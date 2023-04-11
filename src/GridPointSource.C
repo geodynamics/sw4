@@ -44,11 +44,11 @@ using namespace std;
 #include "time_functions.h"
 
 //-----------------------------------------------------------------------
-GridPointSource::GridPointSource(float_sw4 frequency, float_sw4 t0, sw4_type N,
-                                 sw4_type M, sw4_type L, sw4_type G, float_sw4 Fx,
+GridPointSource::GridPointSource(float_sw4 frequency, float_sw4 t0, int N,
+                                 int M, int L, int G, float_sw4 Fx,
                                  float_sw4 Fy, float_sw4 Fz, timeDep tDep,
-                                 sw4_type ncyc, float_sw4* pars, sw4_type npar,
-                                 sw4_type* ipars, sw4_type nipar, float_sw4* jacobian,
+                                 int ncyc, float_sw4* pars, int npar,
+                                 int* ipars, int nipar, float_sw4* jacobian,
                                  float_sw4* dddp, float_sw4* hess1,
                                  float_sw4* hess2, float_sw4* hess3)
     : mFreq(frequency),
@@ -85,11 +85,11 @@ GridPointSource::GridPointSource(float_sw4 frequency, float_sw4 t0, sw4_type N,
 
   m_jacobian_known = jacobian != NULL;
   if (jacobian != NULL)
-    for (sw4_type m = 0; m < 27; m++) m_jacobian[m] = jacobian[m];
+    for (int m = 0; m < 27; m++) m_jacobian[m] = jacobian[m];
 
   m_hessian_known = false;
   if (dddp != NULL && hess1 != NULL && hess2 != NULL && hess3 != NULL) {
-    for (sw4_type m = 0; m < 9; m++) {
+    for (int m = 0; m < 9; m++) {
       m_dddp[m] = dddp[m];
       m_hesspos1[m] = hess1[m];
       m_hesspos2[m] = hess2[m];
@@ -177,13 +177,13 @@ void GridPointSource::initializeTimeFunction() {
       mTimeFunc_om = VerySmoothBump_om;
       mTimeFunc_omtt = VerySmoothBump_omtt;
       break;
-    case iRickerSw4_Type:
-      mTimeFunc = RickerSw4_Type;
-      mTimeFunc_t = RickerSw4_Type_t;
-      mTimeFunc_tt = RickerSw4_Type_tt;
-      mTimeFunc_ttt = RickerSw4_Type_ttt;
-      mTimeFunc_om = RickerSw4_Type_om;
-      mTimeFunc_omtt = RickerSw4_Type_omtt;
+    case iRickerInt:
+      mTimeFunc = RickerInt;
+      mTimeFunc_t = RickerInt_t;
+      mTimeFunc_tt = RickerInt_tt;
+      mTimeFunc_ttt = RickerInt_ttt;
+      mTimeFunc_om = RickerInt_om;
+      mTimeFunc_omtt = RickerInt_omtt;
       break;
     case iBrune:
       mTimeFunc = Brune;
@@ -329,8 +329,8 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   if (mTimeDependence != iDiscrete6moments)
     afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
   else {
-    sw4_type npts = mIpar[0];
-    sw4_type size = 6 * (npts - 1) + 1;
+    int npts = mIpar[0];
+    int size = 6 * (npts - 1) + 1;
     size_t pos = 0;
     afunv[0] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
     pos += size;
@@ -346,7 +346,7 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   }
 #endif
 
-  sw4_type lm_derivative;
+  int lm_derivative;
 #if defined(SOURCE_INVERSION)
   lm_derivative = m_derivative;
 #else
@@ -384,7 +384,7 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   } else if (lm_derivative == 11) {
 #if defined(SOURCE_INVERSION)
     fxyz[0] = fxyz[1] = fxyz[2] = 0;
-    sw4_type i;
+    int i;
     for (i = 0; i < 9; i++) {
       fxyz[0] += afun * m_jacobian[i * 3] * m_dir[i];
       fxyz[1] += afun * m_jacobian[i * 3 + 1] * m_dir[i];
@@ -420,8 +420,8 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
   if (mTimeDependence != iDiscrete6moments)
     afun = mTimeFunc_tt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
   else {
-    sw4_type npts = mIpar[0];
-    sw4_type size = 6 * (npts - 1) + 1;
+    int npts = mIpar[0];
+    int size = 6 * (npts - 1) + 1;
     size_t pos = 0;
     afunv[0] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
     pos += size;
@@ -468,7 +468,7 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
     fxyz[2] = mForces[2] * afun;
   } else if (m_derivative == 11) {
     fxyz[0] = fxyz[1] = fxyz[2] = 0;
-    sw4_type i;
+    int i;
     for (i = 0; i < 9; i++) {
       fxyz[0] += afun * m_jacobian[i * 3] * m_dir[i];
       fxyz[1] += afun * m_jacobian[i * 3 + 1] * m_dir[i];
@@ -502,10 +502,10 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::set_derivative(sw4_type der, const float_sw4 dir[11]) {
+void GridPointSource::set_derivative(int der, const float_sw4 dir[11]) {
 #if defined(SOURCE_INVERSION)
   if (der >= 0 && der <= 11) m_derivative = der;
-  for (sw4_type i = 0; i < 11; i++) m_dir[i] = dir[i];
+  for (int i = 0; i < 11; i++) m_dir[i] = dir[i];
 #endif
 }
 
@@ -590,7 +590,7 @@ void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
 
     // derivative wrt. position (m=0,1,2) and moment tensor components
     // (m=3,..,8)
-    for (sw4_type m = 0; m < 9; m++) {
+    for (int m = 0; m < 9; m++) {
       gradient[m] -= g *
                      (kap1 * m_jacobian[3 * m] + kap2 * m_jacobian[3 * m + 1] +
                       kap3 * m_jacobian[3 * m + 2]) *
@@ -657,15 +657,15 @@ void GridPointSource::add_to_hessian(std::vector<Sarray>& kappa,
     float_sw4 c2 = g0 * dt2o12 * h3;
 
     // (pos,pos)
-    for (sw4_type m = 0; m < 3; m++)
-      for (sw4_type j = m; j < 3; j++) {
+    for (int m = 0; m < 3; m++)
+      for (int j = m; j < 3; j++) {
         hessian[m + 11 * j] -= (kap1 * c1 + eta1 * c2) * m_hesspos1[m + 3 * j] +
                                (kap2 * c1 + eta2 * c2) * m_hesspos2[m + 3 * j] +
                                (kap3 * c1 + eta3 * c2) * m_hesspos3[m + 3 * j];
       }
     // (pos,mij)
-    for (sw4_type m = 0; m < 3; m++) {
-      sw4_type j = 3;
+    for (int m = 0; m < 3; m++) {
+      int j = 3;
       hessian[m + 11 * j] -= (c1 * kap1 + eta1 * c2) * m_dddp[m];
       j = 4;
       hessian[m + 11 * j] -= (c1 * kap1 + eta1 * c2) * m_dddp[m + 3] +
@@ -696,8 +696,8 @@ void GridPointSource::add_to_hessian(std::vector<Sarray>& kappa,
     float_sw4 c1om0 = dgom;
 
     // define c1t0,c2t0, c1om0, c2om0
-    for (sw4_type m = 0; m < 9; m++) {
-      sw4_type j = 9;
+    for (int m = 0; m < 9; m++) {
+      int j = 9;
       hessian[m + 11 * j] -=
           ((c1t0 * kap1 + c2t0 * eta1) * m_jacobian[3 * m] +
            (c1t0 * kap2 + c2t0 * eta2) * m_jacobian[3 * m + 1] +
@@ -730,8 +730,8 @@ void GridPointSource::add_to_hessian(std::vector<Sarray>& kappa,
     float_sw4 dgdttomom =
         dt2o12 * mTimeFunc_ttomom(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
 
-    sw4_type m = 9;
-    sw4_type j = 9;
+    int m = 9;
+    int j = 9;
     hessian[m + 11 * j] -= (cmfact * d2gdt02 + cmfact0 * dgdttt0t0) * h3;
     j = 10;
     hessian[m + 11 * j] -= (cmfact * d2gdt0dom + cmfact0 * dgdttt0om) * h3;
@@ -743,7 +743,7 @@ void GridPointSource::add_to_hessian(std::vector<Sarray>& kappa,
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::prsw4_type_info() const {
+void GridPointSource::print_info() const {
   cout << "--------------------------------------------------------------------"
           "---"
        << endl;
@@ -752,8 +752,8 @@ void GridPointSource::prsw4_type_info() const {
        << endl;
   cout << " jac = \n";
 #if defined(SOURCE_INVERSION)
-  for (sw4_type c = 0; c < 3; c++) {
-    for (sw4_type m = 0; m < 9; m++) cout << m_jacobian[c + 3 * m] << " ";
+  for (int c = 0; c < 3; c++) {
+    for (int m = 0; m < 9; m++) cout << m_jacobian[c + 3 * m] << " ";
     cout << endl;
   }
 #endif

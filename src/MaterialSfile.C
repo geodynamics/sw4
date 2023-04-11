@@ -100,8 +100,8 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
     size_t nj = mEW->m_jEnd[g] - mEW->m_jStart[g] + 1;
 #pragma omp parallel for reduction(+ : material, outside)
     for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
-      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; ++j) {
-        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; ++i) {
+      for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
+        for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
           float_sw4 z0, hv;
           float_sw4 x = (i - 1) * mEW->mGridSize[g];
           float_sw4 y = (j - 1) * mEW->mGridSize[g];
@@ -999,7 +999,7 @@ void MaterialSfile::material_check(bool water) {
     double cminstot[4], cmaxstot[4];
     MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    sw4_type myid;
+    int myid;
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
     if (myid == 0)
     //	 if( mEW->getRank()==0 )

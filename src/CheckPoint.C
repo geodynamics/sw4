@@ -903,7 +903,7 @@ void CheckPoint::set_checkpoint_file(string fname, sw4_type cycle, sw4_type cycl
 
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
-void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle) {
+void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
   // Must be called by all participating process
   //
   // Header format: prec - precision 8--> double, 4--> single (sw4_type)
@@ -994,7 +994,7 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycle) {
+void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
   //
   // Header format: prec - precision 8--> double, 4--> single (sw4_type)
   //                ng   - Number of grids (sw4_type)
@@ -1145,7 +1145,7 @@ void CheckPoint::write_hdf5_dset(hid_t fid, char* dset_name, hid_t dtype,
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, sw4_type a_cycle,
+void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
                                        vector<Sarray>& a_Um,
                                        vector<Sarray>& a_U,
                                        vector<Sarray*>& a_AlphaVEm,
@@ -1392,7 +1392,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, sw4_type a_cycle,
 }  // end write_checkpoint_hdf5()
 
 //-----------------------------------------------------------------------
-void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, sw4_type& a_cycle,
+void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
                                       vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                       vector<Sarray*>& a_AlphaVEm,
                                       vector<Sarray*>& a_AlphaVE) {

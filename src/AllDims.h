@@ -8,10 +8,10 @@
 
 class AllDims {
  public:
-  sw4_type m_myid1d;
-  sw4_type m_myid3di, m_myid3dj, m_myid3dk;
+  int m_myid1d;
+  int m_myid3di, m_myid3dj, m_myid3dk;
 
-  sw4_type m_nproci, m_nprocj, m_nprock;
+  int m_nproci, m_nprocj, m_nprock;
   sw4_type m_ibg, m_ieg, m_jbg, m_jeg, m_kbg,
       m_keg;  // Global dims, includes ghost points
 

@@ -89,8 +89,8 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     bool curvilinear =
         mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
-    for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; ++i) {
-      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; ++j) {
+    for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
+      for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
         float_sw4 x = (i - 1) * mEW->mGridSize[g];
         float_sw4 y = (j - 1) * mEW->mGridSize[g];
 

@@ -4074,12 +4074,12 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   m_kStartActGlobal.resize(mNumberOfGrids);
   m_kEndActGlobal.resize(mNumberOfGrids);
 
-  m_iStartSw4_Type.resize(mNumberOfGrids);
-  m_iEndSw4_Type.resize(mNumberOfGrids);
-  m_jStartSw4_Type.resize(mNumberOfGrids);
-  m_jEndSw4_Type.resize(mNumberOfGrids);
-  m_kStartSw4_Type.resize(mNumberOfGrids);
-  m_kEndSw4_Type.resize(mNumberOfGrids);
+  m_iStartInt.resize(mNumberOfGrids);
+  m_iEndInt.resize(mNumberOfGrids);
+  m_jStartInt.resize(mNumberOfGrids);
+  m_jEndInt.resize(mNumberOfGrids);
+  m_kStartInt.resize(mNumberOfGrids);
+  m_kEndInt.resize(mNumberOfGrids);
 
   m_global_nx.resize(mNumberOfGrids);
   m_global_ny.resize(mNumberOfGrids);
@@ -4241,42 +4241,42 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       // local index bounds for interior points (= no ghost or parallel padding
       // points)
       if (ifirst == 1 - m_ghost_points)
-        m_iStartSw4_Type[g] = 1;
+        m_iStartInt[g] = 1;
       else
-        m_iStartSw4_Type[g] = ifirst + m_ppadding;
+        m_iStartInt[g] = ifirst + m_ppadding;
 
       if (ilast == nx + m_ghost_points)
-        m_iEndSw4_Type[g] = nx;
+        m_iEndInt[g] = nx;
       else
-        m_iEndSw4_Type[g] = ilast - m_ppadding;
+        m_iEndInt[g] = ilast - m_ppadding;
 
       if (jfirst == 1 - m_ghost_points)
-        m_jStartSw4_Type[g] = 1;
+        m_jStartInt[g] = 1;
       else
-        m_jStartSw4_Type[g] = jfirst + m_ppadding;
+        m_jStartInt[g] = jfirst + m_ppadding;
 
       if (jlast == ny + m_ghost_points)
-        m_jEndSw4_Type[g] = ny;
+        m_jEndInt[g] = ny;
       else
-        m_jEndSw4_Type[g] = jlast - m_ppadding;
+        m_jEndInt[g] = jlast - m_ppadding;
 
-      // m_kStartSw4_Type[g] = 1;
-      // m_kEndSw4_Type[g]   = nz[g];
+      // m_kStartInt[g] = 1;
+      // m_kEndInt[g]   = nz[g];
 
       // check that there are more interior points than padding points
-      if (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1 < m_ppadding) {
+      if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding) {
         printf(
             "WARNING: less interior points than padding in proc=%d, grid=%d, "
-            "m_iStartSw4_Type=%d, "
-            "m_iEndSw4_Type=%d, padding=%d\n",
-            m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_ppadding);
+            "m_iStartInt=%d, "
+            "m_iEndInt=%d, padding=%d\n",
+            m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
       }
-      if (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1 < m_ppadding) {
+      if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding) {
         printf(
             "WARNING: less interior points than padding in proc=%d, grid=%d, "
-            "m_jStartSw4_Type=%d, "
-            "m_jEndSw4_Type=%d, padding=%d\n",
-            m_myRank, g, m_jStartSw4_Type[g], m_jEndSw4_Type[g], m_ppadding);
+            "m_jStartInt=%d, "
+            "m_jEndInt=%d, padding=%d\n",
+            m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
       }
 
       // output bounds
@@ -4285,8 +4285,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
         printf(
             "Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], "
             "jInterior=[%d,%d]\n",
-            m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_jStartSw4_Type[g],
-            m_jEndSw4_Type[g]);
+            m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_jStartInt[g],
+            m_jEndInt[g]);
       }
 
       // number of extra ghost points to allow highly accurate interpolation;
@@ -4354,42 +4354,42 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     // local index bounds for interior points (= no ghost or parallel padding
     // points)
     if (ifirst == 1 - m_ghost_points)
-      m_iStartSw4_Type[g] = 1;
+      m_iStartInt[g] = 1;
     else
-      m_iStartSw4_Type[g] = ifirst + m_ppadding;
+      m_iStartInt[g] = ifirst + m_ppadding;
 
     if (ilast == nx + m_ghost_points)
-      m_iEndSw4_Type[g] = nx;
+      m_iEndInt[g] = nx;
     else
-      m_iEndSw4_Type[g] = ilast - m_ppadding;
+      m_iEndInt[g] = ilast - m_ppadding;
 
     if (jfirst == 1 - m_ghost_points)
-      m_jStartSw4_Type[g] = 1;
+      m_jStartInt[g] = 1;
     else
-      m_jStartSw4_Type[g] = jfirst + m_ppadding;
+      m_jStartInt[g] = jfirst + m_ppadding;
 
     if (jlast == ny + m_ghost_points)
-      m_jEndSw4_Type[g] = ny;
+      m_jEndInt[g] = ny;
     else
-      m_jEndSw4_Type[g] = jlast - m_ppadding;
+      m_jEndInt[g] = jlast - m_ppadding;
 
-    m_kStartSw4_Type[g] = 1;
-    m_kEndSw4_Type[g] = nz[g];
+    m_kStartInt[g] = 1;
+    m_kEndInt[g] = nz[g];
 
     // check that there are more interior points than padding points
-    if (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1 < m_ppadding) {
+    if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding) {
       printf(
           "WARNING: less interior points than padding in proc=%d, grid=%d, "
-          "m_iStartSw4_Type=%d, "
-          "m_iEndSw4_Type=%d, padding=%d\n",
-          m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_ppadding);
+          "m_iStartInt=%d, "
+          "m_iEndInt=%d, padding=%d\n",
+          m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
     }
-    if (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1 < m_ppadding) {
+    if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding) {
       printf(
           "WARNING: less interior points than padding in proc=%d, grid=%d, "
-          "m_jStartSw4_Type=%d, "
-          "m_jEndSw4_Type=%d, padding=%d\n",
-          m_myRank, g, m_jStartSw4_Type[g], m_jEndSw4_Type[g], m_ppadding);
+          "m_jStartInt=%d, "
+          "m_jEndInt=%d, padding=%d\n",
+          m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
     }
 
     // output bounds
@@ -4398,8 +4398,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       printf(
           "Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], "
           "jInterior=[%d,%d], kInterior=[%d,%d]\n",
-          m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_jStartSw4_Type[g],
-          m_jEndSw4_Type[g], m_kStartSw4_Type[g], m_kEndSw4_Type[g]);
+          m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_jStartInt[g],
+          m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
     }
 
     //
@@ -4703,8 +4703,8 @@ void EW::allocateCurvilinearArrays() {
     m_kStart[g] = 1 - m_ghost_points;
     m_kEnd[g] = Nz + m_ghost_points;
     m_global_nz[g] = Nz;
-    m_kStartSw4_Type[g] = 1;
-    m_kEndSw4_Type[g] = Nz;
+    m_kStartInt[g] = 1;
+    m_kEndInt[g] = Nz;
     if (mVerbose >= 3 && proc_zero())
       printf(
           "allocateCurvilinearArrays: Number of grid points in curvilinear "
@@ -5156,7 +5156,7 @@ void EW::processSource(char* buffer,
   sw4_type event = 0;
   bool ncyc_set = false;
 
-  timeDep tDep = iRickerSw4_Type;
+  timeDep tDep = iRickerInt;
   char formstring[1000];
   char dfile[1000];
 
@@ -5365,7 +5365,7 @@ void EW::processSource(char* buffer,
       else if (!strcmp("VerySmoothBump", formstring))
         tDep = iVerySmoothBump;
       else if (!strcmp("RickerSw4_Type", formstring))
-        tDep = iRickerSw4_Type;
+        tDep = iRickerInt;
       else if (!strcmp("Brune", formstring))
         tDep = iBrune;
       else if (!strcmp("BruneSmoothed", formstring))
@@ -5424,8 +5424,8 @@ void EW::processSource(char* buffer,
 
   // Discrete source time function
   float_sw4* par = NULL;
-  sw4_type* ipar = NULL;
-  sw4_type npar = 0, nipar = 0;
+  int* ipar = NULL;
+  int npar = 0, nipar = 0;
   if (dfileset) {
     tDep = iDiscrete;
     //  g(t) defined by spline points on a uniform grid, read from file.
@@ -5442,7 +5442,7 @@ void EW::processSource(char* buffer,
     par = new float_sw4[npts + 1];
     par[0] = t0;
     freq = 1 / dt;
-    ipar = new sw4_type[1];
+    ipar = new int[1];
     ipar[0] = npts;
     for (sw4_type i = 0; i < npts; i++) fscanf(fd, "%lg", &par[i + 1]);
     npar = npts + 1;
@@ -5506,7 +5506,7 @@ void EW::processSource(char* buffer,
     freq = 1 / dt;
     nipar = 1;
     par = new float_sw4[npar];
-    ipar = new sw4_type[1];
+    ipar = new int[1];
     ipar[0] = npts;
     size_t offset = 0;
     par[offset] = t0;
@@ -5885,8 +5885,8 @@ void EW::processRupture(char* buffer,
 
   // Discrete source time function
   float_sw4* par = NULL;
-  sw4_type* ipar = NULL;
-  sw4_type npar = 0, nipar = 0, ncyc = 0;
+  int* ipar = NULL;
+  int npar = 0, nipar = 0, ncyc = 0;
   if (rfileset) {
     //  g(t) defined by spline points on a uniform grid, read from file.
     //  Format: t0, dt, npts
@@ -5977,7 +5977,7 @@ void EW::processRupture(char* buffer,
         par[0] = tinit;
         t0 = tinit;
         freq = 1 / dt;
-        ipar = new sw4_type[1];
+        ipar = new int[1];
         ipar[0] = nt1dim + 1;  // add an extra point
         fgets(buf, bufsize, fd);
         token = strtok(buf, " \t");

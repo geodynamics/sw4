@@ -27,23 +27,23 @@ void update_unext(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type k
 #define up(c, i, j, k) a_up[-base3_u + i + ni * (j) + nij * (k) + nijk_u * (c)]
 #define rho(i, j, k) a_rho[-base_rho + i + ni * (j) + nij * (k)]
 
-  const long sw4_type ni = ie - ib + 1;
-  const long sw4_type nij = ni * (je - jb + 1);
-  const long sw4_type base_rho = (ib + ni * jb + nij * kb);
+  const sw4_type ni = ie - ib + 1;
+  const sw4_type nij = ni * (je - jb + 1);
+  const sw4_type base_rho = (ib + ni * jb + nij * kb);
 
-  const long sw4_type nijk_u = nij * (ke - kb + 1);
-  const long sw4_type base3_u = (ib + ni * jb + nij * kb + nijk_u);
+  const sw4_type nijk_u = nij * (ke - kb + 1);
+  const sw4_type base3_u = (ib + ni * jb + nij * kb + nijk_u);
 
-  const long sw4_type nijk_unext = nij * (1);
-  const long sw4_type base3_unext = (ib + ni * jb + nij * kic + nijk_unext);
+  const sw4_type nijk_unext = nij * (1);
+  const sw4_type base3_unext = (ib + ni * jb + nij * kic + nijk_unext);
 
-  const long sw4_type nijk_lutt = nij * (1);
-  const long sw4_type base3_lutt = (ib + ni * jb + nij * kic + nijk_lutt);
+  const sw4_type nijk_lutt = nij * (1);
+  const sw4_type base3_lutt = (ib + ni * jb + nij * kic + nijk_lutt);
 
-  const long sw4_type nijk_force = nij * (1);
-  const long sw4_type base3_force = (ib + ni * jb + nij * kic + nijk_force);
+  const sw4_type nijk_force = nij * (1);
+  const sw4_type base3_force = (ib + ni * jb + nij * kic + nijk_force);
 
-  long sw4_type c, j, i;
+  sw4_type c, j, i;
 #pragma omp parallel private(i, j, c)
   {
     for (c = 1; c <= 3; c++) {
@@ -79,16 +79,16 @@ void dpdmt_wind(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb_
 // u_tt has different dimensions in the k-direction
 #define u_tt(c, i, j, k) \
   a_utt[-base3_tt + i + ni * (j) + nij * (k) + nijk_tt * (c)]
-  const long sw4_type ni = ie - ib + 1;
-  const long sw4_type nij = ni * (je - jb + 1);
+  const sw4_type ni = ie - ib + 1;
+  const sw4_type nij = ni * (je - jb + 1);
 
-  const long sw4_type nijk_u = nij * (ke_u - kb_u + 1);
-  const long sw4_type nijk_tt = nij * (ke_tt - kb_tt + 1);
+  const sw4_type nijk_u = nij * (ke_u - kb_u + 1);
+  const sw4_type nijk_tt = nij * (ke_tt - kb_tt + 1);
 
-  const long sw4_type base3_u = (ib + ni * jb + nij * kb_u + nijk_u);
-  const long sw4_type base3_tt = (ib + ni * jb + nij * kb_tt + nijk_tt);
+  const sw4_type base3_u = (ib + ni * jb + nij * kb_u + nijk_u);
+  const sw4_type base3_tt = (ib + ni * jb + nij * kb_tt + nijk_tt);
 
-  //   long sw4_type c, k, j, i;
+  //   sw4_type c, k, j, i;
   // #pragma omp parallel private(k,i,j,c)
   // {
   //   for (c=1; c<=3; c++)
@@ -126,7 +126,7 @@ void dpdmt_wind(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb_
   // RAJA::RangeSegment c_range(1, 4);
   RAJA::kernel<DPDMT_WIND_LOOP_POL_ASYNC>(
       RAJA::make_tuple(i_range, j_range, k_range),
-      [=] RAJA_DEVICE(long sw4_type i, long sw4_type j, long sw4_type k) {
+      [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
         for (sw4_type c = 1; c < 4; c++)
           u_tt(c, i, j, k) =
               dt2i * (up(c, i, j, k) - 2 * u(c, i, j, k) + um(c, i, j, k));

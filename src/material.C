@@ -591,35 +591,35 @@ float_sw4 EW::localMaxVpOverVs() {
 void EW::extrapolateInXY(vector<Sarray>& field) {
   SW4_MARK_FUNCTION;
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
-    if (m_iStartSw4_Type[g] == 1)
+    if (m_iStartInt[g] == 1)
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (sw4_type i = m_iStart[g]; i < 1; i++) {
             if (field[g](i, j, k) == -1) field[g](i, j, k) = field[g](1, j, k);
           }
-    if (m_iEndSw4_Type[g] == m_global_nx[g])
+    if (m_iEndInt[g] == m_global_nx[g])
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (sw4_type i = m_iEndSw4_Type[g] + 1; i <= m_iEnd[g]; i++) {
+          for (sw4_type i = m_iEndInt[g] + 1; i <= m_iEnd[g]; i++) {
             if (field[g](i, j, k) == -1)
-              field[g](i, j, k) = field[g](m_iEndSw4_Type[g], j, k);
+              field[g](i, j, k) = field[g](m_iEndInt[g], j, k);
           }
-    if (m_jStartSw4_Type[g] == 1)
+    if (m_jStartInt[g] == 1)
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (sw4_type j = m_jStart[g]; j < 1; j++)
           for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             if (field[g](i, j, k) == -1) field[g](i, j, k) = field[g](i, 1, k);
           }
-    if (m_jEndSw4_Type[g] == m_global_ny[g])
+    if (m_jEndInt[g] == m_global_ny[g])
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (sw4_type j = m_jEndSw4_Type[g] + 1; j <= m_jEnd[g]; j++)
+        for (sw4_type j = m_jEndInt[g] + 1; j <= m_jEnd[g]; j++)
           for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             if (field[g](i, j, k) == -1)
-              field[g](i, j, k) = field[g](i, m_jEndSw4_Type[g], k);
+              field[g](i, j, k) = field[g](i, m_jEndInt[g], k);
           }
     // corners not necessary to treat explicitly???
   }
@@ -634,17 +634,17 @@ void EW::extrapolateInZ(sw4_type g, Sarray& field, bool lowk, bool highk) {
         for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
           if (field(i, j, k) == -1) field(i, j, k) = field(i, j, 1);
   if (highk)
-    for (sw4_type k = m_kEndSw4_Type[g] + 1; k <= m_kEnd[g]; k++)
+    for (sw4_type k = m_kEndInt[g] + 1; k <= m_kEnd[g]; k++)
       for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
         for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
-          if (field(i, j, k) == -1) field(i, j, k) = field(i, j, m_kEndSw4_Type[g]);
+          if (field(i, j, k) == -1) field(i, j, k) = field(i, j, m_kEndInt[g]);
 }
 
 //-----------------------------------------------------------------------
 void EW::extrapolateInXYvector(vector<Sarray>& field) {
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     sw4_type nc = field[g].m_nc;
-    if (m_iStartSw4_Type[g] == 1)
+    if (m_iStartInt[g] == 1)
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -653,16 +653,16 @@ void EW::extrapolateInXYvector(vector<Sarray>& field) {
               if (field[g](m, i, j, k) == -1)
                 field[g](m, i, j, k) = field[g](m, 1, j, k);
             }
-    if (m_iEndSw4_Type[g] == m_global_nx[g])
+    if (m_iEndInt[g] == m_global_nx[g])
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (sw4_type i = m_iEndSw4_Type[g] + 1; i <= m_iEnd[g]; i++)
+          for (sw4_type i = m_iEndInt[g] + 1; i <= m_iEnd[g]; i++)
             for (sw4_type m = 1; m <= nc; m++) {
               if (field[g](m, i, j, k) == -1)
-                field[g](m, i, j, k) = field[g](m, m_iEndSw4_Type[g], j, k);
+                field[g](m, i, j, k) = field[g](m, m_iEndInt[g], j, k);
             }
-    if (m_jStartSw4_Type[g] == 1)
+    if (m_jStartInt[g] == 1)
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (sw4_type j = m_jStart[g]; j < 1; j++)
@@ -671,14 +671,14 @@ void EW::extrapolateInXYvector(vector<Sarray>& field) {
               if (field[g](m, i, j, k) == -1)
                 field[g](m, i, j, k) = field[g](m, i, 1, k);
             }
-    if (m_jEndSw4_Type[g] == m_global_ny[g])
+    if (m_jEndInt[g] == m_global_ny[g])
 #pragma omp parallel for
       for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (sw4_type j = m_jEndSw4_Type[g] + 1; j <= m_jEnd[g]; j++)
+        for (sw4_type j = m_jEndInt[g] + 1; j <= m_jEnd[g]; j++)
           for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
             for (sw4_type m = 1; m <= nc; m++) {
               if (field[g](m, i, j, k) == -1)
-                field[g](m, i, j, k) = field[g](m, i, m_jEndSw4_Type[g], k);
+                field[g](m, i, j, k) = field[g](m, i, m_jEndInt[g], k);
             }
     // corners not necessary to treat explicitly???
   }
@@ -695,12 +695,12 @@ void EW::extrapolateInZvector(sw4_type g, Sarray& field, bool lowk, bool highk) 
             if (field(m, i, j, k) == -1) field(m, i, j, k) = field(m, i, j, 1);
           }
   if (highk)
-    for (sw4_type k = m_kEndSw4_Type[g] + 1; k <= m_kEnd[g]; k++)
+    for (sw4_type k = m_kEndInt[g] + 1; k <= m_kEnd[g]; k++)
       for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
         for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
           for (sw4_type m = 1; m <= nc; m++) {
             if (field(m, i, j, k) == -1)
-              field(m, i, j, k) = field(m, i, j, m_kEndSw4_Type[g]);
+              field(m, i, j, k) = field(m, i, j, m_kEndInt[g]);
           }
 }
 

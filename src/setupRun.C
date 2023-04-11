@@ -294,9 +294,9 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
     printf(
         "=================Processor #%i interior index "
         "bounds====================\n"
-        "m_iStartSw4_Type=%i, m_iEndSw4_Type=%i, m_jStartSw4_Type=%i, m_jEndSw4_Type=%i\n",
-        m_myRank, m_iStartSw4_Type[top], m_iEndSw4_Type[top], m_jStartSw4_Type[top],
-        m_jEndSw4_Type[top]);
+        "m_iStartInt=%i, m_iEndInt=%i, m_jStartInt=%i, m_jEndInt=%i\n",
+        m_myRank, m_iStartInt[top], m_iEndInt[top], m_jStartInt[top],
+        m_jEndInt[top]);
     printf(
         "=================Processor #%i Boundary Conditions in top "
         "grid====================\n"
@@ -1008,13 +1008,13 @@ void EW::set_materials()
       for (g = 0; g < mNumberOfCartesianGrids; g++) {
         if (g < mNumberOfCartesianGrids - 1)  // extrapolate to top
         {
-          kFrom = m_kStartSw4_Type[g] + mMaterialExtrapolate;
+          kFrom = m_kStartInt[g] + mMaterialExtrapolate;
 
           if (!mQuiet && proc_zero() && mVerbose >= 3)
             printf(
                 "setMaterials> top extrapol, g=%i, kFrom=%d, kStart=%d, "
-                "kStartSw4_Type=%d\n",
-                g, kFrom, m_kStart[g], m_kStartSw4_Type[g]);
+                "kStartInt=%d\n",
+                g, kFrom, m_kStart[g], m_kStartInt[g]);
 
           for (sw4_type k = m_kStart[g]; k < kFrom; ++k)
 #pragma omp parallel for
@@ -1039,13 +1039,13 @@ void EW::set_materials()
 
         if (g > 0)  // extrapolate to bottom
         {
-          kFrom = m_kEndSw4_Type[g] - mMaterialExtrapolate;
+          kFrom = m_kEndInt[g] - mMaterialExtrapolate;
 
           if (!mQuiet && proc_zero() && mVerbose >= 3)
             printf(
                 "setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%d, "
-                "kEndSw4_Type=%d\n",
-                g, kFrom, m_kEnd[g], m_kEndSw4_Type[g]);
+                "kEndInt=%d\n",
+                g, kFrom, m_kEnd[g], m_kEndInt[g]);
 
           for (sw4_type k = kFrom + 1; k <= m_kEnd[g]; ++k)
 #pragma omp parallel for
@@ -1636,7 +1636,7 @@ void EW::computeDT() {
       //         float_sw4 la, mu, la2mu;
 
 #pragma omp parallel for reduction(min : dtCurv)
-      for (sw4_type k = m_kStartSw4_Type[g]; k <= m_kEndSw4_Type[g]; k++)
+      for (sw4_type k = m_kStartInt[g]; k <= m_kEndInt[g]; k++)
         for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             sw4_type N = 3, LDZ = 1, INFO;
@@ -2067,11 +2067,11 @@ void EW::setup_supergrid() {
     m_kStartActGlobal[g] = m_kStartAct[g] = 1;
     m_kEndActGlobal[g] = m_kEndAct[g] = kmax - 1;
 
-    // Changed to interior Start --> StartSw4_Type etc..
-    if (m_iStartAct[g] < m_iStartSw4_Type[g]) m_iStartAct[g] = m_iStartSw4_Type[g];
-    if (m_jStartAct[g] < m_jStartSw4_Type[g]) m_jStartAct[g] = m_jStartSw4_Type[g];
-    if (m_iEndAct[g] > m_iEndSw4_Type[g]) m_iEndAct[g] = m_iEndSw4_Type[g];
-    if (m_jEndAct[g] > m_jEndSw4_Type[g]) m_jEndAct[g] = m_jEndSw4_Type[g];
+    // Changed to interior Start --> StartInt etc..
+    if (m_iStartAct[g] < m_iStartInt[g]) m_iStartAct[g] = m_iStartInt[g];
+    if (m_jStartAct[g] < m_jStartInt[g]) m_jStartAct[g] = m_jStartInt[g];
+    if (m_iEndAct[g] > m_iEndInt[g]) m_iEndAct[g] = m_iEndInt[g];
+    if (m_jEndAct[g] > m_jEndInt[g]) m_jEndAct[g] = m_jEndInt[g];
 
     // If empty, set dimensions so that imax-imin+1=0, to avoid negative element
     // count.

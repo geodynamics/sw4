@@ -111,7 +111,7 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
            << m_nkg << endl;
     }
   }
-  sw4_type per2d[2], coord2d[2];
+  int per2d[2], coord2d[2];
   MPI_Cart_get(a_ew->m_cartesian_communicator, 2, m_nproc2d, per2d, coord2d);
   //   cout << "RANDMTRL myrank " << a_ew->getRank() << " " << m_nproc2d[0] << "
   //   " << m_nproc2d[1] << endl;
@@ -154,9 +154,9 @@ void RandomizedMaterial::perturb_velocities(sw4_type g, Sarray& cs, Sarray& cp,
     //      grids
     bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
     // Interpolate to sw4 grid
-    for (sw4_type k = mEW->m_kStartSw4_Type[g]; k <= mEW->m_kEndSw4_Type[g]; k++)
-      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++)
-        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
+    for (sw4_type k = mEW->m_kStartInt[g]; k <= mEW->m_kEndInt[g]; k++)
+      for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++)
+        for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
           float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zmin + (k - 1) * h;
           if (curvilinear) {
             x = mEW->mX[g](i, j, k);
@@ -244,9 +244,9 @@ void RandomizedMaterial::assign_perturbation(sw4_type g, Sarray& pert, Sarray& c
   if (m_zmax > zmin && zmax > m_zmin) {
     bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
     // Interpolate to sw4 grid
-    for (sw4_type k = mEW->m_kStartSw4_Type[g]; k <= mEW->m_kEndSw4_Type[g]; k++)
-      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++)
-        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
+    for (sw4_type k = mEW->m_kStartInt[g]; k <= mEW->m_kEndInt[g]; k++)
+      for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++)
+        for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
           float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zmin + (k - 1) * h;
           if (curvilinear) {
             x = mEW->mX[g](i, j, k);

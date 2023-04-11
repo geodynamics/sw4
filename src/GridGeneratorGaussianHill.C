@@ -38,9 +38,9 @@ bool GridGeneratorGaussianHill::grid_mapping(EW* a_ew, float_sw4 q, float_sw4 r,
     float_sw4 Zbot = s0 * (-tau) + (1 - s0) * m_topo_zmax;
 
     float_sw4 Nz_real =
-        static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+        static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
     float_sw4 inzr = 1.0 / Nz_real;
-    float_sw4 zeta = static_cast<float_sw4>((s - a_ew->m_kStartSw4_Type[g]) * inzr);
+    float_sw4 zeta = static_cast<float_sw4>((s - a_ew->m_kStartInt[g]) * inzr);
     z = (1.0 - zeta) * Ztop + zeta * Zbot;
     return true;
   } else {
@@ -87,9 +87,9 @@ bool GridGeneratorGaussianHill::inverse_grid_mapping(EW* a_ew, float_sw4 x,
                                      (Ztop - h * 0.5 <= z && z <= Zbot))) {
         // Point is found on grid:
         float_sw4 Nz_real =
-            static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+            static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
         float_sw4 zeta = (z - Ztop) / (Zbot - Ztop);
-        s = (Nz_real)*zeta + a_ew->m_kStartSw4_Type[g];
+        s = (Nz_real)*zeta + a_ew->m_kStartInt[g];
         //         s = (z-ztop)/(zbot-ztop)*(Nz-1)+1;
         //         if( s < 1 )
         //            s = 1;
@@ -183,9 +183,9 @@ void GridGeneratorGaussianHill::grid_mapping_diff(
     float_sw4 Zbotrr = s0 * (-taurr);
 
     float_sw4 Nz_real =
-        static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+        static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
     float_sw4 inzr = 1.0 / Nz_real;
-    float_sw4 zeta = static_cast<float_sw4>((s - a_ew->m_kStartSw4_Type[g]) * inzr);
+    float_sw4 zeta = static_cast<float_sw4>((s - a_ew->m_kStartInt[g]) * inzr);
 
     zq = (1.0 - zeta) * Ztopq + zeta * Zbotq;
     zr = (1.0 - zeta) * Ztopr + zeta * Zbotr;
@@ -263,7 +263,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
     float_sw4 s0 = curvilinear_interface_parameter(a_ew, iSurfTop - 1);
     //      std::cout << " grid " << g << " interface parameters s0,s1 " << s0
     //      << " " << s1 <<
-    //         " ksw4_type = " << a_ew->m_kStartSw4_Type[g] << " " << a_ew->m_kEndSw4_Type[g]
+    //         " ksw4_type = " << a_ew->m_kStartInt[g] << " " << a_ew->m_kEndInt[g]
     //         << std::endl;
     //      std::cout << " array dims " << a_x.m_ib << " " << a_x.m_ie << " " <<
     //      a_x.m_jb << " " << a_x.m_je << " "
@@ -288,12 +288,12 @@ void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
 
         // Linear interpolation in the vertical direction
         float_sw4 Nz_real =
-            static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+            static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
         float_sw4 inzr = 1.0 / Nz_real;
 #pragma omp parallel for
         for (sw4_type k = a_x.m_kb; k <= a_x.m_ke; k++) {
           float_sw4 zeta =
-              static_cast<float_sw4>((k - a_ew->m_kStartSw4_Type[g]) * inzr);
+              static_cast<float_sw4>((k - a_ew->m_kStartInt[g]) * inzr);
           a_x(i, j, k) = X0;
           a_y(i, j, k) = Y0;
           a_z(i, j, k) = (1.0 - zeta) * Ztop + zeta * Zbot;
@@ -444,12 +444,12 @@ void GridGeneratorGaussianHill::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z
 
         // Linear interpolation in the vertical direction
         float_sw4 Nz_real =
-            static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+            static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
         float_sw4 inzr = 1.0 / Nz_real;
 #pragma omp parallel for
         for (sw4_type k = z.m_kb; k <= z.m_ke; k++) {
           float_sw4 zeta =
-              static_cast<float_sw4>((k - a_ew->m_kStartSw4_Type[g]) * inzr);
+              static_cast<float_sw4>((k - a_ew->m_kStartInt[g]) * inzr);
           z(i, j, k) = (1.0 - zeta) * Ztop + zeta * Zbot;
           J(i, j, k) = h * h * (Zbot - Ztop) * inzr;
         }

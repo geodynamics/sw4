@@ -69,7 +69,7 @@ ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpInterval,
       m_compressionPar(compressionPar),
       m_hdf5helper(NULL) {
   // volimage subdomain x,y corner coordinates
-  for (sw4_type d = 0; d < 2 * 2; d++) mCoordBox[d] = coordBox[d];
+  for (int d = 0; d < 2 * 2; d++) mCoordBox[d] = coordBox[d];
 
   set_dump_interval(dumpInterval);
   set_buffer_interval(bufferInterval);
@@ -133,8 +133,8 @@ void ESSI3D::setup() {
     mGlobalDims[2 * dim + 1] = max(1, min(boxEnd, indexMax));
     // cout << "ESSI3D index ranges: x[" << dim << "] = ("
     //   << boxStart << " , " << boxEnd << ")" << endl;
-    sw4_type ixStart = (dim == 0) ? mEW->m_iStartSw4_Type[g] : mEW->m_jStartSw4_Type[g];
-    sw4_type ixEnd = (dim == 0) ? mEW->m_iEndSw4_Type[g] : mEW->m_jEndSw4_Type[g];
+    sw4_type ixStart = (dim == 0) ? mEW->m_iStartInt[g] : mEW->m_jStartInt[g];
+    sw4_type ixEnd = (dim == 0) ? mEW->m_iEndInt[g] : mEW->m_jEndInt[g];
     // Check if the output box indices intersect with this proc's
     if (m_ihavearray && (boxStart <= ixEnd) && (boxEnd >= ixStart)) {
       mWindow[2 * dim] = max(ixStart, min(boxStart, ixEnd));
@@ -146,8 +146,8 @@ void ESSI3D::setup() {
 
   // In k direction, guestimate the index for the requested depth
   sw4_type kmax = (sw4_type)ceil(mDepth / mEW->mGridSize[g]) + 1;
-  mGlobalDims[4] = mEW->m_kStartSw4_Type[g];
-  mGlobalDims[5] = min(kmax, mEW->m_kEndSw4_Type[g]);
+  mGlobalDims[4] = mEW->m_kStartInt[g];
+  mGlobalDims[5] = min(kmax, mEW->m_kEndInt[g]);
   if (m_ihavearray) {
     mWindow[4] = mGlobalDims[4];
     mWindow[5] = mGlobalDims[5];
@@ -315,9 +315,9 @@ void ESSI3D::open_vel_file(sw4_type a_cycle, std::string& a_path, float_sw4 a_ti
   /* debug = true; */
 
   bool is_root = true;
-  sw4_type g = mEW->mNumberOfGrids - 1;
-  sw4_type window[6], global[3];
-  for (sw4_type d = 0; d < 3; d++) {
+  int g = mEW->mNumberOfGrids - 1;
+  int window[6], global[3];
+  for (int d = 0; d < 3; d++) {
     window[2 * d] = (m_ihavearray) ? (mWindow[2 * d] - mGlobalDims[2 * d]) : 0;
     window[2 * d + 1] =
         (m_ihavearray) ? (mWindow[2 * d + 1] - mGlobalDims[2 * d]) : -1;

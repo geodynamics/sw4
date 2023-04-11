@@ -142,7 +142,7 @@ class ESSI3D {
   bool m_ihavearray;
   sw4_type m_ntimestep;
   bool m_isRestart;
-  sw4_type m_rank;
+  int m_rank;
 };
 
 #endif

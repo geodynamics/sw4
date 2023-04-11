@@ -1116,7 +1116,7 @@ void EW::assign_local_bcs() {
 
 //-----------------------------------------------------------------------
 // Note that the padding cell array is no longer needed.
-// use m_iStartSw4_Type[g], m_iEndSw4_Type[g] to get the range of interior points
+// use m_iStartInt[g], m_iEndInt[g] to get the range of interior points
 void EW::initializePaddingCells() {
   SW4_MARK_FUNCTION;
   sw4_type g = mNumberOfGrids - 1;
@@ -1134,7 +1134,7 @@ void EW::initializePaddingCells() {
 void EW::check_dimensions() {
   SW4_MARK_FUNCTION;
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
-    sw4_type nz = m_kEndSw4_Type[g] - m_kStartSw4_Type[g] + 1;
+    sw4_type nz = m_kEndInt[g] - m_kStartInt[g] + 1;
     sw4_type nzmin;
     if (m_onesided[g][4] && m_onesided[g][5])
       nzmin = 12;
@@ -1146,12 +1146,12 @@ void EW::check_dimensions() {
              "The number of grid points (not counting ghost pts) in the "
              "z-direction in grid "
                  << g << " must be >= " << nzmin << " current value is " << nz);
-    sw4_type nx = m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1;
+    sw4_type nx = m_iEndInt[g] - m_iStartInt[g] + 1;
     REQUIRE2(nx >= 1,
              "No grid points left (not counting ghost pts) in the x-direction "
              "in grid "
                  << g);
-    sw4_type ny = m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1;
+    sw4_type ny = m_jEndInt[g] - m_jStartInt[g] + 1;
     REQUIRE2(ny >= 1,
              "No grid points left (not counting ghost pts) in the y-direction "
              "in grid "
@@ -1552,8 +1552,8 @@ bool EW::interior_point_in_proc(sw4_type a_i, sw4_type a_j, sw4_type a_g) {
 
   bool retval = false;
   if (a_g >= 0 && a_g < mNumberOfGrids) {
-    retval = (a_i >= m_iStartSw4_Type[a_g]) && (a_i <= m_iEndSw4_Type[a_g]) &&
-             (a_j >= m_jStartSw4_Type[a_g]) && (a_j <= m_jEndSw4_Type[a_g]);
+    retval = (a_i >= m_iStartInt[a_g]) && (a_i <= m_iEndInt[a_g]) &&
+             (a_j >= m_jStartInt[a_g]) && (a_j <= m_jEndInt[a_g]);
   }
   return retval;
 }
@@ -1997,38 +1997,38 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
     }
 
     if (mbcGlobalType[0] == bSuperGrid)
-      imin = max(m_iStartSw4_Type[g], nsgxy + 1);
+      imin = max(m_iStartInt[g], nsgxy + 1);
     else
-      imin = m_iStartSw4_Type[g];
+      imin = m_iStartInt[g];
 
     if (mbcGlobalType[1] == bSuperGrid)
-      imax = min(m_iEndSw4_Type[g], m_global_nx[g] - nsgxy);
+      imax = min(m_iEndInt[g], m_global_nx[g] - nsgxy);
     else
-      imax = m_iEndSw4_Type[g];
+      imax = m_iEndInt[g];
 
     if (mbcGlobalType[2] == bSuperGrid)
-      jmin = max(m_jStartSw4_Type[g], nsgxy + 1);
+      jmin = max(m_jStartInt[g], nsgxy + 1);
     else
-      jmin = m_jStartSw4_Type[g];
+      jmin = m_jStartInt[g];
 
     if (mbcGlobalType[3] == bSuperGrid)
-      jmax = min(m_jEndSw4_Type[g], m_global_ny[g] - nsgxy);
+      jmax = min(m_jEndInt[g], m_global_ny[g] - nsgxy);
     else
-      jmax = m_jEndSw4_Type[g];
+      jmax = m_jEndInt[g];
 
     // Can not test on global type when there is more than one grid in the
     // z-direction if uppermost grid has layer on top boundary, the fine grid
     // spacing is used for the s.g. layer width
     if (m_bcType[g][4] == bSuperGrid)
-      kmin = max(m_kStartSw4_Type[g], nsgxy + 1);
+      kmin = max(m_kStartInt[g], nsgxy + 1);
     else
-      kmin = m_kStartSw4_Type[g];
+      kmin = m_kStartInt[g];
     // The lowermost grid has the s.g. layer width based on the spacing of the
     // coarsest grid
     if (m_bcType[g][5] == bSuperGrid)
-      kmax = min(m_kEndSw4_Type[g], m_global_nz[g] - nsgz);
+      kmax = min(m_kEndInt[g], m_global_nz[g] - nsgz);
     else
-      kmax = m_kEndSw4_Type[g];
+      kmax = m_kEndInt[g];
 
     // tmp
     //     printf("proc=%i, iS= %i, iE=%i, jS=%i, jE=%i, kS=%i, kE=%i\n",
@@ -2166,24 +2166,24 @@ void EW::normOfSurfaceDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
   if (m_use_sg_width) nsgxy = static_cast<sw4_type>(floor(m_supergrid_width / h));
 
   if (mbcGlobalType[0] == bSuperGrid)
-    imin = max(m_iStartSw4_Type[g], nsgxy + 1);
+    imin = max(m_iStartInt[g], nsgxy + 1);
   else
-    imin = m_iStartSw4_Type[g];
+    imin = m_iStartInt[g];
 
   if (mbcGlobalType[1] == bSuperGrid)
-    imax = min(m_iEndSw4_Type[g], m_global_nx[g] - nsgxy);
+    imax = min(m_iEndInt[g], m_global_nx[g] - nsgxy);
   else
-    imax = m_iEndSw4_Type[g];
+    imax = m_iEndInt[g];
 
   if (mbcGlobalType[2] == bSuperGrid)
-    jmin = max(m_jStartSw4_Type[g], nsgxy + 1);
+    jmin = max(m_jStartInt[g], nsgxy + 1);
   else
-    jmin = m_jStartSw4_Type[g];
+    jmin = m_jStartInt[g];
 
   if (mbcGlobalType[3] == bSuperGrid)
-    jmax = min(m_jEndSw4_Type[g], m_global_ny[g] - nsgxy);
+    jmax = min(m_jEndInt[g], m_global_ny[g] - nsgxy);
   else
-    jmax = m_jEndSw4_Type[g];
+    jmax = m_jEndInt[g];
 
   // also need to exclude grid points near the point source
   h = mGridSize[g];
@@ -6229,12 +6229,12 @@ void EW::compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
   // Compute energy
   float_sw4 energy = 0;
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
-    sw4_type istart = m_iStartSw4_Type[g];
-    sw4_type iend = m_iEndSw4_Type[g];
-    sw4_type jstart = m_jStartSw4_Type[g];
-    sw4_type jend = m_jEndSw4_Type[g];
-    sw4_type kstart = m_kStartSw4_Type[g];
-    sw4_type kend = m_kEndSw4_Type[g];
+    sw4_type istart = m_iStartInt[g];
+    sw4_type iend = m_iEndInt[g];
+    sw4_type jstart = m_jStartInt[g];
+    sw4_type jend = m_jEndInt[g];
+    sw4_type kstart = m_kStartInt[g];
+    sw4_type kend = m_kEndInt[g];
     float_sw4* up_ptr = Up[g].c_ptr();
     float_sw4* u_ptr = U[g].c_ptr();
     float_sw4* um_ptr = Um[g].c_ptr();
@@ -6287,12 +6287,12 @@ float_sw4 EW::scalarProduct(vector<Sarray>& U, vector<Sarray>& V) {
   //
   float_sw4 s_prod = 0;
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
-    sw4_type istart = m_iStartSw4_Type[g];
-    sw4_type iend = m_iEndSw4_Type[g];
-    sw4_type jstart = m_jStartSw4_Type[g];
-    sw4_type jend = m_jEndSw4_Type[g];
-    sw4_type kstart = m_kStartSw4_Type[g];
-    sw4_type kend = m_kEndSw4_Type[g];
+    sw4_type istart = m_iStartInt[g];
+    sw4_type iend = m_iEndInt[g];
+    sw4_type jstart = m_jStartInt[g];
+    sw4_type jend = m_jEndInt[g];
+    sw4_type kstart = m_kStartInt[g];
+    sw4_type kend = m_kEndInt[g];
     float_sw4* u_ptr = U[g].c_ptr();
     float_sw4* v_ptr = V[g].c_ptr();
     float_sw4 loc_s_prod;
@@ -7549,12 +7549,12 @@ void EW::check_min_max_sw4_type(vector<Sarray>& a_U) {
       //	 mx[c] = -1e38;
       //	 mn[c] =  1e38;
       mx[c - 1] = mn[c - 1] =
-          a_U[g](c, m_iStartSw4_Type[g], m_jStartSw4_Type[g], m_kStartSw4_Type[g]);
+          a_U[g](c, m_iStartInt[g], m_jStartInt[g], m_kStartInt[g]);
     }
 
-    for (sw4_type k = m_kStartSw4_Type[g]; k <= m_kEndSw4_Type[g]; k++)
-      for (sw4_type j = m_jStartSw4_Type[g]; j <= m_jEndSw4_Type[g]; j++)
-        for (sw4_type i = m_iStartSw4_Type[g]; i <= m_iEndSw4_Type[g]; i++)
+    for (sw4_type k = m_kStartInt[g]; k <= m_kEndInt[g]; k++)
+      for (sw4_type j = m_jStartInt[g]; j <= m_jEndInt[g]; j++)
+        for (sw4_type i = m_iStartInt[g]; i <= m_iEndInt[g]; i++)
           for (sw4_type c = 1; c <= nc; c++) {
             if (mx[c - 1] < a_U[g](c, i, j, k)) mx[c - 1] = a_U[g](c, i, j, k);
             if (mn[c - 1] > a_U[g](c, i, j, k)) mn[c - 1] = a_U[g](c, i, j, k);
@@ -7757,7 +7757,7 @@ void EW::extrapolateTopo(Sarray& field) {
   sw4_type g = mNumberOfGrids - 1;  // top grid
   int nExtrap = 0;
 
-  if (m_iStartSw4_Type[g] == 1) {
+  if (m_iStartInt[g] == 1) {
     for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
       for (sw4_type i = m_iStart[g]; i < 1; i++)
         if (field(i, j, k) == NO_TOPO) {
@@ -7766,16 +7766,16 @@ void EW::extrapolateTopo(Sarray& field) {
         }
   }
 
-  if (m_iEndSw4_Type[g] == m_global_nx[g]) {
+  if (m_iEndInt[g] == m_global_nx[g]) {
     for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
-      for (sw4_type i = m_iEndSw4_Type[g] + 1; i <= m_iEnd[g]; i++)
+      for (sw4_type i = m_iEndInt[g] + 1; i <= m_iEnd[g]; i++)
         if (field(i, j, k) == NO_TOPO) {
-          field(i, j, k) = field(m_iEndSw4_Type[g], j, k);
+          field(i, j, k) = field(m_iEndInt[g], j, k);
           nExtrap += 1;
         }
   }
 
-  if (m_jStartSw4_Type[g] == 1) {
+  if (m_jStartInt[g] == 1) {
     for (sw4_type j = m_jStart[g]; j < 1; j++)
       for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
         if (field(i, j, k) == NO_TOPO) {
@@ -7784,11 +7784,11 @@ void EW::extrapolateTopo(Sarray& field) {
         }
   }
 
-  if (m_jEndSw4_Type[g] == m_global_ny[g]) {
-    for (sw4_type j = m_jEndSw4_Type[g] + 1; j <= m_jEnd[g]; j++)
+  if (m_jEndInt[g] == m_global_ny[g]) {
+    for (sw4_type j = m_jEndInt[g] + 1; j <= m_jEnd[g]; j++)
       for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
         if (field(i, j, k) == NO_TOPO) {
-          field(i, j, k) = field(i, m_jEndSw4_Type[g], k);
+          field(i, j, k) = field(i, m_jEndInt[g], k);
           nExtrap += 1;
         }
   }
@@ -9447,9 +9447,9 @@ TestEcons* EW::create_energytest() {
 TestPointSource* EW::get_point_source_test() { return m_point_source_test; }
 void EW::load_balance() {
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
-    size_t local_size = (m_kEndSw4_Type[g] - m_kStartSw4_Type[g] + 1) *
-                        (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1) *
-                        (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1);
+    size_t local_size = (m_kEndInt[g] - m_kStartInt[g] + 1) *
+                        (m_jEndInt[g] - m_jStartInt[g] + 1) *
+                        (m_iEndInt[g] - m_iStartInt[g] + 1);
     size_t global_size = m_global_nx[g] * m_global_ny[g] * m_global_nz[g];
 
     float perc = static_cast<float>(local_size) / global_size * 100.0;

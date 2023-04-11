@@ -261,7 +261,7 @@ class EW {
   void test_sources(vector<GridPointSource*>& a_point_sources,
                     vector<Source*>& a_global_unique_sources, vector<Sarray>& F,
                     vector<sw4_type>& identsources);
-  void testSourceDiscretization(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
+  void testSourceDiscretization(int kx[3], int ky[3], int kz[3],
                                 float_sw4 moments[3],
                                 vector<GridPointSource*>& point_sources,
                                 vector<Sarray>& F, vector<sw4_type>& identsources);
@@ -1109,11 +1109,11 @@ class EW {
                    sw4_type kmin, sw4_type kmax, float_sw4 h);
   void testsrc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
                   sw4_type kb, sw4_type ke, sw4_type nk, sw4_type wind[6], float_sw4 zmin,
-                  float_sw4 h, sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
+                  float_sw4 h, int kx[3], int ky[3], int kz[3],
                   float_sw4 mom[3]);
   void testsrcc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
-                   sw4_type kb, sw4_type ke, sw4_type nk, sw4_type g, sw4_type wind[6], sw4_type kx[3],
-                   sw4_type ky[3], sw4_type kz[3], float_sw4 mom[3]);
+                   sw4_type kb, sw4_type ke, sw4_type nk, sw4_type g, sw4_type wind[6], int kx[3],
+                   int ky[3], int kz[3], float_sw4 mom[3]);
   void tw_aniso_force_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
                          sw4_type kfirst, sw4_type klast, float_sw4* fo, float_sw4 t,
                          float_sw4 om, float_sw4 cv, float_sw4 ph,
@@ -1571,7 +1571,7 @@ class EW {
   vector<sw4_type> m_kStartActGlobal, m_kEndActGlobal;
 
   // global number of grid points on each refinement level, without ghost points
-  vector<sw4_type> m_global_nx, m_global_ny, m_global_nz;
+  vector<int> m_global_nx, m_global_ny, m_global_nz;
 
   // part of global array on each processor, excluding ghost points and parallel
   // overlap points = interior points

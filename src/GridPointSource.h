@@ -50,17 +50,17 @@ class GridPointSource : public Managed {
                                   const GridPointSource& s);
 
  public:
-  GridPointSource(float_sw4 frequency, float_sw4 t0, sw4_type i0, sw4_type j0, sw4_type k0,
-                  sw4_type g, float_sw4 Fx, float_sw4 Fy, float_sw4 Fz, timeDep tDep,
-                  sw4_type ncyc, float_sw4* pars, sw4_type npar, sw4_type* ipars, sw4_type nipar,
+  GridPointSource(float_sw4 frequency, float_sw4 t0, int i0, int j0, int k0,
+                  int g, float_sw4 Fx, float_sw4 Fy, float_sw4 Fz, timeDep tDep,
+                  int ncyc, float_sw4* pars, int npar, int* ipars, int nipar,
                   float_sw4* jacobian = NULL, float_sw4* dddp = NULL,
                   float_sw4* hess1 = NULL, float_sw4* hess2 = NULL,
                   float_sw4* hess3 = NULL);
 
   ~GridPointSource();
 
-  sw4_type m_i0, m_j0, m_k0;  // grid point index
-  sw4_type m_grid;
+  int m_i0, m_j0, m_k0;  // grid point index
+  int m_grid;
   size_t m_key;  // For sorting sources
   RAJA_HOST_DEVICE
   void getFxyz(float_sw4 t, float_sw4* fxyz);
@@ -84,14 +84,14 @@ class GridPointSource : public Managed {
   void add_to_hessian(std::vector<Sarray>& kappa, std::vector<Sarray>& eta,
                       float_sw4 t, float_sw4 dt, float_sw4 hessian[121],
                       std::vector<float_sw4>& h);
-  void set_derivative(sw4_type der, const float_sw4 dir[11]);
+  void set_derivative(int der, const float_sw4 dir[11]);
   void set_noderivative();
-  void prsw4_type_info() const;
+  void print_info() const;
   void set_sort_key(size_t key);
 
   //// discretize a time function at each time step and change the time function
   /// to be "Discrete()"
-  //  void discretizeTimeFuncAndFilter(float_sw4 tStart, float_sw4 dt, sw4_type
+  //  void discretizeTimeFuncAndFilter(float_sw4 tStart, float_sw4 dt, int
   //  nSteps, Filter *filter_ptr);
 
   // make public for simplicity
@@ -99,7 +99,7 @@ class GridPointSource : public Managed {
   RAJA_HOST_DEVICE
   void initializeTimeFunction();
   float_sw4 mForces[3];
-  void prsw4_type_vals() {
+  void print_vals() {
 #if defined(SOURCE_INVERSION)
     std::cout << "DERDEP " << m_derivative << "," << mTimeDependence << "\n";
 #else
@@ -113,37 +113,37 @@ class GridPointSource : public Managed {
   //  float_sw4 mAmp;
 
   timeDep mTimeDependence;
-  float_sw4 (*mTimeFunc)(float_sw4 f, float_sw4 t, float_sw4* par, sw4_type npar,
-                         sw4_type* ipar, sw4_type nipar);
-  float_sw4 (*mTimeFunc_t)(float_sw4 f, float_sw4 t, float_sw4* par, sw4_type npar,
-                           sw4_type* ipar, sw4_type nipar);
-  float_sw4 (*mTimeFunc_tt)(float_sw4 f, float_sw4 t, float_sw4* par, sw4_type npar,
-                            sw4_type* ipar, sw4_type nipar);
-  float_sw4 (*mTimeFunc_ttt)(float_sw4 f, float_sw4 t, float_sw4* par, sw4_type npar,
-                             sw4_type* ipar, sw4_type nipar);
-  float_sw4 (*mTimeFunc_om)(float_sw4 f, float_sw4 t, float_sw4* par, sw4_type npar,
-                            sw4_type* ipar, sw4_type nipar);
+  float_sw4 (*mTimeFunc)(float_sw4 f, float_sw4 t, float_sw4* par, int npar,
+                         int* ipar, int nipar);
+  float_sw4 (*mTimeFunc_t)(float_sw4 f, float_sw4 t, float_sw4* par, int npar,
+                           int* ipar, int nipar);
+  float_sw4 (*mTimeFunc_tt)(float_sw4 f, float_sw4 t, float_sw4* par, int npar,
+                            int* ipar, int nipar);
+  float_sw4 (*mTimeFunc_ttt)(float_sw4 f, float_sw4 t, float_sw4* par, int npar,
+                             int* ipar, int nipar);
+  float_sw4 (*mTimeFunc_om)(float_sw4 f, float_sw4 t, float_sw4* par, int npar,
+                            int* ipar, int nipar);
   float_sw4 (*mTimeFunc_omtt)(float_sw4 f, float_sw4 t, float_sw4* par,
-                              sw4_type npar, sw4_type* ipar, sw4_type nipar);
+                              int npar, int* ipar, int nipar);
   float_sw4 (*mTimeFunc_tttt)(float_sw4 f, float_sw4 t, float_sw4* par,
-                              sw4_type npar, sw4_type* ipar, sw4_type nipar);
+                              int npar, int* ipar, int nipar);
   float_sw4 (*mTimeFunc_tttom)(float_sw4 f, float_sw4 t, float_sw4* par,
-                               sw4_type npar, sw4_type* ipar, sw4_type nipar);
+                               int npar, int* ipar, int nipar);
   float_sw4 (*mTimeFunc_ttomom)(float_sw4 f, float_sw4 t, float_sw4* par,
-                                sw4_type npar, sw4_type* ipar, sw4_type nipar);
-  float_sw4 (*mTimeFunc_tom)(float_sw4 f, float_sw4 t, float_sw4* par, sw4_type npar,
-                             sw4_type* ipar, sw4_type nipar);
+                                int npar, int* ipar, int nipar);
+  float_sw4 (*mTimeFunc_tom)(float_sw4 f, float_sw4 t, float_sw4* par, int npar,
+                             int* ipar, int nipar);
   float_sw4 (*mTimeFunc_omom)(float_sw4 f, float_sw4 t, float_sw4* par,
-                              sw4_type npar, sw4_type* ipar, sw4_type nipar);
+                              int npar, int* ipar, int nipar);
 
   float_sw4* mPar;
-  sw4_type* mIpar;
-  sw4_type mNpar, mNipar;
+  int* mIpar;
+  int mNpar, mNipar;
 
 #if defined(SOURCE_INVERSION)
-  sw4_type mNcyc;
+  int mNcyc;
   //  float_sw4 m_min_exponent;
-  sw4_type m_derivative;
+  int m_derivative;
   bool m_jacobian_known;
   float_sw4 m_jacobian[27];
   bool m_hessian_known;

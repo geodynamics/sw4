@@ -126,8 +126,8 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
 
 #pragma omp parallel for reduction(+ : material, outside)
     for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
-      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++) {
-        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
+      for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++) {
+        for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
           float_sw4 x = (i - 1) * mEW->mGridSize[g];
           float_sw4 y = (j - 1) * mEW->mGridSize[g];
           float_sw4 z = mEW->m_zmin[g] + (k - 1) * mEW->mGridSize[g];
@@ -185,8 +185,8 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
 
 #pragma omp parallel for reduction(+ : material, outside)
       for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
-        for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++) {
-          for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
+        for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++) {
+          for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
             float_sw4 x = mEW->mX[g](i, j, k);
             float_sw4 y = mEW->mY[g](i, j, k);
             float_sw4 z = mEW->mZ[g](i, j, k);

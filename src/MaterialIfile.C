@@ -85,8 +85,8 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
     for (sw4_type k = kLow; k <= mEw->m_kEnd[g]; k++) {
       // what should the index boundaries be here to avoid parallel overlap
       // points, but include real ghost points
-      for (sw4_type j = mEw->m_jStartSw4_Type[g]; j <= mEw->m_jEndSw4_Type[g]; j++) {
-        for (sw4_type i = mEw->m_iStartSw4_Type[g]; i <= mEw->m_iEndSw4_Type[g]; i++) {
+      for (sw4_type j = mEw->m_jStartInt[g]; j <= mEw->m_jEndInt[g]; j++) {
+        for (sw4_type i = mEw->m_iStartInt[g]; i <= mEw->m_iEndInt[g]; i++) {
           totalPoints += 1;
           float_sw4 x = (i - 1) * mEw->mGridSize[g];
           float_sw4 y = (j - 1) * mEw->mGridSize[g];

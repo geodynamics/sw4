@@ -155,7 +155,7 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, sw4_type g,
   float_sw4 h = a_ew->mGridSize[g];
   //  float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
   float_sw4 scaleRatio = 0;
   if (g > ncg) {
@@ -229,7 +229,7 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, sw4_type g,
       for (sw4_type k = a_x.m_kb; k <= a_x.m_ke; k++) {
         // Linear interpolation in the vertical direction
         float_sw4 zeta =
-            static_cast<float_sw4>((k - a_ew->m_kStartSw4_Type[g]) * iNz_real);
+            static_cast<float_sw4>((k - a_ew->m_kStartInt[g]) * iNz_real);
         a_x(i, j, k) = X0;
         a_y(i, j, k) = Y0;
         a_z(i, j, k) = (1.0 - zeta) * Ztop + zeta * Zbot;
@@ -264,7 +264,7 @@ void GridGeneratorGeneral::assignInterfaceSurfaces(EW* a_ew,
     }
   sw4_type extragh = a_ew->m_iStart[ng - 1] -
                 TopoGridExt.m_ib;  // Number of extra ghost points
-  sw4_type egh = a_ew->m_iStartSw4_Type[ng - 1] -
+  sw4_type egh = a_ew->m_iStartInt[ng - 1] -
             TopoGridExt
                 .m_ib;  // Total number of ghost points (including extra points)
   sw4_type refFact = 1;
@@ -279,8 +279,8 @@ void GridGeneratorGeneral::assignInterfaceSurfaces(EW* a_ew,
         (m_topo_zmax - a_ew->m_curviRefLev[g - ncg]) / m_topo_zmax;
 
     // Interior only:
-    for (sw4_type i = a_ew->m_iStartSw4_Type[g]; i <= a_ew->m_iEndSw4_Type[g]; i++)
-      for (sw4_type j = a_ew->m_jStartSw4_Type[g]; j <= a_ew->m_jEndSw4_Type[g]; j++) {
+    for (sw4_type i = a_ew->m_iStartInt[g]; i <= a_ew->m_iEndInt[g]; i++)
+      for (sw4_type j = a_ew->m_jStartInt[g]; j <= a_ew->m_jEndInt[g]; j++) {
         sw4_type iFine = 1 + (i - 1) * refFact;
         sw4_type jFine = 1 + (j - 1) * refFact;
         m_curviInterface[g - ncg](i, j, 1) =
@@ -289,25 +289,25 @@ void GridGeneratorGeneral::assignInterfaceSurfaces(EW* a_ew,
       }
 
     // Extrapolate to ghost points at domain boundaries:
-    if (a_ew->m_jStartSw4_Type[g] == 1) {
+    if (a_ew->m_jStartInt[g] == 1) {
       for (sw4_type i = icib + egh; i <= icie - egh; i++)
         for (sw4_type q = 0; q < egh; q++)
           m_curviInterface[g - ncg](i, icjb + q, 1) =
               m_curviInterface[g - ncg](i, icjb + egh, 1);
     }
-    if (a_ew->m_jEndSw4_Type[g] == a_ew->m_global_ny[g]) {
+    if (a_ew->m_jEndInt[g] == a_ew->m_global_ny[g]) {
       for (sw4_type i = icib + egh; i <= icie - egh; i++)
         for (sw4_type q = 0; q < egh; q++)
           m_curviInterface[g - ncg](i, icje - q, 1) =
               m_curviInterface[g - ncg](i, icje - egh, 1);
     }
-    if (a_ew->m_iStartSw4_Type[g] == 1) {
+    if (a_ew->m_iStartInt[g] == 1) {
       for (sw4_type j = icjb; j <= icje; j++)
         for (sw4_type q = 0; q < egh; q++)
           m_curviInterface[g - ncg](icib + q, j, 1) =
               m_curviInterface[g - ncg](icib + egh, j, 1);
     }
-    if (a_ew->m_iEndSw4_Type[g] == a_ew->m_global_nx[g]) {
+    if (a_ew->m_iEndInt[g] == a_ew->m_global_nx[g]) {
       for (sw4_type j = icjb; j <= icje; j++)
         for (sw4_type q = 0; q < egh; q++)
           m_curviInterface[g - ncg](icie - q, j, 1) =
@@ -614,7 +614,7 @@ bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
   sw4_type iSurfBot = iSurfTop - 1;
   float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
 
   sw4_type i = static_cast<sw4_type>(floor(q));
@@ -670,7 +670,7 @@ bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
   }
   // Linear interpolation in the vertical direction
   float_sw4 zeta =
-      static_cast<float_sw4>((s - a_ew->m_kStartSw4_Type[g]) * iNz_real);
+      static_cast<float_sw4>((s - a_ew->m_kStartInt[g]) * iNz_real);
   z = (1.0 - zeta) * Ztop + zeta * Zbot;
   return true;
 }
@@ -819,7 +819,7 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
   float_sw4 y = (r - 1) * h;
   float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
 
   if (!(m_curviInterface[iSurfTop].in_range(1, ic - 3, jc - 3, 1) &&
@@ -891,7 +891,7 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
   }
   // Linear interpolation in the vertical direction
   float_sw4 zeta =
-      static_cast<float_sw4>((s - a_ew->m_kStartSw4_Type[g]) * iNz_real);
+      static_cast<float_sw4>((s - a_ew->m_kStartInt[g]) * iNz_real);
   zq = (1.0 - zeta) * Ztopq + zeta * Zbotq;
   zr = (1.0 - zeta) * Ztopr + zeta * Zbotr;
   zs = (Zbot - Ztop) * iNz_real;
@@ -1024,7 +1024,7 @@ void GridGeneratorGeneral::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z,
   sw4_type iSurfBot = iSurfTop - 1;
   float_sw4 h = a_ew->mGridSize[g];
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
+      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
   float_sw4 scaleRatio = 0;  // scaleFact=0;
   if (g > ncg) {
@@ -1067,7 +1067,7 @@ void GridGeneratorGeneral::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z,
       for (sw4_type k = z.m_kb; k <= z.m_ke; k++) {
         // Linear interpolation in the vertical direction
         float_sw4 zeta =
-            static_cast<float_sw4>((k - a_ew->m_kStartSw4_Type[g]) * iNz_real);
+            static_cast<float_sw4>((k - a_ew->m_kStartInt[g]) * iNz_real);
         z(i, j, k) = (1.0 - zeta) * Ztop + zeta * Zbot;
         J(i, j, k) = h * h * iNz_real * (Zbot - Ztop);  // (h*h*dz/dr)
         // note, mapping linear in k, exact and numerical derivatives are the

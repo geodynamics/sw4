@@ -67,8 +67,8 @@ using namespace std;
 Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
                float_sw4 y0, float_sw4 z0, float_sw4 Mxx, float_sw4 Mxy,
                float_sw4 Mxz, float_sw4 Myy, float_sw4 Myz, float_sw4 Mzz,
-               timeDep tDep, const char* name, bool topodepth, sw4_type ncyc,
-               float_sw4* pars, sw4_type npar, sw4_type* ipars, sw4_type nipar,
+               timeDep tDep, const char* name, bool topodepth, int ncyc,
+               float_sw4* pars, int npar, int* ipars, int nipar,
                bool correctForMu)
     : mIsMomentSource(true),
       mFreq(frequency),
@@ -99,18 +99,18 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   mNpar = npar;
   if (mNpar > 0) {
     mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
-    for (sw4_type i = 0; i < mNpar; i++) mPar[i] = pars[i];
+    for (int i = 0; i < mNpar; i++) mPar[i] = pars[i];
   } else {
     mNpar = 2;
     mPar = SW4_NEW(Space::Managed, float_sw4[2]);
   }
   mNipar = nipar;
   if (mNipar > 0) {
-    mIpar = SW4_NEW(Space::Managed, sw4_type[mNipar]);
-    for (sw4_type i = 0; i < mNipar; i++) mIpar[i] = ipars[i];
+    mIpar = SW4_NEW(Space::Managed, int[mNipar]);
+    for (int i = 0; i < mNipar; i++) mIpar[i] = ipars[i];
   } else {
     mNipar = 1;
-    mIpar = SW4_NEW(Space::Managed, sw4_type[1]);
+    mIpar = SW4_NEW(Space::Managed, int[1]);
   }
 
   // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
@@ -142,7 +142,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
 Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
                float_sw4 y0, float_sw4 z0, float_sw4 Fx, float_sw4 Fy,
                float_sw4 Fz, timeDep tDep, const char* name, bool topodepth,
-               sw4_type ncyc, float_sw4* pars, sw4_type npar, sw4_type* ipars, sw4_type nipar,
+               int ncyc, float_sw4* pars, int npar, int* ipars, int nipar,
                bool correctForMu)
     : mIsMomentSource(false),
       mFreq(frequency),
@@ -169,7 +169,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   mNpar = npar;
   if (mNpar > 0) {
     mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
-    for (sw4_type i = 0; i < mNpar; i++) mPar[i] = pars[i];
+    for (int i = 0; i < mNpar; i++) mPar[i] = pars[i];
   } else {
     mNpar = 2;
     mPar = SW4_NEW(Space::Managed, float_sw4[2]);
@@ -177,11 +177,11 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
 
   mNipar = nipar;
   if (mNipar > 0) {
-    mIpar = new sw4_type[mNipar];
-    for (sw4_type i = 0; i < mNipar; i++) mIpar[i] = ipars[i];
+    mIpar = new int[mNipar];
+    for (int i = 0; i < mNipar; i++) mIpar[i] = ipars[i];
   } else {
     mNipar = 1;
-    mIpar = new sw4_type[1];
+    mIpar = new int[1];
   }
   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments)
     spline_interpolation();
@@ -284,13 +284,13 @@ float_sw4 Source::getAmplitude() const {
   float_sw4 amplitude = 0;
   if (mIsMomentSource) {
     float_sw4 msqr = 0;
-    for (sw4_type q = 0; q < 6; q++) msqr += SQR(mForces[q]);
+    for (int q = 0; q < 6; q++) msqr += SQR(mForces[q]);
     //    amplitude = mAmp*sqrt(msqr/2.);
     msqr += SQR(mForces[1]) + SQR(mForces[2]) + SQR(mForces[4]);
     amplitude = sqrt(0.5 * msqr);
   } else {
     float_sw4 fsqr = 0;
-    for (sw4_type q = 0; q < 3; q++) fsqr += SQR(mForces[q]);
+    for (int q = 0; q < 3; q++) fsqr += SQR(mForces[q]);
     //    amplitude = mAmp*sqrt(fsqr);
     amplitude = sqrt(fsqr);
   }
@@ -317,7 +317,7 @@ ostream& operator<<(ostream& output, const Source& s) {
 }
 
 //-----------------------------------------------------------------------
-void Source::limit_frequency(sw4_type ppw, float_sw4 minvsoh) {
+void Source::limit_frequency(int ppw, float_sw4 minvsoh) {
   float_sw4 freqlim = minvsoh / (ppw);
 
   if (mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
@@ -333,11 +333,11 @@ void Source::limit_frequency(sw4_type ppw, float_sw4 minvsoh) {
 
 //-----------------------------------------------------------------------
 float_sw4 Source::compute_t0_increase(float_sw4 t0_min) const {
-  // Gaussian, GaussianSw4_Type=Erf, Ricker and RickerSw4_Type are all centered around mT0
+  // Gaussian, GaussianInt=Erf, Ricker and RickerInt are all centered around mT0
   if (mTimeDependence == iGaussian || mTimeDependence == iErf)
     return t0_min + 6.0 / mFreq -
            mT0;  // translating these by at least 6*sigma = 6/freq
-  else if (mTimeDependence == iRicker || mTimeDependence == iRickerSw4_Type)
+  else if (mTimeDependence == iRicker || mTimeDependence == iRickerInt)
     return t0_min + 1.9 / mFreq - mT0;  // 1.9 ?
   else
     return t0_min - mT0;  // the rest of the time functions are zero for t<mT0
@@ -349,7 +349,7 @@ void Source::adjust_t0(float_sw4 dt0) {
 }
 
 //-----------------------------------------------------------------------
-float_sw4 Source::dt_to_resolve(sw4_type ppw) const {
+float_sw4 Source::dt_to_resolve(int ppw) const {
   float_sw4 dt_resolved = 0;
   if (mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
       mTimeDependence == iDBrune) {
@@ -361,19 +361,19 @@ float_sw4 Source::dt_to_resolve(sw4_type ppw) const {
 }
 
 //-----------------------------------------------------------------------
-sw4_type Source::ppw_to_resolve(float_sw4 dt) const {
-  sw4_type ppw = 1;
+int Source::ppw_to_resolve(float_sw4 dt) const {
+  int ppw = 1;
   if (mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
       mTimeDependence == iDBrune) {
     const float_sw4 t95 = 4.744 / mFreq;
-    ppw = static_cast<sw4_type>(t95 / dt);
+    ppw = static_cast<int>(t95 / dt);
   } else {
   }
   return ppw;
 }
 
 //-----------------------------------------------------------------------
-void Source::set_derivative(sw4_type der) {
+void Source::set_derivative(int der) {
   if (der >= 0 && der <= 10) m_derivative = der;
 }
 
@@ -382,7 +382,7 @@ void Source::set_noderivative() { m_derivative = -1; }
 
 //-----------------------------------------------------------------------
 void Source::set_dirderivative(float_sw4 dir[11]) {
-  for (sw4_type i = 0; i < 11; i++) m_dir[i] = dir[i];
+  for (int i = 0; i < 11; i++) m_dir[i] = dir[i];
   m_derivative = 11;
 }
 
@@ -440,7 +440,7 @@ void Source::correct_Z_level(EW* a_ew) {
   //   printf("Entering correct_Z_level()\n");
 
   int i, j, k, g;
-  sw4_type success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
+  int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
 
   // The following is a safety check to make sure only one processor considers
@@ -450,9 +450,9 @@ void Source::correct_Z_level(EW* a_ew) {
   int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<int> whoIsOne(size);
-  sw4_type counter = 0;
+  int counter = 0;
   MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT, MPI_COMM_WORLD);
-  for (unsigned sw4_type p = 0; p < whoIsOne.size(); ++p)
+  for (unsigned int p = 0; p < whoIsOne.size(); ++p)
     if (whoIsOne[p] == 1) {
       counter++;
     }
@@ -1278,7 +1278,7 @@ void Source::getsourcedwghP1sm6(float_sw4 alph, float_sw4 dwghk[6]) const {
 
 //------ filter and fix up any discrete time functions ----------------
 void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
-                             sw4_type sw4TimeSamples, Filter* sw4_filter) {
+                             int sw4TimeSamples, Filter* sw4_filter) {
   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments) {
     // new approach for Discrete time functions
     if (!doFilter) {
@@ -1299,21 +1299,21 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
       // setup the filter for time step dt
       my_filter.computeSOS(dt);
       float_sw4 preCursorTime = my_filter.estimatePrecursor();
-      sw4_type nPadding = static_cast<sw4_type>(ceil(preCursorTime / dt));
+      int nPadding = static_cast<int>(ceil(preCursorTime / dt));
       // current number of points
-      sw4_type npts = mIpar[0];
+      int npts = mIpar[0];
       float_sw4 tstart = mPar[0];
-      sw4_type ext_npts = npts + 2 * nPadding;
+      int ext_npts = npts + 2 * nPadding;
       float_sw4* ext_par = SW4_NEW(Space::Managed, float_sw4[ext_npts + 1]);
       float_sw4 ext_tstart = tstart - nPadding * dt;
       // setup ext_par
       ext_par[0] = ext_tstart;
-      sw4_type i;
+      int i;
       // initial zeros
       for (i = 0; i < nPadding; i++) ext_par[i + 1] = 0.0;
 // copy values from origianla time series
 #pragma omp parallel for
-      for (sw4_type i = 0; i < npts; i++) ext_par[i + nPadding + 1] = mPar[i + 1];
+      for (int i = 0; i < npts; i++) ext_par[i + nPadding + 1] = mPar[i + 1];
       // trailing zeros
       for (i = nPadding + npts; i < ext_npts; i++) ext_par[i + 1] = 0.0;
 
@@ -1325,15 +1325,15 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
       // (forward + backward) bandpass filter (copied from below)
       if (my_filter.get_passes() == 2 && my_filter.get_type() == bandPass) {
         float_sw4 wghv, xi;
-        sw4_type p0 = 3,
+        int p0 = 3,
             p = 20;  // First non-zero time level, and number of points in ramp;
         if (p0 + p <=
             ext_npts)  // only do this if the time series is long enough
         {
-          for (sw4_type i = 1; i <= p0 - 1; i++) {
+          for (int i = 1; i <= p0 - 1; i++) {
             ext_par[i] = 0;
           }
-          for (sw4_type i = p0; i <= p0 + p; i++) {
+          for (int i = p0; i <= p0 + p; i++) {
             wghv = 0;
             xi = (i - p0) / ((float_sw4)p);
             // polynomial P(xi), P(0) = 0, P(1)=1
@@ -1346,7 +1346,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
 
       // update parameters for the discrete function
       mNipar = 1;
-      //      mIpar = new sw4_type[mNipar];
+      //      mIpar = new int[mNipar];
       mIpar[0] = ext_npts;
       //      mFreq = 1./dt;
       ::operator delete[](
@@ -1356,7 +1356,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
       mPar[0] = ext_tstart;  // regular (like Gaussian) time functions are
                              // defined from t=tstart=0
       mT0 = ext_tstart;
-      // for( sw4_type i=0 ; i < nsteps; i++ )
+      // for( int i=0 ; i < nsteps; i++ )
       //    mPar[i+1] = discfunc[i];
       // delete[] discfunc;
 
@@ -1417,7 +1417,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
   // note that this routine is called from all processors, for each input source
   int  i, j, k;
   int g;
-  sw4_type success = a_EW->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
+  int success = a_EW->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   int gg = -1;
   if (success) gg = g;
   MPI_Allreduce(&gg, &g, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
@@ -1484,11 +1484,11 @@ void Source::set_grid_point_sources4(EW* a_EW,
   bool curvilineargp1 = g + 1 >= a_EW->mNumberOfCartesianGrids;
   bool curvilineargm1 = g - 1 >= a_EW->mNumberOfCartesianGrids;
 
-  sw4_type Ni = a_EW->m_global_nx[g];
-  sw4_type Nj = a_EW->m_global_ny[g];
-  sw4_type Nz = a_EW->m_global_nz[g];
+  int Ni = a_EW->m_global_nx[g];
+  int Nj = a_EW->m_global_ny[g];
+  int Nz = a_EW->m_global_nz[g];
 
-  sw4_type ic, jc, kc;
+  int ic, jc, kc;
   bool upperbndry, lowerbndry, ccbndry, gridrefbndry;
   float_sw4 ai, bi, ci;
 
@@ -1506,9 +1506,9 @@ void Source::set_grid_point_sources4(EW* a_EW,
   //   if( canBeInverted )
   //   {
   // Compute source location and weights in source discretization
-  ic = static_cast<sw4_type>(floor(q));
-  jc = static_cast<sw4_type>(floor(r));
-  kc = static_cast<sw4_type>(floor(s));
+  ic = static_cast<int>(floor(q));
+  jc = static_cast<int>(floor(r));
+  kc = static_cast<int>(floor(s));
 
   // Bias stencil away from boundary, no source at ghost/padding points
   if (ic <= 2) ic = 3;
@@ -1542,7 +1542,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                  (lowerbndry && g > 0 && !ccbndry);
   bool curvilinear_refbndry =
       gridrefbndry && g >= a_EW->mNumberOfCartesianGrids;
-  sw4_type ncurv = a_EW->mNumberOfGrids - a_EW->mNumberOfCartesianGrids;
+  int ncurv = a_EW->mNumberOfGrids - a_EW->mNumberOfCartesianGrids;
   bool cc_ic_bndry =
       ccbndry && !a_EW->m_gridGenerator->curviCartIsSmooth(ncurv);
 
@@ -1552,12 +1552,12 @@ void Source::set_grid_point_sources4(EW* a_EW,
   //
 
   // AP: Jun 29, 2017: Since interior_point_in_proc only takes the (i,j)
-  // indices sw4_typeo account, there is no point looping over
+  // indices into account, there is no point looping over
   // k. Furthermore, since this source belongs to this MPI task, it
   // needs to get initialized (filtered), unless it has already been done
   //
-  for (sw4_type j = jc - 2; j <= jc + 3; j++)
-    for (sw4_type i = ic - 2; i <= ic + 3; i++) {
+  for (int j = jc - 2; j <= jc + 3; j++)
+    for (int i = ic - 2; i <= ic + 3; i++) {
       // check if (i,j) belongs to this processor
       if (a_EW->interior_point_in_proc(i, j, g) && !m_timeFuncIsReady) {
         // (optionally) filter and spline interpolate the time function in
@@ -1581,8 +1581,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
   if (gridrefbndry)  // near MR interface
   {
     // compute (icref, jcref) (duplicated from below)
-    sw4_type icref, jcref;
-    sw4_type Niref, Njref;
+    int icref, jcref;
+    int Niref, Njref;
     float_sw4 qref, rref;
     if (kc - 1 < Nz - kc) {
       // kc closer to upper boundary. Source spread to finer grid above.
@@ -1597,18 +1597,18 @@ void Source::set_grid_point_sources4(EW* a_EW,
       Niref = a_EW->m_global_nx[g - 1];
       Njref = a_EW->m_global_ny[g - 1];
     }
-    icref = static_cast<sw4_type>(qref);
-    jcref = static_cast<sw4_type>(rref);
+    icref = static_cast<int>(qref);
+    jcref = static_cast<int>(rref);
     if (icref <= 2) icref = 3;
     if (icref >= Niref - 2) icref = Niref - 3;
     if (jcref <= 2) jcref = 3;
     if (jcref >= Njref - 2) jcref = Njref - 3;
     // done computing (icref, jcref)
-    for (sw4_type k = kc - 2; k <= kc + 3; k++) {
+    for (int k = kc - 2; k <= kc + 3; k++) {
       if (k <= 1) {
         // Finer grid above
-        for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
-          for (sw4_type i = icref - 2; i <= icref + 3; i++) {
+        for (int j = jcref - 2; j <= jcref + 3; j++)
+          for (int i = icref - 2; i <= icref + 3; i++) {
             if (a_EW->interior_point_in_proc(i, j, g + 1) &&
                 !m_timeFuncIsReady)  // checks if (i,j) belongs to this
                                      // processor
@@ -1622,8 +1622,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
       }  // end if k<=1
       if (k >= Nz) {
         // Coarser grid below
-        for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
-          for (sw4_type i = icref - 2; i <= icref + 3; i++) {
+        for (int j = jcref - 2; j <= jcref + 3; j++)
+          for (int i = icref - 2; i <= icref + 3; i++) {
             if (a_EW->interior_point_in_proc(i, j, g - 1) &&
                 !m_timeFuncIsReady)  // checks if (i,j) belongs to this
                                      // processor
@@ -1813,7 +1813,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
 
       } else if (kc == 3) {
         getsourcedwgh(ci, dwghk, wghrefkz, wghrefkzz);
-        for (sw4_type k = 0; k <= 5; k++) dwghk[k] *= 0.5;
+        for (int k = 0; k <= 5; k++) dwghk[k] *= 0.5;
         getsourcewgh(ci, wghk, wghrefkz, wghrefkzz);
         wghkref[0] = wghk[0] * 0.5;
         wghk[0] = wghk[0] * 0.5;
@@ -1845,7 +1845,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
   //      if( !gridrefbndry && (g == a_EW->mNumberOfGrids-1) &&
   //      a_EW->is_onesided(g,4)  )
   if (!gridrefbndry && a_EW->is_onesided(g, 4)) {
-    for (sw4_type k = 0; k <= 5; k++) {
+    for (int k = 0; k <= 5; k++) {
       if ((1 <= k + kc - 2) && (k + kc - 2 <= 4)) {
         wghk[k] /= normwgh[k + kc - 3];
         dwghk[k] /= normwgh[k + kc - 3];
@@ -1857,7 +1857,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
     }
   }
   if (!gridrefbndry && a_EW->is_onesided(g, 5)) {
-    for (sw4_type k = 0; k <= 5; k++) {
+    for (int k = 0; k <= 5; k++) {
       if ((Nz - 3 <= k + kc - 2) && (k + kc - 2 <= Nz)) {
         wghk[k] /= normwgh[Nz - k - kc + 2];
         dwghk[k] /= normwgh[Nz - k - kc + 2];
@@ -1879,12 +1879,12 @@ void Source::set_grid_point_sources4(EW* a_EW,
 
   // If source at grid refinement interface, set up variables for
   // discretization on grid on the other side of the interface
-  sw4_type icref, jcref;
+  int icref, jcref;
   float_sw4 airef, biref, wghiref[6], wghirefx[6], wghirefxx[6];
   float_sw4 wghjref[6], wghjrefy[6], wghjrefyy[6];
   float_sw4 dwghiref[6], dwghjref[6];
   if (gridrefbndry) {
-    sw4_type Niref, Njref;
+    int Niref, Njref;
     float_sw4 qref, rref;
     if (kc - 1 < Nz - kc) {
       // kc closer to upper boundary. Source spread to finer grid above.
@@ -1899,8 +1899,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
       Niref = a_EW->m_global_nx[g - 1];
       Njref = a_EW->m_global_ny[g - 1];
     }
-    icref = static_cast<sw4_type>(qref);
-    jcref = static_cast<sw4_type>(rref);
+    icref = static_cast<int>(qref);
+    jcref = static_cast<int>(rref);
     if (icref <= 2) icref = 3;
     if (icref >= Niref - 2) icref = Niref - 3;
     if (jcref <= 2) jcref = 3;
@@ -1923,9 +1923,9 @@ void Source::set_grid_point_sources4(EW* a_EW,
     } else if (cc_ic_bndry) {
       get_cc_psources(a_EW, g, q, r, s, false, normwgh, point_sources);
     } else {
-      for (sw4_type k = kc - 2; k <= kc + 3; k++)
-        for (sw4_type j = jc - 2; j <= jc + 3; j++)
-          for (sw4_type i = ic - 2; i <= ic + 3; i++) {
+      for (int k = kc - 2; k <= kc + 3; k++)
+        for (int j = jc - 2; j <= jc + 3; j++)
+          for (int i = ic - 2; i <= ic + 3; i++) {
             float_sw4 wF =
                 wghi[i - ic + 2] * wghj[j - jc + 2] * wghk[k - kc + 2];
             if ((wF != 0) &&
@@ -1946,8 +1946,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 point_sources.push_back(sourcePtr);
               }
               if (k <= 1 && ccbndry && upperbndry) {
-                sw4_type Nzp = a_EW->m_global_nz[g + 1];
-                sw4_type kk = Nzp - 1 + k;
+                int Nzp = a_EW->m_global_nz[g + 1];
+                int kk = Nzp - 1 + k;
 
                 GridPointSource* sourcePtr = new GridPointSource(
                     mFreq, mT0, i, j, kk, g + 1, wF * mForces[0],
@@ -1956,7 +1956,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 point_sources.push_back(sourcePtr);
               }
               if (k >= Nz && ccbndry && lowerbndry) {
-                sw4_type kk = k - Nz + 1;
+                int kk = k - Nz + 1;
                 GridPointSource* sourcePtr = new GridPointSource(
                     mFreq, mT0, i, j, kk, g - 1, wF * mForces[0],
                     wF * mForces[1], wF * mForces[2], mTimeDependence, mNcyc,
@@ -1966,11 +1966,11 @@ void Source::set_grid_point_sources4(EW* a_EW,
             }
           }
       if (gridrefbndry) {
-        for (sw4_type k = kc - 2; k <= kc + 3; k++) {
+        for (int k = kc - 2; k <= kc + 3; k++) {
           if (k <= 1) {
             // Finer grid above
-            for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
-              for (sw4_type i = icref - 2; i <= icref + 3; i++) {
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
                 float_sw4 wF = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
                                wghkref[k - kc + 2];
                 if ((wF != 0) &&
@@ -1980,8 +1980,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
                         g + 1))  // checks if (i,j) belongs to this processor
                 {
                   wF /= 0.125 * h * h * h;
-                  sw4_type Nzp = a_EW->m_global_nz[g + 1];
-                  sw4_type kk = Nzp - 1 + k;
+                  int Nzp = a_EW->m_global_nz[g + 1];
+                  int kk = Nzp - 1 + k;
                   GridPointSource* sourcePtr = new GridPointSource(
                       mFreq, mT0, i, j, kk, g + 1, wF * mForces[0],
                       wF * mForces[1], wF * mForces[2], mTimeDependence, mNcyc,
@@ -1992,8 +1992,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
           }  // end if k<=1
           if (k >= Nz) {
             // Coarser grid below
-            for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
-              for (sw4_type i = icref - 2; i <= icref + 3; i++) {
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
                 float_sw4 wF = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
                                wghkref[k - kc + 2];
                 if ((wF != 0) &&
@@ -2003,7 +2003,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                         g - 1))  // checks if (i,j) belongs to this processor
                 {
                   wF /= 8 * h * h * h;
-                  sw4_type kk = k - Nz + 1;
+                  int kk = k - Nz + 1;
                   GridPointSource* sourcePtr = new GridPointSource(
                       mFreq, mT0, i, j, kk, g - 1, wF * mForces[0],
                       wF * mForces[1], wF * mForces[2], mTimeDependence, mNcyc,
@@ -2045,7 +2045,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         dsX0[0] = dsX0[1] = dsX0[2] = 0;
         dsY0[0] = dsY0[1] = dsY0[2] = 0;
         dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
-        // for (sw4_type i = 0; i < 6; i++) d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
+        // for (int i = 0; i < 6; i++) d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
       } else {
         // Compute the curvilinear metric in the processor that owns the source.
         //   (ic, jc are undefined if canBeInverted is false.)
@@ -2070,12 +2070,12 @@ void Source::set_grid_point_sources4(EW* a_EW,
         }
         //	 // Broadcast the computed metric to all processors.
         //	 // First find out the ID of the processor that computed the
-        // metric... 	 sw4_type owner = -1; 	 if(
+        // metric... 	 int owner = -1; 	 if(
         // a_EW->interior_point_in_proc( ic, jc, g )
         //&& canBeInverted )
         //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
-        //	 sw4_type owntmp = owner;
-        //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_SW4_TYPE, MPI_MAX,
+        //	 int owntmp = owner;
+        //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX,
         // MPI_COMM_WORLD );
         //	 // ...then broadcast the derivatives
         //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
@@ -2159,9 +2159,9 @@ void Source::set_grid_point_sources4(EW* a_EW,
 
       //      if( canBeInverted )
       //   {
-      for (sw4_type k = kc - 2; k <= kc + 3; k++)
-        for (sw4_type j = jc - 2; j <= jc + 3; j++)
-          for (sw4_type i = ic - 2; i <= ic + 3; i++) {
+      for (int k = kc - 2; k <= kc + 3; k++)
+        for (int j = jc - 2; j <= jc + 3; j++)
+          for (int i = ic - 2; i <= ic + 3; i++) {
             float_sw4 wFx = 0, wFy = 0, wFz = 0, dsdp[27];
             if (a_EW->interior_point_in_proc(i, j, g)) {
               //                     cout << " src at " << i << " " << j << " "
@@ -2408,7 +2408,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
               //                        cout << "forcing " << endl;
               //			cout << fx << " " << fy << " " << fz <<
               // endl; 			cout << "gradient dsdp- = " << endl;
-              // for( sw4_type dd=0 ; dd <
+              // for( int dd=0 ; dd <
               // 9 ; dd++ ) 			   cout << dsdp[dd] << endl;
               //                        cout << "wFz and dwFzdx0 at " << ic << "
               //                        "
@@ -2523,8 +2523,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 point_sources.push_back(sourcePtr);
               }
               if (k <= 1 && ccbndry && upperbndry) {
-                sw4_type Nzp = a_EW->m_global_nz[g + 1];
-                sw4_type kk = Nzp - 1 + k;
+                int Nzp = a_EW->m_global_nz[g + 1];
+                int kk = Nzp - 1 + k;
 
                 wFx = qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
                       wghk[k - kc + 2];
@@ -2562,7 +2562,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 point_sources.push_back(sourcePtr);
               }
               if (k >= Nz && ccbndry && lowerbndry) {
-                sw4_type kk = k - Nz + 1;
+                int kk = k - Nz + 1;
                 wFx = qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
                       wghk[k - kc + 2];
                 wFy = wghi[i - ic + 2] * rX0[1] * dwghj[j - jc + 2] *
@@ -2607,12 +2607,12 @@ void Source::set_grid_point_sources4(EW* a_EW,
         // --> Source inversion can not be done if the source is located at the
         // interface.
         float_sw4 dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
-        for (sw4_type k = kc - 2; k <= kc + 3; k++) {
+        for (int k = kc - 2; k <= kc + 3; k++) {
           if (k <= 1) {
             float_sw4 hi = 1.0 / (0.5 * h);
             float_sw4 jaci = 1.0 / (0.125 * h * h * h);
-            for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
-              for (sw4_type i = icref - 2; i <= icref + 3; i++) {
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
                 float_sw4 wFx = 0, wFy = 0, wFz = 0;
                 if (a_EW->interior_point_in_proc(i, j, g + 1)) {
                   wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
@@ -2630,8 +2630,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
                   float_sw4 fz = -(mForces[2] * wFx + mForces[4] * wFy +
                                    mForces[5] * wFz) *
                                  jaci;
-                  sw4_type Nzp = a_EW->m_global_nz[g + 1];
-                  sw4_type kk = Nzp - 1 + k;
+                  int Nzp = a_EW->m_global_nz[g + 1];
+                  int kk = Nzp - 1 + k;
                   GridPointSource* sourcePtr = new GridPointSource(
                       mFreq, mT0, i, j, kk, g + 1, fx, fy, fz, mTimeDependence,
                       mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2,
@@ -2644,8 +2644,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
           if (k >= Nz) {
             float_sw4 jaci = 1.0 / (8 * h * h * h);
             float_sw4 hi = 1.0 / (2 * h);
-            for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
-              for (sw4_type i = icref - 2; i <= icref + 3; i++) {
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
                 float_sw4 wFx = 0, wFy = 0, wFz = 0;
                 if (a_EW->interior_point_in_proc(i, j, g - 1)) {
                   wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
@@ -2663,7 +2663,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                   float_sw4 fz = -(mForces[2] * wFx + mForces[4] * wFy +
                                    mForces[5] * wFz) *
                                  jaci;
-                  sw4_type kk = k - Nz + 1;
+                  int kk = k - Nz + 1;
                   GridPointSource* sourcePtr = new GridPointSource(
                       mFreq, mT0, i, j, kk, g - 1, fx, fy, fz, mTimeDependence,
                       mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2,
@@ -2685,13 +2685,13 @@ void Source::set_grid_point_sources4(EW* a_EW,
 }  // end set_grid_point_sources4
 
 //-----------------------------------------------------------------------
-void Source::exact_testmoments(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
+void Source::exact_testmoments(int kx[3], int ky[3], int kz[3],
                                float_sw4 momex[3]) {
-  // Sw4_Typeegrals over the domain of a polynomial of degree (kx,ky,kz) times the
+  // Integrals over the domain of a polynomial of degree (kx,ky,kz) times the
   // source
   if (!mIsMomentSource) {
     float_sw4 x1, y1, z1;
-    for (sw4_type c = 0; c < 3; c++) {
+    for (int c = 0; c < 3; c++) {
       if (kx[c] == 0)
         x1 = 1;
       else
@@ -2708,7 +2708,7 @@ void Source::exact_testmoments(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
     }
   } else {
     float_sw4 x1, y1, z1, xp1, yp1, zp1;
-    for (sw4_type c = 0; c < 3; c++) {
+    for (int c = 0; c < 3; c++) {
       if (kx[c] == 0)
         x1 = 1;
       else
@@ -2755,7 +2755,7 @@ void Source::exact_testmoments(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
 }
 
 //-----------------------------------------------------------------------
-void Source::perturb(float_sw4 h, sw4_type comp) {
+void Source::perturb(float_sw4 h, int comp) {
   if (comp == 0)
     mX0 += h;
   else if (comp == 1)
@@ -2772,10 +2772,10 @@ void Source::perturb(float_sw4 h, sw4_type comp) {
 
 //-----------------------------------------------------------------------
 void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
-                             sw4_type nsteps) {
+                             int nsteps) {
   if (!m_is_filtered) {
-    float_sw4 (*timeFunc)(float_sw4 f, float_sw4 t, float_sw4 * par, sw4_type npar,
-                          sw4_type* ipar, sw4_type nipar);
+    float_sw4 (*timeFunc)(float_sw4 f, float_sw4 t, float_sw4 * par, int npar,
+                          int* ipar, int nipar);
     switch (mTimeDependence) {
       case iRicker:
         timeFunc = RickerWavelet;
@@ -2804,8 +2804,8 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
       case iC6SmoothBump:
         timeFunc = C6SmoothBump;
         break;
-      case iRickerSw4_Type:
-        timeFunc = RickerSw4_Type;
+      case iRickerInt:
+        timeFunc = RickerInt;
         break;
       case iBrune:
         timeFunc = Brune;
@@ -2838,7 +2838,7 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
     mTimeDependence = iDiscrete;
 
     float_sw4* discfunc = new float_sw4[nsteps];
-    for (sw4_type k = 0; k < nsteps; k++)
+    for (int k = 0; k < nsteps; k++)
       discfunc[k] =
           timeFunc(mFreq, tstart + k * dt - mT0, mPar, mNpar, mIpar, mNipar);
 
@@ -2849,13 +2849,13 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
     // + backward) bandpass filter
     if (filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass) {
       float_sw4 wghv, xi;
-      sw4_type p0 = 3,
+      int p0 = 3,
           p = 20;  // First non-zero time level, and number of points in ramp;
       if (p0 + p <= nsteps) {
-        for (sw4_type i = 1; i <= p0 - 1; i++) {
+        for (int i = 1; i <= p0 - 1; i++) {
           discfunc[i - 1] = 0;
         }
-        for (sw4_type i = p0; i <= p0 + p; i++) {
+        for (int i = p0; i <= p0 + p; i++) {
           wghv = 0;
           xi = (i - p0) / ((float_sw4)p);
           // polynomial P(xi), P(0) = 0, P(1)=1
@@ -2868,7 +2868,7 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
 
     // Save discrete function
     mNipar = 1;
-    mIpar = SW4_NEW(Space::Managed, sw4_type[mNipar]);
+    mIpar = SW4_NEW(Space::Managed, int[mNipar]);
     mIpar[0] = nsteps;
 
     mFreq = 1. / dt;
@@ -2879,7 +2879,7 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
                        // from t=tstart=0
     mT0 = tstart;
     //      mPar[0] = tstart-mT0;
-    for (sw4_type i = 0; i < nsteps; i++) mPar[i + 1] = discfunc[i];
+    for (int i = 0; i < nsteps; i++) mPar[i + 1] = discfunc[i];
     delete[] discfunc;
 
     // Build the spline representation
@@ -2889,23 +2889,23 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
 }
 
 //-----------------------------------------------------------------------
-sw4_type Source::spline_interpolation() {
+int Source::spline_interpolation() {
   // Assume mPar[1], to mPar[npts] contain the function
   // Assume mIpar[0] contains npts
   // Assume mFreq contains 1/dt, and mPar[0] is tstart.
   // Compute the six spline coefficients for each interval and return in
   // mPar[1],to mPar[6*(npts-1)]
   if (mTimeDependence == iDiscrete) {
-    sw4_type npts = mIpar[0];
+    int npts = mIpar[0];
 
     // tmp
-    // sw4_type myRank;
+    // int myRank;
     // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     // if (myRank == 0)
     // {
     // 	cout << "before spline interp" << endl;
     // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq
-    // << endl; 	for( sw4_type i=0 ; i < npts ; i++ ) 	  cout << "fun["
+    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun["
     // <<
     // i
     // <<
@@ -2914,40 +2914,40 @@ sw4_type Source::spline_interpolation() {
     // "<< mPar[i+1] << endl;
     // }
 
-    Qspline qusw4_typeicspline(npts, &mPar[1], mPar[0], 1 / mFreq);
+    Qspline quinticspline(npts, &mPar[1], mPar[0], 1 / mFreq);
     float_sw4 tstart = mPar[0];
     ::operator delete[](mPar, Space::Managed);
     mPar = SW4_NEW(Space::Managed, float_sw4[6 * (npts - 1) + 1]);
     mNpar = 6 * (npts - 1) + 1;
     mPar[0] = tstart;
-    float_sw4* qsppt = qusw4_typeicspline.get_polycof_ptr();
-    for (sw4_type i = 0; i < 6 * (npts - 1); i++) mPar[i + 1] = qsppt[i];
+    float_sw4* qsppt = quinticspline.get_polycof_ptr();
+    for (int i = 0; i < 6 * (npts - 1); i++) mPar[i + 1] = qsppt[i];
     //      cout << "after spline interp" << endl;
-    //      for( sw4_type i=0 ; i < npts ; i++ )
+    //      for( int i=0 ; i < npts ; i++ )
     //	 cout << "fun[" << i << "] = "<< mPar[6*i+1] << endl;
 
     return 1;
   } else if (mTimeDependence == iDiscrete6moments) {
-    sw4_type npts = mIpar[0];
+    int npts = mIpar[0];
     // Six different time function, one for each momentum component.
     // Store sequentially in mPar, i.e.,
     // mPar = [tstart, first time func, tstart, second time func, ...]
     // tstart before each function ---> Can reuse time function iDiscrete.
 
     float_sw4* parin = new float_sw4[(npts + 1) * 6];
-    for (sw4_type i = 0; i < (npts + 1) * 6; i++) parin[i] = mPar[i];
+    for (int i = 0; i < (npts + 1) * 6; i++) parin[i] = mPar[i];
     float_sw4 tstart = mPar[0];
     ::operator delete[](mPar, Space::Managed);
     mNpar = 6 * (6 * (npts - 1) + 1);
     mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
 
     size_t pos_in = 0, pos_out = 0;
-    for (sw4_type tf = 0; tf < 6; tf++) {
-      Qspline qusw4_typeicspline(npts, &parin[pos_in + 1], tstart, 1 / mFreq);
+    for (int tf = 0; tf < 6; tf++) {
+      Qspline quinticspline(npts, &parin[pos_in + 1], tstart, 1 / mFreq);
       pos_in += npts + 1;
       mPar[pos_out] = tstart;
-      float_sw4* qsppt = qusw4_typeicspline.get_polycof_ptr();
-      for (sw4_type i = 0; i < 6 * (npts - 1); i++) mPar[pos_out + i + 1] = qsppt[i];
+      float_sw4* qsppt = quinticspline.get_polycof_ptr();
+      for (int i = 0; i < 6 * (npts - 1); i++) mPar[pos_out + i + 1] = qsppt[i];
       pos_out += 6 * (npts - 1) + 1;
     }
     delete[] parin;
@@ -2986,16 +2986,16 @@ Source* Source::copy(std::string a_name) {
 
   retval->mNpar = mNpar;
   retval->mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
-  for (sw4_type i = 0; i < mNpar; i++) retval->mPar[i] = mPar[i];
+  for (int i = 0; i < mNpar; i++) retval->mPar[i] = mPar[i];
 
   retval->mNipar = mNipar;
-  retval->mIpar = new sw4_type[mNipar];
-  for (sw4_type i = 0; i < mNipar; i++) retval->mIpar[i] = mIpar[i];
+  retval->mIpar = new int[mNipar];
+  for (int i = 0; i < mNipar; i++) retval->mIpar[i] = mIpar[i];
 
   retval->mNcyc = mNcyc;
   retval->m_derivative = m_derivative;
   retval->mTimeDependence = mTimeDependence;
-  for (sw4_type i = 0; i < 11; i++) retval->m_dir[i] = m_dir[i];
+  for (int i = 0; i < 11; i++) retval->m_dir[i] = m_dir[i];
   retval->m_is_filtered = m_is_filtered;
 
   retval->m_zTopo = m_zTopo;
@@ -3013,13 +3013,13 @@ float_sw4 Source::find_min_exponent() const {
 
 //-----------------------------------------------------------------------
 void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
-                                      float_sw4 s, sw4_type ic, sw4_type jc, sw4_type kc,
-                                      sw4_type g, float_sw4& zq, float_sw4& zr,
+                                      float_sw4 s, int ic, int jc, int kc,
+                                      int g, float_sw4& zq, float_sw4& zr,
                                       float_sw4& zs, float_sw4& zqq,
                                       float_sw4& zqr, float_sw4& zqs,
                                       float_sw4& zrr, float_sw4& zrs,
                                       float_sw4& zss) const {
-  sw4_type Nz = a_EW->m_global_nz[g];
+  int Nz = a_EW->m_global_nz[g];
   float_sw4 h = a_EW->mGridSize[g];
   if (kc > Nz - 3) {
     // Treat downmost grid lines as cartesian
@@ -3097,7 +3097,7 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
 
     // Assume grid uniform in x and y, compute metric with z=z(q,r,s)
     zq = zr = zs = 0;
-    sw4_type order;
+    int order;
     float_sw4 zetaBreak;
     //    a_EW->get_gridgen_info(order, zetaBreak);
     a_EW->m_gridGenerator->get_gridgen_info(order, zetaBreak);
@@ -3116,8 +3116,8 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
       float_sw4 tauavg = 0;
       float_sw4 tauq = 0, taur = 0;
       float_sw4 tauqq = 0, tauqr = 0, taurr = 0;
-      for (sw4_type j = jc - 3; j <= jc + 4; j++)
-        for (sw4_type i = ic - 3; i <= ic + 4; i++) {
+      for (int j = jc - 3; j <= jc + 4; j++)
+        for (int i = ic - 3; i <= ic + 4; i++) {
           tauavg += a6cofi[i - (ic - 3)] * a6cofj[j - (jc - 3)] *
                     a_EW->mTopoGridExt(i, j, 1);
           tauq += d6cofi[i - (ic - 3)] * a6cofj[j - (jc - 3)] *
@@ -3157,13 +3157,13 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
         zs = 0;
         zss = 0;
         float_sw4 z1d = 0;
-        for (sw4_type k = kc - 3; k <= kc + 4; k++) {
+        for (int k = kc - 3; k <= kc + 4; k++) {
           zpar = (k - 1) / (zetaBreak * (Nz - 1));
           if (zpar >= 1)
             z1d = zMax + (k - kBreak) * h;
           else {
             z1d = (1 - zpar) * (-tauavg) + zpar * (zMax + c1 * (1 - zpar));
-            for (sw4_type o = 2; o < order; o++) z1d += zpar * c1 * pow(1 - zpar, o);
+            for (int o = 2; o < order; o++) z1d += zpar * c1 * pow(1 - zpar, o);
           }
           zs += d6cofk[k - (kc - 3)] * z1d;
           zss += dd6cofk[k - (kc - 3)] * z1d;
@@ -3175,12 +3175,12 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
 }
 
 extern "C" {
-void F77_FUNC(dgels, DGELS)(char&, sw4_type&, sw4_type&, sw4_type&, double*, sw4_type&, double*,
-                            sw4_type&, double*, sw4_type&, sw4_type&);
+void F77_FUNC(dgels, DGELS)(char&, int&, int&, int&, double*, int&, double*,
+                            int&, double*, int&, int&);
 }
 
 //-----------------------------------------------------------------------
-void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
+void Source::get_mr_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
                              float_sw4 s, bool gradient, float_sw4 normwgh[4],
                              vector<GridPointSource*>& point_sources) {
 #define CUB(x) (x) * (x) * (x)
@@ -3189,25 +3189,25 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
   //   icref, jcref on adjacent grid
   // kc
   // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
-  sw4_type ncond = 35;  // Number of moment conditions
+  int ncond = 35;  // Number of moment conditions
 #define a(i, j) a_[(i - 1) + ncond * (j - 1)]
 #define b(i, j) b_[(i - 1) + 125 * (j - 1)]
 #define x(i, j) b_[(i - 1) + 125 * (j - 1)]
   // setup stencil centers etc.
-  sw4_type ic = static_cast<sw4_type>(round(q));
-  sw4_type jc = static_cast<sw4_type>(round(r));
-  sw4_type kc = static_cast<sw4_type>(round(s));
-  sw4_type Nz = a_EW->m_global_nz[g];
-  sw4_type icref, jcref, gref;
+  int ic = static_cast<int>(round(q));
+  int jc = static_cast<int>(round(r));
+  int kc = static_cast<int>(round(s));
+  int Nz = a_EW->m_global_nz[g];
+  int icref, jcref, gref;
   if (kc > Nz / 2) {
     // (q,r,s) in fine grid, stencil extends to coarse grid below
-    icref = static_cast<sw4_type>(round(0.5 * (q + 1)));
-    jcref = static_cast<sw4_type>(round(0.5 * (r + 1)));
+    icref = static_cast<int>(round(0.5 * (q + 1)));
+    jcref = static_cast<int>(round(0.5 * (r + 1)));
     gref = g - 1;
   } else {
     // (q,r,s) in coarse grid, stencil extends to fine grid above
-    icref = static_cast<sw4_type>(round(2 * q - 1));
-    jcref = static_cast<sw4_type>(round(2 * r - 1));
+    icref = static_cast<int>(round(2 * q - 1));
+    jcref = static_cast<int>(round(2 * r - 1));
     gref = g + 1;
   }
   float_sw4 h = a_EW->mGridSize[g], href = a_EW->mGridSize[gref];
@@ -3234,9 +3234,9 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       Jg.insert_intersection(a_EW->mJ[g]);
       SYNC_STREAM;
     }
-    sw4_type kll, kul;
+    int kll, kul;
     if (gref == g + 1) {
-      sw4_type Nzp = a_EW->m_global_nz[g + 1];
+      int Nzp = a_EW->m_global_nz[g + 1];
       kll = Nzp - 4;
       kul = Nzp;
     } else {
@@ -3253,11 +3253,11 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       SYNC_STREAM;
     }
 
-    sw4_type nrhs = 1;
+    int nrhs = 1;
     if (gradient) nrhs = 4;
 
     float_sw4* a_ = new float_sw4[ncond * 125];
-    sw4_type ldb = ncond > 125 ? ncond : 125;
+    int ldb = ncond > 125 ? ncond : 125;
     float_sw4* b_ = new float_sw4[ldb * nrhs];
     //   float_sw4* x_ = new float_sw4[125];
 
@@ -3268,12 +3268,12 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     float_sw4 yc = h * (jc - 1);
     float_sw4 zc = zg(ic, jc, kc);
 
-    for (sw4_type k = kc - 2; k <= kc + 2; k++) {
+    for (int k = kc - 2; k <= kc + 2; k++) {
       if (1 <= k && k <= Nz - 1) {
         // Discretization on this grid
-        for (sw4_type j = jc - 2; j <= jc + 2; j++)
-          for (sw4_type i = ic - 2; i <= ic + 2; i++) {
-            sw4_type ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++) {
+            int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
             float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zg(i, j, k);
             a(1, ind) = 1;
             a(2, ind) = x - xc;
@@ -3315,23 +3315,23 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
           }
       }
       if (k <= 0 || k >= Nz) {
-        sw4_type kk;
+        int kk;
         if (k <= 0) {
-          // Sw4_Typeo finer grid above, continue sw4_typeo fine grid from k=0 and
+          // Into finer grid above, continue into fine grid from k=0 and
           // upward --> from kk=Nz-1
-          sw4_type Nzp = a_EW->m_global_nz[g + 1];
+          int Nzp = a_EW->m_global_nz[g + 1];
           kk = k + Nzp - 1;
         }
         if (k >= Nz) {
-          // Sw4_Typeo coarser grid below, let k=Nz be the coarse grid
+          // Into coarser grid below, let k=Nz be the coarse grid
           // discretization, and continue on coarse grid from k=Nz+1 --> kk=2
           kk = k - Nz + 1;
         }
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++) {
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++) {
             float_sw4 x = (i - 1) * href, y = (j - 1) * href,
                       z = zgref(i, j, kk);
-            sw4_type ind =
+            int ind =
                 i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
             a(1, ind) = 1;
             a(2, ind) = x - xc;
@@ -3374,7 +3374,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       }
       if (k == 1 || k == Nz) {
         // On interface, impose special condition on the fine side
-        sw4_type gf, icf, jcf, icc, jcc, Nzf;
+        int gf, icf, jcf, icc, jcc, Nzf;
         const float_sw4 i256 = 1.0 / 256;
         //         std::cout << "SOURCE:  k= " << k << " ic,jc= " << ic << " "
         //         << jc <<
@@ -3408,8 +3408,8 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         float_sw4* _mom_f = new double[15 * 15 * ncond];
 #define mom_f(c, i, j) \
   _mom_f[(c - 1) + ncond * (i - icf + 7) + 15 * ncond * (j - jcf + 7)]
-        for (sw4_type j = jcf - 7; j <= jcf + 7; j++)
-          for (sw4_type i = icf - 7; i <= icf + 7; i++) {
+        for (int j = jcf - 7; j <= jcf + 7; j++)
+          for (int i = icf - 7; i <= icf + 7; i++) {
             float_sw4 dx = hf * (i - 1) - xc;
             float_sw4 dy = hf * (j - 1) - yc;
             float_sw4 dz = zfa(i, j, Nzf) - zc;
@@ -3453,10 +3453,10 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
             }
           }
 
-        for (sw4_type jo = jcc - 2; jo <= jcc + 2; jo++)
-          for (sw4_type io = icc - 2; io <= icc + 2; io++) {
-            sw4_type i = 2 * io - 1, j = 2 * jo - 1;
-            for (sw4_type c = 1; c <= ncond; c++) {
+        for (int jo = jcc - 2; jo <= jcc + 2; jo++)
+          for (int io = icc - 2; io <= icc + 2; io++) {
+            int i = 2 * io - 1, j = 2 * jo - 1;
+            for (int c = 1; c <= ncond; c++) {
               float_sw4 mom_r =
                   i256 *
                   (mom_f(c, i - 3, j - 3) - 9 * mom_f(c, i - 3, j - 1) -
@@ -3474,7 +3474,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
                    mom_f(c, i + 3, j - 3) - 9 * mom_f(c, i + 3, j - 1) -
                    16 * mom_f(c, i + 3, j) - 9 * mom_f(c, i + 3, j + 1) +
                    mom_f(c, i + 3, j + 3));
-              sw4_type ind =
+              int ind =
                   io - icc + 2 + 5 * (jo - jcc + 2) + 25 * (k - kc + 2) + 1;
               if (g == gf)
                 a(c, ind) += mom_r / Jref(io, jo, 1);
@@ -3659,8 +3659,8 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     // Solve A*x=b for x
 
     char tr = 'N';
-    sw4_type ssize = 125, info = 0, nb = 20;
-    sw4_type lwork = ncond + ncond * nb;
+    int ssize = 125, info = 0, nb = 20;
+    int lwork = ncond + ncond * nb;
     float_sw4* work = new float_sw4[lwork];
     F77_FUNC(dgels, DGELS)
     (tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, work, lwork, info);
@@ -3668,7 +3668,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     REQUIRE2(info == 0, "ERROR, info = " << info << " returned from DGELS ")
 
     // Define the point sources
-    for (sw4_type k = kc - 2; k <= kc + 2; k++) {
+    for (int k = kc - 2; k <= kc + 2; k++) {
       if (1 <= k && k <= Nz - 1) {
         float_sw4 nwgh = 1.0;
         if (k <= 4)
@@ -3677,10 +3677,10 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
           nwgh = normwgh[Nz - k];
 
         // Discretization on this grid
-        for (sw4_type j = jc - 2; j <= jc + 2; j++)
-          for (sw4_type i = ic - 2; i <= ic + 2; i++)
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++)
             if (a_EW->interior_point_in_proc(i, j, g)) {
-              sw4_type ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+              int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
                 fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
@@ -3706,15 +3706,15 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
             }
       }
       if (k <= 0) {
-        // Sw4_Typeo finer grid above, keep k=1 on this (coarse) grid
-        sw4_type Nzp = a_EW->m_global_nz[g + 1];
-        sw4_type kk = k + Nzp - 1;
+        // Into finer grid above, keep k=1 on this (coarse) grid
+        int Nzp = a_EW->m_global_nz[g + 1];
+        int kk = k + Nzp - 1;
         float_sw4 nwgh = 1.0;
         if (kk >= Nzp - 3) nwgh = normwgh[Nzp - kk];
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++)
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
             if (a_EW->interior_point_in_proc(i, j, g + 1)) {
-              sw4_type ind =
+              int ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
@@ -3749,14 +3749,14 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
             }
       }
       if (k >= Nz) {
-        // Sw4_Typeo coarser grid below, move this k=Nz to k=1 on coarse grid.
-        sw4_type kk = k - Nz + 1;
+        // Into coarser grid below, move this k=Nz to k=1 on coarse grid.
+        int kk = k - Nz + 1;
         float_sw4 nwgh = 1.0;
         if (kk <= 4) nwgh = normwgh[kk - 1];
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++)
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
             if (a_EW->interior_point_in_proc(i, j, g - 1)) {
-              sw4_type ind =
+              int ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
@@ -3803,7 +3803,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
 }
 
 //-----------------------------------------------------------------------
-void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
+void Source::get_cc_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
                              float_sw4 s, bool gradient, float_sw4 normwgh[4],
                              vector<GridPointSource*>& point_sources) {
   // Curvilinear/Cartesian interface with interface conditions imposed.
@@ -3814,16 +3814,16 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
   // kc
   // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
   //   std::cout <<"in get_cc_psources " << std::endl;
-  sw4_type ncond = 35;  // Number of moment conditions
+  int ncond = 35;  // Number of moment conditions
 #define a(i, j) a_[(i - 1) + ncond * (j - 1)]
 #define b(i, j) b_[(i - 1) + 125 * (j - 1)]
 #define x(i, j) b_[(i - 1) + 125 * (j - 1)]
   // setup stencil centers etc.
-  sw4_type ic = static_cast<sw4_type>(round(q));
-  sw4_type jc = static_cast<sw4_type>(round(r));
-  sw4_type kc = static_cast<sw4_type>(round(s));
-  sw4_type Nz = a_EW->m_global_nz[g];
-  sw4_type icref = ic, jcref = jc, gref;
+  int ic = static_cast<int>(round(q));
+  int jc = static_cast<int>(round(r));
+  int kc = static_cast<int>(round(s));
+  int Nz = a_EW->m_global_nz[g];
+  int icref = ic, jcref = jc, gref;
   if (g == a_EW->mNumberOfCartesianGrids) {
     // (q,r,s) in curvilinear grid, stencil extends to Cartesian grid below
     gref = g - 1;
@@ -3847,7 +3847,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       a_EW->interior_point_in_proc(icref - 2, jcref + 2, gref) ||
       a_EW->interior_point_in_proc(icref + 2, jcref + 2, gref)) {
     Sarray zg, Jg, zgref, Jgref;
-    sw4_type kll, kul;
+    int kll, kul;
     if (g == a_EW->mNumberOfCartesianGrids) {
       // g is curvilinear, gref Cartesian
       zg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
@@ -3859,14 +3859,14 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         Jg.insert_intersection(a_EW->mJ[g]);
         SYNC_STREAM;
       }
-      sw4_type kll = 1;
-      sw4_type kul = 5;
+      int kll = 1;
+      int kul = 5;
       zgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
       Jgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
       float_sw4 zmin = a_EW->m_zmin[gref];
-      for (sw4_type k = kll; k <= kul; k++)
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++) {
+      for (int k = kll; k <= kul; k++)
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++) {
             zgref(i, j, k) = zmin + (k - 1) * h;
             Jgref(i, j, k) = h * h * h;
           }
@@ -3876,14 +3876,14 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       zg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
       Jg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
       float_sw4 zmin = a_EW->m_zmin[g];
-      for (sw4_type k = kc - 2; k <= kc + 2; k++)
-        for (sw4_type j = jc - 2; j <= jc + 2; j++)
-          for (sw4_type i = ic - 2; i <= ic + 2; i++) {
+      for (int k = kc - 2; k <= kc + 2; k++)
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++) {
             zg(i, j, k) = zmin + (k - 1) * h;
             Jg(i, j, k) = h * h * h;
           }
 
-      sw4_type Nzp = a_EW->m_global_nz[gref];
+      int Nzp = a_EW->m_global_nz[gref];
       kll = Nzp - 4;
       kul = Nzp;
       zgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
@@ -3897,11 +3897,11 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       }
     }
 
-    sw4_type nrhs = 1;
+    int nrhs = 1;
     if (gradient) nrhs = 4;
 
     float_sw4* a_ = new float_sw4[ncond * 125];
-    sw4_type ldb = ncond > 125 ? ncond : 125;
+    int ldb = ncond > 125 ? ncond : 125;
     float_sw4* b_ = new float_sw4[ldb * nrhs];
     //   float_sw4* x_ = new float_sw4[125];
 
@@ -3912,12 +3912,12 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     float_sw4 yc = h * (jc - 1);
     float_sw4 zc = zg(ic, jc, kc);
 
-    for (sw4_type k = kc - 2; k <= kc + 2; k++) {
+    for (int k = kc - 2; k <= kc + 2; k++) {
       if (1 <= k && k <= Nz - 1) {
         // Discretization on this grid
-        for (sw4_type j = jc - 2; j <= jc + 2; j++)
-          for (sw4_type i = ic - 2; i <= ic + 2; i++) {
-            sw4_type ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++) {
+            int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
             float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zg(i, j, k);
             a(1, ind) = 1;
             a(2, ind) = x - xc;
@@ -3959,22 +3959,22 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
           }
       }
       if (k <= 0 || k >= Nz) {
-        sw4_type kk;
+        int kk;
         if (k <= 0) {
-          // Sw4_Typeo finer grid above, continue sw4_typeo fine grid from k=0 and
+          // Into finer grid above, continue into fine grid from k=0 and
           // upward --> from kk=Nz-1
-          sw4_type Nzp = a_EW->m_global_nz[g + 1];
+          int Nzp = a_EW->m_global_nz[g + 1];
           kk = k + Nzp - 1;
         }
         if (k >= Nz) {
-          // Sw4_Typeo coarser grid below, let k=Nz be the coarse grid
+          // Into coarser grid below, let k=Nz be the coarse grid
           // discretization, and continue on coarse grid from k=Nz+1 --> kk=2
           kk = k - Nz + 1;
         }
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++) {
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++) {
             float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zgref(i, j, kk);
-            sw4_type ind =
+            int ind =
                 i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
             a(1, ind) = 1;
             a(2, ind) = x - xc;
@@ -4187,8 +4187,8 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     // Solve A*x=b for x
 
     char tr = 'N';
-    sw4_type ssize = 125, info = 0, nb = 20;
-    sw4_type lwork = ncond + ncond * nb;
+    int ssize = 125, info = 0, nb = 20;
+    int lwork = ncond + ncond * nb;
     float_sw4* work = new float_sw4[lwork];
     F77_FUNC(dgels, DGELS)
     (tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, work, lwork, info);
@@ -4196,7 +4196,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     REQUIRE2(info == 0, "ERROR, info = " << info << " returned from DGELS ")
 
     // Define the point sources
-    for (sw4_type k = kc - 2; k <= kc + 2; k++) {
+    for (int k = kc - 2; k <= kc + 2; k++) {
       if (1 <= k && k <= Nz - 1) {
         float_sw4 nwgh = 1.0;
         if (k <= 4)
@@ -4205,10 +4205,10 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
           nwgh = normwgh[Nz - k];
 
         // Discretization on this grid
-        for (sw4_type j = jc - 2; j <= jc + 2; j++)
-          for (sw4_type i = ic - 2; i <= ic + 2; i++)
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++)
             if (a_EW->interior_point_in_proc(i, j, g)) {
-              sw4_type ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+              int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
                 fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
@@ -4236,15 +4236,15 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
             }
       }
       if (k <= 0) {
-        // Sw4_Typeo finer grid above, keep k=1 on this (coarse) grid
-        sw4_type Nzp = a_EW->m_global_nz[g + 1];
-        sw4_type kk = k + Nzp - 1;
+        // Into finer grid above, keep k=1 on this (coarse) grid
+        int Nzp = a_EW->m_global_nz[g + 1];
+        int kk = k + Nzp - 1;
         float_sw4 nwgh = 1.0;
         if (kk >= Nzp - 3) nwgh = normwgh[Nzp - kk];
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++)
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
             if (a_EW->interior_point_in_proc(i, j, g + 1)) {
-              sw4_type ind =
+              int ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
@@ -4277,14 +4277,14 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
             }
       }
       if (k >= Nz) {
-        // Sw4_Typeo coarser grid below, move this k=Nz to k=1 on coarse grid.
-        sw4_type kk = k - Nz + 1;
+        // Into coarser grid below, move this k=Nz to k=1 on coarse grid.
+        int kk = k - Nz + 1;
         float_sw4 nwgh = 1.0;
         if (kk <= 4) nwgh = normwgh[kk - 1];
-        for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
-          for (sw4_type i = icref - 2; i <= icref + 2; i++)
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
             if (a_EW->interior_point_in_proc(i, j, g - 1)) {
-              sw4_type ind =
+              int ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
@@ -4335,7 +4335,7 @@ void Source::compute_grid_point(EW* a_ew) {
   // Sets values (m_i0,m_j0,m_k0) and m_grid.
   // Should be called after the topographic correction of mZ0
   int i, j, k, g;
-  sw4_type success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
+  int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
   int inds[4] = {-9999, -9999, -9999, -9999};
   if (m_myPoint) {

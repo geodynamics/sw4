@@ -991,12 +991,12 @@ void EW::metric_derivatives_test() {
   communicate_array(jacex, mNumberOfGrids - 1);
 
   float_sw4 li[5], l2[5];
-  sw4_type imin = m_iStartSw4_Type[g];
-  sw4_type imax = m_iEndSw4_Type[g];
-  sw4_type jmin = m_jStartSw4_Type[g];
-  sw4_type jmax = m_jEndSw4_Type[g];
-  sw4_type kmin = m_kStartSw4_Type[g];
-  sw4_type kmax = m_kEndSw4_Type[g];
+  sw4_type imin = m_iStartInt[g];
+  sw4_type imax = m_iEndInt[g];
+  sw4_type jmin = m_jStartInt[g];
+  sw4_type jmax = m_jEndInt[g];
+  sw4_type kmin = m_kStartInt[g];
+  sw4_type kmax = m_kEndInt[g];
 
   // FTNC   if( m_croutines )
   meterr4c_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric[g].c_ptr(), metex.c_ptr(),

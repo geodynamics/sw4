@@ -340,7 +340,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   sort_grid_point_sources(point_sources, identsources);
 
   // Assign initial data
-  sw4_type beginCycle;
+  int beginCycle;
   float_sw4 t;
   if (m_check_point->do_restart()) {
     double timeRestartBegin = MPI_Wtime();
@@ -2592,17 +2592,17 @@ void EW::check_corrector(Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc,
 void EW::check_displacement_continuity(Sarray& Uf, Sarray& Uc, sw4_type gf, sw4_type gc) {
   sw4_type icb, ice, jcb, jce, nkf;
 
-  icb = m_iStartSw4_Type[gc];
-  // ifb = m_iStartSw4_Type[gf];
+  icb = m_iStartInt[gc];
+  // ifb = m_iStartInt[gf];
 
-  ice = m_iEndSw4_Type[gc];
-  // ife = m_iEndSw4_Type[gf];
+  ice = m_iEndInt[gc];
+  // ife = m_iEndInt[gf];
 
-  jcb = m_jStartSw4_Type[gc];
-  // jfb = m_jStartSw4_Type[gf];
+  jcb = m_jStartInt[gc];
+  // jfb = m_jStartInt[gf];
 
-  jce = m_jEndSw4_Type[gc];
-  // jfe = m_jEndSw4_Type[gf];
+  jce = m_jEndInt[gc];
+  // jfe = m_jEndInt[gf];
 
   nkf = m_global_nz[gf];
 
@@ -2672,7 +2672,7 @@ void EW::dirichlet_hom_ic(Sarray& U, sw4_type g, sw4_type k, bool inner) {
     RAJA::RangeSegment iall(m_iStart[g], m_iEnd[g] + 1), izero(m_iStart[g], 1);
 
     // Outer layer of non-unknown ghost points
-    if (m_iStartSw4_Type[g] == 1) {
+    if (m_iStartInt[g] == 1) {
       // low i-side
       // #pragma omp parallel for
       // 	 for( sw4_type j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
@@ -2682,20 +2682,20 @@ void EW::dirichlet_hom_ic(Sarray& U, sw4_type g, sw4_type k, bool inner) {
           RAJA::make_tuple(c_range, jall, izero),
           [=] RAJA_DEVICE(sw4_type c, sw4_type j, sw4_type i) { UV(c, i, j, k) = 0; });
     }
-    if (m_iEndSw4_Type[g] == m_global_nx[g]) {
+    if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
       // #pragma omp parallel for
       // 	 for( sw4_type j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-      // 	    for( sw4_type i=m_iEndSw4_Type[g]+1 ; i <= m_iEnd[g] ; i++ )
+      // 	    for( sw4_type i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
       // 	       for( sw4_type c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,k) = 0;
 
-      RAJA::RangeSegment iend(m_iEndSw4_Type[g] + 1, m_iEnd[g] + 1);
+      RAJA::RangeSegment iend(m_iEndInt[g] + 1, m_iEnd[g] + 1);
       RAJA::kernel<DHI_POL_ASYNC>(
           RAJA::make_tuple(c_range, jall, iend),
           [=] RAJA_DEVICE(sw4_type c, sw4_type j, sw4_type i) { UV(c, i, j, k) = 0; });
     }
-    if (m_jStartSw4_Type[g] == 1) {
+    if (m_jStartInt[g] == 1) {
       // low j-side
       // #pragma omp parallel for
       // 	 for( sw4_type j=m_jStart[g] ; j <= 0 ; j++ )
@@ -2706,14 +2706,14 @@ void EW::dirichlet_hom_ic(Sarray& U, sw4_type g, sw4_type k, bool inner) {
           RAJA::make_tuple(c_range, jzero, iall),
           [=] RAJA_DEVICE(sw4_type c, sw4_type j, sw4_type i) { UV(c, i, j, k) = 0; });
     }
-    if (m_jEndSw4_Type[g] == m_global_ny[g]) {
+    if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
       // #pragma omp parallel for
-      // 	 for( sw4_type j=m_jEndSw4_Type[g]+1 ; j <= m_jEnd[g] ; j++ )
+      // 	 for( sw4_type j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
       // 	    for( sw4_type i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
       // 	       for( sw4_type c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,k) = 0;
-      RAJA::RangeSegment jend(m_jEndSw4_Type[g] + 1, m_jEnd[g] + 1);
+      RAJA::RangeSegment jend(m_jEndInt[g] + 1, m_jEnd[g] + 1);
       RAJA::kernel<DHI_POL_ASYNC>(
           RAJA::make_tuple(c_range, jend, iall),
           [=] RAJA_DEVICE(sw4_type c, sw4_type j, sw4_type i) { UV(c, i, j, k) = 0; });
@@ -2721,19 +2721,19 @@ void EW::dirichlet_hom_ic(Sarray& U, sw4_type g, sw4_type k, bool inner) {
   } else {
     // Interior, unknown ghost points.
     sw4_type ib, ie, jb, je;
-    if (m_iStartSw4_Type[g] == 1)
+    if (m_iStartInt[g] == 1)
       ib = 1;
     else
       ib = m_iStart[g];
-    if (m_iEndSw4_Type[g] == m_global_nx[g])
+    if (m_iEndInt[g] == m_global_nx[g])
       ie = m_global_nx[g];
     else
       ie = m_iEnd[g];
-    if (m_jStartSw4_Type[g] == 1)
+    if (m_jStartInt[g] == 1)
       jb = 1;
     else
       jb = m_jStart[g];
-    if (m_jEndSw4_Type[g] == m_global_ny[g])
+    if (m_jEndInt[g] == m_global_ny[g])
       je = m_global_ny[g];
     else
       je = m_jEnd[g];
@@ -2789,7 +2789,7 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
   sw4_type kdb = U.m_kb, kde = U.m_ke;
   SView& Uv = U.getview();
   if (!m_twilight_forcing) {
-    if (m_iStartSw4_Type[g] == 1) {
+    if (m_iStartInt[g] == 1) {
       // low i-side
       RAJA::RangeSegment j_range(m_jStart[g], m_jEnd[g] + 1);
       RAJA::RangeSegment i_range(m_iStart[g], 1 - adj + 1);
@@ -2803,21 +2803,21 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
       // 	       for( sw4_type c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,kic) = 0;
     }
-    if (m_iEndSw4_Type[g] == m_global_nx[g]) {
+    if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
       RAJA::RangeSegment j_range(m_jStart[g], m_jEnd[g] + 1);
-      RAJA::RangeSegment i_range(m_iEndSw4_Type[g] + adj, m_iEnd[g] + 1);
+      RAJA::RangeSegment i_range(m_iEndInt[g] + adj, m_iEnd[g] + 1);
       RAJA::RangeSegment c_range(1, U.m_nc + 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(j_range, i_range, c_range),
           [=] RAJA_DEVICE(sw4_type j, sw4_type i, sw4_type c) { Uv(c, i, j, kic) = 0; });
       // #pragma omp parallel for
       // 	 for( sw4_type j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
-      // 	    for( sw4_type i=m_iEndSw4_Type[g]+adj ; i <= m_iEnd[g] ; i++ )
+      // 	    for( sw4_type i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ )
       // 	       for( sw4_type c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,kic) = 0;
     }
-    if (m_jStartSw4_Type[g] == 1) {
+    if (m_jStartInt[g] == 1) {
       // low j-side
       RAJA::RangeSegment j_range(m_jStart[g], 1 - adj + 1);
       RAJA::RangeSegment i_range(m_iStart[g], m_iEnd[g] + 1);
@@ -2831,16 +2831,16 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
       // 	       for( sw4_type c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,kic) = 0;
     }
-    if (m_jEndSw4_Type[g] == m_global_ny[g]) {
+    if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
-      RAJA::RangeSegment j_range(m_jEndSw4_Type[g] + adj, m_jEnd[g] + 1);
+      RAJA::RangeSegment j_range(m_jEndInt[g] + adj, m_jEnd[g] + 1);
       RAJA::RangeSegment i_range(m_iStart[g], m_iEnd[g] + 1);
       RAJA::RangeSegment c_range(1, U.m_nc + 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(j_range, i_range, c_range),
           [=] RAJA_DEVICE(sw4_type j, sw4_type i, sw4_type c) { Uv(c, i, j, kic) = 0; });
       // #pragma omp parallel for
-      // 	 for( sw4_type j=m_jEndSw4_Type[g]+adj ; j <= m_jEnd[g] ; j++ )
+      // 	 for( sw4_type j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
       // 	    for( sw4_type i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
       // 	       for( sw4_type c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,kic) = 0;
@@ -2852,9 +2852,9 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
     float_sw4 cv = m_twilight_forcing->m_c;
     float_sw4 h = mGridSize[g];
     float_sw4* u_ptr = U.c_ptr();
-    if (m_iStartSw4_Type[g] == 1) {
+    if (m_iStartInt[g] == 1) {
       // low i-side
-      sw4_type i1 = m_iStart[g], i2 = m_iStartSw4_Type[g] - adj;
+      sw4_type i1 = m_iStart[g], i2 = m_iStartInt[g] - adj;
       sw4_type j1 = m_jStart[g], j2 = m_jEnd[g];
       if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
@@ -2865,9 +2865,9 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
                          &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
                          &i1, &i2, &j1, &j2, &kic, &kic);
     }
-    if (m_iEndSw4_Type[g] == m_global_nx[g]) {
+    if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
-      sw4_type i1 = m_iEndSw4_Type[g] + adj, i2 = m_iEnd[g];
+      sw4_type i1 = m_iEndInt[g] + adj, i2 = m_iEnd[g];
       sw4_type j1 = m_jStart[g], j2 = m_jEnd[g];
       if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
@@ -2878,10 +2878,10 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
                          &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
                          &i1, &i2, &j1, &j2, &kic, &kic);
     }
-    if (m_jStartSw4_Type[g] == 1) {
+    if (m_jStartInt[g] == 1) {
       // low j-side
       sw4_type i1 = m_iStart[g], i2 = m_iEnd[g];
-      sw4_type j1 = m_jStart[g], j2 = m_jStartSw4_Type[g] - adj;
+      sw4_type j1 = m_jStart[g], j2 = m_jStartInt[g] - adj;
       if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                             kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
@@ -2891,10 +2891,10 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
                          &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
                          &i1, &i2, &j1, &j2, &kic, &kic);
     }
-    if (m_jEndSw4_Type[g] == m_global_ny[g]) {
+    if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
       sw4_type i1 = m_iStart[g], i2 = m_iEnd[g];
-      sw4_type j1 = m_jEndSw4_Type[g] + adj, j2 = m_jEnd[g];
+      sw4_type j1 = m_jEndInt[g] + adj, j2 = m_jEnd[g];
       if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                             kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
@@ -2923,7 +2923,7 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
   SView& Bv = B.getview();
   // SYNC_STREAM; // Since this is running on the host
   if (!m_twilight_forcing) {
-    if (m_iStartSw4_Type[g] == 1) {
+    if (m_iStartInt[g] == 1) {
       // low i-side
       RAJA::RangeSegment j_range(m_jStart[g], m_jEnd[g] + 1);
       RAJA::RangeSegment i_range(m_iStart[g], 1 - adj + 1);
@@ -2937,21 +2937,21 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
     // 	       for( sw4_type c=1 ; c <= B.m_nc ; c++ )        \
     // 		  B(c,i,j,kic) = 0;
     }
-    if (m_iEndSw4_Type[g] == m_global_nx[g]) {
+    if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
       RAJA::RangeSegment j_range(m_jStart[g], m_jEnd[g] + 1);
-      RAJA::RangeSegment i_range(m_iEndSw4_Type[g] + adj, m_iEnd[g] + 1);
+      RAJA::RangeSegment i_range(m_iEndInt[g] + adj, m_iEnd[g] + 1);
       RAJA::RangeSegment c_range(1, B.m_nc + 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(j_range, i_range, c_range),
           [=] RAJA_DEVICE(sw4_type j, sw4_type i, sw4_type c) { Bv(c, i, j, kic) = 0; });
 #// pragma omp parallel for                                   \
     // 	 for( sw4_type j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )         \
-    // 	    for( sw4_type i=m_iEndSw4_Type[g]+adj ; i <= m_iEnd[g] ; i++ ) \
+    // 	    for( sw4_type i=m_iEndInt[g]+adj ; i <= m_iEnd[g] ; i++ ) \
     // 	       for( sw4_type c=1 ; c <= B.m_nc ; c++ )                \
     // 		  B(c,i,j,kic) = 0;
     }
-    if (m_jStartSw4_Type[g] == 1) {
+    if (m_jStartInt[g] == 1) {
       // low j-side
       RAJA::RangeSegment j_range(m_jStart[g], 1 - adj + 1);
       RAJA::RangeSegment i_range(m_iStart[g], m_iEnd[g] + 1);
@@ -2965,15 +2965,15 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
       // 	       for( sw4_type c=1 ; c <= B.m_nc ; c++ )
       // 		  B(c,i,j,kic) = 0;
     }
-    if (m_jEndSw4_Type[g] == m_global_ny[g]) {
+    if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
-      RAJA::RangeSegment j_range(m_jEndSw4_Type[g] + adj, m_jEnd[g] + 1);
+      RAJA::RangeSegment j_range(m_jEndInt[g] + adj, m_jEnd[g] + 1);
       RAJA::RangeSegment i_range(m_iStart[g], m_iEnd[g] + 1);
       RAJA::RangeSegment c_range(1, B.m_nc + 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(j_range, i_range, c_range),
           [=] RAJA_DEVICE(sw4_type j, sw4_type i, sw4_type c) { Bv(c, i, j, kic) = 0; });
-      // 	 for( sw4_type j=m_jEndSw4_Type[g]+adj ; j <= m_jEnd[g] ; j++ )
+      // 	 for( sw4_type j=m_jEndInt[g]+adj ; j <= m_jEnd[g] ; j++ )
       // #pragma omp parallel for
       // 	    for( sw4_type i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
       // 	       for( sw4_type c=1 ; c <= B.m_nc ; c++ )
@@ -3009,9 +3009,9 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
       laa_ptr = mLambdaVE[g][0].c_ptr();
     }
 
-    if (m_iStartSw4_Type[g] == 1) {
+    if (m_iStartInt[g] == 1) {
       // low i-side
-      sw4_type i1 = m_iStart[g], i2 = m_iStartSw4_Type[g] - adj;
+      sw4_type i1 = m_iStart[g], i2 = m_iStartInt[g] - adj;
       sw4_type j1 = m_jStart[g], j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
@@ -3064,11 +3064,11 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
                                j2);
         }
       }  // else (not supergrid)
-    }    //  if( m_iStartSw4_Type[g] == 1 )
+    }    //  if( m_iStartInt[g] == 1 )
 
-    if (m_iEndSw4_Type[g] == m_global_nx[g]) {
+    if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
-      sw4_type i1 = m_iEndSw4_Type[g] + adj, i2 = m_iEnd[g];
+      sw4_type i1 = m_iEndInt[g] + adj, i2 = m_iEnd[g];
       sw4_type j1 = m_jStart[g], j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
@@ -3121,12 +3121,12 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
                                j2);
         }
       }  // else (not supergrid)
-    }    // end if( m_iEndSw4_Type[g] == m_global_nx[g] )
+    }    // end if( m_iEndInt[g] == m_global_nx[g] )
 
-    if (m_jStartSw4_Type[g] == 1) {
+    if (m_jStartInt[g] == 1) {
       // low j-side
       sw4_type i1 = m_iStart[g], i2 = m_iEnd[g];
-      sw4_type j1 = m_jStart[g], j2 = m_jStartSw4_Type[g] - adj;
+      sw4_type j1 = m_jStart[g], j2 = m_jStartInt[g] - adj;
       if (usingSupergrid()) {
         // assigns B
         if (m_croutines)
@@ -3178,12 +3178,12 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
                                j2);
         }
       }  // else (not supergrid)
-    }    // end if( m_jStartSw4_Type[g] == 1 )
+    }    // end if( m_jStartInt[g] == 1 )
 
-    if (m_jEndSw4_Type[g] == m_global_ny[g]) {
+    if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
       sw4_type i1 = m_iStart[g], i2 = m_iEnd[g];
-      sw4_type j1 = m_jEndSw4_Type[g] + adj, j2 = m_jEnd[g];
+      sw4_type j1 = m_jEndInt[g] + adj, j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
         if (m_croutines)
@@ -3235,7 +3235,7 @@ void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw
                                j2);
         }
       }
-    }  // end if( m_jEndSw4_Type[g] == m_global_ny[g] )
+    }  // end if( m_jEndInt[g] == m_global_ny[g] )
 
   }  // else twilight
   SYNC_STREAM;
@@ -3250,23 +3250,23 @@ void EW::gridref_initial_guess(Sarray& u, sw4_type g, bool upper) {
     k = 0;
     s = 1;
   } else {
-    k = m_kEndSw4_Type[g] + 1;
+    k = m_kEndInt[g] + 1;
     s = -1;
   }
   sw4_type ib, ie, jb, je;
-  if (m_iStartSw4_Type[g] == 1)
+  if (m_iStartInt[g] == 1)
     ib = 1;
   else
     ib = m_iStart[g];
-  if (m_iEndSw4_Type[g] == m_global_nx[g])
+  if (m_iEndInt[g] == m_global_nx[g])
     ie = m_global_nx[g];
   else
     ie = m_iEnd[g];
-  if (m_jStartSw4_Type[g] == 1)
+  if (m_jStartInt[g] == 1)
     jb = 1;
   else
     jb = m_jStart[g];
-  if (m_jEndSw4_Type[g] == m_global_ny[g])
+  if (m_jEndInt[g] == m_global_ny[g])
     je = m_global_ny[g];
   else
     je = m_jEnd[g];
@@ -4565,9 +4565,9 @@ void EW::test_sources(vector<GridPointSource*>& a_point_sources,
                       vector<Sarray>& a_F, vector<sw4_type>& identsources) {
   SW4_MARK_FUNCTION;
   // Check the source discretization
-  sw4_type kx[3] = {0, 0, 0};
-  sw4_type ky[3] = {0, 0, 0};
-  sw4_type kz[3] = {0, 0, 0};
+  int kx[3] = {0, 0, 0};
+  int ky[3] = {0, 0, 0};
+  int kz[3] = {0, 0, 0};
   float_sw4 moments[3], momexact[3];
   int nsourcesloc = a_point_sources.size();
   int nsources;
@@ -4579,7 +4579,7 @@ void EW::test_sources(vector<GridPointSource*>& a_point_sources,
     cout << "source size = " << a_global_unique_sources.size() << endl;
     cout << "grid point source size = " << nsources << endl;
   }
-  for (sw4_type c = 0; c <= 7; c++) {
+  for (int c = 0; c <= 7; c++) {
     kx[0] = c;
     ky[1] = c;
     kz[2] = c;
@@ -4650,7 +4650,7 @@ void EW::test_sources(vector<GridPointSource*>& a_point_sources,
 }
 
 //-----------------------------------------------------------------------
-void EW::testSourceDiscretization(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
+void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
                                   float_sw4 moments[3],
                                   vector<GridPointSource*>& point_sources,
                                   vector<Sarray>& F,
@@ -4694,8 +4694,8 @@ void EW::testSourceDiscretization(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3]
   if (ncurv > 0 && !m_gridGenerator->curviCartIsSmooth(ncurv)) {
     sw4_type g = mNumberOfCartesianGrids;
     sw4_type Nz = m_global_nz[g];
-    for (sw4_type j = m_jStartSw4_Type[g]; j <= m_jEndSw4_Type[g]; j++)
-      for (sw4_type i = m_iStartSw4_Type[g]; i <= m_iEndSw4_Type[g]; i++)
+    for (sw4_type j = m_jStartInt[g]; j <= m_jEndInt[g]; j++)
+      for (sw4_type i = m_iStartInt[g]; i <= m_iEndInt[g]; i++)
         for (sw4_type c = 1; c <= 3; c++) F[g](c, i, j, Nz) = F[g - 1](c, i, j, 1);
   }
 
@@ -4711,12 +4711,12 @@ void EW::testSourceDiscretization(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3]
                        // grid?
     float_sw4* f_ptr = F[g].c_ptr();
     sw4_type wind[6];
-    wind[0] = m_iStartSw4_Type[g];
-    wind[1] = m_iEndSw4_Type[g];
-    wind[2] = m_jStartSw4_Type[g];
-    wind[3] = m_jEndSw4_Type[g];
-    wind[4] = m_kStartSw4_Type[g];
-    wind[5] = m_kEndSw4_Type[g];
+    wind[0] = m_iStartInt[g];
+    wind[1] = m_iEndInt[g];
+    wind[2] = m_jStartInt[g];
+    wind[3] = m_jEndInt[g];
+    wind[4] = m_kStartInt[g];
+    wind[5] = m_kEndInt[g];
     sw4_type nz = m_global_nz[g];
     if (g <= mNumberOfCartesianGrids - 1)
       testsrc_ci(f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast, nz, wind,

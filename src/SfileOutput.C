@@ -107,12 +107,12 @@ void SfileOutput::setup_images() {
     m_winallocated = true;
   }
   for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
-    mWindow[g][0] = mEW->m_iStartSw4_Type[g];
-    mWindow[g][1] = mEW->m_iEndSw4_Type[g];
-    mWindow[g][2] = mEW->m_jStartSw4_Type[g];
-    mWindow[g][3] = mEW->m_jEndSw4_Type[g];
-    mWindow[g][4] = mEW->m_kStartSw4_Type[g];
-    mWindow[g][5] = mEW->m_kEndSw4_Type[g];
+    mWindow[g][0] = mEW->m_iStartInt[g];
+    mWindow[g][1] = mEW->m_iEndInt[g];
+    mWindow[g][2] = mEW->m_jStartInt[g];
+    mWindow[g][3] = mEW->m_jEndInt[g];
+    mWindow[g][4] = mEW->m_kStartInt[g];
+    mWindow[g][5] = mEW->m_kEndInt[g];
 
     mGlobalDims[g][0] = 1;
     mGlobalDims[g][1] = mEW->m_global_nx[g];
@@ -199,8 +199,8 @@ void SfileOutput::setup_images() {
 void SfileOutput::define_pio() {
   sw4_type glow = 0, ghigh = mEW->mNumberOfGrids;
   m_parallel_io = new Parallel_IO*[ghigh - glow + 1];
-  for (sw4_type g = glow; g < ghigh; g++) {
-    sw4_type global[3], local[3], start[3];
+  for (int g = glow; g < ghigh; g++) {
+    int global[ 3], local[3], start[3];
     for (sw4_type dim = 0; dim < 2; dim++) {
       global[dim] =
           (mGlobalDims[g][2 * dim + 1] - mGlobalDims[g][2 * dim]) / mSampleH +
@@ -220,9 +220,9 @@ void SfileOutput::define_pio() {
     global[2] += m_extraz[g];
     local[2] += m_extraz[g];
 
-    sw4_type iwrite = 0;
-    sw4_type nrwriters = mEW->getNumberOfWritersPFS();
-    sw4_type nproc = 0, myid = 0;
+    int iwrite = 0;
+    int nrwriters = mEW->getNumberOfWritersPFS();
+    int nproc = 0, myid = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
@@ -349,8 +349,8 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
    * ) { */
   /*       cout << "g="<< g << ", a_Z.m_kb="<< a_Z[g].m_kb << ", a_Z.m_ke=" <<
    * a_Z[g].m_ke << ", gz=" << mWindow[g][5] << endl; */
-  /*       cout << "kend, kstart: " << mEW->m_kEndSw4_Type[g] << ", " <<
-   * mEW->m_kStartSw4_Type[g]; */
+  /*       cout << "kend, kstart: " << mEW->m_kEndInt[g] << ", " <<
+   * mEW->m_kStartInt[g]; */
   /*       printf("Z values\n"); */
   /*       for (sw4_type j = 0; j <= a_Z[g].m_ke; j++) { */
   /*         printf("(1,1,%d): %f\n", j, a_Z[g](1,1,j)); */
@@ -363,8 +363,8 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     sw4_type njkw = nkw * ((mWindow[g][3] - mWindow[g][2]) / stH + 1);
     sw4_type gz = g;
     /* sw4_type ku = mWindow[gz][5]; */
-    sw4_type kl = mEW->m_kStartSw4_Type[gz];
-    sw4_type ku = mEW->m_kEndSw4_Type[gz];
+    sw4_type kl = mEW->m_kStartInt[gz];
+    sw4_type ku = mEW->m_kEndInt[gz];
 
     Sarray *data1 = NULL, *data2 = NULL, *data3 = NULL;
     if (mMode == RHO)
@@ -722,7 +722,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
   hid_t h5_fid, grp, grp2, dset, attr, dspace, attr_space1, attr_space2,
       attr_space3, fapl, dxpl, filespace, memspace;
   sw4_type ret;
-  sw4_type myid = 0;
+  int myid = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
   hsize_t offsets[3], counts[3];

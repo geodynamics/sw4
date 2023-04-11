@@ -1,8 +1,9 @@
 #include "EW.h"
 #include "sw4.h"
+
 void EW::testsrc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
                     sw4_type kb, sw4_type ke, sw4_type nk, sw4_type wind[6], float_sw4 zmin,
-                    float_sw4 h, sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
+                    float_sw4 h, int kx[3], int ky[3], int kz[3],
                     float_sw4 mom[3]) {
   const size_t ni = ie - ib + 1;
   const size_t nij = ni * (je - jb + 1);
@@ -76,8 +77,8 @@ void EW::testsrc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_typ
 
 //-----------------------------------------------------------------------
 void EW::testsrcc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
-                     sw4_type kb, sw4_type ke, sw4_type nk, sw4_type g, sw4_type wind[6], sw4_type kx[3],
-                     sw4_type ky[3], sw4_type kz[3], float_sw4 mom[3]) {
+                     sw4_type kb, sw4_type ke, sw4_type nk, sw4_type g, sw4_type wind[6], int kx[3],
+                     int ky[3], int kz[3], float_sw4 mom[3]) {
   const size_t ni = ie - ib + 1;
   const size_t nij = ni * (je - jb + 1);
   const size_t nijk = nij * (ke - kb + 1);

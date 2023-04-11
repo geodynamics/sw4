@@ -98,8 +98,8 @@ class RandomizedMaterial {
       m_vsmax;
   float_sw4 m_vsmin;
   //   float_sw4 m_x0, m_y0;
-  unsigned sw4_type m_seed;
-  sw4_type m_nproc2d[2];
+  unsigned int m_seed;
+  int m_nproc2d[2];
 
   // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in
   // this processor.

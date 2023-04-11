@@ -266,14 +266,14 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   for (sw4_type s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
-  m_ib = m_ew->m_iStartSw4_Type[m_gc] - m_nghost;
-  m_ie = m_ew->m_iEndSw4_Type[m_gc] + m_nghost;
-  m_jb = m_ew->m_jStartSw4_Type[m_gc] - m_nghost;
-  m_je = m_ew->m_jEndSw4_Type[m_gc] + m_nghost;
-  m_ibf = m_ew->m_iStartSw4_Type[m_gf] - m_nghost;
-  m_ief = m_ew->m_iEndSw4_Type[m_gf] + m_nghost;
-  m_jbf = m_ew->m_jStartSw4_Type[m_gf] - m_nghost;
-  m_jef = m_ew->m_jEndSw4_Type[m_gf] + m_nghost;
+  m_ib = m_ew->m_iStartInt[m_gc] - m_nghost;
+  m_ie = m_ew->m_iEndInt[m_gc] + m_nghost;
+  m_jb = m_ew->m_jStartInt[m_gc] - m_nghost;
+  m_je = m_ew->m_jEndInt[m_gc] + m_nghost;
+  m_ibf = m_ew->m_iStartInt[m_gf] - m_nghost;
+  m_ief = m_ew->m_iEndInt[m_gf] + m_nghost;
+  m_jbf = m_ew->m_jStartInt[m_gf] - m_nghost;
+  m_jef = m_ew->m_jEndInt[m_gf] + m_nghost;
   m_nkf = m_ew->m_global_nz[m_gf];
 
   m_kb = 0;
@@ -301,7 +301,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 
   allocate_mpi_buffers();
 
-  sw4_type ndif = m_nghost - (m_ew->m_iStartSw4_Type[m_gc] - m_ew->m_iStart[m_gc]);
+  sw4_type ndif = m_nghost - (m_ew->m_iStartInt[m_gc] - m_ew->m_iStart[m_gc]);
   sw4_type nsw = m_ew->m_iEnd[m_gc] - m_ew->m_iStart[m_gc] + 1;
   copy_str(lm_strx_c, a_strx[m_gc], ndif, m_ie - m_ib + 1, nsw);
   communicate_array1d(lm_strx_c, m_ie - m_ib + 1, 0, m_nghost);
@@ -314,7 +314,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                  hipMemcpyHostToDevice, 0);
 #endif
 
-  ndif = m_nghost - (m_ew->m_iStartSw4_Type[m_gf] - m_ew->m_iStart[m_gf]);
+  ndif = m_nghost - (m_ew->m_iStartInt[m_gf] - m_ew->m_iStart[m_gf]);
   nsw = m_ew->m_iEnd[m_gf] - m_ew->m_iStart[m_gf] + 1;
   copy_str(lm_strx_f, a_strx[m_gf], ndif, m_ief - m_ibf + 1, nsw);
   communicate_array1d(lm_strx_f, m_ief - m_ibf + 1, 0, m_nghost);
@@ -327,7 +327,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                  hipMemcpyHostToDevice, 0);
 #endif
 
-  ndif = m_nghost - (m_ew->m_jStartSw4_Type[m_gc] - m_ew->m_jStart[m_gc]);
+  ndif = m_nghost - (m_ew->m_jStartInt[m_gc] - m_ew->m_jStart[m_gc]);
   nsw = m_ew->m_jEnd[m_gc] - m_ew->m_jStart[m_gc] + 1;
   copy_str(lm_stry_c, a_stry[m_gc], ndif, m_je - m_jb + 1, nsw);
   communicate_array1d(lm_stry_c, m_je - m_jb + 1, 1, m_nghost);
@@ -340,7 +340,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                  hipMemcpyHostToDevice, 0);
 #endif
 
-  ndif = m_nghost - (m_ew->m_jStartSw4_Type[m_gf] - m_ew->m_jStart[m_gf]);
+  ndif = m_nghost - (m_ew->m_jStartInt[m_gf] - m_ew->m_jStart[m_gf]);
   nsw = m_ew->m_jEnd[m_gf] - m_ew->m_jStart[m_gf] + 1;
   copy_str(lm_stry_f, a_stry[m_gf], ndif, m_jef - m_jbf + 1, nsw);
   communicate_array1d(lm_stry_f, m_jef - m_jbf + 1, 1, m_nghost);

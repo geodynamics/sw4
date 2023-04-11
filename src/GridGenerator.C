@@ -229,7 +229,7 @@ bool GridGenerator::exact_metric(EW* a_ew, sw4_type g, Sarray& a_jac,
 }
 
 //-----------------------------------------------------------------------
-void GridGenerator::get_gridgen_info(sw4_type& order, float_sw4& zetaBreak) const {
+void GridGenerator::get_gridgen_info(int& order, float_sw4& zetaBreak) const {
   order = m_grid_interpolation_order;
   zetaBreak = m_zetaBreak;
 }

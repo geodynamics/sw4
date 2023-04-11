@@ -25,7 +25,7 @@ class GridGenerator {
         m_grid_interpolation_order(grid_interpolation_order){};
   bool curviCartIsSmooth(sw4_type ncurv) { return ncurv == 1 && !m_always_new; }
   float_sw4 get_topo_zmax() { return m_topo_zmax; };
-  void get_gridgen_info(sw4_type& order, float_sw4& zetaBreak) const;
+  void get_gridgen_info(int& order, float_sw4& zetaBreak) const;
 
   virtual void assignInterfaceSurfaces(EW* a_ew, Sarray& TopoGridExt) = 0;
   virtual void generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z, Sarray& J) = 0;

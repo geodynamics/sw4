@@ -458,19 +458,19 @@ void Image::define_pio() {
     ghigh = glow + 1;
   }
   m_pio = new Parallel_IO*[ghigh - glow + 1];
-  for (sw4_type g = glow; g < ghigh; g++) {
-    sw4_type global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+  for (int g = glow; g < ghigh; g++) {
+    int global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                      mEW->m_global_nz[g]};
     //		       mEW->m_kEnd[g] - mEW->m_kStart[g] -
     // 2*mEW->m_ghost_points+1}
     //;
-    sw4_type local[3];
+    int local[3];
     local[0] = mWindow[g][1] - mWindow[g][0] + 1;
     local[1] = mWindow[g][3] - mWindow[g][2] + 1;
     local[2] = mWindow[g][5] - mWindow[g][4] + 1;
 
     // subtracting off 1 because C-arrays are base 0
-    sw4_type start[3];
+    int start[3];
     start[0] = mWindow[g][0] - 1;
     start[1] = mWindow[g][2] - 1;
     start[2] = mWindow[g][4] - 1;
@@ -1038,7 +1038,7 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
   off_t offset = 2 * sizeof(sw4_type) + 2 * sizeof(double) + 3 * sizeof(sw4_type) +
                  25 * sizeof(char) +
                  (ghigh - glow) * (2 * sizeof(double) + 4 * sizeof(sw4_type));
-  sw4_type fid = -1;
+  int fid = -1;
   stringstream s, fileSuffix;
   sw4_type prec, nPatches, globalPlaneSize[4];
   if (iwrite) {
@@ -1514,7 +1514,7 @@ void Image::add_grid_to_file_hdf5(const char* fname, bool iwrite,
 void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
-    sw4_type fid;
+    int fid;
     if (iwrite) {
       fid = open(fname, O_WRONLY, 0660);
       if (fid == -1)
@@ -1554,7 +1554,7 @@ void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
 void Image::add_grid_to_file(const char* fname, bool iwrite, size_t offset) {
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
-    sw4_type fid;
+    int fid;
     if (iwrite) {
       fid = open(fname, O_WRONLY, 0660);
       if (fid == -1)
@@ -1594,7 +1594,7 @@ void Image::add_grid_filenames_to_file(const char* fname) {
     stringstream str1;
     m_gridimage->compute_file_suffix(str1, 0);
     string img1str = str1.str();
-    sw4_type fid = open(fname, O_WRONLY, 0660);
+    int fid = open(fname, O_WRONLY, 0660);
     if (fid == -1)
       VERIFY2(0, "ERROR: Image::add_grid_filenames_to_file, error opening file "
                      << fname);
