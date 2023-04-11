@@ -72,12 +72,12 @@ void wavepropbop_4(double *, double *, double *, double *, double *, double *,
 void varcoeffs4(double *, double *);
 void bopext4th(double *, double *);
 
-void F77_FUNC(dspev, DSPEV)(char &JOBZ, char &UPLO, sw4_type &N, double *AP,
-                            double *W, double *Z, sw4_type &LDZ, double *WORK,
-                            sw4_type &INFO);
-void F77_FUNC(dgels, DGELS)(char &TRANS, sw4_type &M, sw4_type &N, sw4_type &NRHS, double *A,
-                            sw4_type &LDA, double *B, sw4_type &LDB, double *WORK,
-                            sw4_type &LWORK, sw4_type &INFO);
+void F77_FUNC(dspev, DSPEV)(char &JOBZ, char &UPLO, int &N, double *AP,
+                            double *W, double *Z, int &LDZ, double *WORK,
+                            int &INFO);
+void F77_FUNC(dgels, DGELS)(char &TRANS, int &M, int &N, int &NRHS, double *A,
+                            int &LDA, double *B, int &LDB, double *WORK,
+                            int &LWORK, int &INFO);
 void randomfield3d(sw4_type *, sw4_type *, sw4_type *, sw4_type *, sw4_type *, sw4_type *, sw4_type *, sw4_type *,
                    sw4_type *, sw4_type *, double *, double *, double *, double *,
                    double *, sw4_type *, double *, sw4_type *, sw4_type *);
@@ -1639,7 +1639,7 @@ void EW::computeDT() {
       for (sw4_type k = m_kStartInt[g]; k <= m_kEndInt[g]; k++)
         for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-            sw4_type N = 3, LDZ = 1, INFO;
+            int N = 3, LDZ = 1, INFO;
             char JOBZ = 'N', UPLO = 'L';
             double Amat[6], W[3], Z[1], WORK[9];
             float_sw4 la = mLambda[g](i, j, k);

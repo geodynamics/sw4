@@ -6907,12 +6907,12 @@ void EW::extractTopographyFromImageFile(string a_topoFileName) {
 void EW::extractTopographyFromRfile(std::string a_topoFileName) {
   std::string rname = "EW::extractTopographyFromRfile";
   Sarray gridElev;
-  sw4_type fd = open(a_topoFileName.c_str(), O_RDONLY);
+  int fd = open(a_topoFileName.c_str(), O_RDONLY);
   if (fd != -1) {
     // ---------- magic number
-    sw4_type magic;
-    size_t nr = read(fd, &magic, sizeof(sw4_type));
-    if (nr != sizeof(sw4_type)) {
+    int magic;
+    size_t nr = read(fd, &magic, sizeof(int));
+    if (nr != sizeof(int)) {
       cout << rname << " Error reading magic number, nr= " << nr << "bytes read"
            << endl;
       close(fd);
@@ -6920,8 +6920,8 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     }
 
     Byteswapper bswap;
-    sw4_type onesw = 1;
-    bswap.byte_rev(&onesw, 1, "sw4_type");
+    int onesw = 1;
+    bswap.byte_rev(&onesw, 1, "int");
     bool swapbytes;
     if (magic == 1)
       swapbytes = false;
@@ -6935,30 +6935,30 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     }
 
     // ---------- precision
-    sw4_type prec = 0;
-    nr = read(fd, &prec, sizeof(sw4_type));
-    if (nr != sizeof(sw4_type)) {
+    int prec = 0;
+    nr = read(fd, &prec, sizeof(int));
+    if (nr != sizeof(int)) {
       cout << rname << " Error reading prec, nr= " << nr << "bytes read"
            << endl;
       close(fd);
       return;
     }
-    if (swapbytes) bswap.byte_rev(&prec, 1, "sw4_type");
-    sw4_type flsize = 4;
+    if (swapbytes) bswap.byte_rev(&prec, 1, "int");
+    int flsize = 4;
     if (prec == 8)
       flsize = sizeof(double);
     else if (prec == 4)
       flsize = sizeof(float);
 
     // ---------- attenuation on file ?
-    sw4_type att;
-    nr = read(fd, &att, sizeof(sw4_type));
-    if (nr != sizeof(sw4_type)) {
+    int att;
+    nr = read(fd, &att, sizeof(int));
+    if (nr != sizeof(int)) {
       cout << rname << " Error reading att, nr= " << nr << "bytes read" << endl;
       close(fd);
       return;
     }
-    if (swapbytes) bswap.byte_rev(&att, 1, "sw4_type");
+    if (swapbytes) bswap.byte_rev(&att, 1, "int");
 
     // ---------- azimuth on file
     double alpha;
@@ -6999,28 +6999,28 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     if (swapbytes) bswap.byte_rev(&lat0, 1, "double");
 
     // ---------- length of projection string
-    sw4_type len;
-    nr = read(fd, &len, sizeof(sw4_type));
-    if (nr != sizeof(sw4_type)) {
+    int len;
+    nr = read(fd, &len, sizeof(int));
+    if (nr != sizeof(int)) {
       cout << rname << " Error reading len, nr= " << nr << "bytes read" << endl;
       close(fd);
       return;
     }
-    if (swapbytes) bswap.byte_rev(&len, 1, "sw4_type");
+    if (swapbytes) bswap.byte_rev(&len, 1, "int");
 
     // ---------- skip projection string
     nr = lseek(fd, len * sizeof(char), SEEK_CUR);
 
     // ---------- number of blocks on file
-    sw4_type npatches;
-    nr = read(fd, &npatches, sizeof(sw4_type));
-    if (nr != sizeof(sw4_type)) {
+    int npatches;
+    nr = read(fd, &npatches, sizeof(int));
+    if (nr != sizeof(int)) {
       cout << rname << " Error reading npatches, nr= " << nr << "bytes read"
            << endl;
       close(fd);
       return;
     }
-    if (swapbytes) bswap.byte_rev(&npatches, 1, "sw4_type");
+    if (swapbytes) bswap.byte_rev(&npatches, 1, "int");
 
     // test
     if (m_myRank == 0 && mVerbose >= 2) {
@@ -7047,17 +7047,17 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     z0 = hs[2];
 
     // ---------- second part of topography block header
-    sw4_type dim[4];
-    nr = read(fd, dim, 4 * sizeof(sw4_type));
-    if (nr != 4 * sizeof(sw4_type)) {
+    int dim[4];
+    nr = read(fd, dim, 4 * sizeof(int));
+    if (nr != 4 * sizeof(int)) {
       cout << rname << " Error reading topography dimensions nr= " << nr
            << "bytes read" << endl;
       close(fd);
       return;
     }
-    if (swapbytes) bswap.byte_rev(dim, 4, "sw4_type");
+    if (swapbytes) bswap.byte_rev(dim, 4, "int");
 
-    sw4_type nctop, nitop, njtop, nktop;
+    int nctop, nitop, njtop, nktop;
     nctop = dim[0];
     nitop = dim[1];
     njtop = dim[2];
@@ -7077,10 +7077,10 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     }
 
     // ---------- Skip other block headers
-    for (sw4_type p = 0; p < npatches - 1; p++)
-      nr = lseek(fd, 4 * sizeof(sw4_type) + 3 * sizeof(double), SEEK_CUR);
+    for (int p = 0; p < npatches - 1; p++)
+      nr = lseek(fd, 4 * sizeof(int) + 3 * sizeof(double), SEEK_CUR);
 
-    // ---------- read topography on file sw4_typeo array gridElev
+    // ---------- read topography on file into array gridElev
     bool roworder = true;
     gridElev.define(1, nitop, 1, njtop, 1, 1);
 
@@ -7120,7 +7120,7 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
                data[nitop * njtop - 1], gridElev(nitop, njtop, 1));
         // get min and max
         float tmax = -9e-10, tmin = 9e+10;
-        for (sw4_type q = 0; q < nitop * njtop; q++) {
+        for (int q = 0; q < nitop * njtop; q++) {
           if (data[q] > tmax) tmax = data[q];
           if (data[q] < tmin) tmin = data[q];
         }
@@ -7143,16 +7143,16 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     }
 
     // Topography read, next interpolate to the computational grid
-    sw4_type topLevel = mNumberOfGrids - 1;
+    int topLevel = mNumberOfGrids - 1;
 
     float_sw4 topomax = -1e99, topomin = 1e99;
 #pragma omp parallel for reduction(max : topomax) reduction(min : topomin)
-    for (sw4_type i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
-      for (sw4_type j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+    for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
         float_sw4 x = (i - 1) * mGridSize[topLevel];
         float_sw4 y = (j - 1) * mGridSize[topLevel];
-        sw4_type i0 = static_cast<sw4_type>(trunc(1 + (x - x0) / hh));
-        sw4_type j0 = static_cast<sw4_type>(trunc(1 + (y - y0) / hh));
+        int i0 = static_cast<int>(trunc(1 + (x - x0) / hh));
+        int j0 = static_cast<int>(trunc(1 + (y - y0) / hh));
         // test
         float_sw4 xmat0 = (i0 - 1) * hh, ymat0 = (j0 - 1) * hh;
         float_sw4 xmatx = x - x0, ymaty = y - y0;
