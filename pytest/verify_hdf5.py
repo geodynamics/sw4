@@ -79,10 +79,10 @@ def read_sw4img(fname):
     # Grid size info
     h = np.zeros(npatch, dtype=np.float64)
     zmin = np.zeros(npatch, dtype=np.float64)
-    i = np.zeros(npatch, dtype=np.int)
-    ni = np.zeros(npatch, dtype=np.int)
-    j = np.zeros(npatch, dtype=np.int)
-    nj = np.zeros(npatch, dtype=np.int)
+    i = np.zeros(npatch, dtype=int)
+    ni = np.zeros(npatch, dtype=int)
+    j = np.zeros(npatch, dtype=int)
+    nj = np.zeros(npatch, dtype=int)
     nelem = 0
     for u in range (0, npatch):
         h[u] = struct.unpack('d', img.read(8))[0]
