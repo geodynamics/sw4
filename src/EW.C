@@ -7238,7 +7238,6 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
-  std::string rname ="EW::extractTopographyFromGMG";
   Sarray gridElev;
   herr_t ierr;
   hid_t file_id, dataset_id, datatype_id, group_id, dataspace_id;
