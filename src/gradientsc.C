@@ -95,15 +95,22 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   a_kapacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define uacc(c, i, j, k) a_uacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 
-  SW4_CPU_WARN;
-#pragma omp parallel for
-  for (int k = kfirstact; k <= klastact; k++)
-    for (int j = jfirstact; j <= jlastact; j++)
-#pragma ivdep
-      for (int i = ifirstact; i <= ilastact; i++) {
+  bool one4 = onesided[4]==1;
+  bool one5 = onesided[5]==1;
+  //  SW4_CPU_WARN;
+  RAJA::RangeSegment j_range(jfirstact,jlastact+1);
+  RAJA::RangeSegment i_range(ifirstact,ilastact+1);
+  RAJA::RangeSegment k_range(kfirstact,klastact+1);
+  RAJA::kernel<DEFAULT_LOOP3>(
+			      RAJA::make_tuple(k_range,j_range, i_range), [=] RAJA_DEVICE(int k, int j, int i) {
+									    //#pragma omp parallel for
+																	    //  for (int k = kfirstact; k <= klastact; k++)
+									    //    for (int j = jfirstact; j <= jlastact; j++)
+									    //#pragma ivdep
+									    //     for (int i = ifirstact; i <= ilastact; i++) {
         float_sw4 normfact = jac(i, j, k);
-        if (k <= 4 && onesided[4] == 1) normfact *= normwgh[k - 1];
-        if (k >= nk - 3 && onesided[5] == 1) normfact *= normwgh[nk - k];
+        if (k <= 4 && one4) normfact *= normwgh[k - 1];
+        if (k >= nk - 3 && one5) normfact *= normwgh[nk - k];
         grho(i, j, k) +=
             (kap(1, i, j, k) *
                  (up(1, i, j, k) - 2 * u(1, i, j, k) + um(1, i, j, k)) * idt *
@@ -118,7 +125,7 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                  idt +
              dt2o12 * kapacc(3, i, j, k) * uacc(3, i, j, k)) *
             normfact;
-      }
+									  });
 }
 
 //-----------------------------------------------------------------------// Takes a lot of time for LFGS

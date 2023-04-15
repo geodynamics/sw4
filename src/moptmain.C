@@ -507,10 +507,12 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
                       mopt->m_vs_max, mopt->m_vp_min, mopt->m_vp_max);
 
   mopt->m_mp->get_material(nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda);
+  std::cout<<"TYPEID IS "<<typeid(mopt->m_mp).name()<<"\n"<<std::flush;
   //   mopt->m_mp->get_material( nmpard, xm, nmpars, xm, rho, mu, lambda );
   int ok = 1;
   if (mopt->m_mcheck) {
     int er = simulation.check_material(rho, mu, lambda, ok, 2);
+    std::cout<<"ERROR CODE IS "<<er<<"\n";
   }
   //   MPI_Barrier(MPI_COMM_WORLD);
   VERIFY2(ok, "ERROR: Material check failed\n");

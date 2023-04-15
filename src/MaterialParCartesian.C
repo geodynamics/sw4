@@ -105,6 +105,7 @@ void MaterialParCartesian::get_material(int nmd, double* xmd, int nms,
                                         vector<Sarray>& a_mu,
                                         vector<Sarray>& a_lambda) {
   SW4_MARK_FUNCTION;
+  std::cout<<"IN MaterialParCartesian::get_material\n"<<std::flush;
   double* rhop = m_rho.c_ptr();
   double* mup = m_mu.c_ptr();
   double* lambdap = m_lambda.c_ptr();

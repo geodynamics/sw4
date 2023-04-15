@@ -2315,7 +2315,7 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
 void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
   SW4_MARK_FUNCTION;
   if (topographyExists()) {
-    const int nc = 3;
+    const int nc = a_U[0].m_nc;
     int g = mNumberOfCartesianGrids - 1;
     int gc = g + 1;
     const int mgp = getNumberOfGhostPoints();

@@ -621,6 +621,7 @@ int EW::check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
     ok = ok && (limits[0] > 0 && limits[2] > 0 &&
                 limits[6] <= mCFLmax * mCFLmax && limits[8] > 0);
     if (!ok) {
+      cout << "rho_min = " << limits[0] << " on grid " << g << endl;
       if (limits[0] <= 0) err_code += 1;
       if (limits[2] <= 0) err_code += 2;
       if (limits[6] > mCFLmax * mCFLmax) err_code += 4;

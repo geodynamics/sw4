@@ -382,6 +382,7 @@ void MaterialParCurv::get_material(int nmd, double* xmd, int nms, double* xms,
 //-----------------------------------------------------------------------
 {
   SW4_MARK_FUNCTION;
+  std::cout<<"IN MaterialParCurv::get_material\n"<<std::flush;
 
   REQUIRE2(nmd == m_nmd && nms == m_nms,
            "ERROR in MaterialParCurv::get_material "
@@ -452,6 +453,10 @@ void MaterialParCurv::get_material(int nmd, double* xmd, int nms, double* xms,
     m_ew->communicate_array(a_mu[g], g);
     m_ew->communicate_array(a_lambda[g], g);
   }
+
+  for (int g = 0; g < m_ew->mNumberOfGrids; g++) {
+    std::cout<<m_ew->getRank()<<"RHO PRE"<<g<<" "<<a_rho[g].norm()<<"\n"<<std::flush;
+  }
   if (m_ew->mNumberOfGrids - m_ew->mNumberOfCartesianGrids > 0) {
     if (m_ew->m_gridGenerator->curviCartIsSmooth(
             m_ew->mNumberOfGrids - m_ew->mNumberOfCartesianGrids)) {
@@ -460,7 +465,12 @@ void MaterialParCurv::get_material(int nmd, double* xmd, int nms, double* xms,
       m_ew->update_curvilinear_cartesian_interface(a_lambda);
     }
   }
+
+  for (int g = 0; g < m_ew->mNumberOfGrids; g++) {
+    std::cout<<m_ew->getRank()<<"RHO POS"<<g<<" "<<a_rho[g].norm()<<"\n"<<std::flush;
+  }
 }
+
 
 //-----------------------------------------------------------------------
 void MaterialParCurv::find_lims(int ib, int ie, int iepm, int ibpp, int& ibint,
