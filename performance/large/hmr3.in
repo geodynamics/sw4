@@ -42,6 +42,7 @@ topography input=rfile zmax=2.5e3 order=3 file=/usr/workspace/wsrzd/ramesh/Proje
 
 # 1 source to make SW4 happy
 source x=50e3 y=50e3 depth=3e3 freq=2.5 type=Gaussian t0=2.4 m0=1.7e17 strike=142.1 rake=180 dip=95.6 
+#rechdf5 infile=rechdf5_input.h5 outfile=rechdf5_output.h5 downsample=10 writeEvery=50
 
 # Image output z=0
 # image z=0 mode=p file=image cycle=0

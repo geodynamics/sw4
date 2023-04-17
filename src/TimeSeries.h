@@ -65,11 +65,11 @@ class TimeSeries {
   TimeSeries(EW* a_ew, std::string fileName, std::string staName,
              receiverMode mode, bool sacFormat, bool usgsFormat,
              bool hdf5Format, std::string hdf5FileName, float_sw4 x,
-             float_sw4 y, float_sw4 z, bool topoDepth, sw4_type writeEvery,
-             sw4_type downSample, bool xyzcomponent = true, sw4_type event = 0);
+             float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery,
+             int downSample, bool xyzcomponent = true, int event = 0);
   ~TimeSeries();
 
-  void allocateRecordingArrays(sw4_type numberOfTimeSteps, float_sw4 startTime,
+  void allocateRecordingArrays(int numberOfTimeSteps, float_sw4 startTime,
                                float_sw4 timeStep);
 
   void recordData(vector<float_sw4>& u);
@@ -81,14 +81,14 @@ class TimeSeries {
 
   float_sw4** getRecordingArray() { return mRecordedSol; }
 
-  sw4_type getNsteps() const { return mLastTimeStep + 1; }
-  sw4_type getDownSample() const { return mDownSample; }
+  int getNsteps() const { return mLastTimeStep + 1; }
+  int getDownSample() const { return mDownSample; }
 
   bool myPoint() { return m_myPoint; }
 
   receiverMode getMode() { return m_mode; }
 
-  sw4_type getUseHDF5() { return m_hdf5Format; }
+  int getUseHDF5() { return m_hdf5Format; }
 
   float_sw4 getX() const { return mX; }
   float_sw4 getY() const { return mY; }
@@ -101,7 +101,7 @@ class TimeSeries {
 
   float_sw4 getMshift() const { return m_shift; }
 
-  sw4_type getMUTC(sw4_type i) const { return m_utc[i]; }
+  int getMUTC(int i) const { return m_utc[i]; }
 
   /* float_sw4 getEpiTimeOffset() const {return m_epi_time_offset;} */
 
@@ -114,24 +114,24 @@ class TimeSeries {
                    float_sw4& ddshift, float_sw4& dd1shift);
   float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff);
 
-  void interpolate(TimeSeries& sw4_typepfrom);
+  void interpolate(TimeSeries& intpfrom);
 
-  void use_as_forcing(sw4_type n, std::vector<Sarray>& f, std::vector<float_sw4>& h,
+  void use_as_forcing(int n, std::vector<Sarray>& f, std::vector<float_sw4>& h,
                       float_sw4 dt, Sarray& Jac, bool topography_exists);
 
   float_sw4 product(TimeSeries& ts) const;
   float_sw4 product_wgh(TimeSeries& ts) const;
 
-  // void reset_utc( sw4_type utc[7] );
+  // void reset_utc( int utc[7] );
   void set_utc_to_simulation_utc();
   void filter_data(Filter* filter_ptr);
-  void prsw4_type_timeinfo() const;
+  void print_timeinfo() const;
   void set_window(float_sw4 winl, float_sw4 winr);
   void exclude_component(bool usex, bool usey, bool usez);
   void readSACfiles(EW* ew, const char* sac1, const char* sac2,
                     const char* sac3, bool ignore_utc);
   void isRestart();
-  void doRestart(EW* ew, bool ignore_utc, float_sw4 shift, sw4_type beginCycle);
+  void doRestart(EW* ew, bool ignore_utc, float_sw4 shift, int beginCycle);
   void set_shift(float_sw4 shift);
   float_sw4 get_shift() const;
   void add_shift(float_sw4 shift);
@@ -153,17 +153,17 @@ class TimeSeries {
   int m_grid0;
 
 #ifdef USE_HDF5
-  sw4_type getNsteps() { return m_nsteps; };
-  void setNsteps(sw4_type nsteps) { m_nsteps = nsteps; };
-  sw4_type allocFid();
+  int getNsteps() { return m_nsteps; };
+  void setNsteps(int nsteps) { m_nsteps = nsteps; };
+  int allocFid();
   void setFidPtr(hid_t* fid) { m_fid_ptr = fid; };
   void setTS0Ptr(TimeSeries* ptr) { m_ts0Ptr = ptr; };
   hid_t* getFidPtr() { return m_fid_ptr; };
-  sw4_type closeHDF5File();
+  int closeHDF5File();
   void resetHDF5file();
   void readSACHDF5(EW* ew, string FileName, bool ignore_utc);
   hid_t openHDF5File(std::string suffix);
-  void write_hdf5_format(sw4_type npts, hid_t loc, float* y, float btime, float dt,
+  void write_hdf5_format(int npts, hid_t loc, float* y, float btime, float dt,
                          char* var, float cmpinc, float cmpaz,
                          bool makeCopy = false, bool isLast = false);
   double getWriteTime() { return m_writeTime; };
@@ -175,20 +175,20 @@ class TimeSeries {
   TimeSeries();
 
   void write_usgs_format(string a_fileName);
-  void write_sac_format(sw4_type npts, char* ofile, float* y, float btime, float dt,
+  void write_sac_format(int npts, char* ofile, float* y, float btime, float dt,
                         char* var, float cmpinc, float cmpaz,
                         bool makeCopy = false);
   float_sw4 utc_distance(int utc1[7], int utc2[7]);
-  void dayinc(sw4_type date[7]);
-  sw4_type lastofmonth(sw4_type year, sw4_type month);
-  sw4_type utccompare(sw4_type utc1[7], sw4_type utc2[7]);
-  sw4_type leap_second_correction(sw4_type utc1[7], sw4_type utc2[7]);
+  void dayinc(int date[7]);
+  int lastofmonth(int year, int month);
+  int utccompare(int utc1[7], int utc2[7]);
+  int leap_second_correction(int utc1[7], int utc2[7]);
 
   void readSACheader(const char* fname, float_sw4& dt, float_sw4& t0,
                      float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-                     float_sw4& cmpinc, sw4_type utc[7], sw4_type& npts);
-  void readSACdata(const char* fname, sw4_type npts, float_sw4* u);
-  void convertjday(sw4_type jday, sw4_type year, sw4_type& day, sw4_type& month);
+                     float_sw4& cmpinc, int utc[7], int& npts);
+  void readSACdata(const char* fname, int npts, float_sw4* u);
+  void convertjday(int jday, int year, int& day, int& month);
   void getwgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6],
               float_sw4 ddwgh[6]);
   void getwgh5(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6],
@@ -200,7 +200,7 @@ class TimeSeries {
                  float_sw4** adjsrc = NULL);
 
   receiverMode m_mode;
-  sw4_type m_nComp;
+  int m_nComp;
 
   bool m_myPoint;  // set to true if this processor writes to the arrays
 
@@ -211,8 +211,8 @@ class TimeSeries {
 
   bool m_zRelativeToTopography;  // location is given relative to topography
 
-  sw4_type mWriteEvery;
-  sw4_type mDownSample;
+  int mWriteEvery;
+  int mDownSample;
 
   bool m_usgsFormat, m_sacFormat, m_hdf5Format;
   string m_path;
@@ -221,10 +221,10 @@ class TimeSeries {
   float_sw4 m_t0, m_shift, m_dt;
 
   // size of recording arrays
-  sw4_type mAllocatedSize;
+  int mAllocatedSize;
 
   // index of last recorded element
-  sw4_type mLastTimeStep;
+  int mLastTimeStep;
 
   // recording arrays
   float_sw4** mRecordedSol;
@@ -235,7 +235,7 @@ class TimeSeries {
   // bool mIgnore;
 
   // sac header data
-  sw4_type mEventYear, mEventMonth, mEventDay, mEventHour, mEventMinute;
+  int mEventYear, mEventMonth, mEventDay, mEventHour, mEventMinute;
   float_sw4 mEventSecond, m_rec_lat, m_rec_lon, m_rec_gp_lat, m_rec_gp_lon;
   float_sw4 m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_x_azimuth;
 
@@ -255,7 +255,7 @@ class TimeSeries {
   bool m_xyzcomponent;
   float_sw4 m_calpha, m_salpha, m_thxnrm, m_thynrm;
 
-  sw4_type m_misfit_scaling;
+  int m_misfit_scaling;
 
   bool m_compute_scalefactor;
   float_sw4 m_scalefactor;
@@ -279,7 +279,7 @@ class TimeSeries {
   EW* m_ew;
 
   // Event no. (in case of multiple events)
-  sw4_type m_event;
+  int m_event;
 
 // HDF5 file id for all SAC data
 #ifdef USE_HDF5
@@ -287,8 +287,8 @@ class TimeSeries {
   hid_t* m_fid_ptr;
   bool m_isMetaWritten;
   bool m_isIncAzWritten;
-  sw4_type m_nptsWritten;
-  sw4_type m_nsteps;
+  int m_nptsWritten;
+  int m_nsteps;
   std::string m_fidName;
   TimeSeries* m_ts0Ptr;
   double m_writeTime;

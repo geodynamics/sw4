@@ -52,15 +52,15 @@
 
 using namespace std;
 
-void parsedate(char* datestr, sw4_type& year, sw4_type& month, sw4_type& day, sw4_type& hour,
-               sw4_type& minute, sw4_type& second, sw4_type& msecond, sw4_type& fail);
+void parsedate(char* datestr, int& year, int& month, int& day, int& hour,
+               int& minute, int& second, int& msecond, int& fail);
 
 TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
                        receiverMode mode, bool sacFormat, bool usgsFormat,
                        bool hdf5Format, std::string hdf5FileName, float_sw4 x,
                        float_sw4 y, float_sw4 depth, bool topoDepth,
-                       sw4_type writeEvery, sw4_type downSample, bool xyzcomponent,
-                       sw4_type event)
+                       int writeEvery, int downSample, bool xyzcomponent,
+                       int event)
     : m_ew(a_ew),
       m_mode(mode),
       m_nComp(0),
@@ -170,12 +170,12 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   MPI_Allreduce(&iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   a_ew->get_utc(m_utc, m_event);
-  //   sw4_type size;
+  //   int size;
   //   MPI_Comm_size(MPI_COMM_WORLD,&size);
-  //   std::vector<sw4_type> whoIsOne(size);
-  //   sw4_type counter = 0;
-  //   MPI_Allgather(&iwrite, 1, MPI_SW4_TYPE, &whoIsOne[0], 1, MPI_SW4_TYPE,
-  //   MPI_COMM_WORLD ); for (unsigned sw4_type i = 0; i < whoIsOne.size(); ++i)
+  //   std::vector<int> whoIsOne(size);
+  //   int counter = 0;
+  //   MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,
+  //   MPI_COMM_WORLD ); for (unsigned int i = 0; i < whoIsOne.size(); ++i)
   //      if (whoIsOne[i] == 1)
   //	 counter++;
 
@@ -192,7 +192,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   // evaluate z-coordinate of topography
   // float_sw4 q, r, s;
   // if (a_ew->topographyExists()) {
-  //   sw4_type gCurv = a_ew->mNumberOfGrids - 1;
+  //   int gCurv = a_ew->mNumberOfGrids - 1;
   //   float_sw4 h = a_ew->mGridSize[gCurv];
   //   q = mX / h + 1.0;
   //   r = mY / h + 1.0;
@@ -240,10 +240,10 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   //   if (a_ew->invert_curvilinear_grid_mapping(
   //           mX, mY, mZ, q, r, s))  // the inversion was successful
   //   {
-  //     m_k0 = (sw4_type)floor(s);
+  //     m_k0 = (int)floor(s);
   //     if (s - (m_k0 + 0.5) > 0.) m_k0++;
-  //     m_k0 = max(a_ew->m_kStartSw4_Type[m_grid0], m_k0);
-  //     sw4_type Nz = a_ew->m_kEndSw4_Type[m_grid0];
+  //     m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
+  //     int Nz = a_ew->m_kEndInt[m_grid0];
   //     m_k0 = min(Nz, m_k0);
   //   } else {
   //     cerr << "Can't invert curvilinear grid mapping for recevier station"
@@ -305,13 +305,13 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
 
   // allocate handles to solution array pointers
   mRecordedSol = new float_sw4*[m_nComp];
-  for (sw4_type q = 0; q < m_nComp; q++)
+  for (int q = 0; q < m_nComp; q++)
     mRecordedSol[q] = static_cast<float_sw4*>(0);
 
   // keep a copy for saving on a sac file
   if (m_sacFormat || m_hdf5Format) {
     mRecordedFloats = new float*[m_nComp];
-    for (sw4_type q = 0; q < m_nComp; q++)
+    for (int q = 0; q < m_nComp; q++)
       mRecordedFloats[q] = static_cast<float*>(0);
   } else
     mRecordedFloats = static_cast<float**>(0);
@@ -361,14 +361,14 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
 TimeSeries::~TimeSeries() {
   // deallocate the recording arrays
   if (mRecordedSol) {
-    for (sw4_type q = 0; q < m_nComp; q++) {
+    for (int q = 0; q < m_nComp; q++) {
       if (mRecordedSol[q]) delete[] mRecordedSol[q];
     }
     delete[] mRecordedSol;
   }
 
   if (mRecordedFloats) {
-    for (sw4_type q = 0; q < m_nComp; q++) {
+    for (int q = 0; q < m_nComp; q++) {
       if (mRecordedFloats[q]) delete[] mRecordedFloats[q];
     }
     delete[] mRecordedFloats;
@@ -376,20 +376,20 @@ TimeSeries::~TimeSeries() {
 }
 
 //--------------------------------------------------------------
-void TimeSeries::allocateRecordingArrays(sw4_type numberOfTimeSteps,
+void TimeSeries::allocateRecordingArrays(int numberOfTimeSteps,
                                          float_sw4 startTime,
                                          float_sw4 timeStep) {
   if (!m_myPoint) return;  // only one processor saves each time series
   if (numberOfTimeSteps > 0) {
     mAllocatedSize = numberOfTimeSteps + 1;
     mLastTimeStep = -1;
-    for (sw4_type q = 0; q < m_nComp; q++) {
+    for (int q = 0; q < m_nComp; q++) {
       if (mRecordedSol[q]) delete[] mRecordedSol[q];
       mRecordedSol[q] = new float_sw4[mAllocatedSize];
     }
 
     if (m_sacFormat || m_hdf5Format) {
-      for (sw4_type q = 0; q < m_nComp; q++) {
+      for (int q = 0; q < m_nComp; q++) {
         if (mRecordedFloats[q]) delete[] mRecordedFloats[q];
         mRecordedFloats[q] = new float[mAllocatedSize];
       }
@@ -411,7 +411,7 @@ void TimeSeries::recordData(vector<float_sw4>& u) {
     printf(
         "Error: TimeSeries::recordData: passing a vector of size=%i but "
         "nComp=%i\n",
-        (sw4_type)u.size(), m_nComp);
+        (int)u.size(), m_nComp);
     return;
   }
 
@@ -425,9 +425,9 @@ void TimeSeries::recordData(vector<float_sw4>& u) {
   if (mLastTimeStep < mAllocatedSize) {
     //      if( m_xyzcomponent || (m_nComp != 3) )
     //      {
-    for (sw4_type q = 0; q < m_nComp; q++) mRecordedSol[q][mLastTimeStep] = u[q];
+    for (int q = 0; q < m_nComp; q++) mRecordedSol[q][mLastTimeStep] = u[q];
     if (m_sacFormat || m_hdf5Format) {
-      for (sw4_type q = 0; q < m_nComp; q++)
+      for (int q = 0; q < m_nComp; q++)
         mRecordedFloats[q][mLastTimeStep] = (float)u[q];
     }
     // AP: The transformation to east-north-up components is now done just
@@ -492,7 +492,7 @@ void TimeSeries::writeFile(string suffix) {
   std::string h5fname, fidName;
   hid_t fid, grp = 0;
   double stlalodp[3], stxyz[3];
-  float origsw4_typeime;
+  float origintime;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -526,8 +526,8 @@ void TimeSeries::writeFile(string suffix) {
         stxyz[2] = double(m_sta_z);
         openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
 
-        origsw4_typeime = float(m_epi_time_offset);
-        openWriteAttr(fid, "ORIGSW4_TYPEIME", H5T_NATIVE_FLOAT, &origsw4_typeime);
+        origintime = float(m_epi_time_offset);
+        openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
 
         m_isMetaWritten = true;
       }
@@ -809,7 +809,7 @@ void TimeSeries::writeFile(string suffix) {
         geographic[1] = new float[mLastTimeStep + 1];
         geographic[2] = new float[mLastTimeStep + 1];
 #pragma omp parallel for
-        for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+        for (int i = 0; i <= mLastTimeStep; i++) {
           geographic[1][i] = m_thynrm * mRecordedFloats[0][i] -
                              m_thxnrm * mRecordedFloats[1][i];  // ns
           geographic[0][i] = m_salpha * mRecordedFloats[0][i] +
@@ -1061,7 +1061,7 @@ void TimeSeries::writeFileUSGS(string suffix) {
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float btime,
+void TimeSeries::write_sac_format(int npts, char* ofile, float* y, float btime,
                                   float dt, char* var, float cmpinc,
                                   float cmpaz, bool makeCopy /*=false*/) {
   /*
@@ -1078,7 +1078,7 @@ void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float bt
   */
   float e;
   float depmax, depmin, depmen;
-  sw4_type* nerr = 0;
+  int* nerr = 0;
   // assign all names in a string array
   //               0         1         2         3          4         5 6 7 8 9
   const char* nm[] = {
@@ -1110,8 +1110,8 @@ void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float bt
   // setup time info
   //  if( m_utc_set )
   //  {
-  sw4_type days = 0;
-  for (sw4_type m = 1; m < m_utc[1]; m++) days += lastofmonth(m_utc[0], m);
+  int days = 0;
+  for (int m = 1; m < m_utc[1]; m++) days += lastofmonth(m_utc[0], m);
   days += m_utc[2];
 
   setnhv(nm[10], m_utc[0], nerr);
@@ -1127,7 +1127,7 @@ void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float bt
   //     setnhv( nm[11], mEventDay, nerr);
   //     setnhv( nm[12], mEventHour, nerr);
   //     setnhv( nm[13], mEventMinute, nerr);
-  //     setnhv( nm[14], static_cast<sw4_type>(mEventSecond), nerr);
+  //     setnhv( nm[14], static_cast<int>(mEventSecond), nerr);
   //     setnhv( nm[15], 0, nerr);
   //  }
 
@@ -1158,7 +1158,7 @@ void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float bt
     // if the file exists, move it to a .bak before writing
     stringstream bak;
     bak << ofile << ".bak";
-    sw4_type ret = rename(ofile, bak.str().c_str());
+    int ret = rename(ofile, bak.str().c_str());
     if (ret == -1) cout << "ERROR: renaming USGS file to " << bak.str() << endl;
   }
 
@@ -1170,7 +1170,7 @@ void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float bt
 
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
-void TimeSeries::write_hdf5_format(sw4_type npts, hid_t grp, float* y, float btime,
+void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
                                    float dt, char* var, float cmpinc,
                                    float cmpaz, bool makeCopy /*=false*/,
                                    bool isLast /*=false*/) {
@@ -1179,8 +1179,8 @@ void TimeSeries::write_hdf5_format(sw4_type npts, hid_t grp, float* y, float bti
   /* double stime, etime; */
 
   hsize_t start, count;
-  sw4_type ret = 1;
-  sw4_type write_npts;
+  int ret = 1;
+  int write_npts;
   float* write_data;
 
   /* stime = MPI_Wtime(); */
@@ -1189,9 +1189,9 @@ void TimeSeries::write_hdf5_format(sw4_type npts, hid_t grp, float* y, float bti
   write_data = y;
 
   if (mDownSample > 1) {
-    write_npts = (sw4_type)npts / mDownSample;
+    write_npts = (int)npts / mDownSample;
     write_data = new float[write_npts];
-    for (sw4_type i = 0; i < write_npts; i++) write_data[i] = y[i * mDownSample];
+    for (int i = 0; i < write_npts; i++) write_data[i] = y[i * mDownSample];
   }
 
   // write only new data
@@ -1217,7 +1217,7 @@ void TimeSeries::write_hdf5_format(sw4_type npts, hid_t grp, float* y, float bti
   if (mDownSample > 1) delete[] write_data;
 
   /* etime = MPI_Wtime(); */
-  /* sw4_type myRank; */
+  /* int myRank; */
   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
   /* printf("Rank %d: [%s], write_npts=%d, time=%f\n", myRank, var, count,
    * etime-stime); */
@@ -1315,16 +1315,16 @@ void TimeSeries::write_usgs_format(string a_fileName) {
     // write the data
 
     if (m_xyzcomponent || (!m_xyzcomponent && m_mode == Div)) {
-      for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+      for (int i = 0; i <= mLastTimeStep; i++) {
         fprintf(fd, "%e", m_shift + i * m_dt);
-        for (sw4_type q = 0; q < m_nComp; q++)
+        for (int q = 0; q < m_nComp; q++)
           // AP (not always enough resolution)	    fprintf(fd, " %20.12g",
           // mRecordedSol[q][i]);
           fprintf(fd, " %24.17e", mRecordedSol[q][i]);
         fprintf(fd, "\n");
       }
     } else if (m_mode == Displacement || m_mode == Velocity) {
-      for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+      for (int i = 0; i <= mLastTimeStep; i++) {
         fprintf(fd, "%e", m_shift + i * m_dt);
         float_sw4 uns =
             m_thynrm * mRecordedSol[0][i] - m_thxnrm * mRecordedSol[1][i];
@@ -1379,11 +1379,11 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
            << std::flush;
       abort();
     } else {
-      sw4_type bufsize = 1024;
+      int bufsize = 1024;
       char* buf = new char[bufsize];
 
       // Read header
-      for (sw4_type line = 0; line < 13; line++) {
+      for (int line = 0; line < 13; line++) {
         fgets(buf, bufsize, fd);
         if (line == 2 && !ignore_utc) {
           // set UTC time, if defined in file
@@ -1405,11 +1405,11 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
               int utcrefsim[7];
               m_ew->get_utc(utcrefsim, m_event);
               //		     cout << "UTC from EW : ";
-              //		     for( sw4_type c=0;c<7;c++ )
+              //		     for( int c=0;c<7;c++ )
               //			cout << utcrefsim[c] << " " ;
               //		     cout << endl;
               //		     cout << "UTC from file : ";
-              //		     for( sw4_type c=0;c<7;c++ )
+              //		     for( int c=0;c<7;c++ )
               //			cout << m_utc[c] << " " ;
               //		     cout << endl;
               m_t0 = utc_distance(utcrefsim, m_utc);
@@ -1417,7 +1417,7 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
             delete[] utcstr;
             if (debug) {
               cout << "found observation utc time ";
-              for (sw4_type u = 0; u < 7; u++) cout << m_utc[u] << " ";
+              for (int u = 0; u < 7; u++) cout << m_utc[u] << " ";
               cout << endl;
             }
           }
@@ -1448,7 +1448,7 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
           cout << "components " << endl;
         }
         float_sw4 tstart, dt, td, ux, uy, uz;
-        sw4_type nlines = 0;
+        int nlines = 0;
         if (fscanf(fd, "%le %le %le %le", &tstart, &ux, &uy, &uz) != EOF)
           nlines++;
         if (fscanf(fd, "%le %le %le %le", &dt, &ux, &uy, &uz) != EOF) nlines++;
@@ -1469,7 +1469,7 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
                << " could not be reopened" << endl;
 
         // Read past header
-        for (sw4_type line = 0; line < 13; line++) fgets(buf, bufsize, fd);
+        for (int line = 0; line < 13; line++) fgets(buf, bufsize, fd);
         // Mapping to invert (e,n) to (x,y) components, Only needed in the
         // non-cartesian case.
         float_sw4 deti = 1.0 / (m_thynrm * m_calpha + m_thxnrm * m_salpha);
@@ -1480,8 +1480,8 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
         // Read the data on file
         if (debug)
           cout << "Found " << nlines << " lines of observation data " << endl;
-        for (sw4_type line = 0; line < nlines; line++) {
-          sw4_type nr = fscanf(fd, "%lf %lf %lf %lf \n", &tstart, &ux, &uy, &uz);
+        for (int line = 0; line < nlines; line++) {
+          int nr = fscanf(fd, "%lf %lf %lf %lf \n", &tstart, &ux, &uy, &uz);
           //               cout << "nr = " << nr << " tstart " << tstart << " ux
           //               " << ux << " uy " << uy << " uz " << uz << endl;
           if (nr != 4) {
@@ -1517,19 +1517,19 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::interpolate(TimeSeries& sw4_typepfrom) {
+void TimeSeries::interpolate(TimeSeries& intpfrom) {
   // Interpolate data to the grid in this object
-  sw4_type order = 4;
+  int order = 4;
 
-  float_sw4 dtfr = sw4_typepfrom.m_dt;
-  float_sw4 t0fr = sw4_typepfrom.m_t0 + sw4_typepfrom.m_shift;
-  sw4_type nfrsteps = sw4_typepfrom.mLastTimeStep + 1;
-  for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+  float_sw4 dtfr = intpfrom.m_dt;
+  float_sw4 t0fr = intpfrom.m_t0 + intpfrom.m_shift;
+  int nfrsteps = intpfrom.mLastTimeStep + 1;
+  for (int i = 0; i <= mLastTimeStep; i++) {
     float_sw4 t = m_t0 + m_shift + i * m_dt;
     float_sw4 ir = (t - t0fr) / dtfr;
-    sw4_type ie = static_cast<sw4_type>(ir);
-    sw4_type mmin = ie - order / 2 + 1;
-    sw4_type mmax = ie + order / 2;
+    int ie = static_cast<int>(ir);
+    int mmin = ie - order / 2 + 1;
+    int mmax = ie + order / 2;
     if (m_usgsFormat)
       mRecordedSol[0][i] = mRecordedSol[1][i] = mRecordedSol[2][i] = 0;
     else
@@ -1540,7 +1540,7 @@ void TimeSeries::interpolate(TimeSeries& sw4_typepfrom) {
       return;
     }
 
-    // If too far past the end of sw4_typepfrom, extrapolate constant value
+    // If too far past the end of intpfrom, extrapolate constant value
     if (ie > nfrsteps + order / 2) {
       if (m_usgsFormat) {
         mRecordedSol[0][i] = mRecordedSol[0][i - 1];
@@ -1552,19 +1552,19 @@ void TimeSeries::interpolate(TimeSeries& sw4_typepfrom) {
         mRecordedFloats[2][i] = mRecordedFloats[2][i - 1];
       }
     } else if (ie < 1) {
-      // Before start of sw4_typepfrom, use first value
+      // Before start of intpfrom, use first value
       if (m_usgsFormat) {
-        mRecordedSol[0][i] = sw4_typepfrom.mRecordedSol[0][0];
-        mRecordedSol[1][i] = sw4_typepfrom.mRecordedSol[1][0];
-        mRecordedSol[2][i] = sw4_typepfrom.mRecordedSol[2][0];
+        mRecordedSol[0][i] = intpfrom.mRecordedSol[0][0];
+        mRecordedSol[1][i] = intpfrom.mRecordedSol[1][0];
+        mRecordedSol[2][i] = intpfrom.mRecordedSol[2][0];
       } else {
-        mRecordedFloats[0][i] = sw4_typepfrom.mRecordedFloats[0][0];
-        mRecordedFloats[1][i] = sw4_typepfrom.mRecordedFloats[1][0];
-        mRecordedFloats[2][i] = sw4_typepfrom.mRecordedFloats[2][0];
+        mRecordedFloats[0][i] = intpfrom.mRecordedFloats[0][0];
+        mRecordedFloats[1][i] = intpfrom.mRecordedFloats[1][0];
+        mRecordedFloats[2][i] = intpfrom.mRecordedFloats[2][0];
       }
 
     } else {
-      sw4_type off;
+      int off;
       if (mmin < 1) {
         off = 1 - mmin;
         mmin = mmin + off;
@@ -1575,27 +1575,27 @@ void TimeSeries::interpolate(TimeSeries& sw4_typepfrom) {
         mmin = mmin - off;
         mmax = mmax - off;
       }
-      for (sw4_type m = mmin; m <= mmax; m++) {
+      for (int m = mmin; m <= mmax; m++) {
         float_sw4 cof = 1;
-        for (sw4_type k = mmin; k <= mmax; k++)
+        for (int k = mmin; k <= mmax; k++)
           if (k != m) cof *= (ir - k) / (m - k);
 
-        if (m_usgsFormat && sw4_typepfrom.m_usgsFormat) {
-          mRecordedSol[0][i] += cof * sw4_typepfrom.mRecordedSol[0][m];
-          mRecordedSol[1][i] += cof * sw4_typepfrom.mRecordedSol[1][m];
-          mRecordedSol[2][i] += cof * sw4_typepfrom.mRecordedSol[2][m];
-        } else if (m_usgsFormat && !sw4_typepfrom.m_usgsFormat) {
-          mRecordedSol[0][i] += cof * sw4_typepfrom.mRecordedFloats[0][m];
-          mRecordedSol[1][i] += cof * sw4_typepfrom.mRecordedFloats[1][m];
-          mRecordedSol[2][i] += cof * sw4_typepfrom.mRecordedFloats[2][m];
-        } else if (!m_usgsFormat && sw4_typepfrom.m_usgsFormat) {
-          mRecordedFloats[0][i] += cof * sw4_typepfrom.mRecordedSol[0][m];
-          mRecordedFloats[1][i] += cof * sw4_typepfrom.mRecordedSol[1][m];
-          mRecordedFloats[2][i] += cof * sw4_typepfrom.mRecordedSol[2][m];
-        } else if (!m_usgsFormat && !sw4_typepfrom.m_usgsFormat) {
-          mRecordedFloats[0][i] += cof * sw4_typepfrom.mRecordedFloats[0][m];
-          mRecordedFloats[1][i] += cof * sw4_typepfrom.mRecordedFloats[1][m];
-          mRecordedFloats[2][i] += cof * sw4_typepfrom.mRecordedFloats[2][m];
+        if (m_usgsFormat && intpfrom.m_usgsFormat) {
+          mRecordedSol[0][i] += cof * intpfrom.mRecordedSol[0][m];
+          mRecordedSol[1][i] += cof * intpfrom.mRecordedSol[1][m];
+          mRecordedSol[2][i] += cof * intpfrom.mRecordedSol[2][m];
+        } else if (m_usgsFormat && !intpfrom.m_usgsFormat) {
+          mRecordedSol[0][i] += cof * intpfrom.mRecordedFloats[0][m];
+          mRecordedSol[1][i] += cof * intpfrom.mRecordedFloats[1][m];
+          mRecordedSol[2][i] += cof * intpfrom.mRecordedFloats[2][m];
+        } else if (!m_usgsFormat && intpfrom.m_usgsFormat) {
+          mRecordedFloats[0][i] += cof * intpfrom.mRecordedSol[0][m];
+          mRecordedFloats[1][i] += cof * intpfrom.mRecordedSol[1][m];
+          mRecordedFloats[2][i] += cof * intpfrom.mRecordedSol[2][m];
+        } else if (!m_usgsFormat && !intpfrom.m_usgsFormat) {
+          mRecordedFloats[0][i] += cof * intpfrom.mRecordedFloats[0][m];
+          mRecordedFloats[1][i] += cof * intpfrom.mRecordedFloats[1][m];
+          mRecordedFloats[2][i] += cof * intpfrom.mRecordedFloats[2][m];
         }
       }
     }
@@ -1631,13 +1631,13 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
   dd1shift = 0;
   if (m_myPoint) {
     // Interpolate data to this object
-    //      sw4_type order = 4;
+    //      int order = 4;
     float_sw4 scale_factor = 0;
 
     float_sw4 mf[3], dmf[3], ddmf[3];
     float_sw4 dtfr = observed.m_dt;
     float_sw4 t0fr = observed.m_t0 + observed.m_shift;
-    sw4_type nfrsteps = observed.mLastTimeStep + 1;
+    int nfrsteps = observed.mLastTimeStep + 1;
 
     bool compute_difference = (diff != NULL);
     float_sw4** misfitsource;
@@ -1660,8 +1660,8 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
     // Weight to ramp down the end of misfit.
     float_sw4 wghv;
-    sw4_type p = 20;      // Number of points in ramp;
-    sw4_type istart = 1;  // Starting index for downward ramp.
+    int p = 20;      // Number of points in ramp;
+    int istart = 1;  // Starting index for downward ramp.
     if (mLastTimeStep - p + 1 > 1) istart = mLastTimeStep - p + 1;
 
     //      cout << "in misfit, " ;
@@ -1682,7 +1682,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
     //      cout << "in misfit last step = " << mLastTimeStep << " m_t0= " <<
     //      m_t0 << " m_shift = " << m_shift << endl; cout << "in misfit t0fr= =
     //      " << t0fr << endl;
-    for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+    for (int i = 0; i <= mLastTimeStep; i++) {
       wghv = 1;
       if (i >= istart) {
         float_sw4 arg = (mLastTimeStep - i) / (p - 1.0);
@@ -1692,11 +1692,11 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
       float_sw4 t = m_t0 + m_shift + i * m_dt;
       float_sw4 ir = (t - t0fr) / dtfr;
-      sw4_type ie = static_cast<sw4_type>(ir);
-      //	 sw4_type mmin = ie-order/2+1;
-      //	 sw4_type mmax = ie+order/2;
-      sw4_type mmin = ie - 2;
-      sw4_type mmax = ie + 3;
+      int ie = static_cast<int>(ir);
+      //	 int mmin = ie-order/2+1;
+      //	 int mmax = ie+order/2;
+      int mmin = ie - 2;
+      int mmax = ie + 3;
       if (mmax - mmin + 1 > nfrsteps) {
         cout << "Error in TimeSeries::misfit : Can not interpolate, "
              << "because the grid is too coarse " << endl;
@@ -1734,7 +1734,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
         mf[0] = mf[1] = mf[2] = 0;
         dmf[0] = dmf[1] = dmf[2] = 0;
         ddmf[0] = ddmf[1] = ddmf[2] = 0;
-        //	    sw4_type off;
+        //	    int off;
         //	    if( mmin < 1 )
         //	    {
         //	       off = 1-mmin;
@@ -1767,7 +1767,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
         float_sw4 idtfr = 1 / dtfr;
         float_sw4 idtfr2 = idtfr * idtfr;
-        for (sw4_type m = mmin; m <= mmax; m++) {
+        for (int m = mmin; m <= mmax; m++) {
           if (observed.m_usgsFormat) {
             mf[0] += wgh[m - mmin] * observed.mRecordedSol[0][m];
             mf[1] += wgh[m - mmin] * observed.mRecordedSol[1][m];
@@ -1859,7 +1859,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
       float_sw4 iscale = 1 / scale_factor;
       misfit *= iscale;
       if (compute_difference)
-        for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+        for (int i = 0; i <= mLastTimeStep; i++) {
           misfitsource[0][i] *= iscale;
           misfitsource[1][i] *= iscale;
           misfitsource[2][i] *= iscale;
@@ -1876,13 +1876,13 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
   if (m_myPoint) {
     //       dbg = m_staName == "FAKE.51";
     // 1. Evaluate correlation at some time shifts around zero
-    sw4_type noptpt = 40;
+    int noptpt = 40;
     float_sw4 tlim = 2, fmax = -1e38, tmax = 0;
     float_sw4 f, df, ddf;
     if (dbg)
       cout << m_event << "Compute maxshift \n 1. scan through time points "
            << endl;
-    for (sw4_type n = 0; n < noptpt; n++) {
+    for (int n = 0; n < noptpt; n++) {
       float_sw4 tshift = -tlim + n * 2 * tlim / (noptpt - 1);
       shiftfunc(observed, tshift, f, df, ddf);
       if (f > fmax) {
@@ -1893,7 +1893,7 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
     }
     // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) =
     // 0
-    sw4_type maxit = 10, it = 0;
+    int maxit = 10, it = 0;
     float_sw4 tol = 1e-12;
     float_sw4 err = tol + 1;
     float_sw4 t1 = tmax;
@@ -1940,7 +1940,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
   float_sw4 idtfr2 = idtfr * idtfr;
 
   float_sw4 t0fr = observed.m_t0 + observed.m_shift;
-  sw4_type nfrsteps = observed.mLastTimeStep + 1;
+  int nfrsteps = observed.mLastTimeStep + 1;
 
   float_sw4 mf[3], dmf[3], ddmf[3];
   func = dfunc = ddfunc = 0;
@@ -1955,10 +1955,10 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
 
   // Weight to ramp down the end of misfit.
   float_sw4 wghv;
-  sw4_type p = 20;      // Number of points in ramp;
-  sw4_type istart = 1;  // Starting index for downward ramp.
+  int p = 20;      // Number of points in ramp;
+  int istart = 1;  // Starting index for downward ramp.
   if (mLastTimeStep - p + 1 > 1) istart = mLastTimeStep - p + 1;
-  for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+  for (int i = 0; i <= mLastTimeStep; i++) {
     wghv = 1;
     if (i >= istart) {
       float_sw4 arg = (mLastTimeStep - i) / (p - 1.0);
@@ -1970,9 +1970,9 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     // Here t is t_n+tshift, t_n is time in this object.
     //   ir is grid point index in observed object that correspond to t_n+tshift
     //  need to evaluate the observed data at this grid point.
-    sw4_type ie = static_cast<sw4_type>(ir);
-    sw4_type mmin = ie - 2;
-    sw4_type mmax = ie + 3;
+    int ie = static_cast<int>(ir);
+    int mmin = ie - 2;
+    int mmax = ie + 3;
     if (mmax - mmin + 1 > nfrsteps) {
       cout << "Error in TimeSeries::shiftfunc : Can not interpolate, "
            << "because the grid is too coarse " << endl;
@@ -2016,7 +2016,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
         ai = ir - (mmin + 2);
         getwgh(ai, wgh, dwgh, ddwgh);
       }
-      for (sw4_type m = mmin; m <= mmax; m++) {
+      for (int m = mmin; m <= mmax; m++) {
         // Window observed data
         float_sw4 wghxobs, wghyobs, wghzobs;
         wghxobs = wghyobs = wghzobs = 1;
@@ -2100,7 +2100,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
   }
   if (compute_adjsrc) {
     float_sw4 iddf = 1 / ddfunc;
-    for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+    for (int i = 0; i <= mLastTimeStep; i++) {
       adjsrc[0][i] *= iddf;
       adjsrc[1][i] *= iddf;
       adjsrc[2][i] *= iddf;
@@ -2175,7 +2175,7 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
   //   retval->m_xyzcomponent = m_xyzcomponent;
 
   // UTC time reference point:
-  for (sw4_type c = 0; c < 7; c++) retval->m_utc[c] = m_utc[c];
+  for (int c = 0; c < 7; c++) retval->m_utc[c] = m_utc[c];
 
   // windows and exclusions
   retval->m_use_win = m_use_win;
@@ -2189,24 +2189,24 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
       // Overwrite pointers, don't want to copy them.
       retval->mRecordedFloats = new float*[m_nComp];
       if (mAllocatedSize > 0) {
-        for (sw4_type q = 0; q < m_nComp; q++)
+        for (int q = 0; q < m_nComp; q++)
           retval->mRecordedFloats[q] = new float[mAllocatedSize];
-        for (sw4_type q = 0; q < m_nComp; q++)
-          for (sw4_type i = 0; i < mAllocatedSize; i++)
+        for (int q = 0; q < m_nComp; q++)
+          for (int i = 0; i < mAllocatedSize; i++)
             retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
       } else {
-        for (sw4_type q = 0; q < m_nComp; q++) retval->mRecordedFloats[q] = NULL;
+        for (int q = 0; q < m_nComp; q++) retval->mRecordedFloats[q] = NULL;
       }
     } else {
       retval->mRecordedSol = new float_sw4*[m_nComp];
       if (mAllocatedSize > 0) {
-        for (sw4_type q = 0; q < m_nComp; q++)
+        for (int q = 0; q < m_nComp; q++)
           retval->mRecordedSol[q] = new float_sw4[mAllocatedSize];
-        for (sw4_type q = 0; q < m_nComp; q++)
-          for (sw4_type i = 0; i < mAllocatedSize; i++)
+        for (int q = 0; q < m_nComp; q++)
+          for (int i = 0; i < mAllocatedSize; i++)
             retval->mRecordedSol[q][i] = mRecordedSol[q][i];
       } else {
-        for (sw4_type q = 0; q < m_nComp; q++) retval->mRecordedSol[q] = NULL;
+        for (int q = 0; q < m_nComp; q++) retval->mRecordedSol[q] = NULL;
       }
     }
   }
@@ -2224,12 +2224,12 @@ float_sw4 TimeSeries::arrival_time(float_sw4 lod) {
   }
 
   float_sw4* maxes = new float_sw4[m_nComp];
-  for (sw4_type c = 0; c < m_nComp; c++) maxes[c] = 0;
+  for (int c = 0; c < m_nComp; c++) maxes[c] = 0;
 
-  sw4_type n;
+  int n;
   if (m_usgsFormat) {
-    for (sw4_type i = 0; i <= mLastTimeStep; i++)
-      for (sw4_type c = 0; c < m_nComp; c++)
+    for (int i = 0; i <= mLastTimeStep; i++)
+      for (int c = 0; c < m_nComp; c++)
         if (fabs(mRecordedSol[c][i]) > maxes[c])
           maxes[c] = fabs(mRecordedSol[c][i]);
     n = 0;
@@ -2240,8 +2240,8 @@ float_sw4 TimeSeries::arrival_time(float_sw4 lod) {
            fabs(mRecordedSol[2][n]) < maxes[2] * lod && n < mLastTimeStep)
       n++;
   } else {
-    for (sw4_type i = 0; i <= mLastTimeStep; i++)
-      for (sw4_type c = 0; c < m_nComp; c++)
+    for (int i = 0; i <= mLastTimeStep; i++)
+      for (int c = 0; c < m_nComp; c++)
         if (fabs(mRecordedFloats[c][i]) > maxes[c])
           maxes[c] = fabs(mRecordedFloats[c][i]);
     n = 0;
@@ -2256,7 +2256,7 @@ float_sw4 TimeSeries::arrival_time(float_sw4 lod) {
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::use_as_forcing(sw4_type n, std::vector<Sarray>& f,
+void TimeSeries::use_as_forcing(int n, std::vector<Sarray>& f,
                                 std::vector<float_sw4>& h, float_sw4 dt,
                                 Sarray& Jac, bool topography_exists) {
   // Use at grid point, n, in the grid of this object.
@@ -2272,7 +2272,7 @@ void TimeSeries::use_as_forcing(sw4_type n, std::vector<Sarray>& f,
     ih3 *= iwgh;
     // Compensate for  dt^4/12 factor in forward corrector step.
     ih3 *= 12 / (dt * dt);
-    //      n = static_cast<sw4_type>(round( (t-m_t0)/m_dt ));
+    //      n = static_cast<int>(round( (t-m_t0)/m_dt ));
     if (n >= 0 && n <= mLastTimeStep) {
       f[m_grid0](1, m_i0, m_j0, m_k0) -= mRecordedSol[0][n] * ih3;
       f[m_grid0](2, m_i0, m_j0, m_k0) -= mRecordedSol[1][n] * ih3;
@@ -2288,7 +2288,7 @@ float_sw4 TimeSeries::product(TimeSeries& ts) const {
   float_sw4 prod = 0;
   if (mLastTimeStep == ts.mLastTimeStep) {
 #pragma omp parallel for reduction(+ : prod)
-    for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+    for (int i = 0; i <= mLastTimeStep; i++) {
       prod += ts.mRecordedSol[0][i] * mRecordedSol[0][i] +
               ts.mRecordedSol[1][i] * mRecordedSol[1][i] +
               ts.mRecordedSol[2][i] * mRecordedSol[2][i];
@@ -2305,12 +2305,12 @@ float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
   float_sw4 prod = 0;
   if (mLastTimeStep == ts.mLastTimeStep) {
     // Weight to ramp down the end of misfit.
-    sw4_type p = 20;  // Number of points in ramp;
-    sw4_type istart = 1;
+    int p = 20;  // Number of points in ramp;
+    int istart = 1;
     if (mLastTimeStep - p + 1 > 1) istart = mLastTimeStep - p + 1;
 
 #pragma omp parallel for reduction(+ : prod)
-    for (sw4_type i = 0; i <= mLastTimeStep; i++) {
+    for (int i = 0; i <= mLastTimeStep; i++) {
       float_sw4 wghv = 1;
       if (i >= istart) {
         float_sw4 arg = (mLastTimeStep - i) / (p - 1.0);
@@ -2342,8 +2342,8 @@ float_sw4 TimeSeries::utc_distance(int utc1[7], int utc2[7]) {
   // Compute time in seconds between two [y,M,d,h,m,s,ms] times
   // returns utc2-utc1 in seconds.
 
-  sw4_type start[7], finish[7];
-  sw4_type c = 0;
+  int start[7], finish[7];
+  int c = 0;
   while (c <= 6 && utc1[c] == utc2[c]) c++;
   if (c == 7)
     // Identical times
@@ -2351,13 +2351,13 @@ float_sw4 TimeSeries::utc_distance(int utc1[7], int utc2[7]) {
   else {
     bool onesmallest;
     if (utc1[c] < utc2[c])
-      for (sw4_type k = 0; k < 7; k++) {
+      for (int k = 0; k < 7; k++) {
         start[k] = utc1[k];
         finish[k] = utc2[k];
         onesmallest = true;
       }
     else
-      for (sw4_type k = 0; k < 7; k++) {
+      for (int k = 0; k < 7; k++) {
         start[k] = utc2[k];
         finish[k] = utc1[k];
         onesmallest = false;
@@ -2375,7 +2375,7 @@ float_sw4 TimeSeries::utc_distance(int utc1[7], int utc2[7]) {
     // Convert days,min,secs, and msecs to seconds
     float_sw4 sg = 1;
     if (!onesmallest) sg = -1;
-    sw4_type ls = leap_second_correction(start, finish);
+    int ls = leap_second_correction(start, finish);
     return sg * (86400.0 * d + (finish[3] - start[3]) * 3600.0 +
                  (finish[4] - start[4]) * 60.0 + (finish[5] - start[5]) +
                  (finish[6] - start[6]) * 1e-3 + ls);
@@ -2383,7 +2383,7 @@ float_sw4 TimeSeries::utc_distance(int utc1[7], int utc2[7]) {
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::dayinc(sw4_type date[7]) {
+void TimeSeries::dayinc(int date[7]) {
   date[2]++;
   if (date[2] > lastofmonth(date[0], date[1])) {
     date[2] = 1;
@@ -2396,9 +2396,9 @@ void TimeSeries::dayinc(sw4_type date[7]) {
 }
 
 //-----------------------------------------------------------------------
-sw4_type TimeSeries::lastofmonth(sw4_type year, sw4_type month) {
-  sw4_type days;
-  sw4_type leapyear = 0;
+int TimeSeries::lastofmonth(int year, int month) {
+  int days;
+  int leapyear = 0;
   leapyear = (year % 400 == 0) || ((year % 4 == 0) && !(year % 100 == 0));
   if (month == 2)
     days = 28 + leapyear;
@@ -2410,9 +2410,9 @@ sw4_type TimeSeries::lastofmonth(sw4_type year, sw4_type month) {
 }
 
 //-----------------------------------------------------------------------
-sw4_type TimeSeries::utccompare(sw4_type utc1[7], sw4_type utc2[7]) {
-  sw4_type c = 0;
-  sw4_type retval;
+int TimeSeries::utccompare(int utc1[7], int utc2[7]) {
+  int c = 0;
+  int retval;
   while (utc1[c] == utc2[c] && c <= 6) c++;
   if (c == 7)
     retval = 0;
@@ -2426,13 +2426,13 @@ sw4_type TimeSeries::utccompare(sw4_type utc1[7], sw4_type utc2[7]) {
 }
 
 //-----------------------------------------------------------------------
-sw4_type TimeSeries::leap_second_correction(sw4_type utc1[7], sw4_type utc2[7])
+int TimeSeries::leap_second_correction(int utc1[7], int utc2[7])
 // Count the number of leap seconds between two utc times.
 {
-  sw4_type *leap_sec_y, *leap_sec_m;
-  sw4_type nls = 25;
-  leap_sec_y = new sw4_type[nls];
-  leap_sec_m = new sw4_type[nls];
+  int *leap_sec_y, *leap_sec_m;
+  int nls = 25;
+  leap_sec_y = new int[nls];
+  leap_sec_m = new int[nls];
   // Table of UTC leap seconds, added at the end of june (6) or december (12)
   leap_sec_y[0] = 1972;
   leap_sec_m[0] = 6;
@@ -2484,25 +2484,25 @@ sw4_type TimeSeries::leap_second_correction(sw4_type utc1[7], sw4_type utc2[7])
   leap_sec_m[23] = 12;
   leap_sec_y[24] = 2012;
   leap_sec_m[24] = 6;
-  sw4_type leaps[7];
+  int leaps[7];
   leaps[2] = 30;
   leaps[3] = 23;
   leaps[4] = 59;
   leaps[5] = 60;
   leaps[6] = 00;
-  sw4_type start[7], end[7];
+  int start[7], end[7];
   if (utccompare(utc1, utc2) <= 0)
-    for (sw4_type c = 0; c < 7; c++) {
+    for (int c = 0; c < 7; c++) {
       start[c] = utc1[c];
       end[c] = utc2[c];
     }
   else
-    for (sw4_type c = 0; c < 7; c++) {
+    for (int c = 0; c < 7; c++) {
       start[c] = utc2[c];
       end[c] = utc1[c];
     }
 
-  sw4_type l, lstart, lend;
+  int l, lstart, lend;
   l = 0;
   leaps[0] = leap_sec_y[l];
   leaps[1] = leap_sec_m[l];
@@ -2531,7 +2531,7 @@ sw4_type TimeSeries::leap_second_correction(sw4_type utc1[7], sw4_type utc2[7])
   }
   lend = l;
   //   cout << "lend = " << lend << endl;
-  sw4_type corr = lend - lstart + 1;
+  int corr = lend - lstart + 1;
   delete[] leap_sec_y;
   delete[] leap_sec_m;
   return corr;
@@ -2553,15 +2553,15 @@ void TimeSeries::filter_data(Filter* filter_ptr) {
     // + backward) bandpass filter
     if (filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass) {
       float_sw4 wghv, xi;
-      sw4_type p0 = 3,
+      int p0 = 3,
           p = 20;  // First non-zero time level, and number of points in ramp;
 
-      for (sw4_type i = 1; i <= p0 - 1; i++) {
+      for (int i = 1; i <= p0 - 1; i++) {
         mRecordedSol[0][i - 1] = 0;
         mRecordedSol[1][i - 1] = 0;
         mRecordedSol[2][i - 1] = 0;
       }
-      for (sw4_type i = p0; i <= p0 + p; i++) {
+      for (int i = p0; i <= p0 + p; i++) {
         wghv = 0;
         xi = (i - p0) / ((float_sw4)p);
         // polynomial P(xi), P(0) = 0, P(1)=1
@@ -2576,7 +2576,7 @@ void TimeSeries::filter_data(Filter* filter_ptr) {
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::prsw4_type_timeinfo() const {
+void TimeSeries::print_timeinfo() const {
   if (m_myPoint) {
     cout << "Observation/TimeSeries from station '" << m_staName
          << "' at grid point " << m_i0 << " " << m_j0 << " " << m_k0 << endl;
@@ -2622,7 +2622,7 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
     bool debug = false;
     float_sw4 dt1, dt2, dt3, t01, t02, t03, lat1, lat2, lat3, lon1, lon2, lon3;
     float_sw4 cmpaz1, cmpaz2, cmpaz3, cmpinc1, cmpinc2, cmpinc3;
-    sw4_type utc1[7], utc2[7], utc3[7], npts1, npts2, npts3;
+    int utc1[7], utc2[7], utc3[7], npts1, npts2, npts3;
 
     // Read header information
     readSACheader(file1.c_str(), dt1, t01, lat1, lon1, cmpaz1, cmpinc1, utc1,
@@ -2633,7 +2633,7 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
                   npts3);
 
     // Check that files are consistent with each other
-    sw4_type eflag = 0;
+    int eflag = 0;
     if (dt1 != dt2 || dt1 != dt3 || dt2 != dt3) eflag = 1;
     if (t01 != t02 || t01 != t03 || t02 != t03) eflag = 1;
     if (lat1 != lat2 || lat1 != lat3 || lat2 != lat3) eflag = 1;
@@ -2641,11 +2641,11 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
     if (npts1 != npts2 || npts1 != npts3 || npts2 != npts3) eflag = 1;
 
     bool utcequal = true;
-    for (sw4_type c = 0; c < 7; c++)
+    for (int c = 0; c < 7; c++)
       if (utc1[c] != utc2[c]) utcequal = false;
-    for (sw4_type c = 0; c < 7; c++)
+    for (int c = 0; c < 7; c++)
       if (utc1[c] != utc3[c]) utcequal = false;
-    for (sw4_type c = 0; c < 7; c++)
+    for (int c = 0; c < 7; c++)
       if (utc2[c] != utc3[c]) utcequal = false;
     if (!utcequal) eflag = 1;
 
@@ -2671,7 +2671,7 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
         // For restart, don't overwrite member vars except data
         if (!mIsRestart) {
           if (!ignore_utc) {
-            for (sw4_type c = 0; c < 7; c++) m_utc[c] = utc1[c];
+            for (int c = 0; c < 7; c++) m_utc[c] = utc1[c];
             int utcrefsim[7];
             m_ew->get_utc(utcrefsim, m_event);
             m_t0 = utc_distance(utcrefsim, m_utc);
@@ -2726,7 +2726,7 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
           float_sw4 a12 = m_thxnrm * deti;
           float_sw4 a21 = -m_salpha * deti;
           float_sw4 a22 = m_thynrm * deti;
-          for (sw4_type i = 0; i < npts1; i++) {
+          for (int i = 0; i < npts1; i++) {
             float_sw4 ncomp =
                 tmat[0] * u1[i] + tmat[1] * u2[i] + tmat[2] * u3[i];
             float_sw4 ecomp =
@@ -2739,8 +2739,8 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
           }
           mLastTimeStep = npts1 - 1;
         } else {
-          // Just copy the read values sw4_typeo our time series
-          for (sw4_type i = 0; i < npts1; i++) {
+          // Just copy the read values into our time series
+          for (int i = 0; i < npts1; i++) {
             mRecordedSol[0][i] = u1[i];
             mRecordedSol[1][i] = u2[i];
             mRecordedSol[2][i] = u3[i];
@@ -2769,13 +2769,13 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
       cout << "lon= " << lon1 << " " << lon2 << " " << lon3 << endl;
       cout << "npt= " << npts1 << " " << npts2 << " " << npts3 << endl;
       cout << "utc1 = ";
-      for (sw4_type c = 0; c < 7; c++) cout << utc1[c] << " ";
+      for (int c = 0; c < 7; c++) cout << utc1[c] << " ";
       cout << endl;
       cout << "utc2 = ";
-      for (sw4_type c = 0; c < 7; c++) cout << utc2[c] << " ";
+      for (int c = 0; c < 7; c++) cout << utc2[c] << " ";
       cout << endl;
       cout << "utc3 = ";
-      for (sw4_type c = 0; c < 7; c++) cout << utc3[c] << " ";
+      for (int c = 0; c < 7; c++) cout << utc3[c] << " ";
       cout << endl;
     }
   }
@@ -2784,12 +2784,12 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
 //-----------------------------------------------------------------------
 void TimeSeries::readSACheader(const char* fname, float_sw4& dt, float_sw4& t0,
                                float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-                               float_sw4& cmpinc, sw4_type utc[7], sw4_type& npts) {
+                               float_sw4& cmpinc, int utc[7], int& npts) {
   float float70[70];
-  sw4_type sw4_type35[35], logical[5];
+  int int35[35], logical[5];
   char kvalues[192];
 
-  if (!(sizeof(float) == 4) || !(sizeof(sw4_type) == 4) || !(sizeof(char) == 1)) {
+  if (!(sizeof(float) == 4) || !(sizeof(int) == 4) || !(sizeof(char) == 1)) {
     cout << "readSACheader: ERROR, size of datatypes do not match the SAC "
             "specification. Can not read SAC file "
          << fname << endl;
@@ -2812,14 +2812,14 @@ void TimeSeries::readSACheader(const char* fname, float_sw4& dt, float_sw4& t0,
     fclose(fd);
     return;
   }
-  nr = fread(sw4_type35, sizeof(sw4_type), 35, fd);
+  nr = fread(int35, sizeof(int), 35, fd);
   if (nr != 35) {
-    cout << "readSACheader: ERROR, could not read sw4_type part of header of "
+    cout << "readSACheader: ERROR, could not read int part of header of "
          << fname << endl;
     fclose(fd);
     return;
   }
-  nr = fread(logical, sizeof(sw4_type), 5, fd);
+  nr = fread(logical, sizeof(int), 5, fd);
   if (nr != 5) {
     cout << "readSACheader: ERROR, could not read bool part of header of "
          << fname << endl;
@@ -2841,19 +2841,19 @@ void TimeSeries::readSACheader(const char* fname, float_sw4& dt, float_sw4& t0,
   lon = float70[32];
   cmpaz = float70[57];
   cmpinc = float70[58];
-  utc[0] = sw4_type35[0];
-  sw4_type jday = sw4_type35[1];
+  utc[0] = int35[0];
+  int jday = int35[1];
   convertjday(jday, utc[0], utc[2], utc[1]);
-  utc[3] = sw4_type35[2];
-  utc[4] = sw4_type35[3];
-  utc[5] = sw4_type35[4];
-  utc[6] = sw4_type35[5];
-  npts = sw4_type35[9];
+  utc[3] = int35[2];
+  utc[4] = int35[3];
+  utc[5] = int35[4];
+  utc[6] = int35[5];
+  npts = int35[9];
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::readSACdata(const char* fname, sw4_type npts, float_sw4* u) {
-  if (!(sizeof(float) == 4) || !(sizeof(sw4_type) == 4) || !(sizeof(char) == 1)) {
+void TimeSeries::readSACdata(const char* fname, int npts, float_sw4* u) {
+  if (!(sizeof(float) == 4) || !(sizeof(int) == 4) || !(sizeof(char) == 1)) {
     cout << "readSACdata: ERROR, size of datatypes do not match the SAC "
             "specification. Can not read SAC file "
          << fname << endl;
@@ -2869,7 +2869,7 @@ void TimeSeries::readSACdata(const char* fname, sw4_type npts, float_sw4* u) {
   }
 
   // Skip header
-  sw4_type retcode = fseek(fd, 158 * 4, SEEK_SET);
+  int retcode = fseek(fd, 158 * 4, SEEK_SET);
   if (retcode != 0) {
     cout << "readSACdata: ERROR, could not skip header in file " << fname
          << endl;
@@ -2889,16 +2889,16 @@ void TimeSeries::readSACdata(const char* fname, sw4_type npts, float_sw4* u) {
   }
 
   // Return floats as float_sw4s
-  for (sw4_type i = 0; i < npts; i++) u[i] = static_cast<float_sw4>(uf[i]);
+  for (int i = 0; i < npts; i++) u[i] = static_cast<float_sw4>(uf[i]);
   delete[] uf;
   fclose(fd);
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::convertjday(sw4_type jday, sw4_type year, sw4_type& day, sw4_type& month) {
+void TimeSeries::convertjday(int jday, int year, int& day, int& month) {
   if (jday > 0 && jday < 367) {
     day = 1;
-    sw4_type jd = 1;
+    int jd = 1;
     month = 1;
     while (jd < jday) {
       jd++;
@@ -2913,11 +2913,11 @@ void TimeSeries::convertjday(sw4_type jday, sw4_type year, sw4_type& day, sw4_ty
 }
 
 ////-----------------------------------------------------------------------
-// void TimeSeries::reset_utc( sw4_type utc[7] )
+// void TimeSeries::reset_utc( int utc[7] )
 //{
-//   for( sw4_type c=0 ; c < 7 ; c++ )
+//   for( int c=0 ; c < 7 ; c++ )
 //      m_utc[c] = utc[c];
-//   sw4_type utcrefsim[7];
+//   int utcrefsim[7];
 //   m_ew->get_utc(utcrefsim);
 //   m_t0 = utc_distance( utcrefsim, m_utc );
 //}
@@ -2931,11 +2931,11 @@ void TimeSeries::set_utc_to_simulation_utc() {
 
 #ifdef USE_HDF5
 /*
- * Cubic interpolation code spline, splsw4_type, spline1_c are modified from
+ * Cubic interpolation code spline, splint, spline1_c are modified from
  * https://www.atnf.csiro.au/computing/software/gipsy/sub/spline.c
  */
-static sw4_type spline(float* x, float* y, sw4_type n, float yp1, float ypn, float* y2) {
-  sw4_type i, k;
+static int spline(float* x, float* y, int n, float yp1, float ypn, float* y2) {
+  int i, k;
   float p, qn, sig, un, *u;
 
   u = (float*)calloc((n - 1), sizeof(float));
@@ -2967,8 +2967,8 @@ static sw4_type spline(float* x, float* y, sw4_type n, float yp1, float ypn, flo
   return 0;
 }
 
-static sw4_type splsw4_type(float* xa, float* ya, float* y2a, sw4_type n, float x, float* y) {
-  sw4_type k, klo = 0, khi = n - 1;
+static int splint(float* xa, float* ya, float* y2a, int n, float x, float* y) {
+  int k, klo = 0, khi = n - 1;
   float h, b, a;
 
   while (khi - klo > 1) {
@@ -3001,10 +3001,10 @@ static sw4_type splsw4_type(float* xa, float* ya, float* y2a, sw4_type n, float 
 /* nout    Number of x-coordinates for which interpolation */
 /*         is wanted. */
 
-static sw4_type cubic_interp(float* xi, float* yi, sw4_type nin, float* xo, float* yo,
-                        sw4_type nout) {
+static int cubic_interp(float* xi, float* yi, int nin, float* xo, float* yo,
+                        int nout) {
   float* y2;
-  sw4_type error, n;
+  int error, n;
 
   if (NULL == xi || NULL == yi || NULL == xo || NULL == yo) return -1;
 
@@ -3015,7 +3015,7 @@ static sw4_type cubic_interp(float* xi, float* yi, sw4_type nin, float* xo, floa
   if (error < 0) return -1;
 
   for (n = 0; n < nout; n++) {
-    error = splsw4_type(xi, yi, y2, nin, xo[n], &yo[n]);
+    error = splint(xi, yi, y2, nin, xo[n], &yo[n]);
     if (error < 0) return -1;
   }
 
@@ -3029,7 +3029,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
   hid_t fid, grp;
   /* char data[128]; */
   /* hsize_t ndim, dims[4]; */
-  sw4_type ret;
+  int ret;
 
   if (!m_myPoint) return;
 
@@ -3141,9 +3141,9 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       float* buf_2up = new float[sw4npts];
       float* x = new float[npts];
       float* nx = new float[sw4npts];
-      for (sw4_type i = 0; i < npts; i++) x[i] = i * downsample;
+      for (int i = 0; i < npts; i++) x[i] = i * downsample;
 
-      for (sw4_type i = 0; i < sw4npts; i++) nx[i] = i;
+      for (int i = 0; i < sw4npts; i++) nx[i] = i;
 
       // Cubic interpolation
       ret = cubic_interp(x, buf_0, npts, nx, buf_0up, sw4npts);
@@ -3162,8 +3162,8 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
         return;
       }
 
-      for (sw4_type i = 0; i < mAllocatedSize; i++) {
-        /* for (sw4_type i = 0; i < npts; i++) { */
+      for (int i = 0; i < mAllocatedSize; i++) {
+        /* for (int i = 0; i < npts; i++) { */
         if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
@@ -3183,7 +3183,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       delete[] x;
       delete[] nx;
     } else {
-      for (sw4_type i = 0; i < mAllocatedSize; i++) {
+      for (int i = 0; i < mAllocatedSize; i++) {
         if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
@@ -3198,7 +3198,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       }
     }
 
-    for (sw4_type i = 0; i < mAllocatedSize; i++) {
+    for (int i = 0; i < mAllocatedSize; i++) {
       mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
       mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
       mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
@@ -3220,7 +3220,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
 //-----------------------------------------------------------------------
 // Restart by reading in prior time series file
 void TimeSeries::doRestart(EW* ew, bool ignore_utc, float_sw4 shift,
-                           sw4_type beginCycle) {
+                           int beginCycle) {
   // Read in this TimeSeries' file
   isRestart();
   if (m_sacFormat) {
@@ -3346,14 +3346,14 @@ bool TimeSeries::get_compute_scalefactor() const {
 float_sw4 TimeSeries::get_scalefactor() const { return m_scalefactor; }
 
 #ifdef USE_HDF5
-sw4_type TimeSeries::allocFid() {
+int TimeSeries::allocFid() {
   m_fid_ptr = new hid_t;
   *m_fid_ptr = 0;
   return 0;  // Added 6/16/202 in Raja code. not tested PBUGS
 }
 
-sw4_type TimeSeries::closeHDF5File() {
-  /* sw4_type myRank; */
+int TimeSeries::closeHDF5File() {
+  /* int myRank; */
   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
 
   if (m_fid_ptr && *m_fid_ptr > 0) {

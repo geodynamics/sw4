@@ -46,7 +46,7 @@ struct sachdr_ sachdr;
 #endif
 /* string patterns */
 
-static sw4_type NRSTR = 70;
+static int NRSTR = 70;
 const char *rstr[] = {
     "DELTA   ", "DEPMIN  ", "DEPMAX  ", "SCALE   ", "ODELTA  ", "B       ",
     "E       ", "O       ", "A       ", "FMT     ", "T0      ", "T1      ",
@@ -60,7 +60,7 @@ const char *rstr[] = {
     "SB      ", "SDELTA  ", "DEPMEN  ", "CMPAZ   ", "CMPINC  ", "XMINIMUM",
     "XMAXIMUM", "YMINIMUM", "YMAXIMUM", "ADJTM   ", "FHDR65  ", "FHDR66  ",
     "FHDR67  ", "FHDR68  ", "FHDR69  ", "FHDR70  "};
-static sw4_type NISTR = 40;
+static int NISTR = 40;
 const char *istr[] = {
     "NZYEAR  ", "NZJDAY  ", "NZHOUR  ", "NZMIN   ", "NZSEC   ", "NZMSEC  ",
     "NVHDR   ", "NINF    ", "NHST    ", "NPTS    ", "NSNPTS  ", "NSN     ",
@@ -69,14 +69,14 @@ const char *istr[] = {
     "ISYNTH  ", "IDHR11  ", "IDHR12  ", "IDHR13  ", "IDHR14  ", "IDHR15  ",
     "IDHR16  ", "IDHR17  ", "IDHR18  ", "IDHR19  ", "IDHR20  ", "LEVEN   ",
     "LPSPOL  ", "LOVROK  ", "LCALDA  ", "LHDR5   "};
-static sw4_type NCSTR = 24;
+static int NCSTR = 24;
 const char *cstr[] = {
     "KSTNM   ", "KEVNM   ", "KEVNMC  ", "KHOLE   ", "KO      ", "KA      ",
     "KT0     ", "KT1     ", "KT2     ", "KT3     ", "KT4     ", "KT5     ",
     "KT6     ", "KT7     ", "KT8     ", "KT9     ", "KF      ", "KUSER0  ",
     "KUSER1  ", "KUSER2  ", "KCMPNM  ", "KNETWK  ", "KDATRD  ", "KINST   "};
 
-static sw4_type NESTR = 50;
+static int NESTR = 50;
 const char *estr[] = {
     "ITIME   ", "IRLIM   ", "IAMPH   ", "IXY     ", "IUNKN   ", "IDISP   ",
     "IVEL    ", "IACC    ", "IB      ", "IDAY    ", "IO      ", "IA      ",
@@ -87,7 +87,7 @@ const char *estr[] = {
     "INUCL   ", "IPREN   ", "IPOSTN  ", "IQUAKE  ", "IPREQ   ", "IPOSTQ  ",
     "ICHEM   ", "IOTHER  ", "IGOOD   ", "IGLCH   ", "IDROP   ", "ILOWSN  ",
     "IRLDTA  ", "IVOLTS  "};
-// static sw4_type NIVAL=50;
+// static int NIVAL=50;
 const char *Istr[] = {
     "IFTYPE  ", "IFTYPE  ", "IFTYPE  ", "IFTYPE  ", "IDEP    ", "IDEP    ",
     "IDEP    ", "IDEP    ", "IZTYPE  ", "IZTYPE  ", "IZTYPE  ", "IZTYPE  ",
@@ -100,10 +100,10 @@ const char *Istr[] = {
     "ISYNTH  ", "IDEP    "};
 
 float fhdr_default = -12345.;
-sw4_type ihdr_default = -12345;
+int ihdr_default = -12345;
 const char *chdr_default = "-12345  ";
 
-void brsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
+void brsac(int LN, char *name, float **data, int *nerr)
 /*
         LN	I*4	length of data array
         name	C*	Name of file to be opened
@@ -119,9 +119,9 @@ void brsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-  sw4_type maxpts;
-  sw4_type i;
-  sw4_type has12345;
+  int maxpts;
+  int i;
+  int has12345;
   FILE *fptr;
   /*
           determine if the file exists for reading
@@ -190,7 +190,7 @@ void brsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
   }
 }
 
-void bwsac(sw4_type LN, const char *name, float *data)
+void bwsac(int LN, const char *name, float *data)
 /*
         LN	I*4	length of data array
         name	C*	Name of file to be opened
@@ -201,7 +201,7 @@ void bwsac(sw4_type LN, const char *name, float *data)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-  // sw4_type nwrite;
+  // int nwrite;
   FILE *fptr;
   if ((fptr = fopen(name, "wb")) == NULL) {
     perror("fopen error in bwsac:");
@@ -217,7 +217,7 @@ void bwsac(sw4_type LN, const char *name, float *data)
   fclose(fptr);
 }
 
-void arsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
+void arsac(int LN, char *name, float **data, int *nerr)
 /*
         IRU	I*4	FILE handle for IO
         LN	I*4	length of data array
@@ -234,18 +234,18 @@ void arsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-  sw4_type maxpts;
-  sw4_type i, j, k, l;
-  sw4_type has12345;
+  int maxpts;
+  int i, j, k, l;
+  int has12345;
   FILE *fptr;
   float rval;
-  // sw4_type ival;
+  // int ival;
   char cval[9];
   char cval0[9], cval1[9], cval2[9];
   char cstr[81];
   char fstr[16];
   char *endptr;
-  sw4_type ls;
+  int ls;
   /*
           determine if the file exists for reading
   */
@@ -272,13 +272,13 @@ void arsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
       sachdr.rhdr[i + k] = (float)strtod(fstr, &endptr);
     }
   }
-  /* read in sw4_typeeger header values 5 per line */
+  /* read in integer header values 5 per line */
   for (i = 0; i < NISTR; i += 5) {
     fgets(cstr, 80, fptr);
     for (k = 0, j = 0; k < 5; k++, j += 10) {
       strncpy(fstr, &cstr[j], 10);
       fstr[10] = '\0';
-      sachdr.ihdr[i + k] = (sw4_type)strtol(fstr, &endptr, 10);
+      sachdr.ihdr[i + k] = (int)strtol(fstr, &endptr, 10);
     }
   }
   /* read in strings - 3 eight character strings per line */
@@ -305,7 +305,7 @@ void arsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
           break;
       }
       ls = strlen(cval);
-      /* check for prsw4_typeing characters */
+      /* check for printing characters */
       for (l = 0; l < 8; l++) {
         if (isprint(cval[l]) == 0 || l >= ls) cval[l] = ' ';
       }
@@ -359,7 +359,7 @@ void arsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
   }
 }
 
-void awsac(sw4_type LN, const char *name, float *data)
+void awsac(int LN, const char *name, float *data)
 /*
         LN	I*4	length of data array
         name	C*	Name of file to be opened
@@ -370,9 +370,9 @@ void awsac(sw4_type LN, const char *name, float *data)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-  // sw4_type nwrite;
+  // int nwrite;
   FILE *fptr;
-  sw4_type i, j, j1, j2, k;
+  int i, j, j1, j2, k;
   char cval[9];
   float zero;
   if ((fptr = fopen(name, "w")) == NULL) {
@@ -385,7 +385,7 @@ void awsac(sw4_type LN, const char *name, float *data)
     j++;
     if ((j % 5) == 0) fprintf(fptr, "\n");
   }
-  /* write sw4_typeeger header block */
+  /* write integer header block */
   j1 = 0;
   j2 = 5;
   for (i = 0; i < 8; i++) {
@@ -427,7 +427,7 @@ void awsac(sw4_type LN, const char *name, float *data)
   fclose(fptr);
 }
 
-void getfhv(char *strcmd, float *fval, sw4_type *nerr)
+void getfhv(char *strcmd, float *fval, int *nerr)
 /*
         Get float header value
 
@@ -439,7 +439,7 @@ void getfhv(char *strcmd, float *fval, sw4_type *nerr)
                                 1337 Header variable does not exist
 */
 {
-  sw4_type i;
+  int i;
   *nerr = -1;
   *fval = -12345.;
   for (i = 0; i < NRSTR; i++) {
@@ -451,9 +451,9 @@ void getfhv(char *strcmd, float *fval, sw4_type *nerr)
   }
 }
 
-void getnhv(char *strcmd, sw4_type *ival, sw4_type *nerr)
+void getnhv(char *strcmd, int *ival, int *nerr)
 /*
-        Get sw4_typeeger header value
+        Get integer header value
 
         strcmd	C*8	String to key on
         ival	R*4	Real value returned
@@ -463,7 +463,7 @@ void getnhv(char *strcmd, sw4_type *ival, sw4_type *nerr)
                                 1337 Header variable does not exist
 */
 {
-  sw4_type i;
+  int i;
   *ival = -12345;
   *nerr = -1;
   for (i = 0; i < NISTR; i++) {
@@ -475,7 +475,7 @@ void getnhv(char *strcmd, sw4_type *ival, sw4_type *nerr)
   }
 }
 
-void getkhv(char *strcmd, char *cval, sw4_type *nerr)
+void getkhv(char *strcmd, char *cval, int *nerr)
 /*
         Get character header value
 
@@ -487,7 +487,7 @@ void getkhv(char *strcmd, char *cval, sw4_type *nerr)
                                 1337 Header variable does not exist
 */
 {
-  sw4_type i;
+  int i;
   *nerr = -1;
   strncpy(cval, "-12345  ", 8);
   for (i = 0; i < NCSTR; i++) {
@@ -501,7 +501,7 @@ void getkhv(char *strcmd, char *cval, sw4_type *nerr)
   }
 }
 
-void getlhv(char *strcmd, sw4_type *lval, sw4_type *nerr)
+void getlhv(char *strcmd, int *lval, int *nerr)
 /*
         Get logical header value
 
@@ -513,7 +513,7 @@ void getlhv(char *strcmd, sw4_type *lval, sw4_type *nerr)
                                 1337 Header variable does not exist
 */
 {
-  sw4_type ival;
+  int ival;
   *nerr = -1;
   getnhv(strcmd, &ival, nerr);
   if (ival == 0)
@@ -522,7 +522,7 @@ void getlhv(char *strcmd, sw4_type *lval, sw4_type *nerr)
     *lval = True;
 }
 
-void getihv(char *strcmd, char *strval, sw4_type *nerr)
+void getihv(char *strcmd, char *strval, int *nerr)
 /*
         Get enumerated header value
 
@@ -534,7 +534,7 @@ void getihv(char *strcmd, char *strval, sw4_type *nerr)
                         1337 Header variable does not exist
 */
 {
-  sw4_type nval;
+  int nval;
   getnhv(strcmd, &nval, nerr);
   strcpy(strval, "        ");
   if (*nerr == 0) {
@@ -545,7 +545,7 @@ void getihv(char *strcmd, char *strval, sw4_type *nerr)
   }
 }
 
-void setfhv(const char *strcmd, float fval, sw4_type *nerr)
+void setfhv(const char *strcmd, float fval, int *nerr)
 /*
         Set float header value
 
@@ -556,7 +556,7 @@ void setfhv(const char *strcmd, float fval, sw4_type *nerr)
                                 1337 Header variable does not exist
 */
 {
-  sw4_type i;
+  int i;
   for (i = 0; i < NRSTR; i++)
     if (streql(strcmd, rstr[i])) {
       sachdr.rhdr[i] = fval;
@@ -564,18 +564,18 @@ void setfhv(const char *strcmd, float fval, sw4_type *nerr)
     }
 }
 
-void setnhv(const char *strcmd, sw4_type ival, sw4_type *nerr)
+void setnhv(const char *strcmd, int ival, int *nerr)
 /*
-        Set sw4_typeeger header value
+        Set integer header value
 
         strcmd  C*8     String to key on
-        ival    I*4     sw4_typeeger value set
+        ival    I*4     integer value set
         nerr    I*4     Error condition
                                 0  no error
                                 1337 Header variable does not exist
 */
 {
-  sw4_type i;
+  int i;
   for (i = 0; i < NISTR; i++)
     if (streql(strcmd, istr[i])) {
       sachdr.ihdr[i] = ival;
@@ -583,9 +583,9 @@ void setnhv(const char *strcmd, sw4_type ival, sw4_type *nerr)
     }
 }
 
-void setkhv(const char *strcmd, char *cval, sw4_type *nerr)
+void setkhv(const char *strcmd, char *cval, int *nerr)
 /*
-        Set sw4_typeeger header value
+        Set integer header value
 
         strcmd  C*8     String to key on
         cval    I*4     String value set
@@ -594,7 +594,7 @@ void setkhv(const char *strcmd, char *cval, sw4_type *nerr)
                                 1337 Header variable does not exist
 */
 {
-  sw4_type i, ls, j;
+  int i, ls, j;
   for (i = 0; i < NCSTR; i++)
     if (streql(strcmd, cstr[i])) {
       ls = strlen(cval);
@@ -608,9 +608,9 @@ void setkhv(const char *strcmd, char *cval, sw4_type *nerr)
     }
 }
 
-void setlhv(const char *strcmd, sw4_type lval, sw4_type *nerr)
+void setlhv(const char *strcmd, int lval, int *nerr)
 /*
-        Set sw4_typeeger header value
+        Set integer header value
 
         strcmd  C*8     String to key on
         cval    I*4     String value set
@@ -625,7 +625,7 @@ void setlhv(const char *strcmd, sw4_type lval, sw4_type *nerr)
     setnhv(strcmd, 1, nerr);
 }
 
-void setihv(const char *strcmd, const char *strval, sw4_type *nerr)
+void setihv(const char *strcmd, const char *strval, int *nerr)
 /*
         Set enumerated header value
 
@@ -637,7 +637,7 @@ void setihv(const char *strcmd, const char *strval, sw4_type *nerr)
                         1337 Header variable does not exist
 */
 {
-  sw4_type i;
+  int i;
   if (streql(strcmd, "IDEP    ") && streql(strval, "IUNKN   "))
     setnhv("IDEP    ", 5, nerr);
   else if (streql(strcmd, "IZTYPE  ") && streql(strval, "IUNKN   "))
@@ -669,7 +669,7 @@ void newhdr() {
 void inihdr()
 /* initialize sac header */
 {
-  sw4_type i;
+  int i;
   for (i = 0; i < NRSTR; i++) sachdr.rhdr[i] = fhdr_default;
   for (i = 0; i < NISTR; i++) sachdr.ihdr[i] = ihdr_default;
   sachdr.ihdr[6] = 6;
@@ -679,7 +679,7 @@ void inihdr()
   for (i = 0; i < NCSTR; i++) strncpy(sachdr.chdr[i], chdr_default, 8);
 }
 
-void wsac1(char *ofile, float *y, sw4_type npts, float btime, float dt, sw4_type *nerr) {
+void wsac1(char *ofile, float *y, int npts, float btime, float dt, int *nerr) {
   /*
   c-----
   c	PURPOSE: WRITE AN EVENLY SPACED SAC FILE
@@ -713,9 +713,9 @@ void wsac1(char *ofile, float *y, sw4_type npts, float btime, float dt, sw4_type
   *nerr = 0;
 }
 
-sw4_type streql(const char *str1, const char *str2) {
-  sw4_type l1, l2, i;
-  // sw4_type retval;
+int streql(const char *str1, const char *str2) {
+  int l1, l2, i;
+  // int retval;
   char str_1[9], str_2[9];
   l1 = strlen(str1);
   if (l1 < 0) l1 = 0;
@@ -741,7 +741,7 @@ sw4_type streql(const char *str1, const char *str2) {
   return (False);
 }
 
-void scmxmn(float *x, sw4_type npts, float *depmax, float *depmin, float *depmen) {
+void scmxmn(float *x, int npts, float *depmax, float *depmin, float *depmen) {
   double sum;
   float dpmax = -1e+38;
   float dpmin = 1e+38;
@@ -749,7 +749,7 @@ void scmxmn(float *x, sw4_type npts, float *depmax, float *depmin, float *depmen
   //	*depmin =  1.0e+38 ;
   sum = 0.0e+00;
 #pragma omp parallel for reduction(max:dpmax) reduction(min:dpmin) reduction(+:sum)
-  for (sw4_type i = 0; i < npts; i++) {
+  for (int i = 0; i < npts; i++) {
     if (x[i] > dpmax) dpmax = x[i];
     if (x[i] < dpmin) dpmin = x[i];
     sum += x[i];
