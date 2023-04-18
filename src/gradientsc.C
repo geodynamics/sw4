@@ -2003,11 +2003,18 @@ void addgradmulac_ci(
 			 });
     }
 
-    // #pragma omp parallel for
-    for (int k = kstart; k <= kend; k++)
-      for (int j = jfirstact; j <= jlastact; j++)
-        // #pragma ivdep
-        for (int i = ifirstact; i <= ilastact; i++) {
+
+    RAJA::RangeSegment k_range(kstart, kend + 1);
+  RAJA::RangeSegment j_range(jfirstact , jlastact + 1);
+  RAJA::RangeSegment i_range(ifirstact , ilastact + 1);
+  RAJA::kernel<CURV_POL>(
+			 RAJA::make_tuple(k_range, j_range, i_range),
+			 [=] RAJA_DEVICE(int k, int j, int i) {
+    // // #pragma omp parallel for
+    // for (int k = kstart; k <= kend; k++)
+    //   for (int j = jfirstact; j <= jlastact; j++)
+    //     // #pragma ivdep
+    //     for (int i = ifirstact; i <= ilastact; i++) {
           // Diagonal terms
           float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
                           d4a * (u(1, i + 1, j, k) - u(1, i - 1, j, k));
@@ -2479,7 +2486,7 @@ void addgradmulac_ci(
                                 (d3wp - d3wm) * (d3map - d3mam))));
           gmu(i, j, k) = gmu(i, j, k) + pd * (mucof + SQR(met(4, i, j, k)));
           glambda(i, j, k) = glambda(i, j, k) + pd * SQR(met(4, i, j, k));
-        }
+			 });
   }
   if (klastact >= nk - 3 && onesided[5] == 1) {
     float_sw4 w8[4] = {0, 0, 1, 1};
