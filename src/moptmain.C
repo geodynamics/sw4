@@ -512,7 +512,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
   int ok = 1;
   if (mopt->m_mcheck) {
     int er = simulation.check_material(rho, mu, lambda, ok, 2);
-    std::cout<<"ERROR CODE IS "<<er<<"\n";
+    //std::cout<<"ERROR CODE IS "<<er<<"\n";
   }
   //   MPI_Barrier(MPI_COMM_WORLD);
   VERIFY2(ok, "ERROR: Material check failed\n");

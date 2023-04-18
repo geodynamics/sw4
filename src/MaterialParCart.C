@@ -312,7 +312,7 @@ void MaterialParCart::get_material(int nmd, double* xmd, int nms, double* xms,
   REQUIRE2(nmd == m_nmd && nms == m_nms,
            "ERROR in MaterialParCart::get_material "
                << " inconsistent dimensions\n");
-  std::cout<<" IN MaterialParCart::get_material\n"<<std::flush;
+  //std::cout<<" IN MaterialParCart::get_material\n"<<std::flush;
 
   double* xptr;
   if (m_nmd > 0)
