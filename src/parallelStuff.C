@@ -1259,7 +1259,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
   std::chrono::high_resolution_clock::time_point t1, t2;
   t1 = SW4_CHRONO_NOW;
 #endif
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm); // WAS MCW
 #if defined(SW4_TRACK_MPI)
   t2 = SW4_CHRONO_NOW;
   coll_sm.insert(0, SW4_CHRONO_DURATION_US(t1, t2));
@@ -1275,7 +1275,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
 #if defined(SW4_TRACK_MPI)
 #if defined(ENABLE_MPI_TIMING_BARRIER)
   t1 = SW4_CHRONO_NOW;
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm);
   t2 = SW4_CHRONO_NOW;
   coll_sm.insert(1, SW4_CHRONO_DURATION_US(t1, t2));
 #endif
@@ -1690,7 +1690,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
   std::chrono::high_resolution_clock::time_point t1, t2;
   t1 = SW4_CHRONO_NOW;
 #endif
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm);
 #if defined(SW4_TRACK_MPI)
   t2 = SW4_CHRONO_NOW;
   coll_sm.insert(2, SW4_CHRONO_DURATION_US(t1, t2));

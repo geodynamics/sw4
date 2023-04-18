@@ -220,7 +220,7 @@ void Mopt::processMaterialAllpts(char* buffer) {
 //-----------------------------------------------------------------------
 void Mopt::processMaterialParCart(char* buffer) {
   SW4_MARK_FUNCTION;
-  std::cout<<" IN Mopt::processMaterialParCart\n"<<std::flush;
+  //std::cout<<" IN Mopt::processMaterialParCart\n"<<std::flush;
   int nr = 1;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mparcart", token) == 0,
