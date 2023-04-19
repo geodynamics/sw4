@@ -1,5 +1,5 @@
 #include "sw4.h"
-
+#include "caliper.h"
 //-----------------------------------------------------------------------
 void add_pseudohessian_terms2(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
@@ -10,6 +10,7 @@ void add_pseudohessian_terms2(
     float_sw4 dt, int onesided[6], int varcase, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
     float_sw4* __restrict__ a_ph) {
+  SW4_MARK_FUNCTION;
   const float_sw4 ih2 = 1.0 / (h * h);
   const float_sw4 idt2 = 1 / (dt * dt);
   const float_sw4 d4a = 2.0 / 3;

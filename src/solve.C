@@ -249,6 +249,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       kmax -= 2;
     }
     if (save_sides) {
+      SW4_MARK_BEGIN("solve:: SAVE_SIDES");
       bool top = g < mNumberOfGrids - 1;
       Upred_saved_sides[g] = new DataPatches(
           upred_name.c_str(), U[g], imin, imax, jmin, jmax, kmin, kmax, 2,
@@ -281,6 +282,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (!mQuiet && proc_zero() && mVerbose >= 3)
         cout << "Maximum temporary file size on grid " << g << " is " << maxsize
              << " doubles for each time step " << endl;
+      SW4_MARK_END("solve:: SAVE_SIDES");
     }
   }
 

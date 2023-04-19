@@ -6715,6 +6715,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   }
   //-----------------------------------------------------------------------
   float_sw4 EW::scalarProduct(vector<Sarray> & U, vector<Sarray> & V) {
+    SW4_MARK_FUNCTION;
     // Compute weighted scalar product between composite grid functions U and C
     //
     // NOTE: assumes a Cartesian grid with super-grid stretching
