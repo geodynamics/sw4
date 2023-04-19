@@ -1199,7 +1199,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     {
       std::chrono::high_resolution_clock::time_point t1, t2;
       t1 = SW4_CHRONO_NOW;
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(m_cartesian_communicator);
       t2 = SW4_CHRONO_NOW;
       coll_sm.insert(30, SW4_CHRONO_DURATION_US(t1, t2));
     }
@@ -1454,7 +1454,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       {
         std::chrono::high_resolution_clock::time_point t1, t2;
         t1 = SW4_CHRONO_NOW;
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(m_cartesian_communicator);
         t2 = SW4_CHRONO_NOW;
         coll_sm.insert(31, SW4_CHRONO_DURATION_US(t1, t2));
       }
@@ -1800,11 +1800,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       std::chrono::duration_cast<std::chrono::milliseconds>(ft2 - ft1).count();
   float fstep_max, fstep_min, fstep_avg;
   MPI_Reduce(&fstep_local, &fstep_max, 1, MPI_FLOAT, MPI_MAX, 0,
-             MPI_COMM_WORLD);
+             m_cartesian_communicator);
   MPI_Reduce(&fstep_local, &fstep_min, 1, MPI_FLOAT, MPI_MIN, 0,
-             MPI_COMM_WORLD);
+             m_cartesian_communicator);
   MPI_Reduce(&fstep_local, &fstep_avg, 1, MPI_FLOAT, MPI_SUM, 0,
-             MPI_COMM_WORLD);
+             m_cartesian_communicator);
   fstep_avg /= m_nProcs;
 #ifndef SOURCE_INVERSION
   if (m_myRank == 0)
@@ -1963,7 +1963,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (int s = 0; s < point_sources.size(); s++) delete point_sources[s];
   // std::cerr<<"Done "<<myRank<<"\n";
   // why is this barrier needed???
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(m_cartesian_communicator);
 
   //   if( m_forcing->knows_exact() )
   //      computeSolutionError(U, mTime, AlphaVE ); // note that final solution
@@ -2550,7 +2550,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     {
       std::chrono::high_resolution_clock::time_point t1, t2;
       t1 = SW4_CHRONO_NOW;
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(m_cartesian_communicator);
       t2 = SW4_CHRONO_NOW;
       coll_sm.insert(20, SW4_CHRONO_DURATION_US(t1, t2));
     }
@@ -2713,7 +2713,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     {
       std::chrono::high_resolution_clock::time_point t1, t2;
       t1 = SW4_CHRONO_NOW;
-      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Barrier(m_cartesian_communicator);
       t2 = SW4_CHRONO_NOW;
       coll_sm.insert(21, SW4_CHRONO_DURATION_US(t1, t2));
     }

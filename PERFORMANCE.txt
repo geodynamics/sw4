@@ -1,0 +1,5 @@
+Performance of fwi2 test for SW4MOPT, all using 8 ranks
+
+1. dev branch CPU Tioga 	381m
+2. SW4MOPT RAJA Tioga		15m
+3. SW4MOPT RAJA Lassen		29m
