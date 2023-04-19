@@ -341,6 +341,7 @@ void EW::solve_backward_allpars(
     //   point_sources[s]->add_to_gradient(K, Kacc, t, mDt, gradientsrc,
     //   mGridSize,
     //                                   mJ, topographyExists());
+    SW4_MARK_BEGIN("SBA:: ATG LOOP PLUS");
     SView* KV = SW4_NEW(Space::Managed, SView[K.size()]);
     SView* KaccV = SW4_NEW(Space::Managed, SView[Kacc.size()]);
     SView* mJV = SW4_NEW(Space::Managed, SView[mJ.size()]);
@@ -365,6 +366,7 @@ void EW::solve_backward_allpars(
     ::operator delete[](KaccV, Space::Managed);
     ::operator delete[](mJV, Space::Managed);
     ::operator delete[](h, Space::Managed);
+    SW4_MARK_END("SBA:: ATG LOOP PLUS");
     //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,
     // mGridSize );
     // std::cout<<"DONE ADD TO GRADIENT\n"<<std::flush;
@@ -417,7 +419,7 @@ void EW::solve_backward_allpars(
   }
   time_sum[7] = MPI_Wtime() - time_start_solve;  // Total solver time
   //   cout << "Final t = " << t << endl;
-
+  SW4_MARK_BEGIN("SBA:: MAX LOOP");
   for (int g = 0; g < mNumberOfGrids; g++) {
     double upmx[3] = {0, 0, 0}, umx[3] = {0, 0, 0}, tmp[3];
     for (int k = m_kStartAct[g]; k <= m_kEndAct[g]; k++)
@@ -429,6 +431,7 @@ void EW::solve_backward_allpars(
             if (fabs(U[g](c + 1, i, j, k)) > umx[c])
               umx[c] = fabs(U[g](c + 1, i, j, k));
           }
+
     tmp[0] = upmx[0];
     tmp[1] = upmx[1];
     tmp[2] = upmx[2];
@@ -458,6 +461,7 @@ void EW::solve_backward_allpars(
            << " " << umx[2] << endl;
     }
   }
+  SW4_MARK_END("SBA:: MAX LOOP");
   if (m_zerograd_at_src) {
     set_to_zero_at_source(gRho, a_Sources, m_zerograd_pad);
     set_to_zero_at_source(gMu, a_Sources, m_zerograd_pad);
@@ -526,6 +530,8 @@ void EW::solve_backward_allpars(
 
 //-----------------------------------------------------------------------
 void EW::enforceDirichlet5(vector<Sarray>& a_U) {
+  SW4_MARK_FUNCTION;
+  //SW4_CPU_WARN;
   for (int g = 0; g < mNumberOfGrids; g++) {
     int ifirst, ilast, jfirst, jlast, kfirst, klast;
     ifirst = m_iStart[g];
