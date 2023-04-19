@@ -529,7 +529,7 @@ void EW::solve_backward_allpars(
 }
 
 //-----------------------------------------------------------------------
-void EW::enforceDirichlet5(vector<Sarray>& a_U) {
+void EW::enforceDirichlet5(vector<Sarray>& a_Uact) {
   SW4_MARK_FUNCTION;
   //SW4_CPU_WARN;
   for (int g = 0; g < mNumberOfGrids; g++) {
@@ -540,7 +540,7 @@ void EW::enforceDirichlet5(vector<Sarray>& a_U) {
     jlast = m_jEnd[g];
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
-
+    SView &a_U=a_Uact[g].getview();
     int off = 3;
     int iafirst, ialast, jafirst, jalast, kafirst, kalast;
     iafirst = m_iStartAct[g];
@@ -552,29 +552,71 @@ void EW::enforceDirichlet5(vector<Sarray>& a_U) {
     bool ilayer = ialast - iafirst - 1 > 0;
     bool jlayer = jalast - jafirst - 1 > 0;
     bool klayer = kalast - kafirst - 1 > 0;
-    if (klayer)  // Always at bottom
-      for (int k = kalast + off; k <= klast; k++)
-        for (int j = jfirst; j <= jlast; j++)
-          for (int i = ifirst; i <= ilast; i++)
-            a_U[g](1, i, j, k) = a_U[g](2, i, j, k) = a_U[g](3, i, j, k) = 0;
-
-    for (int k = kfirst; k <= klast; k++) {
-      if (jlayer) {
-        for (int j = jfirst; j <= jafirst - off; j++)
-          for (int i = ifirst; i <= ilast; i++)
-            a_U[g](1, i, j, k) = a_U[g](2, i, j, k) = a_U[g](3, i, j, k) = 0;
-        for (int j = jalast + off; j <= jlast; j++)
-          for (int i = ifirst; i <= ilast; i++)
-            a_U[g](1, i, j, k) = a_U[g](2, i, j, k) = a_U[g](3, i, j, k) = 0;
-      }
-      if (ilayer) {
-        for (int j = jfirst; j <= jlast; j++)
-          for (int i = ifirst; i <= iafirst - off; i++)
-            a_U[g](1, i, j, k) = a_U[g](2, i, j, k) = a_U[g](3, i, j, k) = 0;
-        for (int j = jfirst; j <= jlast; j++)
-          for (int i = ialast + off; i <= ilast; i++)
-            a_U[g](1, i, j, k) = a_U[g](2, i, j, k) = a_U[g](3, i, j, k) = 0;
-      }
+    if (klayer){  // Always at bottom
+      RAJA::RangeSegment k_range(kalast+off, klast + 1);
+      RAJA::RangeSegment j_range(jfirst , jlast+ 1);
+      RAJA::RangeSegment i_range(ifirst , ilast+ 1);
+        //     for (int k = kalast + off; k <= klast; k++)
+        // for (int j = jfirst; j <= jlast; j++)
+        //   for (int i = ifirst; i <= ilast; i++)
+      RAJA::kernel<CURV_POL>(
+			     RAJA::make_tuple(k_range, j_range, i_range),
+			     [=] RAJA_DEVICE(int k, int j, int i) {
+			       a_U(1, i, j, k) = a_U(2, i, j, k) = a_U(3, i, j, k) = 0;
+			     });
     }
+
+ 
+      if (jlayer) {
+	//    for (int k = kfirst; k <= klast; k++) 
+        // for (int j = jfirst; j <= jafirst - off; j++)
+        //   for (int i = ifirst; i <= ilast; i++)
+	RAJA::RangeSegment k_range(kfirst,klast + 1);
+	RAJA::RangeSegment j_range(jfirst , jafirst-off+ 1);
+	RAJA::RangeSegment i_range(ifirst , ilast+ 1);
+
+	RAJA::kernel<CURV_POL>(
+			       RAJA::make_tuple(k_range, j_range, i_range),
+			       [=] RAJA_DEVICE(int k, int j, int i) {
+				 
+				 a_U(1, i, j, k) = a_U(2, i, j, k) = a_U(3, i, j, k) = 0;
+			       });
+
+	RAJA::RangeSegment j_range2(jalast+off , jlast+ 1);
+	
+	RAJA::kernel<CURV_POL>(
+			       RAJA::make_tuple(k_range, j_range2, i_range),
+			       [=] RAJA_DEVICE(int k, int j, int i) {
+				 //	   for (int k = kfirst; k <= klast; k++) {
+				 //        for (int j = jalast + off; j <= jlast; j++)
+				 //          for (int i = ifirst; i <= ilast; i++)
+				 a_U(1, i, j, k) = a_U(2, i, j, k) = a_U(3, i, j, k) = 0;
+			       });
+      }
+
+      
+      if (ilayer) {
+	RAJA::RangeSegment k_range(kfirst,klast + 1);
+	RAJA::RangeSegment j_range(jfirst , jlast+ 1);
+	RAJA::RangeSegment i_range(ifirst , iafirst-off+ 1);
+	//	for (int k = kfirst; k <= klast; k++) {
+       	//    for (int j = jfirst; j <= jlast; j++)
+	//       for (int i = ifirst; i <= iafirst - off; i++)
+	RAJA::kernel<CURV_POL>(
+			       RAJA::make_tuple(k_range, j_range, i_range),
+			       [=] RAJA_DEVICE(int k, int j, int i) {
+            a_U(1, i, j, k) = a_U(2, i, j, k) = a_U(3, i, j, k) = 0;
+			       });
+	RAJA::RangeSegment i_range2(ialast+off , ilast+ 1);
+	// for (int k = kfirst; k <= klast; k++) {
+	//   for (int j = jfirst; j <= jlast; j++)
+	//     for (int i = ialast + off; i <= ilast; i++)
+	      RAJA::kernel<CURV_POL>(
+				     RAJA::make_tuple(k_range, j_range, i_range2),
+				     [=] RAJA_DEVICE(int k, int j, int i) {
+				       a_U(1, i, j, k) = a_U(2, i, j, k) = a_U(3, i, j, k) = 0;
+				     });
+	}
+    
   }
 }
