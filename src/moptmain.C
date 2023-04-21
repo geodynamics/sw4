@@ -1744,6 +1744,7 @@ int main(int argc, char** argv) {
   SW4_MARK_FUNCTION;
   string fileName;
   int myRank, nProcs;
+  SW4_MARK_BEGIN("MOPTMAIN");
   int status = start_minv(argc, argv, fileName, myRank, nProcs);
 #ifdef ENABLE_CALIPER
   cali_set_int_byname("mpi.rank", myRank);
@@ -2326,6 +2327,7 @@ int main(int argc, char** argv) {
          << endl;
   if (status == 2) status = 0;
   // Stop MPI
+  SW4_MARK_END("MOPTMAIN");
   MPI_Finalize();
   return 0;
   // Note: Always return 0, to avoid having one error message per process from
