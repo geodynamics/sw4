@@ -42,9 +42,11 @@ void wolfecondition(EW& simulation, vector<vector<Source*> >& GlobalSources,
   SW4_MARK_FUNCTION;
   double beta = 0.9, lambdaprev, fpprev, maxlambda;
   int ns = nspar + nmpars;
+  SW4_MARK_BEGIN("WOLFE::COMP_F_AND_DF");
   compute_f_and_df(simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources,
                    GlobalTimeSeries, GlobalObservations, fnew, dfsnew, dfmnew,
                    myRank, mopt);
+  SW4_MARK_END("WOLFE::COMP_F_AND_DF");
   double slope = 0;
   if (nm > 0) {
     double slopetmp = 0;
@@ -559,10 +561,11 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
         << "Begin L-BFGS iteration by evaluating initial misfit and gradient..."
         << endl;
 
+  SW4_MARK_BEGIN("LBFGS::COMP_F_AND_DF");
   compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                    GlobalTimeSeries, GlobalObservations, f, dfs, dfm, myRank,
                    mopt, 0);  // ERROR HAPPENS HERE
-
+  SW4_MARK_END("LBFGS::COMP_F_AND_DF");
   if (mopt->m_output_ts) {
     for (int e = 0; e < GlobalTimeSeries.size(); e++) {
 #ifdef USE_HDF5
@@ -760,12 +763,13 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
       int retcode;
       double fp;
       if (myRank == 0) cout << "Line search.. " << endl;
-
+      SW4_MARK_BEGIN("LBFGS::LINESEARCH");
       linesearch(simulation, GlobalSources, GlobalTimeSeries,
                  GlobalObservations, nspar, nmpars, xs, nmpard_global, nmpard,
                  xm, f, dfs, dfm, da, dam, fabs(alpha), 10.0, tolerance, xa,
                  xam, fp, sf, sfm, myRank, retcode, nreductions, testing, dfps,
                  dfpm, mopt);
+      SW4_MARK_END("LBFGS::LINESEARCH");
 
       if (retcode == 3) {
         if (myRank == 0)
@@ -826,10 +830,11 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
     //	 for( int i=0 ; i < ns ; i++ )
     //	    cout << " i="  << i << " " << ds[i] << " " << xs[i] << endl;
 
+    SW4_MARK_BEGIN("LBFGS::COMP_F_AND_DF2");
     compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                      GlobalTimeSeries, GlobalObservations, f, dfps, dfpm,
                      myRank, mopt, it);
-
+    SW4_MARK_END("LBFGS::COMP_F_AND_DF2");
     // Check Wolfe condition:
     double sc[2] = {0, 0};
     if (nmpard_global > 0) {

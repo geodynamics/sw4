@@ -159,6 +159,8 @@ void EW::solve_backward_allpars(
   //   int idbg=57, jdbg=101, kdbg=1, gdbg=0;
   //   int idbg=113, jdbg=201, kdbg=25, gdbg=1;
   //   bool dbgowner=interior_point_in_proc(idbg,jdbg,gdbg);
+
+  SW4_MARK_BEGIN("TIME STEPPING BACKWARDS");
   // Backward time stepping loop
   for (int currentTimeStep = mNumberOfTimeSteps[event];
        currentTimeStep >= beginCycle; currentTimeStep--) {
@@ -417,6 +419,7 @@ void EW::solve_backward_allpars(
     time_sum[5] += time_measure[6] - time_measure[5];  // Gradient accumulation
     time_sum[6] += time_measure[7] - time_measure[6];  // Cycle arrays
   }
+SW4_MARK_END("TIME STEPPING BACKWARDS");
   time_sum[7] = MPI_Wtime() - time_start_solve;  // Total solver time
   //   cout << "Final t = " << t << endl;
   SW4_MARK_BEGIN("SBA:: MAX LOOP");

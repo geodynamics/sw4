@@ -189,11 +189,13 @@ void nlcg(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
         for (int i = 0; i < nmpard; i++) dam[i] = dm[i];
         int retcode;
         if (myRank == 0 && verbose > 2) cout << "Line search.. " << endl;
+	SW4_MARK_BEGIN("NLCG::LINESEARCH");
         linesearch(simulation, GlobalSources, GlobalTimeSeries,
                    GlobalObservations, nspar, nmpars, xs, nmpard_global, nmpard,
                    xm, f, dfs, dfm, das, dam, fabs(alpha), 1.0, tolerance, xas,
                    xam, fp, sfs, sfm, myRank, retcode, nreductions, testing,
                    dfps, dfpm, mopt);
+	SW4_MARK_END("NLCG::LINESEARCH");
         if (myRank == 0 && verbose > 2)
           cout << " .. return code " << retcode << " misfit changed from " << f
                << " to " << fp << endl;

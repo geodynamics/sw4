@@ -1072,9 +1072,11 @@ void gradient_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
     double f, fp, fm;
 
     vector<Image*> im;
+    SW4_MARK_BEGIN("GRAD::COMPUTE_F_AND_DF");
     compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                      GlobalTimeSeries, GlobalObservations, f, dfs, dfm,
                      simulation.getRank(), mopt, 0);  // mp, false, false, im );
+    SW4_MARK_END("GRAD::COMPUTE_F_AND_DF");
     // Compute max-norm of gradient
     double dfnorm = 0;
     if (nmpard_global > 0) {
@@ -1296,12 +1298,13 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
   if (ns > 0) dfs = new double[ns];
   double* dfm;
   if (nmpard > 0) dfm = new double[nmpard];
-
+  
   vector<Image*> im;
+  SW4_MARK_BEGIN("HESS::COMPUTE_F_AND_DF");
   compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                    GlobalTimeSeries, GlobalObservations, f, dfs, dfm,
                    simulation.getRank(), mopt);  // mp, false, false, im );
-
+  SW4_MARK_END("HESS::COMPUTE_F_AND_DF");
   double* dfsp;
   if (ns > 0) dfsp = new double[ns];
 
@@ -1323,9 +1326,11 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
     for (int ind = 0; ind < ns; ind++) {
       h = 3e-8 * sf[ind];
       xs[ind] += h;
+      SW4_MARK_BEGIN("HESS::COMPUTE_F_AND_DF2");
       compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                        GlobalTimeSeries, GlobalObservations, fp, dfsp, dfmp,
                        myRank, mopt);  // mp, false, false, im );
+      SW4_MARK_END("HESS::COMPUTE_F_AND_DF2");
       for (int p = 0; p < ns; p++) hess[p + ns * ind] = (dfsp[p] - dfs[p]) / h;
       xs[ind] -= h;
       if (myRank == 0) cout << " done " << ind << endl;
@@ -1476,10 +1481,12 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
                 mopt->m_mp->parameter_index(iper, jper, kper, grid, var);
             if (pind >= 0) xm[pind] += h;
             //	       mp->perturb_material(iper,jper,kper,grid,var,h,xs,xm);
+	    SW4_MARK_BEGIN("HESS::COMPUTE_F_AND_DF3");
             compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm,
                              GlobalSources, GlobalTimeSeries,
                              GlobalObservations, f, dfs, dfmp, myRank,
                              mopt);  // mp, false, false, im );
+	    SW4_MARK_END("HESS::COMPUTE_F_AND_DF3");
             for (int p = 0; p < nmpard; p++) dfmp[p] = (dfmp[p] - dfm[p]) / h;
             // Save Hessian column
             restrict(active, wind, dfmp, xmi);
@@ -1738,7 +1745,9 @@ int main(int argc, char** argv) {
   string fileName;
   int myRank, nProcs;
   int status = start_minv(argc, argv, fileName, myRank, nProcs);
-
+#ifdef ENABLE_CALIPER
+  cali_set_int_byname("mpi.rank", myRank);
+#endif
   MPI_Info info;
   MPI_Comm shared_comm;
   MPI_Info_create(&info);
@@ -2116,9 +2125,11 @@ int main(int argc, char** argv) {
           double *dfs, *dfm;
           if (nspar > 0) dfs = new double[nspar];
           if (nmpard > 0) dfm = new double[nmpard];
+	  SW4_MARK_BEGIN("TEST9::COMPUTE_F_AND_DF3");
           compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm,
                            GlobalSources, GlobalTimeSeries, GlobalObservations,
                            f, dfs, dfm, myRank, mopt, 0);
+	  SW4_MARK_END("TEST9::COMPUTE_F_AND_DF3");
         } else if (mopt->m_opttest == 1) {
           bool dbg = false;
           // add frequency-dependent t0 and duration for time windowing of
