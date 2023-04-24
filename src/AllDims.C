@@ -104,15 +104,15 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
    ptrdiff_t fftw_alloc_local = fftw_mpi_local_size_3d( nig, njg, nkg, m_communicator, &ni, &ib );
    m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
 #else
-   int ni, ib;
+   ptrdiff_t ni, ib;
 #endif
 
-   std::vector<int> niloc(m_nproci), ibloc(m_nproci);
+   std::vector<ptrdiff_t> niloc(m_nproci), ibloc(m_nproci);
    niloc[m_myid1d] = ni;
    ibloc[m_myid1d] = ib;
 
-   MPI_Allgather( &ni, 1, MPI_INT, &niloc[0], 1, MPI_INT, m_communicator );
-   MPI_Allgather( &ib, 1, MPI_INT, &ibloc[0], 1, MPI_INT, m_communicator );
+   MPI_Allgather( &ni, 1, MPI_AINT, &niloc[0], 1, MPI_AINT, m_communicator );
+   MPI_Allgather( &ib, 1, MPI_AINT, &ibloc[0], 1, MPI_AINT, m_communicator );
 
    m_ib.resize(m_nproci);
    m_ie.resize(m_nproci);
