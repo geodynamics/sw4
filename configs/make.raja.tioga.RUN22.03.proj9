@@ -8,7 +8,7 @@ ckernel=yes
 openmp=yes
 raja_cuda=yes
 umpire = yes
-fftw = no
+fftw = yes
 hdf5= yes
 zfp=no
 spill_warns = no
@@ -60,8 +60,8 @@ MORE_LINK_FLAGS+=  -L$(UMPIRE_HOME)/lib -lumpire
 endif 
 
 ifeq ($(fftw),yes)
-MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_DIR)/include
-MORE_LINK_FLAGS+=-L $(FFTW_DIR)/lib -Wl,-rpath=$(FFTW_DIR)/lib -lfftw3_mpi -lfftw3
+MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_ROOT)/include
+MORE_LINK_FLAGS+=-L $(FFTW_ROOT)/lib -Wl,-rpath=$(FFTW_ROOT)/lib -lfftw3_mpi -lfftw3
 endif 
 
 ifeq ($(hdf5),yes)
