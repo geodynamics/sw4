@@ -16,6 +16,7 @@ caliper=yes
 raja_only=no
 dbg=no
 register_count=no
+scr = yes
 
 SW4_GPU_ARCH = --offload-arch=gfx90a:xnack-:sramecc+
 SW4_GPU_ARCH = --amdgpu-target=gfx90a
@@ -31,6 +32,8 @@ UMPIRE_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/umpire-2
 
 HDF5_HOME = $(OLCF_HDF5_ROOT)
 HDF5_HOME = $(HDF5_DIR)
+
+SCR_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/scr-v3.0.1/install_tioga
 
 ZFP_HOME=/gpfs/alpine/csc300/world-shared/spock/zfp
 H5Z_HOME=/gpfs/alpine/csc300/world-shared/spock/H5Z-ZFP/install
@@ -114,6 +117,12 @@ ifeq ($(proj_6),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
 endif
+
+ifeq ($(scr),yes)
+MORE_FLAGS+= -I$(SCR_HOME)/include -DSW4_USE_SCR=1
+MORE_LINK_FLAGS+=-Wl,-rpath=$(SCR_HOME)/lib64  -L$(SCR_HOME)/lib64 -lscr
+endif
+
 
 
 LINKFLAGS = 
