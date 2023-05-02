@@ -1534,7 +1534,20 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
   SCR_Start_output(cs.str().c_str(), SCR_FLAG_CHECKPOINT);
   char scr_file[SCR_MAX_FILENAME];
   SCR_Route_file(s.str().c_str(), scr_file);
-  std::cout<<"Writing SCR checkpoint file to "<<scr_file<<"\n";
+
+#define USE_SCR_DELETE 1
+#ifndef USE_SCR_DELETE
+  old_checkpoints.push(std::string(scr_file));
+#else
+  std::stringstream css;
+  // if (get_restart_path().length()!=0)
+  //   css<<get_restart_path()<<"/"<<cs.str();
+  // else
+  //   css<<get_restart_path()<<"./"<<cs.str();
+  old_checkpoints.push(cs.str());
+#endif
+  if (!mEW->getRank())
+    std::cout<<"Writing SCR checkpoint file to "<<scr_file<<"\n";
   int valid=1;
   if (std::FILE *file=std::fopen(scr_file,"wb")){
     int ng = mEW->mNumberOfGrids;
@@ -1576,6 +1589,7 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
     abort();
   }
   SCR_Complete_output(valid);
+  delete_checkpoint();
 #endif
 }
 //-----------------------------------------------------------------------
@@ -1662,3 +1676,21 @@ void CheckPoint::read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
   }
 #endif
 }
+void CheckPoint::delete_checkpoint(){
+  if (old_checkpoints.size()==3){
+    auto del = old_checkpoints.front();
+    old_checkpoints.pop();
+    std::cout<<"Deleting "<<del<<"\n";
+#define USE_SCR_DELETE 1
+#ifndef USE_SCR_DELETE
+    int er = unlink(const_cast<char*>(del.c_str()));
+#else
+    int er=SCR_Delete(del.c_str());
+#endif
+
+    if (er!=0){
+      std::cerr<<"Deletion of olde checkpoint file failed with err code "<<er<<"\n";
+    }
+  }
+}
+    
