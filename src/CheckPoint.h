@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <queue>
+//#include <queue>
 
 #include "sw4.h"
 //#include "boundaryConditionTypes.h"
@@ -73,7 +73,7 @@ void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
   void set_restart_path(string restartPath);
   std::string get_restart_path();
   bool useHDF5() { return mUseHDF5; };
-  std::queue<std::string> old_checkpoints;
+  //std::queue<std::string> old_checkpoints;
  protected:
   void define_pio();
   void setSteps(int a_steps);
@@ -123,7 +123,7 @@ void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
                                   // each grid level
   std::vector<bool> m_ihavearray;
   std::FILE *scr_file_handle;
-  void delete_checkpoint();
+  //void delete_checkpoint();
 };
 
 #endif
