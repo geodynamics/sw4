@@ -78,6 +78,7 @@ def main():
                 count=count+1
     print("\n\n Timing stats \n\n")
     mean,median=stats(timestep)
+    print("#min = ",min(timestep),"max = ",max(timestep))
     print("\n\n")
     print("#Number of point sources ",sources," M")
     print("# number of g p sources= ",gpsources," M")
