@@ -12,7 +12,7 @@ def stats(times):
     print("#Mean =",statistics.mean(times))
     print("#Median =",statistics.median(times))
     print("#STDEV =",statistics.pstdev(times))
-    return statistics.median(times)
+    return statistics.mean(times),statistics.median(times)
 
 def mstats(times):
     # Drop outliers and look at stats
@@ -38,9 +38,15 @@ def main():
     gpssources=0.0
     source=0
     factor=1000000.0
+    first_step=0
+    mpi_init=0
     with open(sys.argv[1]) as infile:
         for line in infile:
             line=line.rstrip()
+            if "After MPI_Init" in line:
+                data=line.split()
+                date=" ".join(data[2:])
+                mpi_init=int(time.mktime(time.strptime(date)))
             if "number of grid point  sources" in line:
                 gpsources = int(int(line.split()[6])/factor)
             elif "number of unique" in line:
@@ -59,6 +65,8 @@ def main():
                 date=" ".join(data[6:])
                 epoch=int(time.mktime(time.strptime(date)))
                 t=0
+                if count==0:
+                    first_step=epoch
                 if count>0:
                     t=epoch-last
                     print(data[2], t)
@@ -69,18 +77,24 @@ def main():
                 laststep=int(data[2])
                 count=count+1
     print("\n\n Timing stats \n\n")
-    median=stats(timestep)
+    mean,median=stats(timestep)
     print("\n\n")
     print("#Number of point sources ",sources," M")
     print("# number of g p sources= ",gpsources," M")
     print("# number of unique g p sources= ",ugpsources," M")
     print("#Steps between timestamps",step)
     print("#Mem Usage ",mem_usage," GB")
-    norm_time=median/step/mem_usage*1000
+    norm_time=mean/step/mem_usage*1000
     print("#Total steps to solution ",total_steps)
     print("#dt = ",dt)
     print("#Adjusted time per step",norm_time," s/per 1K steps/per GB")
-    print("#Time to solution ",math.ceil(total_steps/step*median/3600)," hours")
+    #print("#MPI_Init=",mpi_init," First step",first_step)
+    startup_time = first_step-mpi_init
+    print("#Startup time is ",startup_time," s")
+    print("#Solve Time  ",total_steps/step*mean/3600," hours", total_steps/step*median/3600,"hours")
+    TTS=(total_steps/step*mean+startup_time)/3600
+    TTS_MEDIAN = (total_steps/step*median+startup_time)/3600
+    print("#Total time to solution",TTS,"  hours",TTS_MEDIAN," hours")
     mstats(timestep)
 
 if __name__=="__main__":
