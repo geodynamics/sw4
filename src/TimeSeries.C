@@ -1211,7 +1211,7 @@ void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
 
   if (isLast && ret == 1) {
     m_nptsWritten += count;
-    H5Gflush(grp);
+    /* H5Gflush(grp); */
   }
 
   if (mDownSample > 1) delete[] write_data;
