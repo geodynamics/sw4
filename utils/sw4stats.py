@@ -73,7 +73,8 @@ def main():
                     t=epoch-last
                     print(data[2], t)
                     timestep.append(int(t))
-                    step=int(data[2])-laststep
+                    if count==1:
+                        step=int(data[2])-laststep
                     
                 last=epoch
                 laststep=int(data[2])
