@@ -1276,7 +1276,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
       }
       H5Sclose(dspace);
     }
-    H5Fflush(fid, H5F_SCOPE_GLOBAL);
+    /* H5Fflush(fid, H5F_SCOPE_GLOBAL); */
     H5Fclose(fid);
   }  // end if myrank=0
 

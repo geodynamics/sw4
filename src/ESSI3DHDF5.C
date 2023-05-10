@@ -570,9 +570,9 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   }
 
   H5Pclose(dxpl);
-#ifndef USE_HDF5_ASYNC
-  H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
-#endif
+/* #ifndef USE_HDF5_ASYNC */
+/*   H5Fflush(m_file_id, H5F_SCOPE_GLOBAL); */
+/* #endif */
 
 #endif
   return;
