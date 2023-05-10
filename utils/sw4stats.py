@@ -62,6 +62,8 @@ def main():
                 mem_usage+=float(mmax.split(",")[1])
             elif "Time step" in line:
                 data=line.split()
+                if len(data)<6 :
+                    continue
                 date=" ".join(data[6:])
                 epoch=int(time.mktime(time.strptime(date)))
                 t=0
