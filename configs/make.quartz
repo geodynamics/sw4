@@ -1,23 +1,29 @@
+# module load intel-classic/2021.6.0  mvapich2/2.3.6 fftw/3.3.10 mkl/2022.1.0 hdf5-parallel/1.14.0
   etree = no
-  proj = yes
+  proj = no
   fftw = yes
   hdf5 = yes
-  SW4ROOT = /usr/apps/wpp
-# assumes module load intel
+# Requires module load intel (e.g., intel-classic/2021.6.0)
 # FC = mpiifort
   FC = mpif90
   CXX = mpicxx
-  MKL_PATH = /usr/tce/packages/mkl/mkl-2019.0/lib
-  HDF5ROOT   = ${HDF5}
-  FFTWHOME = /usr/tce/packages/fftw/fftw-3.3.8-mvapich2-2.3-intel-19.0.3
+# Location of user built modules (e.g., proj4, which has not been rebuilt with the above toolchain)
+  SW4ROOT = /usr/apps/wpp
+# MKLROOT environmental variable is set upon module load mkl/2022.1.0
+#  MKLROOT = /usr/tce/packages/mkl/mkl-2022.1.0/mkl/2022.1.0
+  MKL_PATH = ${MKLROOT}/lib/intel64
+#OLD  MKL_PATH = /usr/tce/packages/mkl/mkl-2019.0/lib
+# HDF5 environmental variable is set upon module load hdf5-parallel/1.14.0
+#  HDF5 = /usr/tce/packages/hdf5/hdf5-1.14.0-mvapich2-2.3.6-intel-2022.1.0  
+  HDF5ROOT = ${HDF5}
+# FFTWHOME info is from module display fftw/3.3.10, no root environmental variable is set :(
+  FFTWHOME = /usr/tce/packages/fftw/fftw-3.3.10-mvapich2-2.3.6-intel-classic-2021.6.0
+#OLD  FFTWHOME = /usr/tce/packages/fftw/fftw-3.3.8-mvapich2-2.3-intel-19.0.3
 
-EXTRA_LINK_FLAGS = -Wl,-rpath=$(FFTWHOME)/lib -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
+EXTRA_LINK_FLAGS = -Wl,-rpath=$(FFTWHOME)/lib -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=$(MKL_PATH) -L$(MKL_PATH) -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
 
 #  EXTRA_CXX_FLAGS = -O
 #  EXTRA_FORT_FLAGS = -O
-# must load appropriate modules for hdf5-parallel library support
-# ( module add hdf5-parallel )
-#
 
   debugdir := debug_quartz
   optdir := optimize_quartz
