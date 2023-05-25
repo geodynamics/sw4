@@ -1,13 +1,12 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4     [debug=yes/no] [proj=yes/no] [proj_6=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+# make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 #   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no zfp=no sz=no fftw=no
 # This Makefile asumes that the following environmental variables have been assigned:
 # proj = [yes/no]
-# proj_6 = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
-# SW4ROOT = path to third party libraries (used when proj/proj_6=yes). 
+# SW4ROOT = path to third party libraries (used when proj=yes). 
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 # H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
 # ZFPROOT = path to ZFP library and include files (used when zfp=yes).
@@ -146,14 +145,10 @@ ifdef EXTRA_FORT_FLAGS
 endif
 
 ifeq ($(proj),yes)
-#   CXXFLAGS += -DENABLE_PROJ4
-   CXXFLAGS += -DENABLE_PROJ4 
-#   linklibs += -L$(SW4LIB) -lproj
-   proj  := "proj_4"
-else ifeq ($(proj_6),yes)
-   CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -L$(SQLITE_HOME)/lib  -lproj -lcurl -lssl -lcrypto
-   proj  := "proj_6"
+   CXXFLAGS += -DENABLE_PROJ
+   linklibs += -L$(SW4LIB) -L$(SQLITE_HOME)/lib  -lproj 
+   # -lcurl -lssl -lcrypto
+   proj  := "proj"
 else
    proj  := "no"
 endif
@@ -279,7 +274,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -arch=sm_70 $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
+	cd $(builddir); nvcc $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
@@ -294,7 +289,7 @@ sw4mopt: $(FOBJ) $(FMOBJOPT)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -arch=sm_70 $(DLINKFLAGS) -dlink -o file_link.o $(MOBJOPT) $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
+	cd $(builddir); nvcc $(DLINKFLAGS) -dlink -o file_link.o $(MOBJOPT) $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@  file_link.o $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
@@ -374,7 +369,7 @@ clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
 	/bin/mkdir -p $(profiledir)
-	cd $(optdir); /bin/rm -f sw4 *.o; cd ../$(debugdir); cd ../$(profiledir); /bin/rm -f sw4 *.o; /bin/rm -f sw4 *.o
+	cd $(optdir); /bin/rm -f sw4 sw4mopt *.o; cd ../$(debugdir); cd ../$(profiledir); /bin/rm -f sw4 *.o; /bin/rm -f sw4 *.o
 
 # Special rule for the target test
 test:

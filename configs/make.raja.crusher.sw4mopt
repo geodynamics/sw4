@@ -3,7 +3,7 @@ LINKER = hipcc
 CXX = $(PREP) hipcc
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-proj_6 = yes
+proj = yes
 ckernel=yes 
 openmp=yes
 raja_cuda=yes
@@ -112,7 +112,7 @@ MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
 endif 
 
-ifeq ($(proj_6),yes)
+ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ6_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ6_HOME)/lib64  -L$(PROJ6_HOME)/lib64 -lproj -Wl,-rpath=$(OLCF_SQLITE_ROOT)/lib  -L$(OLCF_SQLITE_ROOT)/lib -lsqlite3
 endif
