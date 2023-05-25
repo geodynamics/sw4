@@ -198,10 +198,11 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
-        if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # use 64 hardware cores per node
+        if omp_threads<=0: omp_threads=32;
+        if mpi_tasks<=0: mpi_tasks = int(128/omp_threads) # use 64 hardware cores per node
         sw_threads = omp_threads # Cori uses hyperthreading by default
-        mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
+        # mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
+        mpirun_cmd="srun -N 2 -n 8" + " -c " + str(sw_threads) + " --gpus-per-task=1 --gpu-bind=map_gpu:0,1,2,3"
     elif 'fourier' in node_name:
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)

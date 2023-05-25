@@ -1,0 +1,111 @@
+FC = ftn
+LINKER = cc
+CXX = $(PREP) nvcc
+
+GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+
+proj = yes
+ckernel=yes 
+openmp=no
+raja_cuda=yes
+umpire = yes
+fftw = yes
+hdf5= yes
+mpi=yes
+zfp=yes
+spill_warns = no
+caliper= no
+lto=no
+expopts=yes
+
+RAJA_HOME = /global/cfs/cdirs/m3354/perl/RAJA-v2022.10.5/build/install
+UMPIRE_HOME = /global/cfs/cdirs/m3354/perl/umpire-2022.10.0/build/install
+
+PROJ_HOME = /global/cfs/cdirs/m3354/perl/proj-8.2.1/build.gnu/install
+HDF5_HOME = /global/cfs/cdirs/m3354/perl/hdf5/build-1.14.0/install
+# HDF5_HOME = $(HDF5_ROOT)
+# HDF5_HOME = /global/cfs/cdirs/m3354/perl/hdf5-1.12.2/build/install
+
+# ZFP_HOME=/global/cfs/cdirs/m3354/perl/zfp/build/install
+# H5Z_HOME=/global/cfs/cdirs/m3354/perl/H5Z-ZFP/build/install
+
+ZFP_HOME=/global/cfs/cdirs/m3354/perl/zfp/build/install
+H5Z_HOME=/global/cfs/cdirs/m3354/perl/H5Z-ZFP/build/install
+
+MPI_HOME=$(CRAY_MPICH_DIR)
+
+NVLINK_UMPIRE = $(UMPIRE_HOME)/lib/libumpire.a $(RAJA_HOME)/lib/libcamp.a
+
+EXTRA_FORT_FLAGS = 
+LAPACK_DIR = 
+
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -DSW4_MASS_PREFETCH=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" 
+# MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_MANAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -DSW4_MASS_PREFETCH=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" 
+# -DPEEKS_GALORE=1 
+MORE_LINK_FLAGS = 
+
+ifeq ($(umpire),yes)
+MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
+MORE_LINK_FLAGS+=  -L$(UMPIRE_HOME)/lib -lumpire -lcamp
+endif 
+
+ifeq ($(fftw),yes)
+MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_ROOT)/include
+MORE_LINK_FLAGS+=-L $(FFTW_ROOT)/lib -Wl,-rpath=$(FFTW_ROOT)/lib -lfftw3_mpi -lfftw3
+endif 
+
+ifeq ($(mpi),yes)
+MORE_FLAGS+= -I $(MPI_HOME)/include
+MORE_LINK_FLAGS+= -L $(MPI_HOME)/lib -Wl,-rpath=$(MPI_HOME)/lib -lmpich
+endif 
+
+
+ifeq ($(hdf5),yes)
+MORE_FLAGS+= -DUSE_HDF5=1 -I$(HDF5_HOME)/include
+MORE_LINK_FLAGS+= -L$(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+endif 
+
+ifeq ($(zfp),yes)
+MORE_FLAGS+= -DUSE_ZFP=1 -I $(ZFP_HOME)/include -I $(H5Z_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(ZFP_HOME)/lib64 -Wl,-rpath=$(H5Z_HOME)/lib -L $(H5Z_HOME)/lib -L $(ZFP_HOME)/lib64  -lh5zzfp -lzfp 
+endif 
+
+ifeq ($(spill_warns),yes)
+MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
+endif 
+
+ifeq ($(openmp),yes)
+MORE_FLAGS+=  -Xcompiler="-fopenmp"
+MORE_LINK_FLAGS+= -fopenmp
+else
+MORE_FLAGS+=  -Xcompiler=" "
+endif
+
+ifeq ($(caliper),yes)
+MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lcaliper
+endif 
+
+ifeq ($(proj),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include -DENABLE_PROJ
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64 -L$(PROJ_HOME)/lib64 -lproj
+endif 
+
+ifeq ($(lto),yes)
+MORE_FLAGS+= -dlto
+LINKFLAGS +=  -dlto
+DLINKFLAGS +=  -dlto
+endif
+
+ifeq ($(expopts),yes)
+MORE_FLAGS += -DSW4_USE_CMEM=1 -DSW4_GHCOF_NO_GP_IS_ZERO=1
+# MORE_FLAGS += -DSW4_USE_CMEM=1 -DSW4_GHCOF_NO_GP_IS_ZERO=1 -DSW4_EXPT_3=1
+endif
+
+DLINKFLAGS =  -arch=sm_80
+LINKFLAGS =  
+# CUDA_HOME = $(CUDA_DIR)
+# EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin gcc -std=c++17 --expt-extended-lambda -restrict -arch=sm_80 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -DSW4_A100=1 -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1
+EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin gcc -std=c++17 --expt-extended-lambda -restrict -arch=sm_80 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -DSW4_A100=1 -DSOURCE_INVERSION=1
+
+EXTRA_LINK_FLAGS =   -dc -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L$(PROJ_HOME)/lib64 -lproj -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) -lgfortran -lstdc++ -lm -ldl

@@ -3,7 +3,7 @@ LINKER = mpicxx
 CXX = $(PREP) nvcc
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-proj_6 = yes
+proj = yes
 ckernel=yes 
 openmp=no
 raja_cuda=yes
@@ -72,13 +72,13 @@ MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
 MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lcaliper
 endif 
 
-ifeq ($(proj),yes)
-MORE_FLAGS+= -I$(PROJ_HOME)/include
-#MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib  -L$(PROJ_HOME)/lib -lproj
-MORE_LINK_FLAGS+= -L$(PROJ_HOME)/lib -lproj
-endif 
+# ifeq ($(proj),yes)
+# MORE_FLAGS+= -I$(PROJ_HOME)/include
+# #MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib  -L$(PROJ_HOME)/lib -lproj
+# MORE_LINK_FLAGS+= -L$(PROJ_HOME)/lib -lproj
+# endif 
 
-ifeq ($(proj_6),yes)
+ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include -DENABLE_PROJ -DENABLE_PROJ6
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(SQLITE_HOME)/lib  -L$(SQLITE_HOME)/lib -lsqlite3
 endif
