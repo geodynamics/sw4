@@ -5791,6 +5791,7 @@ void EW::processRuptureHDF5(char* buffer,
   if (proc_zero())
     cout << "Process rupture data, took " << etime - stime << "seconds."
          << endl;
+  std::cout<<"HDF SOURCE COUNT "<<a_GlobalUniqueSources[event].size()<<"\n";
 #else
   if (proc_zero())
     cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"
@@ -6199,6 +6200,7 @@ void EW::processRupture(char* buffer,
   if (proc_zero())
     cout << "Process rupture data, took " << etime - stime << "seconds."
          << endl;
+  std::cout<<"SRF SOURCE COUNT "<<a_GlobalUniqueSources[event].size()<<"\n";
 }  // end processRupture()
 
 //------------------------------------------------------------------------

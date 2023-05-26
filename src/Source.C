@@ -46,7 +46,7 @@
 #include "mpi.h"
 #include "time_functions.h"
 using namespace std;
-
+#define SW4_FAST_SETUP
 #define SQR(x) ((x) * (x))
 
 //-----------------------------------------------------------------------
@@ -443,6 +443,9 @@ void Source::correct_Z_level(EW* a_ew) {
   int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
 
+  // Do the safety check only one in a sequence of restarts
+  if (!a_ew->m_check_point->do_restart()){
+
   // The following is a safety check to make sure only one processor considers
   // this (i,j) to be interior We could remove this check if we were certain
   // that interior_point_in_proc() never lies
@@ -462,6 +465,8 @@ void Source::correct_Z_level(EW* a_ew) {
                << counter << " for source station at (x,y,depth)=" << mX0
                << ", " << mY0 << ", " << mZ0);
 
+  }
+
   if (!a_ew->topographyExists()) {
     // This is the easy case w/o topography
     m_zTopo = 0.0;
@@ -472,8 +477,12 @@ void Source::correct_Z_level(EW* a_ew) {
     if (a_ew->m_gridGenerator->interpolate_topography(
             a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
       zTopoLocal = -1e38;
+#ifndef SW4_FAST_SETUP
     MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
-                  MPI_COMM_WORLD);
+		  MPI_COMM_WORLD);
+#else
+    m_zTopo=zTopoLocal ;
+#endif
     if (m_zRelativeToTopography) {
       // If location was specified with topodepth, correct z-level
       mZ0 += m_zTopo;
@@ -4344,7 +4353,11 @@ void Source::compute_grid_point(EW* a_ew) {
     inds[3] = g;
   }
   int indsg[4] = {0, 0, 0, 0};
+#ifndef SW4_FAST_SETUP
   MPI_Allreduce(inds, indsg, 4, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#else
+  for(int i=0;i<4;i++) indsg[i]=inds[i];
+#endif
   m_i0 = indsg[0];
   m_j0 = indsg[1];
   m_k0 = indsg[2];

@@ -933,6 +933,7 @@ void readRuptureHDF5(char *fname,
   H5Tclose(dtype);
   free(point_data);
   free(sr_data);
+  std::cout<<world_rank<<" SOURCE SIZE "<<a_GlobalUniqueSources[event].size()<<"\n";
 }
 
 #endif  // USE_HDF5
