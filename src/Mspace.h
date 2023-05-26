@@ -25,6 +25,7 @@
 #include "umpire/strategy/AlignedAllocator.hpp"
 #include "umpire/strategy/AllocationAdvisor.hpp"
 #include "umpire/strategy/MonotonicAllocationStrategy.hpp"
+#include "umpire/strategy/ThreadSafeAllocator.hpp"
 #include "umpire/util/Macros.hpp"
 #endif
 #ifdef USE_MAGMA

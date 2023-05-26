@@ -444,6 +444,7 @@ void Source::correct_Z_level(EW* a_ew) {
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
 
   // Do the safety check only one in a sequence of restarts
+#ifndef SW4_FAST_SETUP
   if (!a_ew->m_check_point->do_restart()){
 
   // The following is a safety check to make sure only one processor considers
@@ -466,7 +467,7 @@ void Source::correct_Z_level(EW* a_ew) {
                << ", " << mY0 << ", " << mZ0);
 
   }
-
+#endif
   if (!a_ew->topographyExists()) {
     // This is the easy case w/o topography
     m_zTopo = 0.0;

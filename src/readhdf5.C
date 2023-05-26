@@ -689,22 +689,39 @@ void readRuptureHDF5(char *fname,
   if (is_debug && world_rank == 0)
     printf("Bcast SRF-HDF5 takes %.2f seconds\n", stime - etime);
 
-  Source *sourcePtr;
+
   timeDep tDep = iDiscrete;
   char formstring[100];
   strcpy(formstring, "Discrete");
 
-  double x = 0.0, y = 0.0, z = 0.0;
-  float_sw4 m0 = 1.0;
-  float_sw4 t0 = 0.0, freq = 1.0;
-  float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
-  bool topodepth = true;
-  // Discrete source time function
-  float_sw4 *par = NULL;
-  int *ipar = NULL;
-  int npar = 0, nipar = 0, ncyc = 0, sr1pos = 0;
+  
   // read all point sources
+  int ccount=0;
+  //std::cout<<"NUmber of points ins "<<npts<<"\n"<<std::flush;
+  int *offsets = new int[npts+1];
+  offsets[0]=0;
+  int offpos=0;
+  for (int i=0;i<npts;i++){
+    offpos+=(int)point_data[i].nt1;
+    offsets[i+1]=offpos;
+  }
+    
+  //a_GlobalUniqueSources[event].resize(npts,(Source*)NULL);
+  Source **srcs = new Source*[npts];
+  // Check if the omp reductions are working correctly
+#pragma omp parallel for reduction( + : nu1,nu2,nu3,nSources)
   for (int pts = 0; pts < npts; pts++) {
+    //Source *sourcePtr;
+    double x = 0.0, y = 0.0, z = 0.0;
+    float_sw4 m0 = 1.0;
+    float_sw4 t0 = 0.0, freq = 1.0;
+    float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
+    bool topodepth = true;
+    // Discrete source time function
+    float_sw4 *par = NULL;
+    int *ipar = NULL;
+    int npar = 0, nipar = 0, ncyc = 0, sr1pos = 0;
+    
     double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
     int nt1, nt2, nt3;
 
@@ -725,7 +742,11 @@ void readRuptureHDF5(char *fname,
     nt3 = (int)point_data[pts].nt3;
 
     // nothing to do if nt1=nt2=nt3=0
-    if (nt1 <= 0 && nt2 <= 0 && nt3 <= 0) continue;
+    if (nt1 <= 0 && nt2 <= 0 && nt3 <= 0) {
+      srcs[pts]=NULL;
+      //ccount++;
+      continue;
+    }
 
     if (world_rank == 0 && mVerbose >= 2) {
       printf(
@@ -752,7 +773,7 @@ void readRuptureHDF5(char *fname,
       ipar = new int[1];
       ipar[0] = nt1dim + 1;  // add an extra point
 
-      for (int i = 0; i < nt1; i++) par[i + 1] = sr_data[sr1pos++];
+      for (int i = 0; i < nt1; i++) par[i + 1] = sr_data[offsets[pts]+i];
 
       // pad with 0
       if (nt1 < 6) {
@@ -885,15 +906,19 @@ void readRuptureHDF5(char *fname,
                      << endl;
         if (world_rank == 0) cout << sourceposerr.str();
       } else {
-        sourcePtr =
+        //sourcePtr =
+	srcs[pts]=
             new Source(ew, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
                        tDep, formstring, topodepth, ncyc, par, npar, ipar,
                        nipar, true);  // true is correctStrengthForMu
 
-        if (sourcePtr->ignore()) {
-          delete sourcePtr;
+        if (srcs[pts]->ignore()) {
+	  std::cout<<"Deleting source\n";
+          //delete sourcePtr;
+	  delete srcs[pts];
+	  srcs[pts]=NULL;
         } else {
-          a_GlobalUniqueSources[event].push_back(sourcePtr);
+          //a_GlobalUniqueSources[event].push_back(srcs[pts]);
           nSources++;
         }
       }
@@ -919,6 +944,9 @@ void readRuptureHDF5(char *fname,
     }  // end if nt3 > 0
 
   }  // end for all sources
+  delete [] offsets;
+  for(int pts=0;pts<npts;pts++)
+    if (srcs[pts]!=NULL) a_GlobalUniqueSources[event].push_back(srcs[pts]);
   if (world_rank == 0)
     printf(
         "Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, "
@@ -933,7 +961,7 @@ void readRuptureHDF5(char *fname,
   H5Tclose(dtype);
   free(point_data);
   free(sr_data);
-  std::cout<<world_rank<<" SOURCE SIZE "<<a_GlobalUniqueSources[event].size()<<"\n";
+  //std::cout<<world_rank<<" SOURCE SIZE "<<a_GlobalUniqueSources[event].size()<<" "<<ccount<<"\n";
 }
 
 #endif  // USE_HDF5

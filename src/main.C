@@ -173,7 +173,8 @@ int main(int argc, char **argv) {
   const int alignment = 512; // 1024 may be 1% faster on Crusher
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::QuickPool, true>(
-          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
+          string("UM_pool_unsafe"), pref_allocator, pool_size, 1024 * 1024, alignment);
+  auto thread_safe_pool = rma.makeAllocator<umpire::strategy::ThreadSafeAllocator>("UM_pool", pooled_allocator);
 #ifdef ENABLE_HIP
   const size_t pool_size_small = static_cast<size_t>(1024) * 1024 * 1024;
 #else
