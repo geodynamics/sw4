@@ -314,6 +314,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   ierr = H5Sclose(dataspace_id);
   ierr = H5Dclose(dataset_id);
 
+  H5Fflush(m_file_id, H5F_SCOPE_LOCAL);
   if (debug && (myRank == 0))
     cerr << "Done writing hdf5 z coordinate: " << m_filename << endl;
 #endif
