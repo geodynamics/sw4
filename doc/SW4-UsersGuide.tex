@@ -2519,14 +2519,14 @@ checkpoint cycleInterval=80000 restartpath=output file=HFCheck
 To use the HDF5 format and optionally with compression:
 \begin{verbatim}
 checkpoint cycleInterval=80000 restartpath=output file=HFCheck \
-    hdf5=yes zfp_accuracy=1e-5
+    hdf5=yes zfp-accuracy=1e-5
 \end{verbatim}
 
 To restart from a previously written checkpoint file, add the \verb+restartfile+ key word and the checkpoint file name to the \verb+checkpoint+ command:
 \begin{verbatim}
 checkpoint cycleInterval=80000 restartpath=output file=HFCheck \
     restartfile=HFCheck.cycle=160000.sw4checkpoint \
-    hdf5=yes zfp_accuracy=1e-5
+    hdf5=yes zfp-accuracy=1e-5
 \end{verbatim}
 
 Note that when using the \verb+checkpoint+ command in combination with the \verb+rec+, \verb+rechdf5+, and  \verb+ssioutput+ commands, it is advisable to align their write intervals, such that the latest time-series data are also written at the time writing a checkpoint file. For example, a user may set  \verb+writeEvery=1000+ (default) in the \verb+rechdf5+ command, and set \verb+dumpInterval=400+ in the \verb+ssioutput+ command, and set \verb+cycleInterval=40000+, as 40000 is divisible by both 1000 and 4000.
@@ -4214,7 +4214,7 @@ Be aware that these files can be {\em very} large, depending on the
 The option {\bf file=...} has the
   same meaning as the corresponding parameters in the image command.
 The \verb+ssioutput+ command produces files with extension \verb+.ssi+.
-To reduce the output size, we have enabled the support to utilize ZFP \url{https://github.com/LLNL/zfp} and SZ \url{https://github.com/szcompressor/SZ} lossy compression. They can reduce the output size without significant precision loss. We found setting \verb+zfp_accuracy=0.01+ can reduce the output size by a factor of 40. Note ZFP and H5Z-ZFP must be installed and linked with SW4 to use this option, see the Installation Guide for detailed installation instructions.
+To reduce the output size, we have enabled the support to utilize ZFP \url{https://github.com/LLNL/zfp} and SZ \url{https://github.com/szcompressor/SZ} lossy compression. They can reduce the output size without significant precision loss. We found setting \verb+zfp-accuracy=0.01+ can reduce the output size by a factor of 40. Note ZFP and H5Z-ZFP must be installed and linked with SW4 to use this option, see the Installation Guide for detailed installation instructions.
 
 
 The option {\bf dumpInterval=...} affects the maximum 
@@ -4251,10 +4251,10 @@ xmax     & ending $x$ location of requested SSI region & real & m & $x_{max}$ \\
 ymin     & starting $y$ location of requested SSI region & real & m & 0 \\ \hline
 ymax     & ending $y$ location of requested SSI region & real & m & $y_{max}$ \\ \hline
 depth     & approx depth of output over requested SSI region & real & m & 0 \\ \hline
-zfp\_accuracy & use ZFP lossy compression accuracy mode & float & none & N/A \\ \hline
-zfp\_precision & use ZFP lossy compression precision mode & float &none &  N/A \\ \hline
-zfp\_rate & use ZFP lossy compression rate mode & float &none &  N/A \\ \hline
-zfp\_reversible & use ZFP lossless compression mode & int & none &  0 \\ \hline
+zfp-accuracy & use ZFP lossy compression accuracy mode & float & none & N/A \\ \hline
+zfp-precision & use ZFP lossy compression precision mode & float &none &  N/A \\ \hline
+zfp-rate & use ZFP lossy compression rate mode & float &none &  N/A \\ \hline
+zfp-reversible & use ZFP lossless compression mode & int & none &  0 \\ \hline
 
 \end{tabular}
 \end{center}
@@ -4326,9 +4326,9 @@ sampleFactorV  & specifies the sub-sampling factor in the vertical direction & i
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{flushleft}
 \bf Syntax:\\ \tt
-checkpoint cycleInterval=... file=... restartpath=... \\ zfp\_{accuracy/precision/rate/reversible}=...\\
+checkpoint cycleInterval=... file=... restartpath=... \\ zfp-{accuracy/precision/rate/reversible}=...\\
 checkpoint cycleInterval=... file=... restartpath=... restartfile=... \\
-zfp\_{accuracy/precision/rate/reversible}=...\\
+zfp-{accuracy/precision/rate/reversible}=...\\
 \bf Required parameter:\\
 \rm Time for output: (time, timeInterval, cycle, or cycleInterval).\\
 \bf Notes:\\
@@ -4384,10 +4384,10 @@ cycleInterval & sets the interval for writing out restart files & int & 0 \\
 restartfile & restart the code from this file & string & ``restart''  \\ \hline
 restartpath & path to restart file & string & N/A \\ \hline
 hdf5 & use HDF5 output format & string & ``no'' \\ \hline
-zfp\_accuracy & use ZFP lossy compression accuracy mode & float & N/A \\ \hline
-zfp\_precision & use ZFP lossy compression precision mode & float & N/A \\ \hline
-zfp\_rate & use ZFP lossy compression rate mode & float & N/A \\ \hline
-zfp\_reversible & use ZFP lossless compression mode & int & 0 \\ \hline
+zfp-accuracy & use ZFP lossy compression accuracy mode & float & N/A \\ \hline
+zfp-precision & use ZFP lossy compression precision mode & float & N/A \\ \hline
+zfp-rate & use ZFP lossy compression rate mode & float & N/A \\ \hline
+zfp-reversible & use ZFP lossless compression mode & int & 0 \\ \hline
 
 \end{tabular}
 \end{center}
