@@ -208,6 +208,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'ray' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="mpirun -gpu -np " + str(mpi_tasks)+" mpibind"
+    elif 'lassen' in node_name:
+        if mpi_tasks<=0: mpi_tasks = 16
+        mpirun_cmd="lrun -T40 " 
     elif 'sierra' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 -p" + str(mpi_tasks)

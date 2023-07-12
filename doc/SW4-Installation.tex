@@ -341,7 +341,7 @@ Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTR
 the C++ compiler, Fortran compiler, or linker, on your system.
 
 \subsection{Building \emph{SW4} with PROJ, HDF5, and ZFP support}
-The PROJ libraray enables the more advanced geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile, sfile} and {\tt gmg} commands. To enable the {\tt sfile}, {\tt ssioutput}, and {\tt gmg} commands, you have to also install the {\tt HDF5} library. To use ZFP compression for the {\tt ssioutput} command, {\tt ZFP} and {\tt H5Z-ZFP} are required. See Section \ref{sec:proj} for installing these libraries.
+The PROJ library enables the more advanced geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile, sfile} and {\tt gmg} commands. To enable the {\tt sfile}, {\tt ssioutput}, and {\tt gmg} commands, you have to also install the {\tt HDF5} library. To use ZFP compression for the {\tt ssioutput} command, {\tt ZFP} and {\tt H5Z-ZFP} are required. See Section \ref{sec:proj} for installing these libraries.
 
 Once you have successfully installed the PROJ, and optionally the HDF5 and ZFP libraries, it should be easy to re-configure \emph{SW4} to use them. Simply edit your configuration file (\verb+make.inc+) by adding the following lines to the top of the file, setting the {\tt proj}, {\tt hdf5}, and {\tt zfp} keywords to
 {\tt yes} or {\tt no}, as appropriate.
@@ -366,7 +366,7 @@ completed. As before, the \verb+sw4+ executable will be located in the \verb+opt
 \verb+debug+ directories.
 
 \subsection{Testing the \emph{SW4} installation}
-The \emph{SW4} source code distribution includes a python(3) script for running several tests and
+The \emph{SW4} source code distribution includes a Python (3) script for running several tests and
 checking the solutions against previously verified results. Note that the same set of tests can be
 performed when \emph{SW4} is built with CMake, see Section~\ref{cha:ctest-sw4}.
 
@@ -438,7 +438,7 @@ To use CMake, navigate to the top {\tt sw4} directory and run the following comm
 The two dots after {\tt cmake [options]} are essential and instructs it to look in the parent
 directory for the {\tt CMakeLists.txt} file.
  
-The \verb+cmake+ command searches for the necessary libraries and other dependencies, then creates
+The \verb+cmake+ command searches for the necessary libraries and other dependencies then creates
 makefiles that are appropriate for your system. You then run \verb+make+ to compiles and link
 \emph{SW4} using these makefiles. For details about the exact commands being used in compilation,
 run \texttt{make VERBOSE=1}.  Once SW4 has been successfully built, you will see the
@@ -534,7 +534,7 @@ following lines of the output from the \verb+cmake+ command:
 
 Sometimes CMake doesn't pick up the correct compiler. Say, for example that the C++ compiler on your
 system is called {\tt mpicxx} and the Fortran compiler is {\tt mpiifort}. You can tell {\tt cmake}
-to use those compilers by setting the following envoronment variables {\em before} running cmake
+to use those compilers by setting the following environment variables {\em before} running cmake
 (assuming a {\tt csh} shell),
 \begin{verbatim}
   > setenv CXX mpicxx
@@ -542,7 +542,7 @@ to use those compilers by setting the following envoronment variables {\em befor
 \end{verbatim}
 
 \subsection{CTest}\label{cha:ctest-sw4}
-The \emph{SW4} CMake configuration includes several test cases that are used to verify the correctness
+The \emph{SW4} CMake configuration includes several test cases used to verify the correctness
 of the \emph{SW4} installation.  Each test consists of two parts. First it runs a case using an input
 file in the \verb+pytest+ directory. Secondly, it checks that the results are within
 a reasonable error tolerance from previously recorded results.
@@ -563,7 +563,7 @@ Test project /Users/petersson1/src/sw4-cig/build
       Start 24: Check_Result_pointsource/pointsource-sg-1
 24/24 Test #24: Check_Result_pointsource/pointsource-sg-1 ...   Passed    0.03 sec
 
-100\% tests passed, 0 tests failed out of 24
+100% tests passed, 0 tests failed out of 24
 
 Total Test time (real) = 230.91 sec
 \end{verbatim}
@@ -626,9 +626,9 @@ The PROJ library (version 9 and later is recommended) can be installed by the fo
   > cd proj-x.x.x
   > mkdir build
   > cd build
-  > cmake -DBUILD_APPS=OFF -DCMAKE_INSTALL_PREFIX=${SW4ROOT}
--DSQLITE3_INCLUDE_DIR=${SW4ROOT}/include
--DSQLITE3_LIBRARY=${SW4ROOT}/lib/libsqlite3.so  ..
+  > cmake -DBUILD_APPS=OFF -DCMAKE_INSTALL_PREFIX=${SW4ROOT} \
+          -DSQLITE3_INCLUDE_DIR=${SW4ROOT}/include           \
+          -DSQLITE3_LIBRARY=${SW4ROOT}/lib/libsqlite3.so  ..
 
   # Note that the two -DSQLITE3 flags are needed if you compiled SQLite yourself.
   > make
@@ -643,13 +643,13 @@ Installing HDF5 (version 1.12 and later is recommended) can be done with the fol
   > cd hdf5-1.xx.x
   > mkdir build
   > cd build
-  > cmake -DHDF5_ENABLE_PARALLEL=ON -DCMAKE_INSTALL_PREFIX=${SW4ROOT}
+  > cmake -DHDF5_ENABLE_PARALLEL=ON -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
   > make
   > make install
 \end{verbatim}
 
 \subsection{ZFP and H5Z-ZFP}
-We recommend to use use ZFP and H5Z-ZFP's latest stable release version. 
+We recommend using ZFP and H5Z-ZFP's latest stable release version. 
 
 Installing ZFP can be done with the following steps:
 \begin{verbatim}
