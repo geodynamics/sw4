@@ -223,13 +223,13 @@ using ODDIEVENJ_EXEC_POL1_ASYNC = ICSTRESS_EXEC_POL_ASYNC;
 
 using ODDIEVENJ_EXEC_POL2_ASYNC = RHS4_EXEC_POL_ASYNC;
 
-using XRHS_POL =
-    RAJA::KernelPolicy<RAJA::statement::HipKernel<RAJA::statement::For<
-        0, RAJA::hip_block_exec,
-        RAJA::statement::For<
-            1, RAJA::hip_block_exec,
-            RAJA::statement::For<2, RAJA::hip_thread_exec,
-                                 RAJA::statement::Lambda<0>>>>>>;
+//using XRHS_POL =
+    //RAJA::KernelPolicy<RAJA::statement::HipKernel<RAJA::statement::For<
+        //0, RAJA::hip_block_exec,
+        //RAJA::statement::For<
+            //1, RAJA::hip_block_exec,
+            //RAJA::statement::For<2, RAJA::hip_thread_exec,
+                                 //RAJA::statement::Lambda<0>>>>>>;
 
 using XRHS_POL_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<RAJA::statement::For<
@@ -580,13 +580,13 @@ using BCFORT_EXEC_POL3_ASYNC =
                                               RAJA::statement::Lambda<0>>>>>>>;
 
 // in curvilinear4sgc.C
-using CURV_POL_ORG =
-    RAJA::KernelPolicy<RAJA::statement::HipKernel<RAJA::statement::For<
-        0, RAJA::hip_block_exec,
-        RAJA::statement::For<
-            1, RAJA::hip_block_exec,
-            RAJA::statement::For<2, RAJA::hip_thread_exec,
-                                 RAJA::statement::Lambda<0>>>>>>;
+//using CURV_POL_ORG =
+ //   RAJA::KernelPolicy<RAJA::statement::HipKernel<RAJA::statement::For<
+  //      0, RAJA::hip_block_exec,
+   //     RAJA::statement::For<
+    //        1, RAJA::hip_block_exec,
+     //       RAJA::statement::For<2, RAJA::hip_thread_exec,
+      //                           RAJA::statement::Lambda<0>>>>>>;
 using CURV_POL = DEFAULT_LOOP3;
 // in parallelStuff.C
 using BUFFER_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<
