@@ -313,6 +313,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                            Sarray& a_Z) {
   bool debug = false;
   /* debug = true; */
+  MPI_Comm comm = mEW->m_cartesian_communicator;
 
   bool is_root = true;
   int g = mEW->mNumberOfGrids - 1;
@@ -352,20 +353,12 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
     if (!m_isRestart) {
       m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
                                  dt);
-
-      // Write z coodinates if necesito
-      if (mEW->topographyExists()) {
-        compute_image(a_Z, 0, 0);
-        if (m_precision == 4)
-          m_hdf5helper->write_topo(m_floatField[0]);
-        else if (m_precision == 8)
-          m_hdf5helper->write_topo(m_doubleField[0]);
-      }
     }
-
     if (debug)
       cout << "Creating hdf5 velocity fields..." << endl;
   }
+
+  MPI_Barrier(comm);
 
   if (m_dumpInterval > 0) {
     int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
@@ -384,16 +377,27 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                                    m_bufferInterval);
   }
 
-  MPI_Comm comm = mEW->m_cartesian_communicator;
   MPI_Barrier(comm);
 
   is_root = false;
   m_hdf5helper->create_file(true, is_root);
 
-  m_hdf5_time += (MPI_Wtime() - hdf5_time);
-
   m_nbufstep = 0;
   m_fileOpen = true;
+
+  if (!m_isRestart) {
+    // Write z coodinates if has topo
+    if (mEW->topographyExists()) {
+      compute_image(a_Z, 0, 0);
+      if (m_precision == 4)
+        m_hdf5helper->write_topo(m_floatField[0]);
+      else if (m_precision == 8)
+        m_hdf5helper->write_topo(m_doubleField[0]);
+    }
+  }
+
+  m_hdf5_time += (MPI_Wtime() - hdf5_time);
+
   return;
 }
 
@@ -419,9 +423,10 @@ void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
   /* debug = true; */
 
   for (int i = 0; i < 3; i++) {
+    int nstep = (int)floor(m_ntimestep / m_dumpInterval);
     compute_image(a_U[g], i, cycle);
     if (cycle > 0 &&
-        (m_nbufstep == m_bufferInterval - 1 || cycle == m_ntimestep)) {
+        (m_nbufstep == m_bufferInterval - 1 || cycle == nstep)) {
       if (m_precision == 4)
         m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle,
                                 m_nbufstep + 1);

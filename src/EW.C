@@ -7238,7 +7238,6 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
-  std::string rname ="EW::extractTopographyFromGMG";
   Sarray gridElev;
   herr_t ierr;
   hid_t file_id, dataset_id, datatype_id, group_id, dataspace_id;
@@ -8495,6 +8494,9 @@ void EW::set_to_zero_at_receiver( vector<Sarray> & a_U,
 #pragma omp parallel for
      for( int s=0 ; s < time_series.size() ; s++ )
      {
+        if (!time_series[s]->myPoint())
+            continue;
+
 	int g = time_series[s]->m_grid0;	
 	int i0= time_series[s]->m_i0;
 	int j0= time_series[s]->m_j0;
