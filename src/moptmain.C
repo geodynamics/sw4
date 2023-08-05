@@ -2308,6 +2308,7 @@ int main(int argc, char** argv) {
                 simulation.getOutputPath(), simulation.mZ);
         }
 
+	print_hwm(myRank);
         if (myRank == 0) {
           cout << "============================================================"
                << endl
