@@ -491,6 +491,8 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
       m_testing(false),
       m_moment_test(false),
       m_twilight_forcing(NULL),
+      GPS(NULL),
+      current_index(0),
       m_point_source_test(0),
       m_energy_test(0),
       m_lamb_test(0),
@@ -754,10 +756,35 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
     // where 0 <= global_rank < nproc, 0<= local_rank < nproc_group
     //   e = global_event_nr, 0 <= e < nevent
     //
+//#define SW4_ONE_NODE_OPT 1
+#ifdef  SW4_ONE_NODE_OPT
+    int myRank=m_myRank;
+    MPI_Info info;
+    MPI_Comm shared_comm;
+    MPI_Info_create(&info);
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, myRank, info,
+			&shared_comm);
+    int local_rank = -1, local_size = -1;
+    MPI_Comm_rank(shared_comm, &local_rank);
+    MPI_Comm_size(shared_comm, &local_size);
+    // Add a check for make sure the allocation does not have partial nodes
+    MPI_Info_free(&info);
+    if (nproc_group==local_size){
+      int tag=m_myRank;
+      MPI_Bcast(&tag,1,MPI_INT,0,shared_comm);
+      std::cout<<" Global "<<myRank<<" local = "<<local_rank<<" Tag = "<<tag<<" nproc_group = "<<nproc_group<<" local_size = "<<local_size<<"\n";
+      ev=tag;
+    } else std:cout<<"ONE_NODE_OPT cancelled due to size mismatch\n";
     MPI_Comm_split(MPI_COMM_WORLD, ev, m_myRank, &m_1d_communicator);
     MPI_Comm_rank(m_1d_communicator, &m_myRank);
     MPI_Comm_size(m_1d_communicator, &m_nProcs);
     MPI_Comm_split(MPI_COMM_WORLD, m_myRank, 0, &m_cross_communicator);
+#else
+    MPI_Comm_split(MPI_COMM_WORLD, ev, m_myRank, &m_1d_communicator);
+    MPI_Comm_rank(m_1d_communicator, &m_myRank);
+    MPI_Comm_size(m_1d_communicator, &m_nProcs);
+    MPI_Comm_split(MPI_COMM_WORLD, m_myRank, 0, &m_cross_communicator);
+#endif
   } else {
     m_eStart = 0;
     m_eEnd = m_nevent - 1;
@@ -4940,11 +4967,11 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     // FORCE_TT
     //
     static bool firstcall = true;
-
     GridPointSource** GPSL;
     int* idnts_local;
     if (init) {
       // WARNING :: FORCE_TT cannot be called until this section has been called
+      //std::cout<<"FORCE INTI CALLED "<<GPS<<" current_index = "<<current_index<<" \n";
       SW4_MARK_BEGIN("FORCE::HOST::FIRSTCALL");
       // size_t mfree,mtotal;
       // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
@@ -5003,15 +5030,27 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
       // GPS[r]->initializeTimeFunction()  "<<point_sources.size()<<" \n";
       SW4_MARK_END("FORCE::HOST::FIRSTCALL");
       firstcall = false;
+      // Store the adderess for swapping
+      ForceVectorArray[current_index]=ForceVector;
+      ForceAddressArray[current_index]=ForceAddress;
+      idntsArray[current_index]=idnts;
+      GPSArray[current_index]=GPS;
     }
     // #ifdef ENABLE_CUDA
     //     typedef RAJA::cuda_exec<32, true> FORCE_LOOP_ASYNC;
     // #else
     //     using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
     // #endif
-    GPSL = GPS;
-    idnts_local = idnts;
-    float_sw4** ForceAddress_copy = ForceAddress;
+    GPS = GPSArray[current_index];
+    GPSL = GPSArray[current_index];
+
+    idnts = idntsArray[current_index];
+    idnts_local = idntsArray[current_index];
+
+    ForceAddress = ForceAddressArray[current_index];
+    float_sw4** ForceAddress_copy = ForceAddressArray[current_index];
+
+    ForceVector = ForceVectorArray[current_index];
     //      std::cout<<"FORCE ::"<<identsources.size()<<"
     //      "<<point_sources.size()
     //		  <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
@@ -9213,6 +9252,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   //-----------------------------------------------------------------------
   void EW::sort_grid_point_sources(vector<GridPointSource*> & point_sources,
                                    vector<int> & identsources) {
+    std::cout<<getRank()<<" sort_grid_point_sources \n";
     size_t* gptr = new size_t[mNumberOfGrids];
     gptr[0] = 0;
     for (int g = 0; g < mNumberOfGrids - 1; g++) {

@@ -446,7 +446,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Sort sources wrt spatial location, needed for thread parallel computing
   vector<int> identsources;
-  sort_grid_point_sources(point_sources, identsources);
+  [&](){
+    static bool call_it=true;
+    if (call_it) sort_grid_point_sources(point_sources, identsources);
+    call_it =false;
+  };
 
   // Assign initial data
   int beginCycle;
@@ -1034,8 +1038,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
   }
 #endif
-  Force(t, F, point_sources, identsources, true);
-
+  //std::cout<<"FORCE INIT CALL IN SOLVE\n";
+  static bool first_call=true;
+  current_index=0;
+  Force(t, F, point_sources, identsources, first_call);
+  first_call=false;
   double time_start_solve = MPI_Wtime();
   print_execution_time(time_start_init, time_start_solve, "initial data phase");
 #ifdef SW4_NORM_TRACE

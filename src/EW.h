@@ -2126,6 +2126,11 @@ class EW {
   int* idnts;
   GridPointSource** GPS;
 
+  float_sw4* ForceVectorArray[2];
+  float_sw4** ForceAddressArray[2];
+  int *idntsArray[2];
+  GridPointSource** GPSArray[2];
+  int current_index;
   // std::unordered_map<size_t, double > mpi_times,mpi_times2;
   // std::unordered_map<size_t, unsigned long long > mpi_count,mpi_count2;
 #ifdef SW4_TRACK_MPI

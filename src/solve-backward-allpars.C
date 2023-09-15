@@ -222,7 +222,12 @@ void EW::solve_backward_allpars(
 
     // U-backward solution, predictor
     evalRHS(U, a_Mu, a_Lambda, Lk, AlphaVE);
-    Force(t, F, point_sources, identsources, true);
+    //std::cout<<"FORCE INIT CALL IN SOLVE-BACKWARDS-ALLPARS\n";
+    static bool first_call = true;
+    current_index=1;
+    Force(t, F, point_sources, identsources, first_call);
+    first_call=false;
+    
     evalPredictor(Um, U, Up, a_Rho, Lk, F);
     //      for(int g=0 ; g < mNumberOfGrids ; g++ )
     //         communicate_array( Um[g], g );
