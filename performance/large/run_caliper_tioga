@@ -1,0 +1,5 @@
+#export CALI_SERVICES_ENABLE=mpi,roctx
+#export CALI_MPI_BLACKLIST=none
+export AMD_SERIALIZE_KERNEL=3
+#flux run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./tprofile ./sw4 small3.in.lassen
+flux run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task ./sw4 hmr3.in.lassen

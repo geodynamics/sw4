@@ -1,0 +1,1 @@
+/usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/CALIPER/Caliper/install/bin/cali-query -q "select inclusive_sum(sum#sum#time.duration) as time group by prop:nested format tree"
