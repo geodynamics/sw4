@@ -33,7 +33,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <fcntl.h>
 #include <unistd.h>
-
+#include "caliper.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -216,6 +216,7 @@ void Image::setSteps(int a_steps) {
 
 //-----------------------------------------------------------------------
 void Image::computeGridPtIndex() {
+  SW4_MARK_FUNCTION;
   // the purpose of this routine is to assign the vector<int> m_gridPtIndex
   /* Here, we compute the index --in the local grid-- of the coordinate value at
      which we have to plot. For x, y, the local grid is the same as the global
@@ -373,6 +374,7 @@ void Image::computeGridPtIndex() {
 
 //-----------------------------------------------------------------------
 bool Image::plane_in_proc(int a_gridIndexCoarsest) {
+  SW4_MARK_FUNCTION;
   // Find intersection of image with local processor grid block, all computed
   // in global indices.
   bool retval = false;
@@ -519,6 +521,7 @@ void Image::define_pio() {
 
 //-----------------------------------------------------------------------
 void Image::allocatePlane() {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
 
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -591,6 +594,7 @@ void Image::allocatePlane() {
 void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                                 vector<Sarray>& a_Um, float_sw4 dt,
                                 int dminus) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::DIV || mMode == Image::CURLMAG ||
          mMode == Image::DIVDT || mMode == Image::CURLMAGDT);
@@ -735,6 +739,7 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
 
 //-----------------------------------------------------------------------
 void Image::computeImageQuantity(std::vector<Sarray>& a_mu, int a_nComp) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   // plane_in_proc returns true for z=const lpanes, because all processors have
   // a part in these planes
@@ -771,6 +776,7 @@ void Image::computeImageQuantity(std::vector<Sarray>& a_mu, int a_nComp) {
 //-----------------------------------------------------------------------
 void Image::computeImageGrid(std::vector<Sarray>& a_X, std::vector<Sarray>& a_Y,
                              std::vector<Sarray>& a_Z) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::GRIDX || mMode == Image::GRIDY ||
          mMode == Image::GRIDZ);
@@ -830,6 +836,7 @@ void Image::computeImageGrid(std::vector<Sarray>& a_X, std::vector<Sarray>& a_Y,
 void Image::computeImageLatLon(std::vector<Sarray>& a_X,
                                std::vector<Sarray>& a_Y,
                                std::vector<Sarray>& a_Z) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::LAT || mMode == Image::LON);
   // plane_in_proc returns true for z=const lpanes, because all processors have
@@ -888,6 +895,7 @@ void Image::computeImageLatLon(std::vector<Sarray>& a_X,
 void Image::computeImagePvel(std::vector<Sarray>& mu,
                              std::vector<Sarray>& lambda,
                              std::vector<Sarray>& rho) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::P);
   if (plane_in_proc(m_gridPtIndex[0])) {
@@ -926,6 +934,7 @@ void Image::computeImagePvel(std::vector<Sarray>& mu,
 //-----------------------------------------------------------------------
 void Image::computeImageSvel(std::vector<Sarray>& mu,
                              std::vector<Sarray>& rho) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::S);
   if (plane_in_proc(m_gridPtIndex[0])) {
@@ -961,6 +970,7 @@ void Image::computeImageSvel(std::vector<Sarray>& mu,
 
 //-----------------------------------------------------------------------
 void Image::copy2DArrayToImage(Sarray& u2) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   REQUIRE2(
       u2.m_nc == 1,
@@ -997,6 +1007,7 @@ void Image::copy2DArrayToImage(Sarray& u2) {
 
 //-----------------------------------------------------------------------
 void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
+  SW4_MARK_FUNCTION;
   if (!m_user_created) return;
 
   ASSERT(m_isDefinedMPIWriters);
@@ -1476,6 +1487,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
 //-----------------------------------------------------------------------
 void Image::add_grid_to_file_hdf5(const char* fname, bool iwrite,
                                   size_t offset) {
+  SW4_MARK_FUNCTION;
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
 #ifdef USE_HDF5
@@ -1512,6 +1524,7 @@ void Image::add_grid_to_file_hdf5(const char* fname, bool iwrite,
 //-----------------------------------------------------------------------
 // NOTE: this routine saves one or more  curvilinear grids to file
 void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
+  SW4_MARK_FUNCTION;
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
     int fid;
@@ -1552,6 +1565,7 @@ void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
 
 //-----------------------------------------------------------------------
 void Image::add_grid_to_file(const char* fname, bool iwrite, size_t offset) {
+  SW4_MARK_FUNCTION;
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
     int fid;
@@ -1634,6 +1648,7 @@ void Image::compute_file_suffix(stringstream& fileSuffix, int cycle) {
 //-----------------------------------------------------------------------
 void Image::update_maxes_hVelMax(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
                                  float_sw4 dt) {
+  SW4_MARK_FUNCTION;
   static bool firstHVM = true;
   bool geographic = false;
   // geographic = true  --> Max of N- and E-components
@@ -1787,6 +1802,7 @@ void Image::update_maxes_vVelMax(std::vector<Sarray>& a_Up,
 void Image::update_maxes_hMax(vector<Sarray>& a_U)
 
 {
+  SW4_MARK_FUNCTION;
   static bool firstHM = true;
   int gmin, gmax;
   if (mLocationType == Image::Z)
@@ -1824,6 +1840,7 @@ void Image::update_maxes_hMax(vector<Sarray>& a_U)
 
 //-----------------------------------------------------------------------
 void Image::update_maxes_vMax(std::vector<Sarray>& a_U) {
+  SW4_MARK_FUNCTION;
   static bool firstVM = true;
   int gmax, gmin;
   if (mLocationType == Image::Z)
@@ -1860,6 +1877,7 @@ void Image::update_maxes_vMax(std::vector<Sarray>& a_U) {
 //-----------------------------------------------------------------------
 void Image::computeDivergence(std::vector<Sarray>& a_U,
                               std::vector<float_sw4*>& a_div) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(a_U.size() == mEW->mNumberOfGrids)
   ASSERT(a_div.size() == a_U.size())
@@ -2173,6 +2191,7 @@ void Image::computeDivergence(std::vector<Sarray>& a_U,
 //-----------------------------------------------------------------------
 void Image::computeCurl(std::vector<Sarray>& a_U,
                         std::vector<float_sw4*>& a_curl) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(a_U.size() == mEW->mNumberOfGrids)
   ASSERT(a_curl.size() == a_U.size())
@@ -2636,6 +2655,7 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
 //-----------------------------------------------------------------------
 void Image::computeImageMagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
                               float_sw4 dt) {
+  SW4_MARK_FUNCTION;
   // dt is distance between Up and Um.
   ASSERT(m_isDefinedMPIWriters);
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -2679,6 +2699,7 @@ void Image::computeImageMagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
 
 //-----------------------------------------------------------------------
 void Image::computeImageMag(vector<Sarray>& a_U) {
+  SW4_MARK_FUNCTION;
   // dt is distance between Up and Um.
   ASSERT(m_isDefinedMPIWriters);
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -2718,6 +2739,7 @@ void Image::computeImageMag(vector<Sarray>& a_U) {
 //-----------------------------------------------------------------------
 void Image::computeImageHmagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
                                float_sw4 dt) {
+  SW4_MARK_FUNCTION;
   // dt is distance between Up and Um.
   ASSERT(m_isDefinedMPIWriters);
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -2759,6 +2781,7 @@ void Image::computeImageHmagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
 
 //-----------------------------------------------------------------------
 void Image::computeImageHmag(vector<Sarray>& a_U) {
+  SW4_MARK_FUNCTION;
   // dt is distance between Up and Um.
   ASSERT(m_isDefinedMPIWriters);
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -2799,6 +2822,7 @@ void Image::computeImageHmag(vector<Sarray>& a_U) {
 void Image::compute_image_gradp(vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
                                 vector<Sarray>& a_Lambda,
                                 vector<Sarray>& a_Rho) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
 
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -2840,6 +2864,7 @@ void Image::compute_image_gradp(vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
 void Image::compute_image_grads(vector<Sarray>& a_gMu,
                                 vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
                                 vector<Sarray>& a_Rho) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
 
   // plane_in_proc returns true for z=const planes, because all processors have
@@ -2884,6 +2909,7 @@ void Image::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                          vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                          vector<Sarray>& a_gLambda, vector<Source*>& a_sources,
                          int a_dminus) {
+  SW4_MARK_FUNCTION;
   if (mMode == HMAXDUDT) {
     if (a_dminus)
       update_maxes_hVelMax(a_Up, a_U, a_dt);
@@ -2918,6 +2944,7 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                          vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                          vector<Sarray>& a_gLambda, vector<Source*>& a_sources,
                          int a_dminus) {
+  SW4_MARK_FUNCTION;
   int td = 0;
   if (!a_dminus) td = is_time_derivative();
 
@@ -3034,6 +3061,7 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 //-----------------------------------------------------------------------
 void Image::computeImageQuantityDiff(vector<Sarray>& a_U, vector<Sarray>& a_Uex,
                                      int comp) {
+  SW4_MARK_FUNCTION;
   ASSERT(m_isDefinedMPIWriters);
 
   // plane_in_proc returns true for z=const planes, because all processors have

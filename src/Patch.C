@@ -3,6 +3,7 @@
 #include "AllDims.h"
 #include "Patch.h"
 #include "sw4.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 Patch::Patch(int dims[6], int procid) {
@@ -18,6 +19,7 @@ Patch::Patch(int dims[6], int procid) {
 //-----------------------------------------------------------------------
 template <class T>
 void Patch::pack(T* array, AllDims& dims, T* array_patch) {
+  SW4_MARK_FUNCTION;
   int myib = dims.m_ib[dims.m_myid3di];
   int myie = dims.m_ie[dims.m_myid3di];
   int myjb = dims.m_jb[dims.m_myid3dj];
@@ -44,6 +46,7 @@ void Patch::pack(T* array, AllDims& dims, T* array_patch) {
 //-----------------------------------------------------------------------
 template <class T>
 void Patch::unpack(T* array, AllDims& dims, T* array_patch) {
+  SW4_MARK_FUNCTION;
   int myib = dims.m_ib[dims.m_myid3di];
   int myie = dims.m_ie[dims.m_myid3di];
   int myjb = dims.m_jb[dims.m_myid3dj];
@@ -70,6 +73,7 @@ void Patch::unpack(T* array, AllDims& dims, T* array_patch) {
 //-----------------------------------------------------------------------
 template <class T>
 void Patch::selfcopy(AllDims& src, T* src_array, AllDims& dest, T* dest_array) {
+  SW4_MARK_FUNCTION;
   int myib = src.m_ib[src.m_myid3di];
   int myie = src.m_ie[src.m_myid3di];
   int myjb = src.m_jb[src.m_myid3dj];

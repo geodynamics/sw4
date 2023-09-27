@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <ctime>
 
+#include "caliper.h"
 #include "Require.h"
 #include "EW.h"
 #include "TimeSeries.h"
@@ -189,6 +190,7 @@ int createWriteAttrStr(hid_t loc, const char *name, const char* str)
 int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, 
                   float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast)
 {
+  SW4_MARK_FUNCTION;
     bool is_debug = false;
     /* is_debug = true; */
     double stime, etime, etime1;
@@ -257,6 +259,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 
 int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta, string suffix)
 {
+  SW4_MARK_FUNCTION;
   bool is_debug = false;
 
   hid_t fid, grp, attr, attr_space1, attr_space3, attr_space4, dset_space, dset, dcpl, fapl;

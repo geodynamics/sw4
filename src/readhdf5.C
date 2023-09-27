@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <ctime>
 
+#include "caliper.h"
 #include "Require.h"
 #include "EW.h"
 #include "TimeSeries.h"
@@ -348,6 +349,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 
 void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor)
 {
+  SW4_MARK_FUNCTION;
   hid_t fid, fapl;
 
   struct traverse_data_t tData;
@@ -480,6 +482,7 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
 
 void readStationInfoHDF5(string inFileName, vector<string> *staname, vector<double> *x, vector<double> *y, vector<double> *z, vector<int> *is_nsew, int *n)
 {
+  SW4_MARK_FUNCTION;
   hid_t fid, fapl;
 
   struct traverse_data2_t tData;
@@ -509,6 +512,7 @@ void readStationInfoHDF5(string inFileName, vector<string> *staname, vector<doub
 
 void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSources, EW *ew, int event, float_sw4 m_global_xmax, float_sw4 m_global_ymax, float_sw4 m_global_zmax, float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, int mVerbose, int nreader)
 {
+  SW4_MARK_FUNCTION;
   bool is_debug = true;
   int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);

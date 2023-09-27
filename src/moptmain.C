@@ -1774,6 +1774,12 @@ int main(int argc, char** argv) {
   int device = presetGPUID(myRank, local_rank, local_size);
 
   init_umpire(device);
+#ifdef ENABLE_CALIPER
+  cali::ConfigManager mgr;
+  mgr.add("hatchet-region-profile,use.mpi=false,profile.mpi,region.count,output.format=cali,output=profile_%mpi.rank%.cali");
+  mgr.start();
+#endif
+
 
   if (status == 0) {
     // Save the source description here
@@ -2329,6 +2335,9 @@ int main(int argc, char** argv) {
   if (status == 2) status = 0;
   // Stop MPI
   SW4_MARK_END("MOPTMAIN");
+#ifdef ENABLE_CALIPER
+  mgr.flush();
+#endif
   MPI_Finalize();
   return 0;
   // Note: Always return 0, to avoid having one error message per process from

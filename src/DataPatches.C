@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "caliper.h"
 
 #include "Sarray.h"
 using namespace std;
@@ -18,6 +19,7 @@ extern std::ofstream norm_trace_file;
 DataPatches::DataPatches(string fname, Sarray& u, int imin, int imax, int jmin,
                          int jmax, int kmin, int kmax, int layers, int ntsteps,
                          double dt, int npad[6], bool top, bool bottom) {
+  SW4_MARK_FUNCTION;
   m_filename = fname;
   // Find the patches residing in this processor
   // npad can be used to only select interior points (avoid processor overlap
@@ -161,6 +163,7 @@ size_t DataPatches::get_noofpoints() const {
 
 //-----------------------------------------------------------------------
 void DataPatches::add_patch(int wind[6]) {
+  SW4_MARK_FUNCTION;
   //   int myid;
   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
   if (wind[1] >= wind[0] && wind[3] >= wind[2] && wind[5] >= wind[4]) {
@@ -183,6 +186,7 @@ void DataPatches::add_patch(int wind[6]) {
 
 //-----------------------------------------------------------------------
 void DataPatches::push(Sarray& u, int n) {
+  SW4_MARK_FUNCTION;
   //   int myid;
   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
   double norm = 0.0;
@@ -231,6 +235,7 @@ void DataPatches::push(Sarray& u, int n) {
 
 //-----------------------------------------------------------------------
 void DataPatches::save_to_file() {
+  SW4_MARK_FUNCTION;
   if (m_ncurrent > 0 && !m_error && m_isnonempty) {
     ssize_t nr;
     int fd = open(m_filename.c_str(), O_RDWR);
@@ -317,6 +322,7 @@ void DataPatches::save_to_file() {
 
 //-----------------------------------------------------------------------
 void DataPatches::pop(Sarray& u, int n) {
+  SW4_MARK_FUNCTION;
   //   int myid;
   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
   if (m_isnonempty && !m_error) {
@@ -360,6 +366,7 @@ void DataPatches::pop(Sarray& u, int n) {
 
 //-----------------------------------------------------------------------
 void DataPatches::read_from_file(int n) {
+  SW4_MARK_FUNCTION;
   if (!m_error && m_isnonempty) {
     size_t nr;
     int fd = open(m_filename.c_str(), O_RDONLY);

@@ -36,6 +36,7 @@
 #include <cstring>
 #include <ctime>
 
+#include "caliper.h"
 #include "EW.h"
 #include "Image3D.h"
 #include "Require.h"
@@ -68,6 +69,7 @@ Image3D::Image3D(EW* a_ew, float_sw4 time, float_sw4 timeInterval, int cycle,
       m_double(doubleMode),
       m_winallocated(false),
       m_memallocated(false) {
+  SW4_MARK_FUNCTION;
   // note that the require2 macro doesn't generate any code unless compiled with
   // debugging options
   REQUIRE2(mode == UX || mode == UY || mode == UZ || mode == RHO || mode == P ||
@@ -134,6 +136,7 @@ Image3D::~Image3D() {
 
 //-----------------------------------------------------------------------
 void Image3D::setup_images() {
+  SW4_MARK_FUNCTION;
   if (!m_winallocated) {
     mWindow.resize(mEW->mNumberOfGrids);
     mGlobalDims.resize(mEW->mNumberOfGrids);
@@ -227,6 +230,7 @@ void Image3D::setup_images() {
 
 //-----------------------------------------------------------------------
 void Image3D::define_pio() {
+  SW4_MARK_FUNCTION;
   int glow = 0, ghigh = mEW->mNumberOfGrids;
   m_parallel_io = new Parallel_IO*[ghigh - glow + 1];
   for (int g = glow; g < ghigh; g++) {
@@ -325,6 +329,7 @@ void Image3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                            vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                            vector<Sarray>& a_Qs, std::string a_path,
                            std::vector<Sarray>& a_Z) {
+  SW4_MARK_FUNCTION;
   double stime, etime;
   if (timeToWrite(a_time, a_cycle, a_dt)) {
     compute_image(a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp,
@@ -361,6 +366,7 @@ void Image3D::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                             vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                             vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                             vector<Sarray>& a_Qs) {
+  SW4_MARK_FUNCTION;
   // Introduce 'st' to simplify the variable name
   int st = mImageSamplingFactor;
   for (int g = 0; g < mEW->mNumberOfGrids; g++) {
@@ -659,6 +665,7 @@ void Image3D::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
 //-----------------------------------------------------------------------
 void Image3D::write_image(int cycle, std::string& path, float_sw4 t,
                           std::vector<Sarray>& a_Z) {
+  SW4_MARK_FUNCTION;
   // File format:
   //
   // [precision(int), npatches(int), time(double), plane(int=-1),
@@ -868,6 +875,7 @@ void Image3D::write_image(int cycle, std::string& path, float_sw4 t,
 //-----------------------------------------------------------------------
 void EW::read_volimage(std::string& path, std::string& fname,
                        vector<Sarray>& data) {
+  SW4_MARK_FUNCTION;
   // File format:
   //
   // [precision(int), npatches(int), time(double), plane(int=-1),

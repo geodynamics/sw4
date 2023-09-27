@@ -40,7 +40,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
+#include "caliper.h"
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
@@ -130,6 +130,11 @@ int main(int argc, char **argv) {
     time(&now);
     printf("After MPI_Init %s \n", ctime(&now));
   }
+#ifdef ENABLE_CALIPER
+  cali::ConfigManager mgr;
+  mgr.add("hatchet-region-profile,use.mpi=false,profile.mpi,region.count,output.format=cali,output=profile_%mpi.rank%.cali");
+  mgr.start();
+#endif
 
 #ifdef SW4_NORM_TRACE
   if (!myRank)
@@ -452,6 +457,8 @@ int main(int argc, char **argv) {
 #ifdef USE_SZ
   H5Z_SZ_Finalize();
 #endif
+
+  mgr.flush(); 
 
 #ifdef SW4_USE_SCR
   // Flush any cached checkpoints to parallel file system

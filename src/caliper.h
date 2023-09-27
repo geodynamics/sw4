@@ -6,6 +6,7 @@
 #if defined(ENABLE_CALIPER)
 
 #include <caliper/cali.h>
+#include <caliper/cali-manager.h>
 
 #define SW4_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
 
