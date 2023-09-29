@@ -205,11 +205,15 @@ void DataPatches::push(Sarray& u, int n) {
     double* uptr = u.c_ptr();
     for (int p = 0; p < m_npatches; p++) {
       size_t ptr = m_dataptr[p];
-      size_t ind = 0, indu;
+      //size_t ind = 0, indu;
+#pragma omp parallel for collapse(3)
       for (int k = m_dims[6 * p + 4]; k <= m_dims[6 * p + 5]; k++)
         for (int j = m_dims[6 * p + 2]; j <= m_dims[6 * p + 3]; j++)
           for (int i = m_dims[6 * p]; i <= m_dims[6 * p + 1]; i++) {
-            indu = (i - ib) + ni * (j - jb) + ni * nj * (k - kb);
+            size_t indu = (i - ib) + ni * (j - jb) + ni * nj * (k - kb);
+	    size_t ind = (i-m_dims[6 * p])
+	      +(j-m_dims[6 * p + 2])*(m_dims[6 * p + 1]-m_dims[6 * p]+1)
+	      +(k-m_dims[6 * p + 4])*(m_dims[6 * p + 1]-m_dims[6 * p]+1)*(m_dims[6 * p + 3]-m_dims[6 * p + 2]+1);
             for (int c = 0; c < m_ncomp; c++)
               //		     m_data[m_ncurrent][ptr+m_ncomp*ind+c] =
               // uptr[m_ncomp*indu+c];
@@ -219,7 +223,7 @@ void DataPatches::push(Sarray& u, int n) {
             for (int c = 0; c < m_ncomp; c++)
               norm += uptr[indu + c * ntot] * uptr[indu + c * ntot];
 #endif
-            ind++;
+            //ind++;
           }
     }
     //      if( myid == 2 )
@@ -348,17 +352,21 @@ void DataPatches::pop(Sarray& u, int n) {
     const size_t ntot = ni * nj * u.m_nk;
     for (int p = 0; p < m_npatches; p++) {
       size_t ptr = m_dataptr[p];
-      size_t ind = 0, indu;
+      //size_t ind = 0, indu;
       double* uptr = u.c_ptr();
+#pragma omp parallel for collapse(3)
       for (int k = m_dims[6 * p + 4]; k <= m_dims[6 * p + 5]; k++)
         for (int j = m_dims[6 * p + 2]; j <= m_dims[6 * p + 3]; j++)
           for (int i = m_dims[6 * p]; i <= m_dims[6 * p + 1]; i++) {
-            indu = (i - ib) + ni * (j - jb) + ni * nj * (k - kb);
+            size_t indu = (i - ib) + ni * (j - jb) + ni * nj * (k - kb);
+	    size_t ind = (i-m_dims[6 * p])
+	      +(j-m_dims[6 * p + 2])*(m_dims[6 * p + 1]-m_dims[6 * p]+1)
+	      +(k-m_dims[6 * p + 4])*(m_dims[6 * p + 1]-m_dims[6 * p]+1)*(m_dims[6 * p + 3]-m_dims[6 * p + 2]+1);
             for (int c = 0; c < m_ncomp; c++)
               //		     uptr[m_ncomp*indu+c] =
               // m_data[nloc][ptr+m_ncomp*ind+c];
               uptr[indu + c * ntot] = m_data[nloc][ptr + m_ncomp * ind + c];
-            ind++;
+            //ind++;
           }
     }
   }
