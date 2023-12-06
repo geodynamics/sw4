@@ -14,7 +14,7 @@ Additional resources:
 
 Cite Code As
 ------------
-Petersson, N. Anders, Sjogreen, Bjorn, Tang, Houjun, & Pankajakshan, Ramesh. (2023, September 6). geodynamics/sw4: SW4, version 3.0 (Version v3.0). Zenodo. https://doi.org/10.5281/zenodo.8322590
+Petersson, N. Anders, Sjogreen, Bjorn, Tang, Houjun, & Pankajakshan, Ramesh. (2023, September 6). geodynamics/sw4: SW4, version 3.0. doi:10.5281/zenodo.8322590, url: https://doi.org/10.5281/zenodo.8322590
 
 Primary References
 ------------------
