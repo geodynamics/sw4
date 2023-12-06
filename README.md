@@ -30,7 +30,7 @@ Sjögreen, B.; Petersson, N.A. (2012), A Fourth Order Accurate Finite Difference
 
 User's Guide
 ------------
-Petersson, N.A.; Sjögreen, B.; Tang, H. (2023), User's Guide to SW4, version 3.0, LLNL-SM-741439 (LLNL-SM-741439)
+Petersson, N.A.; Sjögreen, B.; Tang, H. (2023), User's Guide to SW4, version 3.0, LLNL-SM-741439
 
 Files
 -----
