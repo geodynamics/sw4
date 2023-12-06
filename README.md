@@ -22,7 +22,7 @@ Sjögreen, B.; Petersson, N.A. (2012), A Fourth Order Accurate Finite Difference
 
 Petersson, N.A.; Sjögreen, B. (2012), Stable and efficient modeling of anelastic attenuation in seismic wave propagation, Communications in Computational Physics, 12 (01) , 193-225
 
-Petersson, N.A.; Sjögreen, B., Tang, H. (2023), User's guide to SW4, version 3.0, LLNL-SM-741439 (LLNL-SM-741439)
+Petersson, N.A.; Sjögreen, B.; Tang, H. (2023), User's guide to SW4, version 3.0, LLNL-SM-741439 (LLNL-SM-741439)
 
 Petersson, N.A.; Sjögreen, B. (2015), Wave propagation in anisotropic elastic materials and curvilinear coordinates using a summation-by-parts finite difference method, Journal of Computational Physics, 299, 820-841, doi: 10.1016/j.jcp.2015.07.023, url: http://linkinghub.elsevier.com/retrieve/pii/S0021999115004684
 
