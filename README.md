@@ -22,7 +22,7 @@ Zhang, L.;  Wang, S.; and Petersson, N.A. (2021), Elastic Wave Propagation in Cu
 
 Petersson, N.A.; Sjögreen, B. (2015), Wave propagation in anisotropic elastic materials and curvilinear coordinates using a summation-by-parts finite difference method, Journal of Computational Physics, 299, 820-841, doi: 10.1016/j.jcp.2015.07.023, url: http://linkinghub.elsevier.com/retrieve/pii/S0021999115004684
 
-Petersson, N.A.; Sjögreen, B. (2012), Stable and efficient modeling of anelastic attenuation in seismic wave propagation, Communications in Computational Physics, 12 (01), 193-225
+Petersson, N.A.; Sjögreen, B. (2012), Stable and efficient modeling of anelastic attenuation in seismic wave propagation, Communications in Computational Physics, 12 (01), 193-225. doi:10.4208/cicp.201010.090611a
 
 Sjögreen, B.; Petersson, N.A. (2012), A Fourth Order Accurate Finite Difference Scheme for the Elastic Wave Equation in Second Order Formulation, Journal of Scientific Computing, 52 (1), 17-48, doi: 10.1007/s10915-011-9531-1, url: http://link.springer.com/10.1007/s10915-011-9531-1
 
