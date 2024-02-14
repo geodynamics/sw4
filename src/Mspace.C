@@ -899,6 +899,7 @@ Space GML(const void *ptr) {
     std::cerr << "Invalid value in GML \n";
     return Space::Host;
   }
+#if HIP_MAJOR_VERSION==5
   if (attr.memoryType == hipMemoryTypeHost) {
     return Space::Pinned;
   } else if (attr.memoryType == hipMemoryTypeDevice) {
@@ -907,6 +908,17 @@ Space GML(const void *ptr) {
     return Space::Managed;
   } else
     return Space::Space_Error;
+
+#else
+  if (attr.type == hipMemoryTypeHost) {
+    return Space::Pinned;
+  } else if (attr.type == hipMemoryTypeDevice) {
+    return Space::Managed;
+  } else if (attr.type == hipMemoryTypeUnified) {
+    return Space::Managed;
+  } else
+    return Space::Space_Error;
+#endif
 }
 #endif
 
