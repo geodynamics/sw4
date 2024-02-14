@@ -1,0 +1,28 @@
+#!/usr/bin/python3
+import sys
+import os
+import flux
+from flux.job import JobspecV1
+
+def main():
+    if len(sys.argv)<3:
+        print("Usage :: sw4run <NODES> <INPUTFILE> <OPTIONAL TIME IN MINUTES>")
+        exit(1)
+    handle = flux.Flux()
+    jobspec = JobspecV1.from_command(
+        command=["./sw4",sys.argv[2]],num_nodes=int(sys.argv[1]),num_tasks=int(sys.argv[1])*8,
+    )
+    #print("sw4run runing on ",jobspec.num_nodes," using ",jobspec.num_tasks)
+    jobspec.cwd = os.getcwd()
+    jobspec.exclusive=1
+    if len(sys.argv)==4:
+        jobspec.t=sys.argv[3]
+    jobspec.c=24
+    jobspec.environment = dict(os.environ)
+    jobspec.stdout="Test.out"
+    jobspec.stderr="Test.err"
+    print(flux.job.submit(handle, jobspec))
+
+
+if __name__=="__main__":
+    main()
