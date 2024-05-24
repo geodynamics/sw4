@@ -333,6 +333,13 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 //       printf("%i: Lon= %e, Lat=%e\n", q, lon[q], lat[q]);
        printf("%i: Lon= %e, Lat=%e, x=%e, y=%e\n", q, lon[q], lat[q], xc[q], yc[q]);
     }
+
+    printf("\n");
+    
+    printf("top_right = [%.6f, %.6f]\n", lat[0], lon[0]);
+    printf("bot_right = [%.6f, %.6f]\n", lat[1], lon[1]);
+    printf("bot_left  = [%.6f, %.6f]\n", lat[2], lon[2]);
+    printf("top_left  = [%.6f, %.6f]\n", lat[3], lon[3]);
     
     printf("\n");
   }

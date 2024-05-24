@@ -22,6 +22,9 @@ version = np.float32(lines[idx])
 idx += 1
 print('Version:', version)
 
+while lines[idx][0] == '#':
+    idx += 1
+
 fields = lines[idx].split()
 if fields[0] != 'PLANE':
     print('Expecting PLANE on second line, exit on error...')

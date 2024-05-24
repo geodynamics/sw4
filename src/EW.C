@@ -7405,7 +7405,6 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
 #endif
 }
 
-
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromUCVM( std::string a_topoFileName )
 {
@@ -7422,6 +7421,133 @@ void EW::extractTopographyFromUCVM( std::string a_topoFileName )
   int nrow = 0, nfile = 0, material = 0;
   sprintf(inname, "/tmp/ucvm.topo.in.%d", m_myRank);
   sprintf(outname, "/tmp/ucvm.topo.out.%d", m_myRank);
+
+  int g = mNumberOfGrids-1;
+  mTopo.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],1,1);
+
+  /* printf("x0=%f, y0=%f\n", x0, y0); */
+  /* printf("topoGMG: m_iStart %d, m_iEnd %d, m_jStart %d, m_jEnd %d\n", */ 
+  /*         m_iStart[topLevel],  m_iEnd[topLevel],  m_jStart[topLevel], m_jEnd[topLevel]); */
+
+  remove(outname);
+
+  int npts = (m_iEnd[topLevel] - m_iStart[topLevel] + 1) * (m_jEnd[topLevel] -  m_jStart[topLevel] + 1);
+  int total_batch = (int)npts / 20000;
+  if (is_debug)
+      fprintf(stderr, "Rank %d: %d points, %d batches\n", m_myRank, npts, (int)npts / 20000);
+
+  fptr = fopen(inname, "w");
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+      float_sw4 x = (i-1)*mGridSize[topLevel];
+      float_sw4 y = (j-1)*mGridSize[topLevel];
+  
+      computeGeographicCoord(x, y, sw4_lon, sw4_lat);
+      /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon, sw4_lat); */
+
+      nrow++;
+      material++;
+      // Batch the processing to every 20000 points, the limit of ucvm_query
+      if (nrow >= 20000) {
+          fflush(fptr);
+          fclose(fptr);
+          if (is_debug)
+              fprintf(stderr, "Query batch %d / %d\n", nfile, total_batch);
+          // query UCVM and append to output file
+          sprintf(cmd, "ucvm_query -f /pscratch/sd/h/houhun/ucvm.withSCPBR/conf/ucvm.conf -m cvmsi,elygtl:taper < %s >> %s", inname, outname);
+          system(cmd);
+
+          fptr = fopen(inname, "w");
+          nrow = 0;
+          nfile++;
+      }
+      fprintf(fptr, "%f %f 0.0\n", sw4_lon, sw4_lat);
+
+    }// end for j
+  }// end for i
+
+  fclose(fptr);
+
+  // query UCVM
+  if (nrow > 0) {
+      printf("Query last batch %d\n", nfile);
+      sprintf(cmd, "ucvm_query -f /pscratch/sd/h/houhun/ucvm.withSCPBR/conf/ucvm.conf -m cvmsi,elygtl:taper < %s >> %s", inname, outname);
+      system(cmd);
+  }
+
+  if (is_debug)
+      fprintf(stderr, "Rank %d: queried %d elev values\n", m_myRank, material);
+
+  double mylon, mylat, myz, myelev, myvs30, cvm_vp, cvm_vs, cvm_rho, gtl_vp, gtl_vs, gtl_rho, comb_vp, comb_vs, comb_rho;
+  char cvm_name[128], gtl_name[128], comb_name[128];
+  material = 0;
+  fptr = fopen(outname, "r");
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+      float_sw4 x = (i-1)*mGridSize[topLevel];
+      float_sw4 y = (j-1)*mGridSize[topLevel];
+  
+      computeGeographicCoord(x, y, sw4_lon, sw4_lat);
+
+      /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon, sw4_lat); */
+
+      material++;
+      fscanf(fptr, " %lf %lf %lf %lf %lf %s %lf %lf %lf %s %lf %lf %lf %s %lf %lf %lf",
+             &mylon, &mylat, &myz, &myelev, &myvs30, cvm_name, &cvm_vp, &cvm_vs, &cvm_rho,
+             gtl_name, &gtl_vp, &gtl_vs, &gtl_rho, comb_name, &comb_vp, &comb_vs, &comb_rho);
+
+      if (fabs(sw4_lon - mylon) > 1e-3 )
+          fprintf(stderr, "x=%.1f, y=%.1f, sw4_lon=%f does not match ucvm_lon=%f!\n", x, y, sw4_lon, mylon);
+      if (fabs(sw4_lat - mylat) > 1e-3 )
+          fprintf(stderr, "x=%.1f, y=%.1f, sw4_lat=%f does not match ucvm_lat=%f!\n", x, y, sw4_lat, mylat);
+
+      float_sw4 mytopo = myelev;
+      /* if (mytopo < 0) { */
+      /*     fprintf(stderr, "Rank %d: (%d, %d) [%f, %f] elev = %f\n", m_myRank, i, j, sw4_lat, sw4_lon, mytopo); */
+      /* } */
+
+      /* printf("Calculated topo: %f, fac %f %f\n", mytopo, fac0, fac1); */
+      if (mytopo > topomax)
+        topomax = mytopo;
+      if (mytopo < topomin)
+        topomin = mytopo;
+      
+      mTopo(i,j,1) = mytopo;
+
+    }// end for j
+  }// end for i
+  fclose(fptr);
+
+
+  MPI_Barrier(m_1d_communicator);
+  end_time = MPI_Wtime();
+
+  if (m_myRank==0) {
+    printf("Read topography from UCVM time=%e seconds\n", end_time-start_time);
+    if (mVerbose>=2) {
+      printf("Topo corners %f, %f, %f, %f\n", mTopo(m_iStart[topLevel],m_jStart[topLevel],1), mTopo(m_iEnd[topLevel],m_jStart[topLevel],1),
+                                              mTopo(m_iEnd[topLevel],m_jStart[topLevel],1), mTopo(m_iEnd[topLevel],m_jEnd[topLevel],1));
+      printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromCUSVM( std::string a_topoFileName )
+{
+  bool is_debug = true;
+  double start_time, end_time;
+  start_time = MPI_Wtime();
+  int verbose = mVerbose;
+  float_sw4 topomax=-1e30, topomin=1e30;
+  int topLevel=mNumberOfGrids-1;
+  double sw4_lon, sw4_lat;
+
+  char inname[128], outname[128], cmd[2048];
+  FILE *fptr;
+  int nrow = 0, nfile = 0, material = 0;
+  sprintf(inname, "/tmp/cusvm.topo.in.%d", m_myRank);
+  sprintf(outname, "/tmp/cusvm.topo.out.%d", m_myRank);
 
   int g = mNumberOfGrids-1;
   mTopo.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],1,1);

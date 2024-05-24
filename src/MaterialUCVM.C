@@ -82,10 +82,16 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
     bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
     bool is_debug = true;
+
+    bool bulldoze = false;
+    bool even_stretch = false;
+
     uint64_t outside=0, material=0;
-    double lon, lat;
+    double lon, lat, elev, topo_elev;
     int nrow, nfile = 0;
     char inname[128], outname[128], cmd[2048];
+    double squash_bottom = 7000;
+    double squash_power = 1.1;
 
     FILE *fptr;
 
@@ -106,9 +112,9 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
     }
 
     // Get topo
-    fprintf(stderr, "Start to query topo\n");
-    mEW->extractTopographyFromUCVM("ucvm");
-    fprintf(stderr, "Done query topo\n");
+    /* fprintf(stderr, "Start to query topo\n"); */
+    /* mEW->extractTopographyFromUCVM("ucvm"); */
+    /* fprintf(stderr, "Done query topo\n"); */
 
     m_zminloc = 0;
 
@@ -134,8 +140,11 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
                 float_sw4 y = (j-1)*mEW->mGridSize[g];
                 float_sw4 z = 0;
                 // (x, y, z) is the coordinate of current grid point
-                material++;
                 mEW->computeGeographicCoord(x, y, lon, lat);
+
+                i1 = i * g_fac[g];
+                j1 = j * g_fac[g];
+                /* topo_elev = mEW->mTopo(i1, j1, 1); */
 
                 for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
                     if( curvilinear )
@@ -143,21 +152,41 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
                     else
                         z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
-                    // Adjust with topo
-                    i1 = i * g_fac[g];
-                    j1 = j * g_fac[g];
-                    z += mEW->mTopo(i1, j1, 1);
+                    elev = z;
+                    if (elev < 0)
+                        elev = 0;
 
-                    if (z < 0) {
-                        /* fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] topo(%d, %d)=%f \n", */
-                        /*         mEW->getRank(), g, i, j, k, lon, lat, z, i1, j1, mEW->mTopo(i1, j1, 1)); */
-                        // "fill in fluids" by using the surface (depth=0) value
-                        z = 0;
-                    }
+                    /* // Bulldoze by removing anything above sea-level, filling constant values from vertical surface below sea-level */
+                    /* if (bulldoze) { */
+                    /*     // Adjust with topo */
+                    /*     elev = z + topo_elev; */
 
-                    // Deal with some values on top grid that exceeds the topogrophy interface
-                    /* if (g == mEW->mNumberOfGrids - 1 && z < m_zminloc) */
-                    /*     z = m_zminloc; */
+                    /*     if (elev  < 0) */
+                    /*         elev = 0; */
+
+                    /*     /1* fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] topo(%d, %d)=%f \n", *1/ */
+                    /*     /1*         mEW->getRank(), g, i, j, k, lon, lat, z, i1, j1, topo_elev); *1/ */
+                    /* } */
+                    /* // Stretch & Squash by squashing above sea-level and stretching below sea-level with a bottom (7km) */
+                    /* else { */
+                    /*     if (z <= squash_bottom) { */
+                    /*         if (z < 0) */
+                    /*             z = 0; */
+                    /*         // Even stretching */
+                    /*         if (even_stretch) */
+                    /*             elev = z / squash_bottom * (squash_bottom + topo_elev); */
+                    /*         else */
+                    /*             elev = pow(z / squash_bottom, squash_power) * (squash_bottom + topo_elev); */
+                    /*     } */
+                    /*     else */
+                    /*         elev = z + topo_elev; */
+
+                    /*     // Debug */
+                    /*     if (nrow % 10000 == 0) { */
+                    /*         fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] topo(%d, %d)=%f, z=%f, squashed z=%f \n", */
+                    /*                 mEW->getRank(), g, i, j, k, lon, lat, z, i1, j1, topo_elev, z, elev); */
+                    /*     } */
+                    /* } */
 
                     nrow++;
                     // Batch the processing to every 20000 points, the limit of ucvm_query
@@ -174,9 +203,9 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
                         nrow = 0;
                         nfile++;
                     }
-                    fprintf(fptr, "%f %f %f\n", lon, lat, z);
-                }
-
+                    fprintf(fptr, "%f %f %f\n", lon, lat, elev);
+                    material++;
+                } // End for k
             } // End for i
         } // End for j
         fclose(fptr);
@@ -199,53 +228,76 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
                 float_sw4 x = (i-1)*mEW->mGridSize[g];
                 float_sw4 y = (j-1)*mEW->mGridSize[g];
                 float_sw4 z;
+
+                i1 = i * g_fac[g];
+                j1 = j * g_fac[g];
+                /* topo_elev = mEW->mTopo(i1, j1, 1); */
+
+                mEW->computeGeographicCoord(x, y, lon, lat);
+
                 for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
                     if( curvilinear )
                         z = mEW->mZ[g](i,j,k);
                     else
                         z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
-                    // Adjust with topo
-                    i1 = i * g_fac[g];
-                    j1 = j * g_fac[g];
-                    z += mEW->mTopo(i1, j1, 1);
+                    elev = z;
+                    if (elev < 0)
+                        elev = 0;
 
-                    if (z < 0) {
-                        /* fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] topo(%d, %d)=%f \n", */
-                        /*         mEW->getRank(), g, i, j, k, lon, lat, z, i1, j1, mEW->mTopo(i1, j1, 1)); */
-                        // "fill in fluids" by using the surface (depth=0) value
-                        z = 0;
-                    }
+                    /* if (bulldoze) { */
+                    /*     // Bulldoze by removing anything above sea-level, fill constant values from vertical surface below sea-level */
+                    /*     elev = z + topo_elev; */
+                    /*     if (elev < 0) */
+                    /*         elev = 0; */
+                    /* } */
+                    /* else { */
+                    /*     // Squash by squashing above sea-level and stretching below sea-level with a bottom (7km) */
+                    /*     if (z <= squash_bottom) { */
+                    /*         if (z < 0) */
+                    /*             z = 0; */
+                    /*         // Even stretching */
+                    /*         if (even_stretch) */
+                    /*             elev = z / squash_bottom * (squash_bottom + topo_elev); */
+                    /*         else */
+                    /*             elev = pow(z / squash_bottom, squash_power) * (squash_bottom + topo_elev); */
+                    /*     } */
+                    /*     else */
+                    /*         elev = z + topo_elev; */
+                    /* } */
 
-                    mEW->computeGeographicCoord(x, y, lon, lat);
 
-                    // (x, y, z) is the coordinate of current grid point
                     material++;
-                    /* fscanf(fptr, " %10.4lf %10.4lf %10.3lf %10.3lf %10.3lf %10s %10.3lf %10.3lf %10.3lf %10s %10.3lf %10.3lf %10.3lf %10s %10.3lf %10.3lf %10.3lf", */
-                    /*        &mylon, &mylat, &myz, &myelev, &myvs30, cvm_name, &cvm_vp, &cvm_vs, &cvm_rho, gtl_name, &gtl_vp, &gtl_vs, &gtl_rho, comb_name, &comb_vp, &comb_vs, &comb_rho); */
                     fscanf(fptr, " %lf %lf %lf %lf %lf %s %lf %lf %lf %s %lf %lf %lf %s %lf %lf %lf",
-                           &mylon, &mylat, &myz, &myelev, &myvs30, cvm_name, &cvm_vp, &cvm_vs, &cvm_rho,
-                           gtl_name, &gtl_vp, &gtl_vs, &gtl_rho, comb_name, &comb_vp, &comb_vs, &comb_rho);
+                                   &mylon, &mylat, &myz, &myelev, &myvs30, cvm_name, &cvm_vp, &cvm_vs, &cvm_rho,
+                                   gtl_name, &gtl_vp, &gtl_vs, &gtl_rho, comb_name, &comb_vp, &comb_vs, &comb_rho);
 
                     rho[g](i, j, k) = comb_rho;
                     cp[g](i, j, k)  = comb_vp;
                     cs[g](i, j, k)  = comb_vs;
+                    if( use_q ) {
+                        xis[g](i, j, k)  = comb_vs / 1000.0 * 150.0;
+                        xip[g](i, j, k)  = xis[g](i, j, k) * 2.0;
+                    }
 
                     if (fabs(lon - mylon) > 1e-3 )
                         printf("x=%.1ff, y=%.1f, sw4_lon=%f does not match ucvm_lon=%f!\n", x, y, lon, mylon);
                     if (fabs(lat - mylat) > 1e-3 )
                         printf("x=%.1f, y=%.1f, sw4_lat=%f does not match ucvm_lat=%f!\n", x, y, lat, mylat);
-                    if (fabs(z - myz) > 1e-3 )
-                        printf("x=%.1f, y=%.1f, sw4_z=%f does not match ucvm_z=%f!\n", x, y, z, myz);
+                    if (fabs(elev - myz) > 1e-3 )
+                        printf("x=%.1f, y=%.1f, sw4_z=%f does not match ucvm_z=%f!\n", x, y, elev, myz);
 
                     if (comb_rho < 10 || comb_rho > 10000) {
-                        fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] rho = %f\n",  mEW->getRank(), g, i, j, k, mylon, mylat, myz, comb_rho);
+                        fprintf(stderr, "Rank %d grid %d (%d, %d, %d) [%f, %f, %f] rho = %f\n",
+                                         mEW->getRank(), g, i, j, k, mylon, mylat, myz, comb_rho);
                     }
                     if (comb_vp < 10 || comb_vp > 10000) {
-                        fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] vp = %f\n",  mEW->getRank(), g, i, j, k, mylon, mylat, myz, comb_vp);
+                        fprintf(stderr, "Rank %d grid %d (%d, %d, %d) [%f, %f, %f] vp = %f\n",
+                                         mEW->getRank(), g, i, j, k, mylon, mylat, myz, comb_vp);
                     }
                     if (comb_vs < 10 || comb_vs > 10000) {
-                        fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%f, %f, %f] vs = %f\n",  mEW->getRank(), g, i, j, k, mylon, mylat, myz, comb_vs);
+                        fprintf(stderr, "Rank %d grid %d (%d, %d, %d) [%f, %f, %f] vs = %f\n",
+                                         mEW->getRank(), g, i, j, k, mylon, mylat, myz, comb_vs);
                     }
 
                 } // End for k
