@@ -453,6 +453,7 @@ void TimeSeries::recordData(vector<float_sw4>& u) {
         "Ran out of recording space for the receiver station at (i,j,k,grid) = "
         "(%i, %i, %i, %i)\n",
         m_i0, m_j0, m_k0, m_grid0);
+    std::cout<<" mLastTimeStep "<<mLastTimeStep<<"  mAllocatedSize "<< mAllocatedSize<<"\n"<<std::flush;
     return;
   }
 

@@ -1605,6 +1605,10 @@ void Sarray::GetAtt(char* file, int line) {
 }
 //----------------------------------------------------------------------
 void Sarray::switch_space(Space new_space) {
+#ifdef ENABLE_APU
+  //std::cout<<"NO OP SWITCH SPACE DUE TO ENABLE_APU\n"<<std::flush;
+  return;
+#endif
 #ifdef ENABLE_GPU
 
   // std::cout<<"Switching from "<<as_int(space)<<" to

@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
   // bool checkmode = false;
 
   stringstream reason;
+  // Workaround for binding bug in rocm/6.1.0
+#pragma omp barrier
   // Initialize MPI...
 #ifdef USE_HDF5_ASYNC
   int provided;
@@ -157,7 +159,7 @@ int main(int argc, char **argv) {
   // auto device_allocator = rma.getAllocator("DEVICE");
 #ifdef ENABLE_HIP
   const size_t pool_size =
-      static_cast<size_t>(64) * 1024 * 1024 * 1024;  //+102*1024*1024;
+      static_cast<size_t>(50) * 1024 * 1024 * 1024;  //+102*1024*1024;
 #else
   const size_t pool_size =
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;

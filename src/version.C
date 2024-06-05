@@ -157,5 +157,8 @@ std::string compiler_options() {
   opts << "\n\t\tCray Compiler(" << __cray_major__ << "." << __cray_minor__
        << "." << __cray_patchlevel__ << ")\n";
 #endif
+#ifdef ENABLE_APU
+  opts <<" APU Enabled\n";
+#endif
   return opts.str();
 }
