@@ -1,0 +1,34 @@
+RAJA
+wget https://github.com/LLNL/RAJA/releases/download/v2024.02.2/RAJA-v2024.02.2.tar.gz
+gunzip and untar RAJA and cd to it
+./scripts/lc-builds/toss4_amdclang.sh 6.1.1 gfx942
+follow instruction on build
+make test
+make install
+
+Umpire
+wget https://github.com/LLNL/Umpire/releases/download/v2024.02.1/umpire-2024.02.1.tar.gz
+gunzip and unar UMPIRE and cd to it
+mkdir build && cd build
+cmake -DCMAKE_CXX_COMPILER=hipcc -DCMAKE_C_COMPILER=hipcc -DCMAKE_INSTALL_PREFIX=../install -DENABLE_HIP=On -DENABLE_OPENMP=Off -DHIP_ROOT_DIR=/opt/rocm-6.1.1/hip -DCMAKE_HIP_ARCHITECTUR
+ES=gfx942 ../
+make -j 20
+make test
+make install
+
+PROJ4
+wget https://download.osgeo.org/proj/proj-6.3.0.tar.gz
+
+sw4:
+cd configs
+cp make.rzadams make.inc
+edit make.inc and point RAJA_HOME, UMPIRE_HOME and PROJ_HOME to the install dirs from above
+From sw4, run /make -f Makefile.hipcc -j 
+
+
+Running:
+cd performance/large
+ln -s ../../optimize_mp/sw4 .
+sh run_mi200 ?( in an allocation )
+
+
