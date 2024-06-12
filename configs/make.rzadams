@@ -21,12 +21,16 @@ scr=no
 
 RAJA_HOME = /usr/workspace/us_cit/ramesh/raja
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/2024/MI300/SW4_APRIL_2024/RAJA-v2024.02.1/install_lc_toss4-amdclang-6.1.0-gfx942/
+RAJA_HOME = /usr/workspace/elcapnda/ramesh/RAJA-v2024.02.2/install_lc_toss4-amdclang-6.1.1-gfx942
+#RAJA_HOME = /usr/workspace/elcapnda/ramesh/RAJA-v2024.02.1/install_lc_toss4-amdclang-6.1.1-gfx942
 
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2022/EAS3/proj-6.3.0/install
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/2024/MI300/SW4_APRIL_2024/proj-6.3.0/install_610
+PROJ_HOME = /usr/workspace/elcapnda/ramesh/proj-6.3.0/install
 
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2022/EAS3/umpire-2022.10.0/install_rzvernal_530
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/2024/MI300/SW4_APRIL_2024/umpire-2024.02.1/install_rzvernal_610/
+UMPIRE_HOME = /usr/workspace/elcapnda/ramesh/umpire-2024.02.1/install
 
 HDF5_HOME = $(HDF5_DIR)
 
@@ -50,8 +54,8 @@ SCR_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/CRUSHER/SCR/scr-develop/i
 
 EXTRA_FORT_FLAGS = 
 
-MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_MANAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -O3 -x hip -Wno-inconsistent-missing-override --offload-arch=gfx942:xnack-:sramecc+  --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\"  -DSW4_GHCOF_NO_GP_IS_ZERO=1 -g3 -ggdb -std=c++17 -Wno-unused-result
-MORE_LINK_FLAGS =  -O3  -std=c++17 -L $(LAPACK_LIB)  -lgfortran -lsci_amd_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi $(GCC_LINK_LINE) --offload-arch=gfx942:xnack-:sramecc+  -L${ROCM_PATH}/lib   -L ${ROCM_PATH}/roctracer/lib -lroctracer64 -L${CRAY_MPICH_ROOTDIR}/gtl/lib -Wl,-rpath=${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa -lcamp -lflang -lpgmath -lflangrti -ldl
+MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_MANAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -O3 -x hip -Wno-inconsistent-missing-override --offload-arch=gfx942  --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\"  -DSW4_GHCOF_NO_GP_IS_ZERO=1 -g3 -ggdb -std=c++17 -Wno-unused-result -DENABLE_APU=1
+MORE_LINK_FLAGS =  -O3  -std=c++17 -L $(LAPACK_LIB)  -lgfortran -lsci_amd_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi $(GCC_LINK_LINE) --offload-arch=gfx942  -L${ROCM_PATH}/lib   -L ${ROCM_PATH}/roctracer/lib -lroctracer64 -L${CRAY_MPICH_ROOTDIR}/gtl/lib -Wl,-rpath=${CRAY_MPICH_ROOTDIR}/gtl/lib -lmpi_gtl_hsa -lcamp -lflang -lpgmath -lflangrti -ldl 
 
 
 ifeq ($(umpire),yes)
