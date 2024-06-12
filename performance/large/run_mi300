@@ -1,4 +1,5 @@
 export MPICH_GPU_SUPPORT_ENABLED=1
+export HSA_XNACK=1
 #export MPICH_NOLOCAL=1
 ## Below required for ASAN
 #export HSA_XNACK=1

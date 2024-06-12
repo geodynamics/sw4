@@ -380,6 +380,7 @@ void TimeSeries::allocateRecordingArrays(int numberOfTimeSteps,
                                          float_sw4 startTime,
                                          float_sw4 timeStep) {
   if (!m_myPoint) return;  // only one processor saves each time series
+
   if (numberOfTimeSteps > 0) {
     mAllocatedSize = numberOfTimeSteps + 1;
     mLastTimeStep = -1;
@@ -395,7 +396,7 @@ void TimeSeries::allocateRecordingArrays(int numberOfTimeSteps,
       }
     }
   }
-
+  std::cout<<m_ew->getRank()<<" Allocating time series array of size "<<mAllocatedSize<<"\n";
   // Move this time series to always start at 'startTime'. Perhaps this should
   // be done elsewhere ?
   m_shift = startTime - m_t0;
@@ -453,7 +454,6 @@ void TimeSeries::recordData(vector<float_sw4>& u) {
         "Ran out of recording space for the receiver station at (i,j,k,grid) = "
         "(%i, %i, %i, %i)\n",
         m_i0, m_j0, m_k0, m_grid0);
-    std::cout<<" mLastTimeStep "<<mLastTimeStep<<"  mAllocatedSize "<< mAllocatedSize<<"\n"<<std::flush;
     return;
   }
 
