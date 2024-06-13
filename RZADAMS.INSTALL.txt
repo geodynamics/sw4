@@ -19,6 +19,9 @@ make install
 PROJ4
 wget https://download.osgeo.org/proj/proj-6.3.0.tar.gz
 
+module load amd
+module load rocm
+module load cray-hdf5-parallel/1.12.2.11
 sw4:
 cd configs
 cp make.rzadams make.inc
