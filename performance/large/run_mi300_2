@@ -1,4 +1,9 @@
 export MPICH_GPU_SUPPORT_ENABLED=1
-#flux run -n 8 -c 24 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 hmr3.in.lassen
-flux run -n 8 -c 24 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 h.in.lassen
+export HSA_XNACK=1
+export LIBSCI_ARCH_OVERRIDE=naples
+#export MPICH_NOLOCAL=1
+## Below required for ASAN
+#export HSA_XNACK=1
+flux run -n 8 -c 24 -g 1 -N 2 --exclusive ./sw4 hmr3.in
+flux run -n 8 -c 24 -g 1 -N 2 --exclusive ./sw4 h.in.rzansel
 
