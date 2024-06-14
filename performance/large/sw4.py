@@ -11,14 +11,19 @@ def main():
     handle = flux.Flux()
     nodes=int(sys.argv[1])
     print("Running sw4 on ",nodes, " using ",nodes*4," ranks with input file ",sys.argv[2])
+    
     jobspec = JobspecV1.from_command(
-        command=["./sw4",sys.argv[2]], num_tasks=nodes*4, num_nodes=nodes,
+        command=["./sw4",sys.argv[2]],
+        num_tasks=nodes*4,
+        num_nodes=nodes,
+        cores_per_task=24,
+        exclusive=True
     )
+
+    jobspec.setattr('system.job.name', "SW4")
     jobspec.cwd = os.getcwd()
-    jobspec.exclusive=1
-    jobspec.t=480
-    jobspec.c=24
-    #jobspec.setattr(thp,always)
+    jobspec.duration="10m"
+    jobspec.setattr("system.thp","always")
     
     os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
     os.environ["HSA_XNACK"]="1"
@@ -26,6 +31,8 @@ def main():
     
     jobspec.stdout="SW4.{{id}}.out"
     jobspec.stderr="SW4.{{id}}.err"
+    
+    print(jobspec.resource_counts())
     print("Submitted ",flux.job.submit(handle, jobspec))
 
 
