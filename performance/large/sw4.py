@@ -23,6 +23,7 @@ def main():
     jobspec.setattr('system.job.name', "SW4")
     jobspec.cwd = os.getcwd()
     jobspec.duration="10m"
+    jobspec.queue="pdev"
     jobspec.setattr("system.thp","always")
     
     os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
