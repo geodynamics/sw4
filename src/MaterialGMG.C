@@ -391,9 +391,9 @@ int compare_int(const void* a, const void* b) {
   return (*(int*)a - *(int*)b);
 }
 
-static char** read_hdf5_attr_str_varlen(hid_t loc, const char* name, int *attr_size, int *nattr) {
-  hid_t attr_id, dtype_id, space_id;
-  int ierr;
+static char** read_hdf5_attr_str_varlen(hid_t loc, const char* name, int *nattr) {
+  hid_t attr_id, dtype_id, space_id, type_class;
+  int ierr, attr_size;
   char **data = NULL;
   hsize_t dims[4];
 
@@ -401,27 +401,31 @@ static char** read_hdf5_attr_str_varlen(hid_t loc, const char* name, int *attr_s
   ASSERT(attr_id >= 0);
 
   dtype_id = H5Aget_type(attr_id);
-  *attr_size = H5Tget_size(dtype_id);
+  attr_size = H5Tget_size(dtype_id);
   space_id = H5Aget_space(attr_id);
   H5Sget_simple_extent_dims(space_id, dims, NULL);
   *nattr = (int) dims[0];
 
-  printf("attr size: %d nattr %d\n", *attr_size, *nattr);
+  /* printf("attr size: %d nattr %d\n", attr_size, *nattr); */
 
   data = (char **) malloc (dims[0] * sizeof (char *));
 
-  hid_t type_class = H5Tget_class(dtype_id);
+  type_class = H5Tget_class(dtype_id);
   if (type_class == H5T_STRING && H5Tis_variable_str(dtype_id)) {
     ierr = H5Aread(attr_id, dtype_id, data);
     ASSERT(ierr >= 0);
   }
   else {
-    data[0] = (char*)malloc(*attr_size * dims[0] * sizeof(char));
-    for (int i = 1; i < dims[0]; i++)
-      data[i] = data[0] + i * (*attr_size);
+    char *tmpdata = (char*)malloc(attr_size * dims[0] * sizeof(char) + 1);
 
-    ierr = H5Aread(attr_id, dtype_id, data[0]);
+    ierr = H5Aread(attr_id, dtype_id, tmpdata);
     ASSERT(ierr >= 0);
+
+    for (int i = 0; i < dims[0]; i++) {
+      data[i] = (char*)calloc(attr_size + 1, sizeof(char));
+      memcpy(data[i], &tmpdata[i * attr_size], attr_size);
+    }
+    free(tmpdata);
   }
 
   /* for (int i = 0; i < dims[0]; i++) { */
@@ -442,14 +446,14 @@ void MaterialGMG::read_gmg() {
   time_start = MPI_Wtime();
 
 #ifdef USE_HDF5
-  int is_debug = 1;
+  int is_debug = 0;
   hid_t file_id, dataset_id, group_id, filespace_id, topo_grp;
   double alpha;
   herr_t ierr;
   hsize_t dims[4], num_objs;
   H5O_info2_t obj_info;
   char grid_name[128], obj_name[128], **data_values, *varname;
-  int str_len, hv[16], myhv, count, attr_size, nattr;
+  int str_len, hv[16], count, nattr;
   string fname = m_model_dir + "/" + m_model_file;
 
   /* // Fixed for GMG grids */
@@ -475,7 +479,7 @@ void MaterialGMG::read_gmg() {
 
     // Iterate through the objects in the group
     count = 0;
-    for (int i = 0; i < m_npatches; i++) {
+    for (int i = 0; i < num_objs; i++) {
       H5Gget_objname_by_idx(group_id, i, obj_name, sizeof(obj_name));
 
       // In case there are non datasets in the group, decrease the count
@@ -486,18 +490,13 @@ void MaterialGMG::read_gmg() {
       }
 
       dataset_id = H5Dopen(group_id, obj_name, H5P_DEFAULT);
-      read_hdf5_attr(dataset_id, H5T_NATIVE_INT, "resolution_vert", &myhv);
-
-      if (is_debug)
-        fprintf(stderr, "hv[%d]=%d\n", i, myhv);
-
-      hv[count++] = myhv;
+      read_hdf5_attr(dataset_id, H5T_NATIVE_INT, "resolution_vert", &hv[count++]);
 
       H5Dclose(dataset_id);
     }
 
     // Read the data_values to know which variable is stored in what c index
-    data_values = read_hdf5_attr_str_varlen(file_id, "data_values", &attr_size, &nattr);
+    data_values = read_hdf5_attr_str_varlen(file_id, "data_values", &nattr);
     for (int i = 0; i < nattr; i++) {
       varname = data_values[i];
       if (is_debug)
@@ -514,6 +513,10 @@ void MaterialGMG::read_gmg() {
       else if (strstr(varname, "Qs"))
         m_idx_qs = i;
     }
+
+    for (int i = 0; i < nattr; i++)
+      free(data_values[i]);
+    free(data_values);
 
     if (is_debug) {
       fprintf(stderr, "Vp idx: %d, Vs idx: %d, rho idx: %d, Qp idx: %d, Qs idx: %d\n",
@@ -548,11 +551,6 @@ void MaterialGMG::read_gmg() {
   m_nc.resize(m_npatches);
   m_ztop.resize(m_npatches);
   m_Material.resize(m_npatches);
-
-  /* hv[0] = 25; */
-  /* hv[1] = 50; */
-  /* hv[2] = 125; */
-  /* hv[3] = 250; */
 
   if (mEW->getRank() == 0) {
     file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
