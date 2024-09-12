@@ -164,8 +164,8 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz:
              * %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f\n", */
             /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf,
-             * gr, i0, j0, k0, mat(gr,0,i0,j0,k0), mat(gr,1,i0,j0,k0),
-             * mat(gr,2,i0,j0,k0) ); */
+             * gr, i0, j0, k0, mat(gr,m_idx_rho,i0,j0,k0), mat(gr,m_idx_vp,i0,j0,k0),
+             * mat(gr,m_idx_vs,i0,j0,k0) ); */
             /* } */
 
             // weights should be within [0, 1]
@@ -198,14 +198,14 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
 
             rho[g](i, j, k) =
                 (1 - wghz) *
-                    ((1 - wghy) * ((1 - wghx) * mat(gr, 0, i0, j0, k0) +
-                                   wghx * mat(gr, 0, i0 + 1, j0, k0)) +
-                     wghy * ((1 - wghx) * mat(gr, 0, i0, j0 + 1, k0) +
-                             wghx * mat(gr, 0, i0 + 1, j0 + 1, k0))) +
-                wghz * ((1 - wghy) * ((1 - wghx) * mat(gr, 0, i0, j0, k0 + 1) +
-                                      wghx * mat(gr, 0, i0 + 1, j0, k0 + 1)) +
-                        wghy * ((1 - wghx) * mat(gr, 0, i0, j0 + 1, k0 + 1) +
-                                wghx * mat(gr, 0, i0 + 1, j0 + 1, k0 + 1)));
+                    ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_rho, i0, j0, k0) +
+                                   wghx * mat(gr, m_idx_rho, i0 + 1, j0, k0)) +
+                     wghy * ((1 - wghx) * mat(gr, m_idx_rho, i0, j0 + 1, k0) +
+                             wghx * mat(gr, m_idx_rho, i0 + 1, j0 + 1, k0))) +
+                wghz * ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_rho, i0, j0, k0 + 1) +
+                                      wghx * mat(gr, m_idx_rho, i0 + 1, j0, k0 + 1)) +
+                        wghy * ((1 - wghx) * mat(gr, m_idx_rho, i0, j0 + 1, k0 + 1) +
+                                wghx * mat(gr, m_idx_rho, i0 + 1, j0 + 1, k0 + 1)));
 
             /* if (x == 80000 && y == 9000) { */
             /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz:
@@ -223,14 +223,14 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
 
             cp[g](i, j, k) =
                 (1 - wghz) *
-                    ((1 - wghy) * ((1 - wghx) * mat(gr, 1, i0, j0, k0) +
-                                   wghx * mat(gr, 1, i0 + 1, j0, k0)) +
-                     wghy * ((1 - wghx) * mat(gr, 1, i0, j0 + 1, k0) +
-                             wghx * mat(gr, 1, i0 + 1, j0 + 1, k0))) +
-                wghz * ((1 - wghy) * ((1 - wghx) * mat(gr, 1, i0, j0, k0 + 1) +
-                                      wghx * mat(gr, 1, i0 + 1, j0, k0 + 1)) +
-                        wghy * ((1 - wghx) * mat(gr, 1, i0, j0 + 1, k0 + 1) +
-                                wghx * mat(gr, 1, i0 + 1, j0 + 1, k0 + 1)));
+                    ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_vp, i0, j0, k0) +
+                                   wghx * mat(gr, m_idx_vp, i0 + 1, j0, k0)) +
+                     wghy * ((1 - wghx) * mat(gr, m_idx_vp, i0, j0 + 1, k0) +
+                             wghx * mat(gr, m_idx_vp, i0 + 1, j0 + 1, k0))) +
+                wghz * ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_vp, i0, j0, k0 + 1) +
+                                      wghx * mat(gr, m_idx_vp, i0 + 1, j0, k0 + 1)) +
+                        wghy * ((1 - wghx) * mat(gr, m_idx_vp, i0, j0 + 1, k0 + 1) +
+                                wghx * mat(gr, m_idx_vp, i0 + 1, j0 + 1, k0 + 1)));
 
             /* if (cp[g](i,j,k) < 700) { */
             /* printf("Rank %d, cp[%d](%d, %d, %d)=%.2f\n", mEW->getRank(), g,
@@ -240,14 +240,14 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
 
             cs[g](i, j, k) =
                 (1 - wghz) *
-                    ((1 - wghy) * ((1 - wghx) * mat(gr, 2, i0, j0, k0) +
-                                   wghx * mat(gr, 2, i0 + 1, j0, k0)) +
-                     wghy * ((1 - wghx) * mat(gr, 2, i0, j0 + 1, k0) +
-                             wghx * mat(gr, 2, i0 + 1, j0 + 1, k0))) +
-                wghz * ((1 - wghy) * ((1 - wghx) * mat(gr, 2, i0, j0, k0 + 1) +
-                                      wghx * mat(gr, 2, i0 + 1, j0, k0 + 1)) +
-                        wghy * ((1 - wghx) * mat(gr, 2, i0, j0 + 1, k0 + 1) +
-                                wghx * mat(gr, 2, i0 + 1, j0 + 1, k0 + 1)));
+                    ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_vs, i0, j0, k0) +
+                                   wghx * mat(gr, m_idx_vs, i0 + 1, j0, k0)) +
+                     wghy * ((1 - wghx) * mat(gr, m_idx_vs, i0, j0 + 1, k0) +
+                             wghx * mat(gr, m_idx_vs, i0 + 1, j0 + 1, k0))) +
+                wghz * ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_vs, i0, j0, k0 + 1) +
+                                      wghx * mat(gr, m_idx_vs, i0 + 1, j0, k0 + 1)) +
+                        wghy * ((1 - wghx) * mat(gr, m_idx_vs, i0, j0 + 1, k0 + 1) +
+                                wghx * mat(gr, m_idx_vs, i0 + 1, j0 + 1, k0 + 1)));
 
 #ifdef BZ_DEBUG
             if (cs[g](i, j, k) < 0) {
@@ -260,27 +260,27 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             if (use_q) {
               xip[g](i, j, k) =
                   (1 - wghz) *
-                      ((1 - wghy) * ((1 - wghx) * mat(gr, 3, i0, j0, k0) +
-                                     wghx * mat(gr, 3, i0 + 1, j0, k0)) +
-                       wghy * ((1 - wghx) * mat(gr, 3, i0, j0 + 1, k0) +
-                               wghx * mat(gr, 3, i0 + 1, j0 + 1, k0))) +
+                      ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_qp, i0, j0, k0) +
+                                     wghx * mat(gr, m_idx_qp, i0 + 1, j0, k0)) +
+                       wghy * ((1 - wghx) * mat(gr, m_idx_qp, i0, j0 + 1, k0) +
+                               wghx * mat(gr, m_idx_qp, i0 + 1, j0 + 1, k0))) +
                   wghz *
-                      ((1 - wghy) * ((1 - wghx) * mat(gr, 3, i0, j0, k0 + 1) +
-                                     wghx * mat(gr, 3, i0 + 1, j0, k0 + 1)) +
-                       wghy * ((1 - wghx) * mat(gr, 3, i0, j0 + 1, k0 + 1) +
-                               wghx * mat(gr, 3, i0 + 1, j0 + 1, k0 + 1)));
+                      ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_qp, i0, j0, k0 + 1) +
+                                     wghx * mat(gr, m_idx_qp, i0 + 1, j0, k0 + 1)) +
+                       wghy * ((1 - wghx) * mat(gr, m_idx_qp, i0, j0 + 1, k0 + 1) +
+                               wghx * mat(gr, m_idx_qp, i0 + 1, j0 + 1, k0 + 1)));
 
               xis[g](i, j, k) =
                   (1 - wghz) *
-                      ((1 - wghy) * ((1 - wghx) * mat(gr, 4, i0, j0, k0) +
-                                     wghx * mat(gr, 4, i0 + 1, j0, k0)) +
-                       wghy * ((1 - wghx) * mat(gr, 4, i0, j0 + 1, k0) +
-                               wghx * mat(gr, 4, i0 + 1, j0 + 1, k0))) +
+                      ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_qs, i0, j0, k0) +
+                                     wghx * mat(gr, m_idx_qs, i0 + 1, j0, k0)) +
+                       wghy * ((1 - wghx) * mat(gr, m_idx_qs, i0, j0 + 1, k0) +
+                               wghx * mat(gr, m_idx_qs, i0 + 1, j0 + 1, k0))) +
                   wghz *
-                      ((1 - wghy) * ((1 - wghx) * mat(gr, 4, i0, j0, k0 + 1) +
-                                     wghx * mat(gr, 4, i0 + 1, j0, k0 + 1)) +
-                       wghy * ((1 - wghx) * mat(gr, 4, i0, j0 + 1, k0 + 1) +
-                               wghx * mat(gr, 4, i0 + 1, j0 + 1, k0 + 1)));
+                      ((1 - wghy) * ((1 - wghx) * mat(gr, m_idx_qs, i0, j0, k0 + 1) +
+                                     wghx * mat(gr, m_idx_qs, i0 + 1, j0, k0 + 1)) +
+                       wghy * ((1 - wghx) * mat(gr, m_idx_qs, i0, j0 + 1, k0 + 1) +
+                               wghx * mat(gr, m_idx_qs, i0 + 1, j0 + 1, k0 + 1)));
             }
 
           }  // End if inside
@@ -366,10 +366,11 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
   H5Aclose(attr_id);
 }
 
-static char* read_hdf5_attr_str(hid_t loc, const char* name) {
+static char* read_hdf5_attr_str(hid_t loc, const char *name)
+{
   hid_t attr_id, dtype;
   int ierr;
-  char* data = NULL;
+  char *data = NULL;
 
   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
   ASSERT(attr_id >= 0);
@@ -385,26 +386,159 @@ static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   /* fprintf(stderr, "Read data: [%s]\n", data); */
   return data;
 }
+
+int compare_int(const void* a, const void* b) {
+  return (*(int*)a - *(int*)b);
+}
+
+static char** read_hdf5_attr_str_varlen(hid_t loc, const char* name, int *attr_size, int *nattr) {
+  hid_t attr_id, dtype_id, space_id;
+  int ierr;
+  char **data = NULL;
+  hsize_t dims[4];
+
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+
+  dtype_id = H5Aget_type(attr_id);
+  *attr_size = H5Tget_size(dtype_id);
+  space_id = H5Aget_space(attr_id);
+  H5Sget_simple_extent_dims(space_id, dims, NULL);
+  *nattr = (int) dims[0];
+
+  printf("attr size: %d nattr %d\n", *attr_size, *nattr);
+
+  data = (char **) malloc (dims[0] * sizeof (char *));
+
+  hid_t type_class = H5Tget_class(dtype_id);
+  if (type_class == H5T_STRING && H5Tis_variable_str(dtype_id)) {
+    ierr = H5Aread(attr_id, dtype_id, data);
+    ASSERT(ierr >= 0);
+  }
+  else {
+    data[0] = (char*)malloc(*attr_size * dims[0] * sizeof(char));
+    for (int i = 1; i < dims[0]; i++)
+      data[i] = data[0] + i * (*attr_size);
+
+    ierr = H5Aread(attr_id, dtype_id, data[0]);
+    ASSERT(ierr >= 0);
+  }
+
+  /* for (int i = 0; i < dims[0]; i++) { */
+  /*   fprintf(stderr, "Read data: [%s]\n", data[i]); */
+  /* } */
+
+  H5Tclose(dtype_id);
+  H5Aclose(attr_id);
+
+  return data;
+}
 #endif
 
 //-----------------------------------------------------------------------
 void MaterialGMG::read_gmg() {
   // Timers
   double time_start, time_end;
-  /* double intf_start, intf_end, mat_start, mat_end; */
   time_start = MPI_Wtime();
 
 #ifdef USE_HDF5
+  int is_debug = 1;
   hid_t file_id, dataset_id, group_id, filespace_id, topo_grp;
   double alpha;
   herr_t ierr;
-  hsize_t dims[4];
-  char grid_name[128];
-  int str_len, hv[5];
+  hsize_t dims[4], num_objs;
+  H5O_info2_t obj_info;
+  char grid_name[128], obj_name[128], **data_values, *varname;
+  int str_len, hv[16], myhv, count, attr_size, nattr;
   string fname = m_model_dir + "/" + m_model_file;
 
-  // Fixed for GMG grids
-  m_npatches = 4;
+  /* // Fixed for GMG grids */
+  /* m_npatches = 4; */
+
+  // Discover the number of blocks and their h/v grid size
+  if (mEW->getRank() == 0) {
+    file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id < 0) {
+      cout << "Could not open hdf5 file: " << fname.c_str() << endl;
+      MPI_Abort(MPI_COMM_WORLD, file_id);
+    }
+
+    group_id = H5Gopen(file_id, "blocks", H5P_DEFAULT);
+    ASSERT(group_id > 0);
+
+    H5Gget_num_objs(group_id, &num_objs);
+    m_npatches = (int) num_objs;
+
+    // debug
+    if (is_debug)
+      fprintf(stderr, "Found %d objs in blocks group\n");
+
+    // Iterate through the objects in the group
+    count = 0;
+    for (int i = 0; i < m_npatches; i++) {
+      H5Gget_objname_by_idx(group_id, i, obj_name, sizeof(obj_name));
+
+      // In case there are non datasets in the group, decrease the count
+      H5Oget_info_by_name(group_id, obj_name, &obj_info, H5O_INFO_BASIC, H5P_DEFAULT);
+      if (obj_info.type != H5O_TYPE_DATASET) {
+        m_npatches--;
+        continue;
+      }
+
+      dataset_id = H5Dopen(group_id, obj_name, H5P_DEFAULT);
+      read_hdf5_attr(dataset_id, H5T_NATIVE_INT, "resolution_vert", &myhv);
+
+      if (is_debug)
+        fprintf(stderr, "hv[%d]=%d\n", i, myhv);
+
+      hv[count++] = myhv;
+
+      H5Dclose(dataset_id);
+    }
+
+    // Read the data_values to know which variable is stored in what c index
+    data_values = read_hdf5_attr_str_varlen(file_id, "data_values", &attr_size, &nattr);
+    for (int i = 0; i < nattr; i++) {
+      varname = data_values[i];
+      if (is_debug)
+        fprintf(stderr, "name %d: [%s]\n", i, varname);
+
+      if (strstr(varname, "Vp") || strstr(varname, "VP"))
+        m_idx_vp = i;
+      else if (strstr(varname, "Vs") || strstr(varname, "VS"))
+        m_idx_vs = i;
+      else if (strstr(varname, "density") || strstr(varname, "RHO"))
+        m_idx_rho = i;
+      else if (strstr(varname, "Qp"))
+        m_idx_qp = i;
+      else if (strstr(varname, "Qs"))
+        m_idx_qs = i;
+    }
+
+    if (is_debug) {
+      fprintf(stderr, "Vp idx: %d, Vs idx: %d, rho idx: %d, Qp idx: %d, Qs idx: %d\n",
+                        m_idx_vp, m_idx_vs, m_idx_rho, m_idx_qp, m_idx_qs);
+    }
+
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+
+    // Sort the hv array
+    qsort(hv, count, sizeof(int), compare_int);
+
+    // debug
+    if (is_debug)
+      for (int i = 0; i < count; i++)
+        fprintf(stderr, "hv[%d]=%d\n", i, hv[i]);
+  }  // End rank==0
+
+  MPI_Bcast(&m_npatches, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(hv, m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_idx_vp, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_idx_vs, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_idx_rho, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_idx_qp, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_idx_qs, 1, MPI_INT, 0, mEW->m_1d_communicator);
 
   m_hv.resize(m_npatches);
   m_hh.resize(m_npatches);
@@ -415,10 +549,10 @@ void MaterialGMG::read_gmg() {
   m_ztop.resize(m_npatches);
   m_Material.resize(m_npatches);
 
-  hv[0] = 25;
-  hv[1] = 50;
-  hv[2] = 125;
-  hv[3] = 250;
+  /* hv[0] = 25; */
+  /* hv[1] = 50; */
+  /* hv[2] = 125; */
+  /* hv[3] = 250; */
 
   if (mEW->getRank() == 0) {
     file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -437,12 +571,8 @@ void MaterialGMG::read_gmg() {
             m_Yaz, m_Zmax);
 #endif
 
-    // Origin_x is not correctly read sometimes
-    if (m_Origin_x < 1) {
-      m_Origin_x = 99286.2;
-      if (mEW->getRank() == 0)
-        printf("GMG origin_x read invalid value, correct to 99286.2 \n");
-    }
+    ASSERT(m_Origin_x > 0);
+    ASSERT(m_Origin_y > 0);
 
     m_CRS = read_hdf5_attr_str(file_id, "crs");
     str_len = (int)(strlen(m_CRS) + 1);
@@ -474,7 +604,7 @@ void MaterialGMG::read_gmg() {
 
       // Make assumption is correct with the data
       ASSERT(hv[p] == (int)m_hv[p]);
-      ASSERT(dims[3] == 7);
+      /* ASSERT(dims[3] == 7); */
 
       m_Material[p] = new float[dims[0] * dims[1] * dims[2] * dims[3]]();
       ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, filespace_id,
@@ -615,11 +745,11 @@ void MaterialGMG::fill_in_fluids() {
       for (int j = 0; j < m_nj[p]; j++) {
         int k0 = 0;
         // Vs is 2 in GMG model
-        while (mat(p, 2, i, j, k0) < 0 && k0 < m_nk[p] - 1) k0++;
+        while (mat(p, m_idx_vs, i, j, k0) < 0 && k0 < m_nk[p] - 1) k0++;
 
         // consider the case where the top block is all water. Then k0 = m_nk-1
         // and mat(Vs) <0
-        if (k0 == m_nk[p] - 1 && mat(p, 2, i, j, k0) < 0) {
+        if (k0 == m_nk[p] - 1 && mat(p, m_idx_vs, i, j, k0) < 0) {
           // get value from block p+1
           if (p < m_npatches - 1) {
             int pd = p + 1, id, jd, kd;  // index of donor block
@@ -647,12 +777,12 @@ void MaterialGMG::fill_in_fluids() {
              * value, rho=%f\n", p, i, j, k0, mat(pd,0,id,jd,kd)); */
 
             // get values from block 'pd'
-            mat_assign(p, 0, i, j, k0, mat(pd, 0, id, jd, kd));
-            mat_assign(p, 1, i, j, k0, mat(pd, 1, id, jd, kd));
-            mat_assign(p, 2, i, j, k0, mat(pd, 2, id, jd, kd));
+            mat_assign(p, 0, i, j, k0, mat(pd, m_idx_rho, id, jd, kd));
+            mat_assign(p, 1, i, j, k0, mat(pd, m_idx_vp, id, jd, kd));
+            mat_assign(p, 2, i, j, k0, mat(pd, m_idx_vs, id, jd, kd));
             if (m_use_attenuation) {
-              mat_assign(p, 3, i, j, k0, mat(pd, 3, id, jd, kd));
-              mat_assign(p, 4, i, j, k0, mat(pd, 4, id, jd, kd));
+              mat_assign(p, 3, i, j, k0, mat(pd, m_idx_qp, id, jd, kd));
+              mat_assign(p, 4, i, j, k0, mat(pd, m_idx_qs, id, jd, kd));
             }
           } else {
             printf(
@@ -666,18 +796,18 @@ void MaterialGMG::fill_in_fluids() {
         // debug
         /* if (k0 > 0) { */
         /*    /1* fprintf(stderr, "p=%d, ijk: %d %d %d, s=%f\n", p, i, j, k0,
-         * mat(p,2,i,j,k0-1)); *1/ */
+         * mat(p,m_idx_vs,i,j,k0-1)); *1/ */
         /*   fprintf(stderr, "p=%d, ijk: %d %d 0 to %d, assign rho=%f\n", p, i,
-         * j, k0, mat(p,0,i,j,k0)); */
+         * j, k0, mat(p,m_idx_rho,i,j,k0)); */
         /* } */
 
         for (int k = 0; k < k0; k++) {
-          mat_assign(p, 0, i, j, k, mat(p, 0, i, j, k0));
-          mat_assign(p, 1, i, j, k, mat(p, 1, i, j, k0));
-          mat_assign(p, 2, i, j, k, mat(p, 2, i, j, k0));
+          mat_assign(p, 0, i, j, k, mat(p, m_idx_rho, i, j, k0));
+          mat_assign(p, 1, i, j, k, mat(p, m_idx_vp, i, j, k0));
+          mat_assign(p, 2, i, j, k, mat(p, m_idx_vs, i, j, k0));
           if (m_use_attenuation) {
-            mat_assign(p, 3, i, j, k, mat(p, 3, i, j, k0));
-            mat_assign(p, 4, i, j, k, mat(p, 4, i, j, k0));
+            mat_assign(p, 3, i, j, k, mat(p, m_idx_qp, i, j, k0));
+            mat_assign(p, 4, i, j, k, mat(p, m_idx_qs, i, j, k0));
           }
         }  // End for k
 
@@ -696,22 +826,22 @@ void MaterialGMG::material_check(bool water) {
     for (int i = 0; i < m_ni[p]; i++)
       for (int j = 0; j < m_nj[p]; j++)
         for (int k = 0; k < m_nk[p]; k++) {
-          if (water || mat(p, 2, i, j, k) > 0) {
-            if (mat(p, 0, i, j, k) < rhomin) rhomin = mat(p, 0, i, j, k);
-            if (mat(p, 0, i, j, k) > rhomax) rhomax = mat(p, 0, i, j, k);
-            if (mat(p, 1, i, j, k) < cpmin) cpmin = mat(p, 1, i, j, k);
-            if (mat(p, 1, i, j, k) > cpmax) cpmax = mat(p, 1, i, j, k);
-            if (mat(p, 2, i, j, k) < csmin) csmin = mat(p, 2, i, j, k);
-            if (mat(p, 2, i, j, k) > csmax) csmax = mat(p, 2, i, j, k);
-            double crat = mat(p, 1, i, j, k) / mat(p, 2, i, j, k);
+          if (water || mat(p, m_idx_vs, i, j, k) > 0) {
+            if (mat(p, m_idx_rho, i, j, k) < rhomin) rhomin = mat(p, m_idx_rho, i, j, k);
+            if (mat(p, m_idx_rho, i, j, k) > rhomax) rhomax = mat(p, m_idx_rho, i, j, k);
+            if (mat(p, m_idx_vp, i, j, k) < cpmin) cpmin = mat(p, m_idx_vp, i, j, k);
+            if (mat(p, m_idx_vp, i, j, k) > cpmax) cpmax = mat(p, m_idx_vp, i, j, k);
+            if (mat(p, m_idx_vs, i, j, k) < csmin) csmin = mat(p, m_idx_vs, i, j, k);
+            if (mat(p, m_idx_vs, i, j, k) > csmax) csmax = mat(p, m_idx_vs, i, j, k);
+            double crat = mat(p, m_idx_vp, i, j, k) / mat(p, m_idx_vs, i, j, k);
             if (crat < cratmin) {
               cratmin = crat;
               if (printsmallcpcs && crat < 1.41) {
                 cout << "crat= " << crat << " at " << i << " " << j << " " << k
                      << endl;
-                cout << " material is " << mat(p, 0, i, j, k) << " "
-                     << mat(p, 1, i, j, k) << " " << mat(p, 2, i, j, k) << " "
-                     << mat(p, 3, i, j, k) << " " << mat(p, 4, i, j, k) << endl;
+                cout << " material is " << mat(p, m_idx_rho, i, j, k) << " "
+                     << mat(p, m_idx_vp, i, j, k) << " " << mat(p, m_idx_vs, i, j, k) << " "
+                     << mat(p, m_idx_qp, i, j, k) << " " << mat(p, m_idx_qs, i, j, k) << endl;
               }
             }
             if (crat > cratmax) cratmax = crat;

@@ -107,5 +107,6 @@ class MaterialGMG : public MaterialData {
   vector<double> m_hv, m_hh, m_ztop;
   vector<int> m_ni, m_nj, m_nk, m_nc;
   vector<float*> m_Material;
+  int m_idx_vp, m_idx_vs, m_idx_rho, m_idx_qp, m_idx_qs;
 };
 #endif
