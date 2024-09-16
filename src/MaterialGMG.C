@@ -620,30 +620,43 @@ void MaterialGMG::read_gmg() {
       }
     }  // End for each patch
 
-    topo_grp = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
-    ASSERT(topo_grp >= 0);
+    if (H5Lexists(file_id, "surfaces", H5P_DEFAULT)) {
 
-    dataset_id = H5Dopen(topo_grp, "top_surface", H5P_DEFAULT);
-    ASSERT(dataset_id >= 0);
+      topo_grp = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
+      ASSERT(topo_grp >= 0);
 
-    filespace_id = H5Dget_space(dataset_id);
-    H5Sget_simple_extent_dims(filespace_id, &m_Top_dims[0], NULL);
+      dataset_id = H5Dopen(topo_grp, "top_surface", H5P_DEFAULT);
+      ASSERT(dataset_id >= 0);
+
+      filespace_id = H5Dget_space(dataset_id);
+      H5Sget_simple_extent_dims(filespace_id, &m_Top_dims[0], NULL);
 
 #ifdef BZ_DEBUG
-    fprintf(stderr, "Top dims: %ld %ld\n", m_Top_dims[0], m_Top_dims[1]);
+      fprintf(stderr, "Top dims: %ld %ld\n", m_Top_dims[0], m_Top_dims[1]);
 #endif
 
-    m_Top_surface = new float[m_Top_dims[0] * m_Top_dims[1]]();
-    ASSERT(m_Top_surface);
+      m_Top_surface = new float[m_Top_dims[0] * m_Top_dims[1]]();
+      ASSERT(m_Top_surface);
 
-    ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, filespace_id,
-                   H5P_DEFAULT, m_Top_surface);
-    ASSERT(ierr >= 0);
+      ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, filespace_id,
+                     H5P_DEFAULT, m_Top_surface);
+      ASSERT(ierr >= 0);
 
-    H5Sclose(filespace_id);
-    H5Dclose(dataset_id);
+      H5Sclose(filespace_id);
+      H5Dclose(dataset_id);
+      H5Gclose(topo_grp);
+    }
+    else {
+      m_Top_dims[0] = m_ni[0];
+      m_Top_dims[1] = m_nj[0];
+      m_Top_surface = new float[m_Top_dims[0] * m_Top_dims[1]]();
+      for (int i = 0; i < m_Top_dims[0] * m_Top_dims[1]; i++) {
+        m_Top_surface[i] = 0;
+      }
+
+    }
+
     H5Gclose(group_id);
-    H5Gclose(topo_grp);
     H5Fclose(file_id);
 
     m_Zmin = 1e10;
@@ -692,7 +705,7 @@ void MaterialGMG::read_gmg() {
 
   ASSERT(m_Origin_x > 0);
   ASSERT(m_Origin_y > 0);
-  ASSERT(m_Yaz > 0);
+  ASSERT(m_Yaz >= 0);
 
   alpha = m_Yaz - 180.0;
   CHECK_INPUT(
