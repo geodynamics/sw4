@@ -448,7 +448,6 @@ void MaterialGMG::read_gmg() {
 #ifdef USE_HDF5
   int is_debug = 0;
   hid_t file_id, dataset_id, group_id, filespace_id, topo_grp;
-  double alpha;
   herr_t ierr;
   hsize_t dims[4], num_objs;
   H5O_info2_t obj_info;
@@ -707,12 +706,11 @@ void MaterialGMG::read_gmg() {
   ASSERT(m_Origin_y > 0);
   ASSERT(m_Yaz >= 0);
 
-  alpha = m_Yaz - 180.0;
   CHECK_INPUT(
-      fabs(alpha - mEW->getGridAzimuth()) < 1e-6,
+      fabs(m_Yaz - mEW->getGridAzimuth()) < 1e-6 || m_Yaz-180.0 -  mEW->getGridAzimuth() < 1e-6,
       "ERROR: gmg azimuth must be equal "
       "to coordinate system azimuth"
-          << " azimuth on gmg = " << alpha
+          << " azimuth on gmg = " << m_Yaz
           << " azimuth of coordinate sytem = " << mEW->getGridAzimuth());
 
   if (mEW->getRank() == 0 && mEW->getVerbosity() >= 2) {
