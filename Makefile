@@ -152,7 +152,7 @@ ifeq ($(proj),yes)
    proj  := "proj_4"
 else ifeq ($(proj_6),yes)
    CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -L$(SQLITE_HOME)/lib  -lproj -lcurl -lssl -lcrypto
+   linklibs += -lproj -lcurl -lssl -lcrypto
    proj  := "proj_6"
 else
    proj  := "no"
@@ -190,8 +190,8 @@ else
 endif
 
 ifeq ($(hdf5),yes)
-   CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
-   linklibs += -L$(HDF5ROOT)/lib -Wl,-rpath=$(HDF5ROOT)/lib -lhdf5
+   CXXFLAGS  += -I$(HDF5_HOME)/include -DUSE_HDF5
+   linklibs += -L$(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5
 endif
 
 ifeq ($(zfp),yes)
@@ -272,7 +272,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -arch=sm_70 $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
+	cd $(builddir); nvcc -arch=sm_90 $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
@@ -347,8 +347,8 @@ format:
 	clang-format -style Google -i src/*.C
 	clang-format -style Google -i src/*.h
 ptest: 
-	cd $(builddir); $(CXX) -O3 -std=c++11 --expt-extended-lambda -arch=sm_70 -I$(RAJA_LOCATION)/include -x cu -c -dc ../src/Policies.C
-	cd $(builddir); nvcc -O3 -arch=sm_70 -dlink -o file_link.o Policies.o
-	cd $(builddir); nvcc -O3 -arch=sm_70 -o p file_link.o Policies.o -L$(RAJA_LOCATION)/lib -lRAJA
+	cd $(builddir); $(CXX) -O3 -std=c++11 --expt-extended-lambda -arch=sm_90 -I$(RAJA_LOCATION)/include -x cu -c -dc ../src/Policies.C
+	cd $(builddir); nvcc -O3 -arch=sm_90 -dlink -o file_link.o Policies.o
+	cd $(builddir); nvcc -O3 -arch=sm_90 -o p file_link.o Policies.o -L$(RAJA_LOCATION)/lib -lRAJA
 tags:
 	etags -o src/TAGS src/*.C src/*.h 
