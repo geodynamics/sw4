@@ -4405,19 +4405,19 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     //
     // Allocate arrays as needed by the use case
     //
-    mRho[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+    mRho[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Managed);
     mRho[g].set_to_minusOne();
     if (m_anisotropic) {
       mC[g].define(21, ifirst, ilast, jfirst, jlast, kfirst, klast);
       mC[g].set_to_minusOne();
     } else {
       // elastic material
-      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Managed);
       mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                        Space::Host);
+                        Space::Managed);
       // initialize the material coefficients to -1
-      mMu[g].set_to_minusOneHost();
-      mLambda[g].set_to_minusOneHost();
+      mMu[g].set_to_minusOne();
+      mLambda[g].set_to_minusOne();
       // allocate space for material coefficient arrays needed by MR
       m_Morc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
       m_Mlrc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
@@ -4432,23 +4432,23 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     }
     // viscoelastic material coefficients & memory variables
     if (m_use_attenuation) {
-      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
-      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Managed);
+      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Managed);
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
         mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                           Space::Host);
+                           Space::Managed);
         mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                               Space::Host);
+                               Space::Managed);
         // initialize the viscoelastic material coefficients to -1
-        mMuVE[g][a].set_to_minusOneHost();
-        mLambdaVE[g][a].set_to_minusOneHost();
+        mMuVE[g][a].set_to_minusOne();
+        mLambdaVE[g][a].set_to_minusOne();
       }
       // initialize Qp and Qs to -1
-      mQs[g].set_to_minusOneHost();
-      mQp[g].set_to_minusOneHost();
+      mQs[g].set_to_minusOne();
+      mQp[g].set_to_minusOne();
     }
 
     // go to the next coarser grid
@@ -4733,7 +4733,7 @@ void EW::allocateCurvilinearArrays() {
 
     // and material properties, initialize to -1
     mRho[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                   m_kEnd[g]);
+                   m_kEnd[g],Space::Managed);
     mRho[g].set_to_minusOne();
 
     if (m_anisotropic)  // NEED TO UPDATE FOR SEVERAL CURVILINEAR GRIDS!!!
@@ -4746,29 +4746,29 @@ void EW::allocateCurvilinearArrays() {
       mCcurv.set_to_minusOne();
     } else {
       mMu[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g], Space::Host);
+                    m_kEnd[g], Space::Managed);
       mMu[g].set_to_minusOneHost();
       mLambda[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                        m_kStart[g], m_kEnd[g], Space::Host);
+                        m_kStart[g], m_kEnd[g], Space::Managed);
       mLambda[g].set_to_minusOneHost();
     }
     // viscoelastic material coefficients
     if (m_use_attenuation) {
       // initialize the viscoelastic material coefficients to -1
       mQs[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g], Space::Host);
+                    m_kEnd[g], Space::Managed);
       mQs[g].set_to_minusOneHost();
       mQp[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g], Space::Host);
+                    m_kEnd[g], Space::Managed);
       mQp[g].set_to_minusOneHost();
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model has m_number_mechanisms = 0
       {
         mMuVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g], Space::Host);
+                           m_kStart[g], m_kEnd[g], Space::Managed);
         mMuVE[g][a].set_to_minusOneHost();
         mLambdaVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g], Space::Host);
+                               m_kStart[g], m_kEnd[g], Space::Managed);
         mLambdaVE[g][a].set_to_minusOneHost();
       }  // end for a...
     }    // end if attenuation

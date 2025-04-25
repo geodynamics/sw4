@@ -286,10 +286,20 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_strx_f = SW4_NEW(Space::Managed, float_sw4[m_ief - m_ibf + 1]);
   m_stry_f = SW4_NEW(Space::Managed, float_sw4[m_jef - m_jbf + 1]);
 #ifdef ENABLE_GPU
+  
+#ifdef ENABLE_APU
+
+  float_sw4* lm_strx_c = m_strx_c;
+  float_sw4* lm_stry_c = m_stry_c;
+  float_sw4* lm_strx_f = m_strx_f;
+  float_sw4* lm_stry_f = m_stry_f;
+  
+#else
   float_sw4* lm_strx_c = new float_sw4[m_ie - m_ib + 1];
   float_sw4* lm_stry_c = new float_sw4[m_je - m_jb + 1];
   float_sw4* lm_strx_f = new float_sw4[m_ief - m_ibf + 1];
   float_sw4* lm_stry_f = new float_sw4[m_jef - m_jbf + 1];
+#endif
 #else
 
   float_sw4* lm_strx_c = m_strx_c;
@@ -310,8 +320,10 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                   cudaMemcpyHostToDevice, 0);
 #endif
 #ifdef ENABLE_HIP
+#ifndef ENABLE_APU
   hipMemcpyAsync(m_strx_c, lm_strx_c, (m_ie - m_ib + 1) * sizeof(double),
                  hipMemcpyHostToDevice, 0);
+#endif
 #endif
 
   ndif = m_nghost - (m_ew->m_iStartInt[m_gf] - m_ew->m_iStart[m_gf]);
@@ -323,8 +335,10 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                   cudaMemcpyHostToDevice, 0);
 #endif
 #ifdef ENABLE_HIP
+#ifndef ENABLE_APU
   hipMemcpyAsync(m_strx_f, lm_strx_f, (m_ief - m_ibf + 1) * sizeof(double),
                  hipMemcpyHostToDevice, 0);
+#endif
 #endif
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gc] - m_ew->m_jStart[m_gc]);
@@ -336,8 +350,10 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                   cudaMemcpyHostToDevice, 0);
 #endif
 #ifdef ENABLE_HIP
+#ifndef ENABLE_APU
   hipMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
                  hipMemcpyHostToDevice, 0);
+#endif
 #endif
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gf] - m_ew->m_jStart[m_gf]);
@@ -349,41 +365,45 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                   cudaMemcpyHostToDevice, 0);
 #endif
 #ifdef ENABLE_HIP
+#ifndef ENABLE_APU
   hipMemcpyAsync(m_stry_f, lm_stry_f, (m_jef - m_jbf + 1) * sizeof(double),
                  hipMemcpyHostToDevice, 0);
+#endif
 #endif
 
   SYNC_STREAM;
 
-  m_rho_c.define(m_ib, m_ie, m_jb, m_je, 1, 1);
-  m_rho_f.define(m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf);
+  m_rho_c.define(m_ib, m_ie, m_jb, m_je, 1, 1,Space::Managed);
+  m_rho_f.define(m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf,Space::Managed);
 
-  m_mu_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
-  m_lambda_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
-  m_jac_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
+  m_mu_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
+  m_lambda_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
+  m_jac_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
 
-  m_mu_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-  m_lambda_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-  m_jac_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
+  m_mu_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
+  m_lambda_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
+  m_jac_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
 
-  m_x_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
-  m_y_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
-  m_z_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
-  m_met_c.define(4, m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
+  m_x_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
+  m_y_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
+  m_z_c.define(m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
+  m_met_c.define(4, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed);
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gc, m_x_c, m_y_c, m_z_c,
                                                m_jac_c, m_met_c, false);
   // std::cout<<"HERE 1\n";
   m_met_c.insert_intersection(m_ew->mMetric[m_gc]);
   // std::cout<<"HERE 1.1\n"<<std::flush;
   m_jac_c.insert_intersection(m_ew->mJ[m_gc]);
+  SYNC_STREAM; // NEW
   // std::cout<<"HERE 1.2\n"<<std::flush;
   communicate_array(m_met_c, true);
   communicate_array(m_jac_c, true);
+  SYNC_STREAM; // NEW
 
-  m_x_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-  m_y_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-  m_z_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-  m_met_f.define(4, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
+  m_x_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
+  m_y_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
+  m_z_f.define(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
+  m_met_f.define(4, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed);
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gf, m_x_f, m_y_f, m_z_f,
                                                m_jac_f, m_met_f, false);
   m_met_f.insert_intersection(m_ew->mMetric[m_gf]);
@@ -391,17 +411,19 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 
   communicate_array(m_met_f, true);
   communicate_array(m_jac_f, true);
-
+  SYNC_STREAM; // NEW
   if (m_tw != 0) {
     m_tw->get_rho(m_rho_c, m_x_c, m_y_c, m_z_c);
     m_tw->get_rho(m_rho_f, m_x_f, m_y_f, m_z_f);
     m_tw->get_mula(m_mu_c, m_lambda_c, m_x_c, m_y_c, m_z_c);
     m_tw->get_mula(m_mu_f, m_lambda_f, m_x_f, m_y_f, m_z_f);
   } else {
+    SYNC_STREAM;
     m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
     m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
     m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
     m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
+    SYNC_STREAM;
     m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
     m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
     SYNC_STREAM;
@@ -557,10 +579,12 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   SW4_MARK_END("DGETRF");
 #endif
 #ifdef ENABLE_GPU
+#ifndef ENABLE_APU
   delete [] lm_strx_c;
   delete [] lm_stry_c;
   delete [] lm_strx_f;
   delete [] lm_stry_f;
+#endif
 #endif
 }
 
