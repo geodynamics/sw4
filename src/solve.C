@@ -92,7 +92,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     norm_trace_file.open("Norms.dat");
   }
 #endif
-  // print_hwm(getRank());
+  print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
       Up(mNumberOfGrids), Um(mNumberOfGrids), U(mNumberOfGrids);

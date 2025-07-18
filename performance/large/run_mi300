@@ -1,9 +1,10 @@
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
-export LIBSCI_ARCH_OVERRIDE=naples
+export LIBSCI_ARCH_OVERRIDE=genoa
 #export MPICH_NOLOCAL=1
 ## Below required for ASAN
 #export HSA_XNACK=1
-flux run -n 4 -c 24 -g 1 -N 1 --exclusive ./sw4 hmr3.in
-flux run -n 4 -c 24 -g 1 -N 1 --exclusive ./sw4 h.in.rzansel
+#export CRAYBLAS_PROFILING_VERBOSITY=2
+export OMP_DISPLAY_ENV=TRUE
+flux run -n 4 -N 1 --exclusive ./sw4 hmr3.in.lassen
 

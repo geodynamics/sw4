@@ -1,9 +1,15 @@
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
-export LIBSCI_ARCH_OVERRIDE=naples
+export LIBSCI_ARCH_OVERRIDE=genoa
 #export MPICH_NOLOCAL=1
 ## Below required for ASAN
 #export HSA_XNACK=1
-flux run -n 8 -c 24 -g 1 -N 2 --exclusive ./sw4 hmr3.in
-flux run -n 8 -c 24 -g 1 -N 2 --exclusive ./sw4 h.in.rzansel
+#export CRAYBLAS_PROFILING_VERBOSITY=2
+export OMP_DISPLAY_ENV=TRUE
+export FASTLOAD_VERBOSE=1
+flux run -n 8 -c 24 -g 1 -N 2 -o mpibind=verbose --exclusive ./sw4 hmr3.in.lassen
+flux run -n 8 -c 21 -g 1 -N 2 -o mpibind=verbose --exclusive ./sw4 hmr3.in.lassen
+flux run -n 8 -c 24 -g 1 -N 2 -o mpibind=verbose --exclusive ./sw4 hmr3.in.lassen
+flux run -n 8 -c 21 -g 1 -N 2 -o mpibind=verbose --exclusive ./sw4 hmr3.in.lassen
+#flux run -n 4 -c 21 -g 1 -N 1 --exclusive ./sw4 h.in.lassen
 

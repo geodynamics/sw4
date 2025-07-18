@@ -6,6 +6,9 @@
 #include <limits.h>
 #include <unistd.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include <iomanip>
 #include <unordered_map>
 
@@ -18,6 +21,7 @@
 #include <sys/syscall.h>
 #include <sched.h>
 
+void print_mem_usage();
 long long node_mem();
 std::string hostname();
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
@@ -153,6 +157,7 @@ void check_mem() {
 }
 
 void print_hwm(int rank) {
+	if (!rank) print_mem_usage();
   const int allocator_count = 3;
   long long host_mem_used = 0;
 #ifdef SW4_CPU_HWM
