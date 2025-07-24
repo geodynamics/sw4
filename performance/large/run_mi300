@@ -1,10 +1,14 @@
 export MPICH_GPU_SUPPORT_ENABLED=1
-export HSA_XNACK=1
+#export HSA_XNACK=1
 export LIBSCI_ARCH_OVERRIDE=genoa
 #export MPICH_NOLOCAL=1
 ## Below required for ASAN
 #export HSA_XNACK=1
 #export CRAYBLAS_PROFILING_VERBOSITY=2
-export OMP_DISPLAY_ENV=TRUE
-flux run -n 4 -N 1 --exclusive ./sw4 hmr3.in.lassen
+#export OMP_DISPLAY_ENV=TRUE
+export HUGETLB_VERBOSE=3
+flux run -n 4 -N 1 -x ./sw4base hmr3.in.lassen
+#flux run -n 4 -N 1 -x ./sw4huge hmr3.in.lassen
+#flux run -n 4 -N 1 -x ./sw4base hmr3.in.lassen
+#flux run -N 1 -n 1 xterm -e ./a.out `pgrep sw4`
 

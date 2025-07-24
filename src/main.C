@@ -159,11 +159,7 @@ int main(int argc, char **argv) {
   // auto device_allocator = rma.getAllocator("DEVICE");
 #ifdef ENABLE_HIP
   const size_t pool_size =
-<<<<<<< HEAD
       static_cast<size_t>(5) * 1024 * 1024 * 1024;  //+102*1024*1024;
-=======
-      static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
->>>>>>> c75aaa9631db347372b42ec2661cc8186d808bea
 #else
   const size_t pool_size =
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
@@ -421,7 +417,7 @@ int main(int argc, char **argv) {
          << endl
          << "The execution on proc " << myRank << " was UNSUCCESSFUL." << endl
          << "============================================================"
-         << endl;
+<< endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
