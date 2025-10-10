@@ -116,7 +116,19 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
     /* mEW->extractTopographyFromUCVM("ucvm"); */
     /* fprintf(stderr, "Done query topo\n"); */
 
-    m_zminloc = 0;
+    // The default floors for taper interpolation is 500m, 1700m, 1700m for vs,vp,density.
+    const char *ucvm_cmd = getenv("UCVM_QUERY_CMD");
+    if (ucvm_cmd == NULL || strstr(ucvm_cmd, "ucvm_query") == NULL) {
+        if (mEW->getRank() == 0)
+            fprintf(stderr, "UCVM_QUERY_CMD env variable not set correctly [%s], exiting...\n", ucvm_cmd);
+        exit(-1);
+    }
+
+    // const char *ucvm_cmd = "ucvm_query -f /global/cfs/cdirs/m3354/tang/ucvm/install.25.7/conf/ucvm.conf -m cvmsi ";
+    // const char *ucvm_cmd = "ucvm_query -f /global/cfs/cdirs/m3354/tang/ucvm/install.25.7/conf/ucvm.conf -m cvmsi,elygtl:taper -L 750,1700,1700 ";
+    // const char *ucvm_cmd = "ucvm_query -f /global/cfs/cdirs/m3354/tang/ucvm/install.25.7/conf/ucvm.conf -m cvmsi,elygtl:taper -L 1000,1700,1700 ";
+    if (mEW->getRank() == 0)
+        fprintf(stderr, "Using command: %s\n", ucvm_cmd);
 
     for(int g=0; g < mEW->mNumberOfGrids; g++) {
         sprintf(inname, "/tmp/ucvm.in.%d.%d", g, mEW->getRank());
@@ -196,7 +208,7 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
                         if (is_debug)
                             fprintf(stderr, "Query batch %d / %d\n", nfile, total_batch);
                         // query UCVM and append to output file
-                        sprintf(cmd, "ucvm_query -f /pscratch/sd/h/houhun/ucvm.withSCPBR/conf/ucvm.conf -m cvmsi,elygtl:taper -L 200,700,1500 < %s >> %s", inname, outname);
+                        sprintf(cmd, "%s < %s >> %s", ucvm_cmd, inname, outname);
                         system(cmd);
 
                         fptr = fopen(inname, "w");
@@ -213,7 +225,7 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
         // query UCVM
         if (nrow > 0) {
             printf("Query last batch %d\n", nfile);
-            sprintf(cmd, "ucvm_query -f /pscratch/sd/h/houhun/ucvm.withSCPBR/conf/ucvm.conf -m cvmsi,elygtl:taper -L 200,700,1500 < %s >> %s", inname, outname);
+            sprintf(cmd, "%s < %s >> %s", ucvm_cmd, inname, outname);
             system(cmd);
         }
 
@@ -276,7 +288,26 @@ void MaterialUCVM::set_material_properties(std::vector<Sarray> & rho,
                     cp[g](i, j, k)  = comb_vp;
                     cs[g](i, j, k)  = comb_vs;
                     if( use_q ) {
-                        xis[g](i, j, k)  = comb_vs / 1000.0 * 150.0;
+                        // if (z <= 50)
+                        //     xis[g](i, j, k) = 10.0;
+                        // else if (z <= 100)
+                        //     xis[g](i, j, k) = 20.0;
+                        // else if (z < 200)
+                        //     xis[g](i, j, k) = 30.0;
+                        // else
+                        //     xis[g](i, j, k)  = comb_vs / 1000.0 * 100.0;
+
+                        // xip[g](i, j, k)  = xis[g](i, j, k) * 2.0;
+
+			if (z <= 50)
+			    xis[g](i, j, k) = 40.0;   //(damp  = 0.0125 ) 
+			else if (z <= 100)
+			    xis[g](i, j, k) = 90.0;  //(damp =  0.0056)
+			else if (z < 200)
+			    xis[g](i, j, k) = 140.0;    //(damp = 0.0036)
+			else
+			    xis[g](i, j, k) = fmax(comb_vs/1000.0*250, 140); //<== to avoid sudden Q reduction at 200 m) 
+
                         xip[g](i, j, k)  = xis[g](i, j, k) * 2.0;
                     }
 

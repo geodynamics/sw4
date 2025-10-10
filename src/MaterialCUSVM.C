@@ -87,10 +87,8 @@ void MaterialCUSVM::set_material_properties(std::vector<Sarray> & rho,
     bool even_stretch = false;
 
     uint64_t outside=0, material=0;
-    double lon, lat, depth, topo_elev;
+    double lon, lat, depth, topo_elev, min_depth;
     char inname[128], outname[128], cmd[2048];
-    double squash_bottom = 7000;
-    double squash_power = 1.1;
 
     FILE *fptr;
 
@@ -119,6 +117,8 @@ void MaterialCUSVM::set_material_properties(std::vector<Sarray> & rho,
     vp_min = 200;
     vs_min = 0;
     density_min = 800;
+    // Note, due to the abnormal surface velocity, we replace it with depth=10 
+    min_depth = 10;
 
     for(int g=0; g < mEW->mNumberOfGrids; g++) {
         sprintf(inname, "/tmp/cusvm.in.%d.%d", g, mEW->getRank());
@@ -152,8 +152,8 @@ void MaterialCUSVM::set_material_properties(std::vector<Sarray> & rho,
                         z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
                     depth = z;
-                    if (depth < 0)
-                        depth = 0;
+                    if (depth < min_depth)
+                        depth = min_depth;
 
                     fprintf(fptr, "%f %f %f\n", lon, lat, depth);
                     material++;
@@ -196,9 +196,11 @@ void MaterialCUSVM::set_material_properties(std::vector<Sarray> & rho,
                     else
                         z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
+                    // There is a value discontinuity issue with the USGS data due to stiching different models
+                    // current workaround is using depth=10 instead of actual surface values
                     depth = z;
-                    if (depth < 0)
-                        depth = 0;
+                    if (depth < min_depth)
+                        depth = min_depth;
 
                     /* if (i == 1200 && k == 1) { */
                     /*     fprintf(stderr, "Rank %d grid %d: (%d, %d, %d) [%lf, %lf, %lf] : %lf, %lf, %lf\n", */
@@ -227,6 +229,27 @@ void MaterialCUSVM::set_material_properties(std::vector<Sarray> & rho,
                     rho[g](i, j, k) = density;
                     cp[g](i, j, k)  = vp;
                     cs[g](i, j, k)  = vs;
+                    if( use_q ) {
+                        // Qs=36               for VS < 360;
+                        // Qs=0.1*Vs           for 360 ≤ VS < 500;
+                        // Qs=0.3* VS − 100    for 500 ≤ VS < 1000;
+                        // Qs=167 ·*VS+  33    for 1000 ≤ VS < 4000
+                        // Qs=700              for VS ≥ 4000
+                        // Qp=2*Qs
+                        if (vs <= 360)
+                            xis[g](i, j, k)  = 36;
+                        else if (vs > 360 && vs < 500)
+                            xis[g](i, j, k)  = vs * 0.1;
+                        else if (vs >= 500 && vs < 1000)
+                            xis[g](i, j, k)  = vs * 0.3 - 100.0;
+                        else if (vs >= 1000 && vs < 4000)
+                            xis[g](i, j, k)  = vs * 167.0 + 33.0;
+                        else if (vs >= 4000)
+                            xis[g](i, j, k)  = 700;
+
+                        xip[g](i, j, k)  = xis[g](i, j, k) * 2.0;
+                    }
+
 
                     if (fabs(lon - mylon) > 1e-5 )
                         printf("x=%.1ff, y=%.1f, sw4_lon=%f does not match ucvm_lon=%f!\n", x, y, lon, mylon);
