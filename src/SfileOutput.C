@@ -739,6 +739,14 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     H5Awrite(attr, H5T_NATIVE_DOUBLE, &spacing);
     H5Aclose(attr);
 
+    aname = "Coarsest horizontal grid spacing";
+    double spacing = mEW->mGridSize[0]*stH;
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT, H5P_DEFAULT);
+    if( attr < 0 )
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+    H5Awrite(attr, H5T_NATIVE_DOUBLE, &spacing);
+    H5Aclose(attr);
+
     aname = "Attenuation";
     int att = mEW->usingAttenuation();
     attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT, H5P_DEFAULT);
