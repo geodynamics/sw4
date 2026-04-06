@@ -569,7 +569,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   int npts = 0, nseg = 0, nsr1 = 0;
   hsize_t dims;
   double rVersion;
-  int nSources=0, nu1=0, nu2=0, nu3=0;
+  int nSources=0, nu1=0, nu2=0, nu3=0, nskip_zero_slip=0;
 
   stime = MPI_Wtime();
   // Only rank 0 reads data, then broadcast to all other processes
@@ -777,6 +777,19 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       {
          printf("INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n", slip_sum, slip_m);
       }
+      float_sw4 slip_sum_tol = 1e-12;
+      if( slip_sum > -slip_sum_tol && slip_sum < slip_sum_tol )
+      {
+        nskip_zero_slip++;
+        if( world_rank == 0 && nskip_zero_slip <= 10 )
+        {
+          printf("WARNING: skipping rupture point #%i because dt*sum(slip_vel)=%e [m], slip1=%e [m]\n",
+                 pts+1, slip_sum, slip_m);
+        }
+        for (int i=1; i<=nt1dim+1; i++)
+          par[i] = 0;
+        slip_sum = 1;
+      }
       // scale time series to sum to integrate to one        
       for (int i=1; i<=nt1dim+1; i++)
       {
@@ -911,6 +924,8 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   } // end for all sources
   if (world_rank == 0)
     printf("Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n", npts, nSources, nu1, nu2, nu3);
+  if (world_rank == 0 && nskip_zero_slip > 0)
+    printf("Skipped %i rupture points with zero slip-velocity integral in u1.\n", nskip_zero_slip);
 
   etime = MPI_Wtime();
   if (is_debug && world_rank == 0) 
