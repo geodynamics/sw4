@@ -778,32 +778,34 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
          printf("INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n", slip_sum, slip_m);
       }
       float_sw4 slip_sum_tol = 1e-12;
+      bool skip_zero_slip_point = false;
       if( slip_sum > -slip_sum_tol && slip_sum < slip_sum_tol )
       {
         nskip_zero_slip++;
+        skip_zero_slip_point = true;
         if( world_rank == 0 && nskip_zero_slip <= 10 )
         {
           printf("WARNING: skipping rupture point #%i because dt*sum(slip_vel)=%e [m], slip1=%e [m]\n",
                  pts+1, slip_sum, slip_m);
         }
+      }
+      // scale time series to sum to integrate to one
+      if( !skip_zero_slip_point )
+      {
         for (int i=1; i<=nt1dim+1; i++)
-          par[i] = 0;
-        slip_sum = 1;
-      }
-      // scale time series to sum to integrate to one        
-      for (int i=1; i<=nt1dim+1; i++)
-      {
-         par[i] /= slip_sum;
-      }
-      if (world_rank == 0 && mVerbose >= 2)
-      {
-         slip_sum=0;
-         for (int i=1; i<=nt1dim+1; i++)
-         {
-            slip_sum += par[i];
-         }
-         slip_sum *=dt;
-         printf("INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n", slip_sum);
+        {
+           par[i] /= slip_sum;
+        }
+        if (world_rank == 0 && mVerbose >= 2)
+        {
+           slip_sum=0;
+           for (int i=1; i<=nt1dim+1; i++)
+           {
+              slip_sum += par[i];
+           }
+           slip_sum *=dt;
+           printf("INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n", slip_sum);
+        }
       }
       //done scaling        
       
@@ -881,7 +883,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
         if (world_rank == 0)
           cout << sourceposerr.str();
       }
-      else
+      else if( !skip_zero_slip_point )
       {
         sourcePtr = new Source(ew, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
                                tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true ); // true is correctStrengthForMu
