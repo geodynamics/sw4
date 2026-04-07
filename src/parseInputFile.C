@@ -5944,7 +5944,7 @@ void EW::processRupture(char* buffer,
       printf("Number of point sources in data block: %i\n", npts);
 
     // read all point sources
-    int nSources = 0, nu1 = 0, nu2 = 0, nu3 = 0;
+    int nSources = 0, nu1 = 0, nu2 = 0, nu3 = 0, nskip_zero_slip = 0;
     for (int pts = 0; pts < npts; pts++) {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2,
           slip3;
@@ -6022,6 +6022,17 @@ void EW::processRupture(char* buffer,
               "INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from "
               "header)=%e [m]\n",
               slip_sum, slip_m);
+        }
+        float_sw4 slip_sum_tol = 1e-12;
+        if( slip_sum > -slip_sum_tol && slip_sum < slip_sum_tol )
+        {
+           nskip_zero_slip++;
+           if( proc_zero() && nskip_zero_slip <= 10 )
+              printf("WARNING: rupture point %i has near-zero slip integral (dt*sum(slip_vel)=%e), skipping source normalization.\n",
+                     pts+1, slip_sum);
+           for (int i = 1; i <= nt1dim + 1; i++)
+              par[i] = 0;
+           slip_sum = 1;
         }
         // scale time series to sum to integrate to one
         for (int i = 1; i <= nt1dim + 1; i++) {
@@ -6193,6 +6204,8 @@ void EW::processRupture(char* buffer,
           "Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, "
           "nu3=%i\n",
           npts, nSources, nu1, nu2, nu3);
+    if (proc_zero() && nskip_zero_slip > 0)
+      printf("Skipped %i rupture points with zero slip-velocity integral in u1.\n", nskip_zero_slip);
 
     fclose(fd);
   }

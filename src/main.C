@@ -48,7 +48,13 @@
 #include "version.h"
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
+#if defined(__has_include)
+#if __has_include("nvToolsExtCuda.h")
 #include "nvToolsExtCuda.h"
+#elif __has_include("nvToolsExt.h")
+#include "nvToolsExt.h"
+#endif
+#endif
 #endif
 
 #ifdef USE_ZFP
