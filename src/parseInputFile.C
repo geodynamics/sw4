@@ -6024,29 +6024,30 @@ void EW::processRupture(char* buffer,
               slip_sum, slip_m);
         }
         float_sw4 slip_sum_tol = 1e-12;
+        bool skip_zero_slip_point = false;
         if( slip_sum > -slip_sum_tol && slip_sum < slip_sum_tol )
         {
            nskip_zero_slip++;
+           skip_zero_slip_point = true;
            if( proc_zero() && nskip_zero_slip <= 10 )
-              printf("WARNING: rupture point %i has near-zero slip integral (dt*sum(slip_vel)=%e), skipping source normalization.\n",
+              printf("WARNING: rupture point %i has near-zero slip integral (dt*sum(slip_vel)=%e), skipping source creation.\n",
                      pts+1, slip_sum);
-           for (int i = 1; i <= nt1dim + 1; i++)
-              par[i] = 0;
-           slip_sum = 1;
         }
         // scale time series to sum to integrate to one
-        for (int i = 1; i <= nt1dim + 1; i++) {
-          par[i] /= slip_sum;
-        }
-        if (proc_zero() && mVerbose >= 2) {
-          slip_sum = 0;
+        if( !skip_zero_slip_point ) {
           for (int i = 1; i <= nt1dim + 1; i++) {
-            slip_sum += par[i];
+            par[i] /= slip_sum;
           }
-          slip_sum *= dt;
-          printf(
-              "INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n",
-              slip_sum);
+          if (proc_zero() && mVerbose >= 2) {
+            slip_sum = 0;
+            for (int i = 1; i <= nt1dim + 1; i++) {
+              slip_sum += par[i];
+            }
+            slip_sum *= dt;
+            printf(
+                "INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n",
+                slip_sum);
+          }
         }
         // done scaling
 
@@ -6136,7 +6137,7 @@ void EW::processRupture(char* buffer,
           sourceposerr << "***************************************************"
                        << endl;
           if (m_myRank == 0) cout << sourceposerr.str();
-        } else {
+        } else if( !skip_zero_slip_point ) {
           sourcePtr =
               new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
                          tDep, formstring, topodepth, ncyc, par, npar, ipar,
