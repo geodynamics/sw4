@@ -96,6 +96,7 @@ class MaterialGMG : public MaterialData {
 
   bool m_use_attenuation;
   int m_npatches;
+  int m_idx_rho, m_idx_vp, m_idx_vs, m_idx_qp, m_idx_qs;
   double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;
   char* m_CRS;
 #ifdef USE_HDF5
