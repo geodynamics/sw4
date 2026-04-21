@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -385,6 +386,38 @@ static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   /* fprintf(stderr, "Read data: [%s]\n", data); */
   return data;
 }
+
+struct GmgBlockInfo {
+  std::string name;
+  double ztop;
+  double hh;
+  double hv;
+  hsize_t dims[4];
+};
+
+static herr_t collect_gmg_block_names(hid_t loc_id, const char* name,
+                                      const H5L_info_t* /*info*/,
+                                      void* operator_data) {
+#if H5_VERSION_GE(1, 12, 0)
+  H5O_info1_t object_info;
+#else
+  H5O_info_t object_info;
+#endif
+  std::vector<std::string>* block_names =
+      static_cast<std::vector<std::string>*>(operator_data);
+
+  ASSERT(operator_data != NULL);
+
+#if H5_VERSION_GE(1, 12, 0)
+  H5Oget_info_by_name1(loc_id, name, &object_info, H5P_DEFAULT);
+#else
+  H5Oget_info_by_name(loc_id, name, &object_info, H5P_DEFAULT);
+#endif
+
+  if (object_info.type == H5O_TYPE_DATASET) block_names->push_back(name);
+
+  return 0;
+}
 #endif
 
 //-----------------------------------------------------------------------
@@ -398,27 +431,11 @@ void MaterialGMG::read_gmg() {
   hid_t file_id, dataset_id, group_id, filespace_id, topo_grp;
   double alpha;
   herr_t ierr;
-  hsize_t dims[4];
-  char grid_name[128];
-  int str_len, hv[5];
+  hsize_t dims[4], top_dims[3];
+  int str_len = 0, top_rank = 0;
   string fname = m_model_dir + "/" + m_model_file;
-
-  // Fixed for GMG grids
-  m_npatches = 4;
-
-  m_hv.resize(m_npatches);
-  m_hh.resize(m_npatches);
-  m_ni.resize(m_npatches);
-  m_nj.resize(m_npatches);
-  m_nk.resize(m_npatches);
-  m_nc.resize(m_npatches);
-  m_ztop.resize(m_npatches);
-  m_Material.resize(m_npatches);
-
-  hv[0] = 25;
-  hv[1] = 50;
-  hv[2] = 125;
-  hv[3] = 250;
+  std::vector<GmgBlockInfo> blocks;
+  m_npatches = 0;
 
   if (mEW->getRank() == 0) {
     file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -450,30 +467,72 @@ void MaterialGMG::read_gmg() {
     group_id = H5Gopen(file_id, "blocks", H5P_DEFAULT);
     ASSERT(group_id >= 0);
 
+    std::vector<std::string> block_names;
+    ierr = H5Literate(group_id, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
+                      collect_gmg_block_names, &block_names);
+    ASSERT(ierr >= 0);
+
+    m_npatches = (int)block_names.size();
+    CHECK_INPUT(m_npatches > 0,
+                "ERROR: GMG file contains no datasets in /blocks");
+
+    blocks.resize(m_npatches);
+
     for (int p = 0; p < m_npatches; p++) {
-      sprintf(grid_name, "vres%dm", hv[p]);
-      dataset_id = H5Dopen(group_id, grid_name, H5P_DEFAULT);
+      blocks[p].name = block_names[p];
+      dataset_id = H5Dopen(group_id, block_names[p].c_str(), H5P_DEFAULT);
       ASSERT(dataset_id >= 0);
 
       filespace_id = H5Dget_space(dataset_id);
       H5Sget_simple_extent_dims(filespace_id, dims, NULL);
+      H5Sclose(filespace_id);
 
 #ifdef BZ_DEBUG
       fprintf(stderr, "Rank %d, p=%d dims: %ld %ld %ld %ld\n", mEW->getRank(),
               p, dims[0], dims[1], dims[2], dims[3]);
 #endif
 
-      m_ni[p] = (int)dims[0];
-      m_nj[p] = (int)dims[1];
-      m_nk[p] = (int)dims[2];
-      m_nc[p] = (int)dims[3];
+      for (int d = 0; d < 4; d++) blocks[p].dims[d] = dims[d];
 
-      read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "z_top", &m_ztop[p]);
-      read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &m_hh[p]);
-      read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_vert", &m_hv[p]);
+      read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "z_top", &blocks[p].ztop);
+      read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz",
+                     &blocks[p].hh);
+      read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_vert",
+                     &blocks[p].hv);
 
-      // Make assumption is correct with the data
-      ASSERT(hv[p] == (int)m_hv[p]);
+      H5Dclose(dataset_id);
+    }
+
+    std::sort(blocks.begin(), blocks.end(),
+              [](const GmgBlockInfo& lhs, const GmgBlockInfo& rhs) {
+                if (lhs.ztop != rhs.ztop) return lhs.ztop > rhs.ztop;
+                return lhs.hv < rhs.hv;
+              });
+
+    m_hv.resize(m_npatches);
+    m_hh.resize(m_npatches);
+    m_ni.resize(m_npatches);
+    m_nj.resize(m_npatches);
+    m_nk.resize(m_npatches);
+    m_nc.resize(m_npatches);
+    m_ztop.resize(m_npatches);
+    m_Material.resize(m_npatches);
+
+    for (int p = 0; p < m_npatches; p++) {
+      dataset_id = H5Dopen(group_id, blocks[p].name.c_str(), H5P_DEFAULT);
+      ASSERT(dataset_id >= 0);
+
+      filespace_id = H5Dget_space(dataset_id);
+      H5Sget_simple_extent_dims(filespace_id, dims, NULL);
+
+      m_ni[p] = (int)blocks[p].dims[0];
+      m_nj[p] = (int)blocks[p].dims[1];
+      m_nk[p] = (int)blocks[p].dims[2];
+      m_nc[p] = (int)blocks[p].dims[3];
+      m_ztop[p] = blocks[p].ztop;
+      m_hh[p] = blocks[p].hh;
+      m_hv[p] = blocks[p].hv;
+
       ASSERT(dims[3] == 7);
 
       m_Material[p] = new float[dims[0] * dims[1] * dims[2] * dims[3]]();
@@ -485,8 +544,8 @@ void MaterialGMG::read_gmg() {
       H5Dclose(dataset_id);
 
       if (mEW->getVerbosity() >= 2) {
-        printf("  GMG header block #%i\n", p);
-        printf("    hh=%f, hv=%f\n", m_hh[p], m_hv[p]);
+        printf("  GMG header block #%i (%s)\n", p, blocks[p].name.c_str());
+        printf("    ztop=%f, hh=%f, hv=%f\n", m_ztop[p], m_hh[p], m_hv[p]);
         printf("    nc=%lld, ni=%lld, nj=%lld, nk=%lld\n", dims[3], dims[0],
                dims[1], dims[2]);
       }
@@ -499,7 +558,17 @@ void MaterialGMG::read_gmg() {
     ASSERT(dataset_id >= 0);
 
     filespace_id = H5Dget_space(dataset_id);
-    H5Sget_simple_extent_dims(filespace_id, &m_Top_dims[0], NULL);
+    top_rank = H5Sget_simple_extent_ndims(filespace_id);
+    CHECK_INPUT(top_rank == 2 || top_rank == 3,
+                "ERROR: GMG top_surface must be rank-2 or rank-3, got "
+                    << top_rank);
+    H5Sget_simple_extent_dims(filespace_id, top_dims, NULL);
+    m_Top_dims[0] = top_dims[0];
+    m_Top_dims[1] = top_dims[1];
+    if (top_rank == 3)
+      CHECK_INPUT(top_dims[2] == 1,
+                  "ERROR: GMG top_surface third dimension must be 1, got "
+                      << top_dims[2]);
 
 #ifdef BZ_DEBUG
     fprintf(stderr, "Top dims: %ld %ld\n", m_Top_dims[0], m_Top_dims[1]);
@@ -524,6 +593,17 @@ void MaterialGMG::read_gmg() {
     }
 
   }  // End rank==0
+
+  MPI_Bcast(&m_npatches, 1, MPI_INT, 0, mEW->m_1d_communicator);
+
+  m_hv.resize(m_npatches);
+  m_hh.resize(m_npatches);
+  m_ni.resize(m_npatches);
+  m_nj.resize(m_npatches);
+  m_nk.resize(m_npatches);
+  m_nc.resize(m_npatches);
+  m_ztop.resize(m_npatches);
+  m_Material.resize(m_npatches);
 
   MPI_Barrier(mEW->m_1d_communicator);
 
