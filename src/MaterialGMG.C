@@ -111,10 +111,15 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
         gmg_x = xRel * cosAz - yRel * sinAz;
         gmg_y = xRel * sinAz + yRel * cosAz;
 
-        i0 = static_cast<int>(floor(gmg_x / m_hh[0]));
-        j0 = static_cast<int>(floor(gmg_y / m_hh[0]));
+        const int top_i = static_cast<int>(floor(gmg_x / m_Top_hx));
+        const int top_j = static_cast<int>(floor(gmg_y / m_Top_hy));
+        if (top_i < 0 || top_i >= static_cast<int>(m_Top_dims[0]) ||
+            top_j < 0 || top_j >= static_cast<int>(m_Top_dims[1])) {
+          outside += static_cast<size_t>(mEW->m_kEnd[g] - mEW->m_kStart[g] + 1);
+          continue;
+        }
 
-        top = -m_Top_surface[i0 * m_Top_dims[1] + j0];
+        top = -m_Top_surface[top_i * m_Top_dims[1] + top_j];
 
         for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
           float_sw4 z;
@@ -387,6 +392,49 @@ static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   return data;
 }
 
+static bool read_hdf5_attr_optional_f64(hid_t loc, const char* name,
+                                        double& data) {
+  if (H5Aexists(loc, name) <= 0) return false;
+  read_hdf5_attr(loc, H5T_IEEE_F64LE, name, &data);
+  return true;
+}
+
+static void read_gmg_surface_spacing(hid_t dataset_id, double& hx, double& hy) {
+  double h = 0.0;
+  const bool has_h = read_hdf5_attr_optional_f64(dataset_id, "resolution_horiz",
+                                                 h);
+  const bool has_hx =
+      read_hdf5_attr_optional_f64(dataset_id, "x_resolution", hx);
+  const bool has_hy =
+      read_hdf5_attr_optional_f64(dataset_id, "y_resolution", hy);
+
+  CHECK_INPUT(has_h || (has_hx && has_hy),
+              "ERROR: GMG surface dataset must define resolution_horiz or "
+              "both x_resolution and y_resolution");
+
+  if (!has_hx) hx = h;
+  if (!has_hy) hy = h;
+
+  CHECK_INPUT(hx > 0 && hy > 0,
+              "ERROR: GMG surface spacing must be positive, got hx="
+                  << hx << " hy=" << hy);
+}
+
+static hid_t open_gmg_surface_dataset(hid_t group_id,
+                                      const char** surface_name) {
+  const char* candidates[] = {"top_surface", "topography_bathymetry"};
+  const int ncandidates = sizeof(candidates) / sizeof(candidates[0]);
+
+  for (int i = 0; i < ncandidates; i++) {
+    if (H5Lexists(group_id, candidates[i], H5P_DEFAULT) > 0) {
+      if (surface_name) *surface_name = candidates[i];
+      return H5Dopen(group_id, candidates[i], H5P_DEFAULT);
+    }
+  }
+
+  return -1;
+}
+
 struct GmgBlockInfo {
   std::string name;
   double ztop;
@@ -432,6 +480,7 @@ void MaterialGMG::read_gmg() {
   double alpha;
   herr_t ierr;
   hsize_t dims[4], top_dims[3];
+  const char* surface_name = NULL;
   int str_len = 0, top_rank = 0;
   string fname = m_model_dir + "/" + m_model_file;
   std::vector<GmgBlockInfo> blocks;
@@ -453,13 +502,6 @@ void MaterialGMG::read_gmg() {
     fprintf(stderr, "origin: %f %f, az %f, dim_z %f\n", m_Origin_x, m_Origin_y,
             m_Yaz, m_Zmax);
 #endif
-
-    // Origin_x is not correctly read sometimes
-    if (m_Origin_x < 1) {
-      m_Origin_x = 99286.2;
-      if (mEW->getRank() == 0)
-        printf("GMG origin_x read invalid value, correct to 99286.2 \n");
-    }
 
     m_CRS = read_hdf5_attr_str(file_id, "crs");
     str_len = (int)(strlen(m_CRS) + 1);
@@ -554,8 +596,10 @@ void MaterialGMG::read_gmg() {
     topo_grp = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
     ASSERT(topo_grp >= 0);
 
-    dataset_id = H5Dopen(topo_grp, "top_surface", H5P_DEFAULT);
-    ASSERT(dataset_id >= 0);
+    dataset_id = open_gmg_surface_dataset(topo_grp, &surface_name);
+    CHECK_INPUT(dataset_id >= 0,
+                "ERROR: GMG /surfaces must contain one of: top_surface, "
+                "topography_bathymetry");
 
     filespace_id = H5Dget_space(dataset_id);
     top_rank = H5Sget_simple_extent_ndims(filespace_id);
@@ -565,6 +609,7 @@ void MaterialGMG::read_gmg() {
     H5Sget_simple_extent_dims(filespace_id, top_dims, NULL);
     m_Top_dims[0] = top_dims[0];
     m_Top_dims[1] = top_dims[1];
+    read_gmg_surface_spacing(dataset_id, m_Top_hx, m_Top_hy);
     if (top_rank == 3)
       CHECK_INPUT(top_dims[2] == 1,
                   "ERROR: GMG top_surface third dimension must be 1, got "
@@ -612,6 +657,8 @@ void MaterialGMG::read_gmg() {
   MPI_Bcast(&m_Yaz, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_Zmax, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_Zmin, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_Top_hx, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_Top_hy, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_hv[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_hh[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_ni[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
@@ -626,7 +673,7 @@ void MaterialGMG::read_gmg() {
   if (mEW->getRank() != 0) {
     /* fprintf(stderr, "Rank %d, strlen: %d, topo dims: %ld %ld\n",
      * mEW->getRank(), str_len, m_Top_dims[0], m_Top_dims[1]); */
-    m_CRS = new char[str_len]();
+    m_CRS = (char*)malloc(str_len * sizeof(char));
     m_Top_surface = new float[m_Top_dims[0] * m_Top_dims[1]];
     for (int p = 0; p < m_npatches; p++) {
       m_Material[p] = new float[m_ni[p] * m_nj[p] * m_nk[p] * m_nc[p]]();
@@ -642,9 +689,13 @@ void MaterialGMG::read_gmg() {
     MPI_Bcast(m_Material[p], m_ni[p] * m_nj[p] * m_nk[p] * m_nc[p], MPI_FLOAT,
               0, mEW->m_1d_communicator);
 
-  ASSERT(m_Origin_x > 0);
-  ASSERT(m_Origin_y > 0);
-  ASSERT(m_Yaz > 0);
+  CHECK_INPUT(m_Origin_x > 0 && m_Origin_y > 0,
+              "ERROR: invalid GMG origin values origin_x="
+                  << m_Origin_x << " origin_y=" << m_Origin_y);
+  CHECK_INPUT(m_Yaz > 0, "ERROR: invalid GMG y_azimuth " << m_Yaz);
+  CHECK_INPUT(m_Top_hx > 0 && m_Top_hy > 0,
+              "ERROR: invalid GMG surface spacing hx="
+                  << m_Top_hx << " hy=" << m_Top_hy);
 
   alpha = m_Yaz - 180.0;
   CHECK_INPUT(
@@ -658,6 +709,8 @@ void MaterialGMG::read_gmg() {
     printf("  GMG header: \n");
     printf("    y_azimuth=%e, origin_x=%f, origin_y=%f\n", m_Yaz, m_Origin_x,
            m_Origin_y);
+    printf("    surface=%s, hx=%f, hy=%f\n",
+           surface_name ? surface_name : "broadcast", m_Top_hx, m_Top_hy);
     printf("    nblocks=%d\n", m_npatches);
 #ifdef BZ_DEBUG
     fprintf(stderr, "Rank %d, Done reading GMG data!\n", mEW->getRank());

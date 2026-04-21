@@ -103,6 +103,7 @@ class MaterialGMG : public MaterialData {
 #else
   size_t m_Top_dims[2];
 #endif
+  double m_Top_hx, m_Top_hy;
   float* m_Top_surface;
   vector<double> m_hv, m_hh, m_ztop;
   vector<int> m_ni, m_nj, m_nk, m_nc;
