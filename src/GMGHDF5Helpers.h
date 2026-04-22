@@ -1,7 +1,10 @@
 #ifndef SW4_GMGHDF5HELPERS_H
 #define SW4_GMGHDF5HELPERS_H
 
+#include "Require.h"
+
 #ifdef USE_HDF5
+#include "hdf5.h"
 
 static inline bool read_hdf5_attr_optional_f64(hid_t loc, const char* name,
                                                double& data)
