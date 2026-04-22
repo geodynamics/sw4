@@ -208,8 +208,8 @@ void GeographicProjection::computeCartesianCoordGMG(double &x, double &y,
   c = proj_coord(lon, lat, 0.0, 0.0);
   c_out = proj_trans(m_Pgmg, PJ_FWD, c);
 
-  x = c_out.xyzt.y;
-  y = c_out.xyzt.x;
+  x = c_out.xyzt.x;
+  y = c_out.xyzt.y;
 
 #else
   printf("GMG format only works with proj 6+, abort!\n");
