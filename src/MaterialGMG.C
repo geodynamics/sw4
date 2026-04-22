@@ -107,8 +107,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
         /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon,
          * sw4_lat); */
 
-        // GMG x/y, lat/lon is switched from sw4 CRS
-        mEW->computeCartesianCoordGMG(gmg_y0, gmg_x0, sw4_lon, sw4_lat, m_CRS);
+        mEW->computeCartesianCoordGMG(gmg_x0, gmg_y0, sw4_lon, sw4_lat, m_CRS);
         /* printf("computeCartesianCoordGMG : %f %f %f %f\n", gmg_x0, gmg_y0,
          * sw4_lon, sw4_lat); */
 
