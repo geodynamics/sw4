@@ -205,8 +205,7 @@ void GeographicProjection::computeCartesianCoordGMG(double &x, double &y,
 
   ASSERT(m_Pgmg);
 
-  // lat lon is switched in GMG CRS
-  c = proj_coord(lat, lon, 0.0, 0.0);
+  c = proj_coord(lon, lat, 0.0, 0.0);
   c_out = proj_trans(m_Pgmg, PJ_FWD, c);
 
   x = c_out.xyzt.y;
