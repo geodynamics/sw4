@@ -543,16 +543,18 @@ static herr_t collect_gmg_block_names(hid_t loc_id, const char* name,
 #else
   H5O_info_t object_info;
 #endif
+  herr_t ierr;
   std::vector<std::string>* block_names =
       static_cast<std::vector<std::string>*>(operator_data);
 
   ASSERT(operator_data != NULL);
 
 #if H5_VERSION_GE(1, 12, 0)
-  H5Oget_info_by_name1(loc_id, name, &object_info, H5P_DEFAULT);
+  ierr = H5Oget_info_by_name1(loc_id, name, &object_info, H5P_DEFAULT);
 #else
-  H5Oget_info_by_name(loc_id, name, &object_info, H5P_DEFAULT);
+  ierr = H5Oget_info_by_name(loc_id, name, &object_info, H5P_DEFAULT);
 #endif
+  if (ierr < 0) return ierr;
 
   if (object_info.type == H5O_TYPE_DATASET) block_names->push_back(name);
 
