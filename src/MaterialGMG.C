@@ -117,13 +117,16 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
         gmg_x = xRel * cosAz - yRel * sinAz;
         gmg_y = xRel * sinAz + yRel * cosAz;
 
-        const int top_i = static_cast<int>(floor(gmg_x / m_Top_hx));
-        const int top_j = static_cast<int>(floor(gmg_y / m_Top_hy));
-        if (top_i < 0 || top_i >= static_cast<int>(m_Top_dims[0]) ||
-            top_j < 0 || top_j >= static_cast<int>(m_Top_dims[1])) {
-          outside += static_cast<size_t>(mEW->m_kEnd[g] - mEW->m_kStart[g] + 1);
-          continue;
-        }
+        int top_i = static_cast<int>(floor(gmg_x / m_Top_hx));
+        int top_j = static_cast<int>(floor(gmg_y / m_Top_hy));
+        if (top_i < 0)
+          top_i = 0;
+        else if (top_i >= static_cast<int>(m_Top_dims[0]))
+          top_i = static_cast<int>(m_Top_dims[0]) - 1;
+        if (top_j < 0)
+          top_j = 0;
+        else if (top_j >= static_cast<int>(m_Top_dims[1]))
+          top_j = static_cast<int>(m_Top_dims[1]) - 1;
 
         top = -m_Top_surface[top_i * m_Top_dims[1] + top_j];
 
@@ -161,7 +164,9 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             // Extend the material value if simulation grid is larger than
             // material grid
             if (i0 >= m_ni[gr] - 1) i0 = m_ni[gr] - 2;
+            if (i0 < 0) i0 = 0;
             if (j0 >= m_nj[gr] - 1) j0 = m_nj[gr] - 2;
+            if (j0 < 0) j0 = 0;
             if (k0 >= m_nk[gr] - 1) k0 = m_nk[gr] - 2;
             if (k0 < 0) k0 = 0;
 
