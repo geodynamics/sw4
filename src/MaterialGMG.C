@@ -427,49 +427,7 @@ static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   /* fprintf(stderr, "Read data: [%s]\n", data); */
   return data;
 }
-
-static bool read_hdf5_attr_optional_f64(hid_t loc, const char* name,
-                                        double& data) {
-  if (H5Aexists(loc, name) <= 0) return false;
-  read_hdf5_attr(loc, H5T_IEEE_F64LE, name, &data);
-  return true;
-}
-
-static void read_gmg_surface_spacing(hid_t dataset_id, double& hx, double& hy) {
-  double h = 0.0;
-  const bool has_h = read_hdf5_attr_optional_f64(dataset_id, "resolution_horiz",
-                                                 h);
-  const bool has_hx =
-      read_hdf5_attr_optional_f64(dataset_id, "x_resolution", hx);
-  const bool has_hy =
-      read_hdf5_attr_optional_f64(dataset_id, "y_resolution", hy);
-
-  CHECK_INPUT(has_h || (has_hx && has_hy),
-              "ERROR: GMG surface dataset must define resolution_horiz or "
-              "both x_resolution and y_resolution");
-
-  if (!has_hx) hx = h;
-  if (!has_hy) hy = h;
-
-  CHECK_INPUT(hx > 0 && hy > 0,
-              "ERROR: GMG surface spacing must be positive, got hx="
-                  << hx << " hy=" << hy);
-}
-
-static hid_t open_gmg_surface_dataset(hid_t group_id,
-                                      const char** surface_name) {
-  const char* candidates[] = {"top_surface", "topography_bathymetry"};
-  const int ncandidates = sizeof(candidates) / sizeof(candidates[0]);
-
-  for (int i = 0; i < ncandidates; i++) {
-    if (H5Lexists(group_id, candidates[i], H5P_DEFAULT) > 0) {
-      if (surface_name) *surface_name = candidates[i];
-      return H5Dopen(group_id, candidates[i], H5P_DEFAULT);
-    }
-  }
-
-  return -1;
-}
+#include "GMGHDF5Helpers.h"
 
 static std::string trim_hdf5_string(const char* data, size_t len) {
   size_t end = len;
@@ -615,7 +573,7 @@ void MaterialGMG::read_gmg() {
   herr_t ierr;
   hsize_t dims[4], top_dims[3];
   const char* surface_name = NULL;
-  int str_len = 0, top_rank = 0;
+  int str_len = 0;
   string fname = m_model_dir + "/" + m_model_file;
   std::vector<GmgBlockInfo> blocks;
   std::vector<std::string> components;
@@ -750,19 +708,12 @@ void MaterialGMG::read_gmg() {
                 "ERROR: GMG /surfaces must contain one of: top_surface, "
                 "topography_bathymetry");
 
+    read_gmg_surface_dims(dataset_id, top_dims);
     filespace_id = H5Dget_space(dataset_id);
-    top_rank = H5Sget_simple_extent_ndims(filespace_id);
-    CHECK_INPUT(top_rank == 2 || top_rank == 3,
-                "ERROR: GMG top_surface must be rank-2 or rank-3, got "
-                    << top_rank);
-    H5Sget_simple_extent_dims(filespace_id, top_dims, NULL);
+    ASSERT(filespace_id >= 0);
     m_Top_dims[0] = top_dims[0];
     m_Top_dims[1] = top_dims[1];
     read_gmg_surface_spacing(dataset_id, m_Top_hx, m_Top_hy);
-    if (top_rank == 3)
-      CHECK_INPUT(top_dims[2] == 1,
-                  "ERROR: GMG top_surface third dimension must be 1, got "
-                      << top_dims[2]);
 
 #ifdef BZ_DEBUG
     fprintf(stderr, "Top dims: %ld %ld\n", m_Top_dims[0], m_Top_dims[1]);
