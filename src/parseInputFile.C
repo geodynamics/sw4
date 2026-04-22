@@ -6350,7 +6350,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
            skip_zero_slip_point = true;
            if( proc_zero() && nskip_zero_slip <= 10 )
            {
-              printf("WARNING: skipping rupture point #%i because dt*sum(slip_vel)=%e [m], slip1=%e [m]\n",
+              printf("WARNING: skipping rupture point #%i because dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n",
                      pts+1, slip_sum, slip_m);
            }
         }
