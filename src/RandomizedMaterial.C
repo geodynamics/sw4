@@ -364,6 +364,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
   // get ucc from other proc
 
   MPI_Request* req = new MPI_Request[n1];
+  MPI_Datatype mpi_complex = get_mpi_datatype(uc);
   int tag = 349;
   for (int k1 = 1; k1 <= r1; k1++) {
     if (ib1 <= k1 && k1 <= ib1 + n1 - 1) {
@@ -376,14 +377,14 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
       }
       if (proc != -1)
         MPI_Isend(&uc[n2g * n3g * (k1 - ib1)], n2g * n3g,
-                  MPI_CXX_DOUBLE_COMPLEX, proc, tag,
-                  mEW->m_cartesian_communicator, &req[k1 - ib1]);
+                  mpi_complex, proc, tag, mEW->m_cartesian_communicator,
+                  &req[k1 - ib1]);
       else
         cout << "Error finding owner of " << n1g - k1 << " for send" << endl;
     }
   }
 
-  complex<double>* ucc_ = new complex<double>[n2g * n3g];
+  complex<float_sw4>* ucc_ = new complex<float_sw4>[n2g * n3g];
 #define ucc(k2, k3) ucc_[k3 + n3g * (k2)]
 
   for (int k1 = n1g - 1; k1 >= n1g - r1; k1--) {
@@ -399,7 +400,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
       // who owns "  << n1g-k1 << endl;
       MPI_Status status;
       if (proc != -1)
-        MPI_Recv(ucc_, n2g * n3g, MPI_CXX_DOUBLE_COMPLEX, proc, tag,
+        MPI_Recv(ucc_, n2g * n3g, mpi_complex, proc, tag,
                  mEW->m_cartesian_communicator, &status);
       else
         cout << "Error finding owner of " << n1g - k1 << " for receive" << endl;
