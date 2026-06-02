@@ -47,6 +47,8 @@ __constant__ double cmem_acof_no_gp[384];
 #endif
 
 #ifdef USE_HDF5
+#include <unistd.h>
+
 #include "SfileOutput.h"
 #include "sachdf5.h"
 #endif
@@ -768,6 +770,18 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_myRank == 0 && !m_check_point->do_restart())
       createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event] + 1, mDt,
                                "");
+    MPI_Barrier(MPI_COMM_WORLD);
+    hid_t fid = 0;
+    const int max_open_attempts = 10;
+    for (int attempt = 0; attempt < max_open_attempts && fid <= 0; attempt++) {
+      H5E_BEGIN_TRY
+      { fid = a_TimeSeries[0]->openHDF5File("", true); }
+      H5E_END_TRY
+      if (fid <= 0 && attempt + 1 < max_open_attempts) sleep(1);
+    }
+    CHECK_INPUT(fid > 0,
+                "Could not open receiver HDF5 file on rank " << m_myRank
+                << " after " << max_open_attempts << " attempts");
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif

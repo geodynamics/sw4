@@ -3377,7 +3377,7 @@ void TimeSeries::resetHDF5file() {
   closeHDF5File();
 }
 
-hid_t TimeSeries::openHDF5File(std::string suffix) {
+hid_t TimeSeries::openHDF5File(std::string suffix, bool quiet) {
   hid_t fapl;
   bool is_debug = false;
   /* is_debug = true; */
@@ -3419,7 +3419,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix) {
 
   *m_fid_ptr = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);
   if (*m_fid_ptr <= 0) {
-    printf("%s Error opening file [%s]\n", __func__, filename.c_str());
+    if (!quiet) printf("%s Error opening file [%s]\n", __func__, filename.c_str());
     H5Pclose(fapl);
     return 0;
   }
