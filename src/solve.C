@@ -40,6 +40,9 @@
 #include "CurvilinearInterface2.h"
 #include "SfileOutput.h"
 
+#ifdef USE_HDF5
+#include <unistd.h>
+#endif
 
 void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, float_sw4*, float_sw4*,
                          float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
@@ -511,6 +514,22 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       a_TimeSeries[tsi]->resetHDF5file();
     if(m_myRank == 0 && !m_check_point->do_restart()) 
       createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
+    MPI_Barrier(m_1d_communicator);
+    hid_t fid = 0;
+    const int max_open_attempts = 10;
+    for (int attempt = 0; attempt < max_open_attempts && fid <= 0; attempt++)
+    {
+      H5E_BEGIN_TRY
+      {
+        fid = a_TimeSeries[0]->openHDF5File("", true);
+      }
+      H5E_END_TRY
+      if (fid <= 0 && attempt + 1 < max_open_attempts)
+        sleep(1);
+    }
+    CHECK_INPUT(fid > 0,
+                "Could not open receiver HDF5 file on rank " << m_myRank <<
+                " after " << max_open_attempts << " attempts");
     MPI_Barrier(m_1d_communicator);
   }
 #endif
