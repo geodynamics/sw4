@@ -9261,7 +9261,8 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
     group_id = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
     ASSERT(group_id >= 0);
 
-    dataset_id = open_gmg_surface_dataset(group_id, &surface_name);
+    dataset_id = open_gmg_surface_dataset(group_id, &surface_name,
+                                          GMG_SURFACE_TOPOGRAPHY);
     CHECK_INPUT(dataset_id >= 0,
                 "ERROR: GMG /surfaces must contain one of: top_surface, "
                 "topography_bathymetry");
@@ -9316,8 +9317,9 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
     printf("GMG header: azimuth=%e, origin_x=%f, origin_y=%f\n", az, origin_x,
            origin_y);
     printf("            surface=%s, hx=%e, hy=%e, ni=%llu, nj=%llu\n",
-           surface_name ? surface_name : "broadcast", top_hx, top_hy, dims[0],
-           dims[1]);
+           surface_name ? surface_name : "broadcast", top_hx, top_hy,
+           static_cast<unsigned long long>(dims[0]),
+           static_cast<unsigned long long>(dims[1]));
   }
 
   float* f_data = new float[dims[0] * dims[1]];
@@ -9336,6 +9338,9 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
   int topLevel = mNumberOfGrids - 1;
 
   float_sw4 topomax = -1e30, topomin = 1e30;
+  double gmg_x_min = 1e100, gmg_x_max = -1e100;
+  double gmg_y_min = 1e100, gmg_y_max = -1e100;
+  long long outside_gmg_surface = 0;
 
   /* printf("x0=%f, y0=%f\n", x0, y0); */
   /* printf("topoGMG: m_iStart %d, m_iEnd %d, m_jStart %d, m_jEnd %d\n", */
@@ -9370,10 +9375,20 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
       /* printf("converted gmg xy: %f, %f, origin: %f %f\n", gmg_x, gmg_y,
        * origin_x, origin_y); */
 
+      if (gmg_x < gmg_x_min) gmg_x_min = gmg_x;
+      if (gmg_x > gmg_x_max) gmg_x_max = gmg_x;
+      if (gmg_y < gmg_y_min) gmg_y_min = gmg_y;
+      if (gmg_y > gmg_y_max) gmg_y_max = gmg_y;
+
       const double xmax = (dims[0] - 1) * top_hx;
       const double ymax = (dims[1] - 1) * top_hy;
-      const double gmg_x_clamped = std::max(0.0, std::min(gmg_x, xmax));
-      const double gmg_y_clamped = std::max(0.0, std::min(gmg_y, ymax));
+      const double tol =
+          std::max(1e-6 * std::max(top_hx, top_hy),
+                   1e-10 * std::max(xmax, ymax));
+      const double gmg_x_clamped =
+          gmg_clamp_coordinate(gmg_x, 0.0, xmax, tol, outside_gmg_surface);
+      const double gmg_y_clamped =
+          gmg_clamp_coordinate(gmg_y, 0.0, ymax, tol, outside_gmg_surface);
 
       int i0 = static_cast<int>(floor(gmg_x_clamped / top_hx));
       int j0 = static_cast<int>(floor(gmg_y_clamped / top_hy));
@@ -9415,9 +9430,26 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
   MPI_Barrier(MPI_COMM_WORLD);
   end_time = MPI_Wtime();
 
+  double gmg_x_min_global, gmg_x_max_global, gmg_y_min_global,
+      gmg_y_max_global;
+  long long outside_gmg_surface_global;
+  MPI_Allreduce(&gmg_x_min, &gmg_x_min_global, 1, MPI_DOUBLE, MPI_MIN,
+                MPI_COMM_WORLD);
+  MPI_Allreduce(&gmg_x_max, &gmg_x_max_global, 1, MPI_DOUBLE, MPI_MAX,
+                MPI_COMM_WORLD);
+  MPI_Allreduce(&gmg_y_min, &gmg_y_min_global, 1, MPI_DOUBLE, MPI_MIN,
+                MPI_COMM_WORLD);
+  MPI_Allreduce(&gmg_y_max, &gmg_y_max_global, 1, MPI_DOUBLE, MPI_MAX,
+                MPI_COMM_WORLD);
+  MPI_Allreduce(&outside_gmg_surface, &outside_gmg_surface_global, 1,
+                MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+
   if (m_myRank == 0) {
     printf("Read topography from GeoModelGrids time=%e seconds\n",
            end_time - start_time);
+    printf("GMG topography projected bounds: x=[%e,%e], y=[%e,%e]\n",
+           gmg_x_min_global, gmg_x_max_global, gmg_y_min_global,
+           gmg_y_max_global);
     if (mVerbose >= 2) {
       printf("Topo corners %f, %f, %f, %f\n",
              mTopo(m_iStart[topLevel], m_jStart[topLevel], 1),
@@ -9427,6 +9459,12 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
       printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
     }
   }
+  CHECK_INPUT(
+      outside_gmg_surface_global == 0,
+      "ERROR: GMG topography projection maps "
+          << outside_gmg_surface_global
+          << " grid coordinates outside the surface extent. "
+          << "Check CRS, axis order, origin, and azimuth.");
 #else
   if (m_myRank == 0)
     printf(

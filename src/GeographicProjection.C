@@ -42,6 +42,20 @@ using namespace std;
 
 static const char* sw4_geographic_crs() { return "+proj=latlong +datum=NAD83"; }
 
+#ifdef ENABLE_PROJ_6
+static PJ* create_lonlat_xy_transform(const char* crs_from,
+                                      const char* crs_to) {
+  PJ* transform = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
+  if (transform == NULL) return NULL;
+  PJ* normalized = proj_normalize_for_visualization(PJ_DEFAULT_CTX, transform);
+  if (normalized != NULL) {
+    proj_destroy(transform);
+    transform = normalized;
+  }
+  return transform;
+}
+#endif
+
 //-----------------------------------------------------------------------
 GeographicProjection::GeographicProjection(double lon_origin, double lat_origin,
                                            string projection, double az) {
@@ -80,7 +94,7 @@ GeographicProjection::GeographicProjection(double lon_origin, double lat_origin,
   //printf("GP %s %s\n",crs_from,crs_to);
   //const char *crs_to = "+proj=utm +ellps=WGS84 +lon_0=-116.855 +lat_0=37.2281 +units=m";
   //std::cout<<"STRING "<<crs_to<<"\n"<<projection.c_str()<<"\n";
-  m_P = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
+  m_P = create_lonlat_xy_transform(crs_from, crs_to);
   /* printf("projection: [%s]\n", crs_to); */
   ASSERT(m_P);
 
@@ -202,8 +216,7 @@ void GeographicProjection::computeCartesianCoordGMG(double &x, double &y,
   if (m_Pgmg == NULL || m_gmg_crs_from_cache != m_geographic_crs ||
       m_gmg_crs_to_cache != gmg_crs_to) {
     if (m_Pgmg) proj_destroy(m_Pgmg);
-    m_Pgmg = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from,
-                                    gmg_crs_to.c_str(), NULL);
+    m_Pgmg = create_lonlat_xy_transform(crs_from, gmg_crs_to.c_str());
     m_gmg_crs_from_cache = m_geographic_crs;
     m_gmg_crs_to_cache = gmg_crs_to;
   }
