@@ -43,6 +43,22 @@ static const char* sw4_geographic_crs()
    return "+proj=latlong +datum=NAD83";
 }
 
+#ifdef ENABLE_PROJ
+static PJ* create_lonlat_xy_transform(const char* crs_from,
+                                      const char* crs_to)
+{
+  PJ* transform = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
+  if (transform == NULL)
+    return NULL;
+  PJ* normalized = proj_normalize_for_visualization(PJ_DEFAULT_CTX, transform);
+  if (normalized != NULL) {
+    proj_destroy(transform);
+    transform = normalized;
+  }
+  return transform;
+}
+#endif
+
 //-----------------------------------------------------------------------
 GeographicProjection::GeographicProjection( double lon_origin, double lat_origin,
 					    string projection, double az )
@@ -75,7 +91,7 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
    const char *crs_from = m_geographic_crs.c_str();
    const char *crs_to = projection.c_str();
 
-   m_P = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
+   m_P = create_lonlat_xy_transform(crs_from, crs_to);
    /* printf("projection: [%s]\n", crs_to); */
    ASSERT(m_P);
 
@@ -196,9 +212,8 @@ void GeographicProjection::computeCartesianCoordGMG(double &x, double &y,
 
   if (m_Pgmg == NULL || m_gmg_crs_from_cache != m_geographic_crs ||
       m_gmg_crs_to_cache != gmg_crs_to) {
-    if (m_Pgmg)
-      proj_destroy(m_Pgmg);
-    m_Pgmg = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, gmg_crs_to.c_str(), NULL);
+    if (m_Pgmg) proj_destroy(m_Pgmg);
+    m_Pgmg = create_lonlat_xy_transform(crs_from, gmg_crs_to.c_str());
     m_gmg_crs_from_cache = m_geographic_crs;
     m_gmg_crs_to_cache = gmg_crs_to;
   }

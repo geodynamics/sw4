@@ -3,6 +3,20 @@
 
 #include "Require.h"
 
+static inline double gmg_clamp_coordinate(double value, double lower,
+                                          double upper, double tolerance,
+                                          long long& outside_count) {
+  if (value < lower) {
+    if (lower - value > tolerance) outside_count++;
+    return lower;
+  }
+  if (value > upper) {
+    if (value - upper > tolerance) outside_count++;
+    return upper;
+  }
+  return value;
+}
+
 #ifdef USE_HDF5
 #include "hdf5.h"
 
@@ -45,11 +59,23 @@ static inline void read_gmg_surface_spacing(hid_t dataset_id, double& hx,
                   << hx << " hy=" << hy);
 }
 
+enum GMGSurfacePurpose {
+  GMG_SURFACE_TOPOGRAPHY,
+  GMG_SURFACE_MODEL_TOP
+};
+
 static inline hid_t open_gmg_surface_dataset(hid_t group_id,
-                                             const char** surface_name)
+                                             const char** surface_name,
+                                             GMGSurfacePurpose purpose)
 {
-  const char* candidates[] = {"top_surface", "topography_bathymetry"};
-  const int ncandidates = sizeof(candidates) / sizeof(candidates[0]);
+  const char* topography_candidates[] = {"topography_bathymetry",
+                                         "top_surface"};
+  const char* model_top_candidates[] = {"top_surface",
+                                        "topography_bathymetry"};
+  const char** candidates = purpose == GMG_SURFACE_TOPOGRAPHY
+                                ? topography_candidates
+                                : model_top_candidates;
+  const int ncandidates = 2;
 
   for (int i = 0; i < ncandidates; i++) {
     if (H5Lexists(group_id, candidates[i], H5P_DEFAULT) > 0) {

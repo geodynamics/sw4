@@ -44,6 +44,7 @@
 #include <math.h>
 #include <fcntl.h>
 #include "EW.h"
+#include "GMGHDF5Helpers.h"
 #include "MaterialGMG.h"
 #include "Byteswapper.h"
 
@@ -89,10 +90,18 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
+  long long outside_gmg_horizontal = 0;
+  double gmg_x_min = 1e100, gmg_x_max = -1e100;
+  double gmg_y_min = 1e100, gmg_y_max = -1e100;
 
   const double yazimuthRad = m_Yaz * M_PI / 180.0;
   const double cosAz = cos(yazimuthRad);
   const double sinAz = sin(yazimuthRad);
+  const double top_xmax = (m_Top_dims[0] - 1) * m_Top_hx;
+  const double top_ymax = (m_Top_dims[1] - 1) * m_Top_hy;
+  const double top_tol =
+      std::max(1e-6 * std::max(m_Top_hx, m_Top_hy),
+               1e-10 * std::max(top_xmax, top_ymax));
 
   for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
     bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
@@ -115,17 +124,22 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
           gmg_x = xRel*cosAz - yRel*sinAz;
           gmg_y = xRel*sinAz + yRel*cosAz;
 
+        if (gmg_x < gmg_x_min) gmg_x_min = gmg_x;
+        if (gmg_x > gmg_x_max) gmg_x_max = gmg_x;
+        if (gmg_y < gmg_y_min) gmg_y_min = gmg_y;
+        if (gmg_y > gmg_y_max) gmg_y_max = gmg_y;
 
-          int top_i = static_cast<int>(floor(gmg_x/m_Top_hx));
-          int top_j = static_cast<int>(floor(gmg_y/m_Top_hy));
-          if (top_i < 0)
-            top_i = 0;
-          else if (top_i >= static_cast<int>(m_Top_dims[0]))
-            top_i = static_cast<int>(m_Top_dims[0]) - 1;
-          if (top_j < 0)
-            top_j = 0;
-          else if (top_j >= static_cast<int>(m_Top_dims[1]))
-            top_j = static_cast<int>(m_Top_dims[1]) - 1;
+        double top_x = gmg_clamp_coordinate(gmg_x, 0.0, top_xmax, top_tol,
+                                            outside_gmg_horizontal);
+        double top_y = gmg_clamp_coordinate(gmg_y, 0.0, top_ymax, top_tol,
+                                            outside_gmg_horizontal);
+
+        int top_i = static_cast<int>(floor(top_x / m_Top_hx));
+        int top_j = static_cast<int>(floor(top_y / m_Top_hy));
+        if (top_i >= static_cast<int>(m_Top_dims[0]))
+          top_i = static_cast<int>(m_Top_dims[0]) - 1;
+        if (top_j >= static_cast<int>(m_Top_dims[1]))
+          top_j = static_cast<int>(m_Top_dims[1]) - 1;
 
           top = -m_Top_surface[top_i*m_Top_dims[1] + top_j];
 
@@ -152,35 +166,43 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
                 if (z < intf)
                   z = intf;
 
-                // i0, j0, k0 are the coordiates in GMG block
-                i0 = static_cast<int>( floor(gmg_x/m_hh[gr]) );
-                j0 = static_cast<int>( floor(gmg_y/m_hh[gr]) );
-                int k0 = static_cast<int>( floor((z-intf)/m_hv[gr]) );
+          // i0, j0, k0 are the coordiates in GMG block
+          const double block_xmax = (m_ni[gr] - 1) * m_hh[gr];
+          const double block_ymax = (m_nj[gr] - 1) * m_hh[gr];
+          const double block_tol =
+              std::max(1e-6 * m_hh[gr],
+                       1e-10 * std::max(block_xmax, block_ymax));
+          double block_x = gmg_clamp_coordinate(gmg_x, 0.0, block_xmax,
+                                                block_tol,
+                                                outside_gmg_horizontal);
+          double block_y = gmg_clamp_coordinate(gmg_y, 0.0, block_ymax,
+                                                block_tol,
+                                                outside_gmg_horizontal);
+          i0 = static_cast<int>(floor(block_x / m_hh[gr]));
+          j0 = static_cast<int>(floor(block_y / m_hh[gr]));
+          int k0 = static_cast<int>(floor((z - intf) / m_hv[gr]));
 
                 // (x, y, z) is the coordinate of current grid point
 		if( m_Zmin <= z && z <= m_Zmax) {
 
 		   material++;
 
-                   // Extend the material value if simulation grid is larger than material grid
-                   if (i0 >= m_ni[gr] - 1)
-                       i0 = m_ni[gr] - 2;
-                   if (i0 < 0)
-                       i0 = 0;
-                   if (j0 >= m_nj[gr] - 1)
-                       j0 = m_nj[gr] - 2;
-                   if (j0 < 0)
-                       j0 = 0;
-                   if (k0 >= m_nk[gr] - 1)
-                       k0 = m_nk[gr] - 2;
-                   if (k0 < 0)
-                       k0 = 0;
+            // Keep the interpolation stencil inside the GMG block after
+            // tolerance-limited edge clamping. Horizontal coordinates outside
+            // the GMG extent beyond tolerance are reported as input errors.
+            if (i0 >= m_ni[gr] - 1) i0 = m_ni[gr] - 2;
+            if (i0 < 0) i0 = 0;
+            if (j0 >= m_nj[gr] - 1) j0 = m_nj[gr] - 2;
+            if (j0 < 0) j0 = 0;
+            if (k0 >= m_nk[gr] - 1) k0 = m_nk[gr] - 2;
+            if (k0 < 0) k0 = 0;
 
-		   // Use bilinear interpolation always:
-        	   // Bias stencil near the boundary, need to communicate arrays afterwards.
-                   float_sw4 wghx = (gmg_x - i0*m_hh[gr]) / m_hh[gr];
-                   float_sw4 wghy = (gmg_y - j0*m_hh[gr]) / m_hh[gr];
-                   float_sw4 wghz = (z - intf - k0*m_hv[gr]) / m_hv[gr];
+            // Use bilinear interpolation always:
+            // Bias stencil near the boundary, need to communicate arrays
+            // afterwards.
+            float_sw4 wghx = (block_x - i0 * m_hh[gr]) / m_hh[gr];
+            float_sw4 wghy = (block_y - j0 * m_hh[gr]) / m_hh[gr];
+            float_sw4 wghz = (z - intf - k0 * m_hv[gr]) / m_hv[gr];
 
                    /* if (x == 80000 && y == 9000) { */
                    /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz: %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f\n", */ 
@@ -268,10 +290,33 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
         } // End for k
    } // end for g...
 
-   free(m_CRS);
-   for (int i = 0; i < m_npatches; i++)
-     delete [] m_Material[i];
-   delete [] m_Top_surface;
+  double gmg_x_min_global, gmg_x_max_global, gmg_y_min_global,
+      gmg_y_max_global;
+  long long outside_gmg_horizontal_global;
+  MPI_Allreduce(&gmg_x_min, &gmg_x_min_global, 1, MPI_DOUBLE, MPI_MIN,
+                mEW->m_1d_communicator);
+  MPI_Allreduce(&gmg_x_max, &gmg_x_max_global, 1, MPI_DOUBLE, MPI_MAX,
+                mEW->m_1d_communicator);
+  MPI_Allreduce(&gmg_y_min, &gmg_y_min_global, 1, MPI_DOUBLE, MPI_MIN,
+                mEW->m_1d_communicator);
+  MPI_Allreduce(&gmg_y_max, &gmg_y_max_global, 1, MPI_DOUBLE, MPI_MAX,
+                mEW->m_1d_communicator);
+  MPI_Allreduce(&outside_gmg_horizontal, &outside_gmg_horizontal_global, 1,
+                MPI_LONG_LONG, MPI_SUM, mEW->m_1d_communicator);
+  if (mEW->getRank() == 0)
+    printf("GMG material projected bounds: x=[%e,%e], y=[%e,%e]\n",
+           gmg_x_min_global, gmg_x_max_global, gmg_y_min_global,
+           gmg_y_max_global);
+  CHECK_INPUT(
+      outside_gmg_horizontal_global == 0,
+      "ERROR: GMG material projection maps "
+          << outside_gmg_horizontal_global
+          << " grid coordinates outside the material extent. "
+          << "Check CRS, axis order, origin, and azimuth.");
+
+  free(m_CRS);
+  for (int i = 0; i < m_npatches; i++) delete[] m_Material[i];
+  delete[] m_Top_surface;
 
    mEW->communicate_arrays( rho );
    mEW->communicate_arrays( cs );
@@ -358,8 +403,6 @@ static char* read_hdf5_attr_str(hid_t loc, const char *name)
   /* fprintf(stderr, "Read data: [%s]\n", data); */
   return data;
 }
-#include "GMGHDF5Helpers.h"
-
 static std::string trim_hdf5_string(const char* data, size_t len)
 {
   size_t end = len;
@@ -636,14 +679,19 @@ void MaterialGMG::read_gmg()
       if (mEW->getVerbosity() >= 2) {
         printf("  GMG header block #%i (%s)\n", p, blocks[p].name.c_str());
         printf("    ztop=%f, hh=%f, hv=%f\n", m_ztop[p], m_hh[p], m_hv[p]);
-        printf("    nc=%lld, ni=%lld, nj=%lld, nk=%lld\n", dims[3], dims[0], dims[1], dims[2]);
+        printf("    nc=%llu, ni=%llu, nj=%llu, nk=%llu\n",
+               static_cast<unsigned long long>(dims[3]),
+               static_cast<unsigned long long>(dims[0]),
+               static_cast<unsigned long long>(dims[1]),
+               static_cast<unsigned long long>(dims[2]));
       }
     } // End for each patch
 
     topo_grp = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
     ASSERT(topo_grp >= 0);
 
-    dataset_id = open_gmg_surface_dataset(topo_grp, &surface_name);
+    dataset_id = open_gmg_surface_dataset(topo_grp, &surface_name,
+                                          GMG_SURFACE_MODEL_TOP);
     CHECK_INPUT(dataset_id >= 0,
                 "ERROR: GMG /surfaces must contain one of: top_surface, topography_bathymetry");
 
