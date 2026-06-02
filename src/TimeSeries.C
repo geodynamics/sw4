@@ -3399,7 +3399,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix) {
       m_hdf5Name.find(".h5") == string::npos)
     filename.append(".hdf5");
 
-  if (*m_fid_ptr >= 0 && this->m_ts0Ptr &&
+  if (*m_fid_ptr > 0 && this->m_ts0Ptr &&
       filename.compare(this->m_ts0Ptr->m_fidName) == 0) {
     // If file is alread open, no need to open it again
     return *m_fid_ptr;
