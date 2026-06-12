@@ -317,6 +317,9 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
     int fd = open("/dev/urandom", O_RDONLY);
     read(fd, &m_seed, sizeof(unsigned int));
     close(fd);
+  } else {
+    // Avoid repeating the same random phase sequence on every MPI slab.
+    m_seed += mEW->getRank() * 11;
   }
 
   // 1. Generate Fourier modes and setup FFTW plan
