@@ -1099,19 +1099,6 @@ void EW::set_materials()
             }
     }
 
-    // threshold material velocities
-    if (m_useVelocityThresholds) {
-      for (g = 0; g < mNumberOfGrids; g++)
-#pragma omp parallel for
-        for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-          for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-            for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-              if (mMu[g](i, j, k) < m_vsMin) mMu[g](i, j, k) = m_vsMin;
-              if (mLambda[g](i, j, k) < m_vpMin) mLambda[g](i, j, k) = m_vpMin;
-            }
-    }
-    SW4_MARK_END("SetMat::Section 2");
-
     SW4_MARK_BEGIN("SetMat::RANDOMIZE");
     // add random perturbation
     //    cout << "randomize = " << m_randomize << " randblsize= " <<
@@ -1151,6 +1138,20 @@ void EW::set_materials()
       }
     }
     SW4_MARK_END("SetMat::RANDOMIZE");
+
+    // threshold material velocities
+    if (m_useVelocityThresholds) {
+      for (g = 0; g < mNumberOfGrids; g++)
+#pragma omp parallel for
+        for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
+          for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+            for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+              if (mMu[g](i, j, k) < m_vsMin) mMu[g](i, j, k) = m_vsMin;
+              if (mLambda[g](i, j, k) < m_vpMin) mLambda[g](i, j, k) = m_vpMin;
+            }
+    }
+    SW4_MARK_END("SetMat::Section 2");
+
     convert_material_to_mulambda();
 
     check_for_nan(mMu, 1, "mu ");
