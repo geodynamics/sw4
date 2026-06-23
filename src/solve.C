@@ -774,9 +774,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     hid_t fid = 0;
     const int max_open_attempts = 10;
     for (int attempt = 0; attempt < max_open_attempts && fid <= 0; attempt++) {
-      H5E_BEGIN_TRY
-      { fid = a_TimeSeries[0]->openHDF5File("", true); }
-      H5E_END_TRY
+      H5E_BEGIN_TRY {
+        fid = a_TimeSeries[0]->openHDF5File("", true);
+      } H5E_END_TRY;
       if (fid <= 0 && attempt + 1 < max_open_attempts) sleep(1);
     }
     CHECK_INPUT(fid > 0,
