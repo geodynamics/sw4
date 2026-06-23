@@ -18,6 +18,10 @@
 #include <sys/syscall.h>
 #include <sched.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 long long node_mem();
 std::string hostname();
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,

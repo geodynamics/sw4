@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
   // auto device_allocator = rma.getAllocator("DEVICE");
 #ifdef ENABLE_HIP
   const size_t pool_size =
-      static_cast<size_t>(64) * 1024 * 1024 * 1024;  //+102*1024*1024;
+      static_cast<size_t>(32) * 1024 * 1024 * 1024;  //+102*1024*1024;
 #else
   const size_t pool_size =
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;

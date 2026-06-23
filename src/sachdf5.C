@@ -349,9 +349,11 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_alignment(fapl, 32767, alignment);
+  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
   fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
   if (fid < 0) {
     printf("Error: H5Fcreate failed\n");
+    H5Pclose(fapl);
     return -1;
   }
   H5Pclose(fapl);
@@ -546,6 +548,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
   H5Pclose(dcpl);
   H5Sclose(attr_space1);
   H5Sclose(attr_space3);
+  H5Fflush(fid, H5F_SCOPE_GLOBAL);
   H5Fclose(fid);
 
   elapsed_time = MPI_Wtime() - start_time;
