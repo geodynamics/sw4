@@ -126,7 +126,7 @@ struct srf_data_t {
 
 static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
 {
-  hid_t grp, dset, attr;
+  hid_t grp = -1, dset = -1, attr = -1;
   herr_t status;
 #if H5_VERSION_GE(1,12,0)
   H5O_info1_t infobuf;
@@ -219,7 +219,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
       if (dset < 0)
         fprintf(stderr, "Error reading from rechdf5 station %s, STX,STY,STZ open failed!\n", grp_name);
-      ASSERT(attr > 0);
+      ASSERT(dset > 0);
       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       ASSERT(ret >= 0);
       H5Dclose(dset);
@@ -233,7 +233,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
       if (dset < 0)
         fprintf(stderr, "Error reading from rechdf5 station %s, STLA,STLO,STDP open failed!\n", grp_name);
-      ASSERT(attr > 0);
+      ASSERT(dset > 0);
       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       ASSERT(ret >= 0);
       H5Dclose(dset);
@@ -399,7 +399,7 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
 
 static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
 {
-  hid_t grp, dset, attr;
+  hid_t grp = -1, dset = -1, attr = -1;
   herr_t status;
 #if H5_VERSION_GE(1,12,0)
   H5O_info1_t infobuf;
@@ -443,7 +443,7 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
       if (dset < 0)
         fprintf(stderr, "Error reading from rechdf5 station %s, STX,STY,STZ open failed!\n", grp_name);
-      ASSERT(attr > 0);
+      ASSERT(dset > 0);
       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       ASSERT(ret >= 0);
       H5Dclose(dset);
@@ -453,7 +453,7 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
       if (dset < 0)
         fprintf(stderr, "Error reading from rechdf5 station %s, STLA,STLO,STDP open failed!\n", grp_name);
-      ASSERT(attr > 0);
+      ASSERT(dset > 0);
       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       ASSERT(ret >= 0);
       H5Dclose(dset);
