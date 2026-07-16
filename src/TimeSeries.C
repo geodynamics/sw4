@@ -3078,15 +3078,24 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     int is_nsew, npts, sw4npts;
     readAttrInt(grp, "ISNSEW", &is_nsew);
 
-    if (is_nsew == 1) {
+    bool has_nsew = H5Lexists(grp, "EW", H5P_DEFAULT) > 0;
+    bool has_xyz = H5Lexists(grp, "X", H5P_DEFAULT) > 0;
+
+    if (has_nsew && (is_nsew == 1 || !has_xyz)) {
       dset_names[0] = "EW";
       dset_names[1] = "NS";
       dset_names[2] = "UP";
-    } else {
+    } else if (has_xyz) {
       cartesian = true;
       dset_names[0] = "X";
       dset_names[1] = "Y";
       dset_names[2] = "Z";
+    } else {
+      cout << "ERROR: no complete displacement component set in group ["
+           << m_staName << "]" << endl;
+      H5Gclose(grp);
+      H5Fclose(fid);
+      return;
     }
     m_xyzcomponent = cartesian;
 

@@ -446,7 +446,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
-    if (!xyzcomponent) isnsew = 1;
+    isnsew = xyzcomponent ? 0 : 1;
 
     createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
 
