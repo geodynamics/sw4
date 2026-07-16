@@ -52,7 +52,8 @@ class ESSI3DHDF5 {
   void create_file(bool is_restart, bool is_root);
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
-                    double (&origin)[3], int cycle, double t, double dt);
+                    double (&origin)[3], int cycle, double t, double dt,
+                    double output_timestep);
   void write_topo(void* window_array);
 
   void write_vel(void* window_array, int comp, int cycle, int nstep);

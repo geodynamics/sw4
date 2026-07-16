@@ -349,10 +349,11 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
       origin[d] = (mGlobalDims[2 * d] - 1) * h;  // low end of each index range
     double az = mEW->getGridAzimuth();
     double dt = mEW->getTimeStep();
+    double output_timestep = m_dumpInterval > 0 ? dt * m_dumpInterval : dt;
 
     if (!m_isRestart) {
       m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
-                                 dt);
+                                 dt, output_timestep);
     }
     if (debug)
       cout << "Creating hdf5 velocity fields..." << endl;

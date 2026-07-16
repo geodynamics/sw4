@@ -153,7 +153,7 @@ void ESSI3DHDF5::create_file(bool is_restart, bool is_root) {
 
 void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
                               double (&origin)[3], int cycle, double t,
-                              double dt) {
+                              double dt, double output_timestep) {
 #ifdef USE_HDF5
   bool debug = false;
   /* debug=true; */
@@ -222,6 +222,16 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
                           dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &dt);
+  ierr = H5Dclose(dataset_id);
+  ierr = H5Sclose(dataspace_id);
+
+  // Effective time interval between samples stored in the velocity datasets
+  dim = 1;
+  dataspace_id = H5Screate_simple(1, &dim, NULL);
+  dataset_id = H5Dcreate2(m_file_id, "outputtimestep", H5T_NATIVE_DOUBLE,
+                          dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                  &output_timestep);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
 
