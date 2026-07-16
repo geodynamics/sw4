@@ -7071,12 +7071,28 @@ void EW::processReceiver(char* buffer,
                        writeEvery, downSample, !nsew, event);
 #if USE_HDF5
     if (hdf5format) {
-      if (a_GlobalTimeSeries[event].size() == 0) {
+      // Each HDF5 output file needs its own shared handle.  Receivers in the
+      // same file share a handle, but receivers in different files must not
+      // force one another's files to close and reopen during output.
+      TimeSeries* file_ts0 = NULL;
+      for (int ts = (int)a_GlobalTimeSeries[event].size() - 1; ts >= 0;
+           ts--) {
+        TimeSeries* candidate = a_GlobalTimeSeries[event][ts];
+        if (candidate->getUseHDF5() &&
+            candidate->getPath() == ts_ptr->getPath() &&
+            candidate->gethdf5FileName() ==
+                ts_ptr->gethdf5FileName()) {
+          file_ts0 = candidate->getTS0Ptr();
+          break;
+        }
+      }
+
+      if (file_ts0 == NULL) {
         ts_ptr->allocFid();
         ts_ptr->setTS0Ptr(ts_ptr);
       } else {
-        ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
-        ts_ptr->setTS0Ptr(a_GlobalTimeSeries[event][0]);
+        ts_ptr->setFidPtr(file_ts0->getFidPtr());
+        ts_ptr->setTS0Ptr(file_ts0);
       }
     }
 #endif

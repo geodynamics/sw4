@@ -34,6 +34,7 @@
 __constant__ double cmem_acof[384];
 __constant__ double cmem_acof_no_gp[384];
 #endif
+#include <map>
 #include <sstream>
 #include "EW.h"
 #include "Mspace.h"
@@ -764,24 +765,54 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // locking so we can have multiple writer to open and write different datasets
   // of the same file
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-  if (a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
-    for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++)
+  // A single event can have several rechdf5 commands, each with its own
+  // output file.  Create each file from only the time series that belong to
+  // it; otherwise duplicate station names from different commands collide in
+  // the first output file and the remaining files are never created.
+  map<string, vector<TimeSeries*> > hdf5TimeSeries;
+  for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) {
+    if (a_TimeSeries[tsi]->getUseHDF5()) {
       a_TimeSeries[tsi]->resetHDF5file();
-    if (m_myRank == 0 && !m_check_point->do_restart())
-      createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event] + 1, mDt,
-                               "");
-    MPI_Barrier(MPI_COMM_WORLD);
-    hid_t fid = 0;
-    const int max_open_attempts = 10;
-    for (int attempt = 0; attempt < max_open_attempts && fid <= 0; attempt++) {
-      H5E_BEGIN_TRY {
-        fid = a_TimeSeries[0]->openHDF5File("", true);
-      } H5E_END_TRY;
-      if (fid <= 0 && attempt + 1 < max_open_attempts) sleep(1);
+      string key = a_TimeSeries[tsi]->getPath() + "\n" +
+                   a_TimeSeries[tsi]->gethdf5FileName();
+      hdf5TimeSeries[key].push_back(a_TimeSeries[tsi]);
     }
-    CHECK_INPUT(fid > 0,
-                "Could not open receiver HDF5 file on rank " << m_myRank
-                << " after " << max_open_attempts << " attempts");
+  }
+
+  if (!hdf5TimeSeries.empty()) {
+    int create_status = 0;
+    if (m_myRank == 0 && !m_check_point->do_restart()) {
+      for (map<string, vector<TimeSeries*> >::iterator it =
+               hdf5TimeSeries.begin();
+           it != hdf5TimeSeries.end(); ++it) {
+        if (createTimeSeriesHDF5File(it->second,
+                                     mNumberOfTimeSteps[event] + 1, mDt,
+                                     "") < 0)
+          create_status = -1;
+      }
+    }
+    MPI_Bcast(&create_status, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    CHECK_INPUT(create_status == 0,
+                "Could not create receiver HDF5 output file(s)");
+
+    const int max_open_attempts = 10;
+    for (map<string, vector<TimeSeries*> >::iterator it =
+             hdf5TimeSeries.begin();
+         it != hdf5TimeSeries.end(); ++it) {
+      hid_t fid = 0;
+      for (int attempt = 0; attempt < max_open_attempts && fid <= 0;
+           attempt++) {
+        H5E_BEGIN_TRY {
+          fid = it->second[0]->openHDF5File("", true);
+        } H5E_END_TRY;
+        if (fid <= 0 && attempt + 1 < max_open_attempts) sleep(1);
+      }
+      CHECK_INPUT(fid > 0,
+                  "Could not open receiver HDF5 file "
+                      << it->second[0]->gethdf5FileName() << " on rank "
+                      << m_myRank << " after " << max_open_attempts
+                      << " attempts");
+    }
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif

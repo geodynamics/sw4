@@ -387,8 +387,6 @@ int main(int argc, char **argv) {
 #ifdef USE_HDF5
           myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
           if (ts == GlobalTimeSeries[0].size() - 1) {
-            GlobalTimeSeries[0][ts]->closeHDF5File();
-
             MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0,
                        MPI_COMM_WORLD);
             if (myRank == 0)
@@ -397,6 +395,15 @@ int main(int argc, char **argv) {
           }
 #endif
         }
+
+#ifdef USE_HDF5
+        // There can be one shared handle per HDF5 output file.  Closing every
+        // TimeSeries is safe because receivers for a file share the same
+        // pointer and closeHDF5File is a no-op once that handle is closed.
+        for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++)
+          if (GlobalTimeSeries[0][ts]->getUseHDF5())
+            GlobalTimeSeries[0][ts]->closeHDF5File();
+#endif
 
         if (myRank == 0) {
           cout << "============================================================"

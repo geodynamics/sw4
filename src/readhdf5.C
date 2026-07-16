@@ -278,13 +278,30 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
           op_data->outFileName, x, y, z, topodepth, op_data->writeEvery,
           op_data->downSample, !nsew, op_data->event);
 
-      if ((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) {
+      // Share an HDF5 handle only with receivers writing to the same file.
+      // A single shared handle for all rechdf5 output files causes every rank
+      // to close and reopen files when switching receiver sets.
+      TimeSeries *file_ts0 = NULL;
+      for (int ts =
+               (int)(*op_data->GlobalTimeSeries)[op_data->event].size() - 1;
+           ts >= 0; ts--) {
+        TimeSeries *candidate =
+            (*op_data->GlobalTimeSeries)[op_data->event][ts];
+        if (candidate->getUseHDF5() &&
+            candidate->getPath() == ts_ptr->getPath() &&
+            candidate->gethdf5FileName() ==
+                ts_ptr->gethdf5FileName()) {
+          file_ts0 = candidate->getTS0Ptr();
+          break;
+        }
+      }
+
+      if (file_ts0 == NULL) {
         ts_ptr->allocFid();
         ts_ptr->setTS0Ptr(ts_ptr);
       } else {
-        ts_ptr->setFidPtr(
-            (*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
-        ts_ptr->setTS0Ptr((*op_data->GlobalTimeSeries)[op_data->event][0]);
+        ts_ptr->setFidPtr(file_ts0->getFidPtr());
+        ts_ptr->setTS0Ptr(file_ts0);
       }
 
       if (ts_ptr->myPoint()) {

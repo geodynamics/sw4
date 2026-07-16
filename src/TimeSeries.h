@@ -159,6 +159,7 @@ class TimeSeries {
   void setFidPtr(hid_t* fid) { m_fid_ptr = fid; };
   void setTS0Ptr(TimeSeries* ptr) { m_ts0Ptr = ptr; };
   hid_t* getFidPtr() { return m_fid_ptr; };
+  TimeSeries* getTS0Ptr() { return m_ts0Ptr; };
   int closeHDF5File();
   void resetHDF5file();
   void readSACHDF5(EW* ew, string FileName, bool ignore_utc);
