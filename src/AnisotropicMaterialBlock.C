@@ -107,7 +107,7 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
   //  int pc[4];
   // compute the number of parallel overlap points
   //  mEW->interiorPaddingCells( pc );
-  int material = 0, outside = 0;
+  long long material = 0, outside = 0;
 
   for (int g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids
   {
@@ -215,9 +215,11 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
     }            // end for g (curvilinear)
 
   }  // end if topographyExists
-  int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  long long outsideSum, materialSum;
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
+  MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
 
   if (mEW->proc_zero())
     cout << "block command: outside = " << outsideSum << ", "
