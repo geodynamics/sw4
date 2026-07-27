@@ -54,9 +54,11 @@ class ESSI3DHDF5 {
   void write_header(double h, double (&lonlat_origin)[2], double az,
                     double (&origin)[3], int cycle, double t, double dt,
                     double output_timestep);
+  void ensure_progress_datasets();
   void write_topo(void* window_array);
 
   void write_vel(void* window_array, int comp, int cycle, int nstep);
+  void write_progress(int sw4_timestep, int output_index);
 
   void init_write_vel(bool m_isRestart, int ntimestep, int ZFPmode,
                       double ZFPpar, int dumpInterval);

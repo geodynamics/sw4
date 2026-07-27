@@ -235,7 +235,49 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
 
+  ensure_progress_datasets();
+
   if (debug && (myRank == 0)) cerr << "Writing hdf5 metadata done" << endl;
+#endif
+  return;
+}
+
+void ESSI3DHDF5::ensure_progress_datasets() {
+#ifdef USE_HDF5
+  // Progress markers are updated after each complete buffered velocity write.
+  // Preserve them when present and add them when restarting a legacy file.
+  const char* names[2] = {"lastsw4timestep", "lastoutputindex"};
+  int initial_progress = -1;
+  hsize_t dim = 1;
+
+  for (int i = 0; i < 2; i++) {
+    htri_t exists = H5Lexists(m_file_id, names[i], H5P_DEFAULT);
+    if (exists < 0) {
+      cerr << "Error checking ssioutput progress dataset " << names[i] << endl;
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+    if (exists == 0) {
+      hid_t dataspace_id = H5Screate_simple(1, &dim, NULL);
+      hid_t dataset_id =
+          H5Dcreate2(m_file_id, names[i], H5T_NATIVE_INT, dataspace_id,
+                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      if (dataset_id < 0) {
+        cerr << "Error creating ssioutput progress dataset " << names[i]
+             << endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
+      }
+      herr_t ierr =
+          H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                   &initial_progress);
+      if (ierr < 0) {
+        cerr << "Error initializing ssioutput progress dataset " << names[i]
+             << endl;
+        MPI_Abort(MPI_COMM_WORLD, ierr);
+      }
+      H5Dclose(dataset_id);
+      H5Sclose(dataspace_id);
+    }
+  }
 #endif
   return;
 }
@@ -585,6 +627,57 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
 /* #endif */
 
+#endif
+  return;
+}
+
+void ESSI3DHDF5::write_progress(int sw4_timestep, int output_index) {
+#ifdef USE_HDF5
+#ifdef USE_HDF5_ASYNC
+  // The progress values must never get ahead of pending velocity writes.
+  size_t num_in_progress;
+  hbool_t op_failed;
+  H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+  if (op_failed) {
+    cerr << "Error completing asynchronous ssioutput writes" << endl;
+    MPI_Abort(MPI_COMM_WORLD, -1);
+  }
+#endif
+
+  int myRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
+  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+  hsize_t dim = 1;
+  hid_t memspace = H5Screate_simple(1, &dim, NULL);
+  const char* names[2] = {"lastsw4timestep", "lastoutputindex"};
+  int values[2] = {sw4_timestep, output_index};
+
+  for (int i = 0; i < 2; i++) {
+    hid_t dset = H5Dopen(m_file_id, names[i], H5P_DEFAULT);
+    if (dset < 0) {
+      cerr << "Error opening ssioutput progress dataset " << names[i] << endl;
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+    hid_t filespace = H5Dget_space(dset);
+    if (myRank != 0) {
+      H5Sselect_none(memspace);
+      H5Sselect_none(filespace);
+    }
+    herr_t ierr =
+        H5Dwrite(dset, H5T_NATIVE_INT, memspace, filespace, dxpl, &values[i]);
+    if (ierr < 0) {
+      cerr << "Error writing ssioutput progress dataset " << names[i] << endl;
+      MPI_Abort(MPI_COMM_WORLD, ierr);
+    }
+    H5Sclose(filespace);
+    H5Dclose(dset);
+  }
+
+  H5Sclose(memspace);
+  H5Pclose(dxpl);
+  H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
 #endif
   return;
 }

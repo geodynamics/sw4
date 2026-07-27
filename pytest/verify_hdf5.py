@@ -199,6 +199,14 @@ def verify(pytest_dir, tolerance):
 
     essi_fname = hdf5_dir + 'essioutput.ssi'
     ref_essi_fname = ref_dir + 'essioutput.cycle=000.essi'
+    with h5py.File(essi_fname, 'r') as essi_file:
+        last_sw4_timestep = essi_file['lastsw4timestep'][0]
+        last_output_index = essi_file['lastoutputindex'][0]
+    if last_sw4_timestep != 268 or last_output_index != 267:
+        print("ESSI progress metadata does not match!",
+              last_sw4_timestep, last_output_index)
+        return False
+
     data0, data1, data2 = read_essi(essi_fname)
     ref_data0, ref_data1, ref_data2 = read_essi(ref_essi_fname)
     sum0 = np.sum(data0)

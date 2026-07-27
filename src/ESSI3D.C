@@ -228,7 +228,7 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     a_cycle /= m_dumpInterval;
   }
 
-  write_image_hdf5(a_cycle, a_path, a_time, a_U);
+  write_image_hdf5(a_cycle, o_cycle, a_path, a_time, a_U);
 
   if (o_cycle == mNumberOfTimeSteps)  // last time step
     close_vel_file();
@@ -249,7 +249,7 @@ void ESSI3D::force_write_image(float_sw4 a_time, int a_cycle,
 #ifdef USE_HDF5
   double hdf5_time = MPI_Wtime();
   open_vel_file(a_cycle, a_path, a_time, a_Z);
-  write_image_hdf5(a_cycle, a_path, a_time, a_U);
+  write_image_hdf5(a_cycle, a_cycle, a_path, a_time, a_U);
   close_vel_file();
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 #else
@@ -354,6 +354,9 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
     if (!m_isRestart) {
       m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
                                  dt, output_timestep);
+    } else {
+      // Older ssioutput files do not have the progress datasets.
+      m_hdf5helper->ensure_progress_datasets();
     }
     if (debug)
       cout << "Creating hdf5 velocity fields..." << endl;
@@ -415,8 +418,8 @@ void ESSI3D::close_vel_file() {
   return;
 }
 
-void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
-                              vector<Sarray>& a_U) {
+void ESSI3D::write_image_hdf5(int cycle, int sw4_timestep, std::string& path,
+                              float_sw4 t, vector<Sarray>& a_U) {
   // Top grid only
   int g = mEW->mNumberOfGrids - 1;
   int doWrite = 0;
@@ -448,9 +451,13 @@ void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
             "written correctly!\n");
 
   if (doWrite == 3) {
+    m_hdf5helper->write_progress(sw4_timestep, cycle - 1);
     if (debug)
-      fprintf(stderr, "Rank %d: write_image_hdf5 cycle=%d/%d, m_nbufstep=%d\n",
-              m_rank, cycle, m_ntimestep, m_nbufstep);
+      fprintf(stderr,
+              "Rank %d: write_image_hdf5 cycle=%d/%d, sw4_timestep=%d, "
+              "output_index=%d, m_nbufstep=%d\n",
+              m_rank, cycle, m_ntimestep, sw4_timestep, cycle - 1,
+              m_nbufstep);
     m_nbufstep = 0;
   }
   return;
