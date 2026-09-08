@@ -5673,8 +5673,8 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
 	    tDep = iDirac;
          else if (!strcmp("C6SmoothBump",formstring) )
 	    tDep = iC6SmoothBump;
-	 else if (!strcmp("ModifiedHaskellvSB",formstring) )
-	    tDep = iModifiedHaskellvSB;
+	 else if (!strcmp("ModifiedHaskellSmoothed",formstring) )
+	    tDep = iModifiedHaskellSmoothed;
 	 else
             if (m_myRank == 0)
 	      cout << "unknown time function: " << formstring << endl << " using default RickerInt function." << endl;
@@ -5874,9 +5874,9 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      }
   }
 
-  if( tDep == iModifiedHaskellvSB )
+  if( tDep == iModifiedHaskellSmoothed )
   {
-     CHECK_INPUT( b_set, err << "source command: b must be set for ModifiedHaskellvSB time function");
+     CHECK_INPUT( b_set, err << "source command: b must be set for ModifiedHaskellSmoothed time function");
      par = new float_sw4[1];
      par[0] = b;
      npar = 1;

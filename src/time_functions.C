@@ -1811,140 +1811,152 @@ float_sw4 C6SmoothBump_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int n
   return tmp;
 }
 
-float_sw4 ModifiedHaskellvSB(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 ModifiedHaskellSmoothed(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0)
-    tmp = 0.0;
-  else if (x > 1)
-    tmp = 0.0;
+  const float_sw4 tf = t*freq;
+  const float_sw4 h = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q = b + 1.0/6.0;
+  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
+  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
+  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
+  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return 1-exp(-tf)*(1 + tf + 0.5*tf*tf + tf*tf*tf/6 +
+                       c4*tf*tf*tf*tf + c5*tf*tf*tf*tf*tf +
+                       c6*tf*tf*tf*tf*tf*tf + c7*tf*tf*tf*tf*tf*tf*tf);
   else
-    tmp = 1.0 - exp(-x)*(1.0 + x - b*pow(x,2));
-  return tmp;
+    return 1-exp(-tf)*(1 + 0.5*tf*tf - b*tf*tf*tf);
 }
 
-float_sw4 ModifiedHaskellvSB_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 ModifiedHaskellSmoothed_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
+  const float_sw4 tf = t*freq;
+  const float_sw4 h = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q = b + 1.0/6.0;
+  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
+  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
+  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
+  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return exp(-tf)*freq*((1.0/6.0-4*c4)*tf*tf*tf +
+                          (c4-5*c5)*tf*tf*tf*tf +
+                          (c5-6*c6)*tf*tf*tf*tf*tf +
+                          (c6-7*c7)*tf*tf*tf*tf*tf*tf + c7*tf*tf*tf*tf*tf*tf*tf);
   else
-    tmp = freq*exp(-x)*(x + b*x*(2-x));
-  return tmp;
+    return freq*exp(-tf)*(1-tf+(0.5+3*b)*tf*tf-b*tf*tf*tf);
 }
 
-float_sw4 ModifiedHaskellvSB_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 ModifiedHaskellSmoothed_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
+  const float_sw4 tf = t*freq;
+  const float_sw4 h = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q = b + 1.0/6.0;
+  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
+  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
+  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
+  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return exp(-tf)*t*((1.0/6.0-4*c4)*tf*tf*tf +
+                       (c4-5*c5)*tf*tf*tf*tf +
+                       (c5-6*c6)*tf*tf*tf*tf*tf +
+                       (c6-7*c7)*tf*tf*tf*tf*tf*tf + c7*tf*tf*tf*tf*tf*tf*tf);
   else
-    tmp = t*exp(-x)*(x + b*x*(2-x));
-  return tmp;
+    return t*exp(-tf)*(1-tf+(0.5+3*b)*tf*tf-b*tf*tf*tf);
 }
 
-float_sw4 ModifiedHaskellvSB_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 ModifiedHaskellSmoothed_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
+  const float_sw4 tf = t*freq;
+  const float_sw4 h = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q = b + 1.0/6.0;
+  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
+  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
+  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
+  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return exp(-tf)*freq*freq*(3*(1.0/6.0-4*c4)*tf*tf +
+                               (4*(c4-5*c5)-(1.0/6.0-4*c4))*tf*tf*tf +
+                               (5*(c5-6*c6)-(c4-5*c5))*tf*tf*tf*tf +
+                               (6*(c6-7*c7)-(c5-6*c6))*tf*tf*tf*tf*tf +
+                               (7*c7-(c6-7*c7))*tf*tf*tf*tf*tf*tf - c7*tf*tf*tf*tf*tf*tf*tf);
   else
-    tmp = freq*freq*exp(-x)*(1 + 2*b - (1 + 4*b)*x + b*x*x);
-  return tmp;
+    return freq*freq*exp(-tf)*(-2+(2+6*b)*tf-(0.5+6*b)*tf*tf+b*tf*tf*tf);
 }
 
-float_sw4 ModifiedHaskellvSB_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 ModifiedHaskellSmoothed_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
+  const float_sw4 tf = t*freq;
+  const float_sw4 h = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q = b + 1.0/6.0;
+  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
+  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
+  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
+  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+  const float_sw4 a3 = 1.0/6.0-4*c4;
+  const float_sw4 a4 = c4-5*c5;
+  const float_sw4 a5 = c5-6*c6;
+  const float_sw4 a6 = c6-7*c7;
+  const float_sw4 a7 = c7;
+
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return exp(-tf)*freq*freq*freq*(6*a3*tf + (12*a4-6*a3)*tf*tf +
+                                    (20*a5-8*a4+a3)*tf*tf*tf +
+                                    (30*a6-10*a5+a4)*tf*tf*tf*tf +
+                                    (42*a7-12*a6+a5)*tf*tf*tf*tf*tf +
+                                    (a6-14*a7)*tf*tf*tf*tf*tf*tf + a7*tf*tf*tf*tf*tf*tf*tf);
   else
-    tmp = exp(-x)*(x + b*x*(2-x) + x*(1 + 2*b - (1 + 4*b)*x + b*x*x));
-  return tmp;
+    return freq*freq*freq*exp(-tf)*(4+6*b-(3+18*b)*tf+(0.5+9*b)*tf*tf-b*tf*tf*tf);
 }
 
-float_sw4 ModifiedHaskellvSB_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 ModifiedHaskellSmoothed_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
-  else
-    tmp = t*t*exp(-x)*(1 + 2*b - (1 + 4*b)*x + b*x*x);
-  return tmp;
-}
+  const float_sw4 tf = t*freq;
+  const float_sw4 h = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q = b + 1.0/6.0;
+  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
+  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
+  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
+  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+  const float_sw4 a3 = 1.0/6.0-4*c4;
+  const float_sw4 a4 = c4-5*c5;
+  const float_sw4 a5 = c5-6*c6;
+  const float_sw4 a6 = c6-7*c7;
+  const float_sw4 a7 = c7;
 
-float_sw4 ModifiedHaskellvSB_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
-{
-  const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return exp(-tf)*freq*(12*a3*tf*tf + (20*a4-8*a3)*tf*tf*tf +
+                          (30*a5-10*a4+a3)*tf*tf*tf*tf +
+                          (42*a6-12*a5+a4)*tf*tf*tf*tf*tf +
+                          (56*a7-14*a6+a5)*tf*tf*tf*tf*tf*tf +
+                          (a6-16*a7)*tf*tf*tf*tf*tf*tf*tf + a7*tf*tf*tf*tf*tf*tf*tf*tf);
   else
-    tmp = freq*freq*freq*exp(-x)*(-2 - 6*b + (1 + 6*b)*x - b*x*x);
-  return tmp;
-}
-
-float_sw4 ModifiedHaskellvSB_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
-{
-  const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
-  else
-    tmp = exp(-x)*(2*freq*(1 + 2*b - (1 + 4*b)*x + b*x*x) +
-                   freq*x*(-2 - 6*b + (1 + 6*b)*x - b*x*x));
-  return tmp;
-}
-
-float_sw4 ModifiedHaskellvSB_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
-{
-  const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
-  else
-    tmp = freq*freq*freq*freq*exp(-x)*(3 + 12*b - (1 + 8*b)*x + b*x*x);
-  return tmp;
-}
-
-float_sw4 ModifiedHaskellvSB_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
-{
-  const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
-  else
-    tmp = exp(-x)*(3*freq*freq*(-2 - 6*b + (1 + 6*b)*x - b*x*x) +
-                   freq*freq*x*(3 + 12*b - (1 + 8*b)*x + b*x*x));
-  return tmp;
-}
-
-float_sw4 ModifiedHaskellvSB_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
-{
-  const float_sw4 b = par[0];
-  const float_sw4 x = t*freq;
-  float_sw4 tmp;
-  if (x < 0 || x > 1)
-    tmp = 0.0;
-  else
-    tmp = exp(-x)*(2*(1 + 2*b - (1 + 4*b)*x + b*x*x) +
-                   4*x*(-2 - 6*b + (1 + 6*b)*x - b*x*x) +
-                   x*x*(3 + 12*b - (1 + 8*b)*x + b*x*x));
-  return tmp;
+    return freq*exp(-tf)*(-4+(8+18*b)*tf-(4+30*b)*tf*tf+(0.5+11*b)*tf*tf*tf-b*tf*tf*tf*tf);
 }
