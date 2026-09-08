@@ -245,13 +245,21 @@ void GridPointSource::initializeTimeFunction()
       mTimeFunc_om = C6SmoothBump_om;
       mTimeFunc_omtt = C6SmoothBump_omtt;
       break;
-    case iModifiedHaskellSmoothed :
-      mTimeFunc = ModifiedHaskellSmoothed;
-      mTimeFunc_t = ModifiedHaskellSmoothed_t;
-      mTimeFunc_tt = ModifiedHaskellSmoothed_tt;
-      mTimeFunc_ttt = ModifiedHaskellSmoothed_ttt;
-      mTimeFunc_om = ModifiedHaskellSmoothed_om;
-      mTimeFunc_omtt = ModifiedHaskellSmoothed_omtt;
+    case iHaskell :
+      mTimeFunc = Haskell;
+      mTimeFunc_t = Haskell_t;
+      mTimeFunc_tt = Haskell_tt;
+      mTimeFunc_ttt = Haskell_ttt;
+      mTimeFunc_om = Haskell_om;
+      mTimeFunc_omtt = Haskell_omtt;
+      break;
+    case iHaskellSmoothed :
+      mTimeFunc = HaskellSmoothed;
+      mTimeFunc_t = HaskellSmoothed_t;
+      mTimeFunc_tt = HaskellSmoothed_tt;
+      mTimeFunc_ttt = HaskellSmoothed_ttt;
+      mTimeFunc_om = HaskellSmoothed_om;
+      mTimeFunc_omtt = HaskellSmoothed_omtt;
       break;
     default :
       std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;

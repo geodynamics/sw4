@@ -137,7 +137,7 @@ Source::Source(EW *a_ew,
    //    spline_interpolation();
    // else
    if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces &&
-       mTimeDependence != iModifiedHaskellSmoothed ) // not sure about iDiscrete6moments
+       mTimeDependence != iHaskell && mTimeDependence != iHaskellSmoothed ) // not sure about iDiscrete6moments
    {
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
@@ -216,7 +216,7 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
 
   if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
      spline_interpolation();
-  else if( mTimeDependence != iModifiedHaskellSmoothed )
+  else if( mTimeDependence != iHaskell && mTimeDependence != iHaskellSmoothed )
   {
      mPar[0] = find_min_exponent();
      mPar[1] = mNcyc;
@@ -399,7 +399,7 @@ void Source::limit_frequency( int ppw, float_sw4 minvsoh )
        mTimeDependence == iGaussian  || mTimeDependence == iErf || 
        mTimeDependence == iVerySmoothBump || mTimeDependence == iSmoothWave || 
        mTimeDependence == iLiu || mTimeDependence == iC6SmoothBump ||
-       mTimeDependence == iModifiedHaskellSmoothed )
+       mTimeDependence == iHaskell || mTimeDependence == iHaskellSmoothed )
    {
       if( mFreq > 2*M_PI*freqlim )
 	 mFreq = 2*M_PI*freqlim;
@@ -435,7 +435,7 @@ float_sw4 Source::dt_to_resolve( int ppw ) const
 {
   float_sw4 dt_resolved = 0;
   if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
-      mTimeDependence == iDBrune || mTimeDependence == iModifiedHaskellSmoothed)
+      mTimeDependence == iDBrune || mTimeDependence == iHaskell || mTimeDependence == iHaskellSmoothed)
     {
       const float_sw4 t95 = 4.744/mFreq;
       dt_resolved = t95/ppw;
@@ -452,7 +452,7 @@ int Source::ppw_to_resolve( float_sw4 dt ) const
 {
   int ppw = 1;
   if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
-      mTimeDependence == iDBrune || mTimeDependence == iModifiedHaskellSmoothed)
+      mTimeDependence == iDBrune || mTimeDependence == iHaskell || mTimeDependence == iHaskellSmoothed)
     {
       const float_sw4 t95 = 4.744/mFreq;
       ppw = static_cast<int>(t95/dt);
@@ -2632,8 +2632,11 @@ void Source::filter_timefunc( Filter* filter_ptr, float_sw4 tstart, float_sw4 dt
       case iC6SmoothBump :
 	 timeFunc = C6SmoothBump;
 	 break;
-      case iModifiedHaskellSmoothed :
-	 timeFunc = ModifiedHaskellSmoothed;
+      case iHaskell :
+	 timeFunc = Haskell;
+	 break;
+      case iHaskellSmoothed :
+	 timeFunc = HaskellSmoothed;
 	 break;
       case iRickerInt :
 	 timeFunc = RickerInt;

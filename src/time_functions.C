@@ -1811,187 +1811,277 @@ float_sw4 C6SmoothBump_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int n
   return tmp;
 }
 
-float_sw4 ModifiedHaskellSmoothed(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 Haskell(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 cutoff = par[0];
   const float_sw4 b = par[1];
   const float_sw4 tf = t*freq;
-  const float_sw4 h = 2.31;
-  const float_sw4 hi = 1/h;
-  const float_sw4 q = b + 1.0/6.0;
-  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
-  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
-  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
-  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
-
   if( tf < 0 )
     return 0;
-  else if( tf < h )
-    return 1-exp(-tf)*(1 + tf + 0.5*tf*tf + tf*tf*tf/6 +
-                       c4*tf*tf*tf*tf + c5*tf*tf*tf*tf*tf +
-                       c6*tf*tf*tf*tf*tf*tf + c7*tf*tf*tf*tf*tf*tf*tf);
   else
     {
       if( -tf > cutoff )
-        return 1-exp(-tf)*(1 + 0.5*tf*tf - b*tf*tf*tf);
+        return 1-exp(-tf)*(1+tf-b*tf*tf);
       else
         return 1;
     }
 }
 
-float_sw4 ModifiedHaskellSmoothed_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 Haskell_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 cutoff = par[0];
   const float_sw4 b = par[1];
   const float_sw4 tf = t*freq;
-  const float_sw4 h = 2.31;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( -tf > cutoff )
+        return freq*exp(-tf)*(tf+b*tf*(2-tf));
+      else
+        return 0;
+    }
+}
+
+float_sw4 Haskell_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+{
+  const float_sw4 cutoff = par[0];
+  const float_sw4 b = par[1];
+  const float_sw4 tf = t*freq;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( -tf > cutoff )
+        return t*exp(-tf)*(tf+b*tf*(2-tf));
+      else
+        return 0;
+    }
+}
+
+float_sw4 Haskell_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+{
+  const float_sw4 cutoff = par[0];
+  const float_sw4 b = par[1];
+  const float_sw4 tf = t*freq;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( -tf > cutoff )
+        return freq*freq*exp(-tf)*(1+2*b-(1+4*b)*tf+b*tf*tf);
+      else
+        return 0;
+    }
+}
+
+float_sw4 Haskell_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+{
+  const float_sw4 cutoff = par[0];
+  const float_sw4 b = par[1];
+  const float_sw4 tf = t*freq;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( -tf > cutoff )
+        return freq*freq*freq*exp(-tf)*(-2-6*b+(1+6*b)*tf-b*tf*tf);
+      else
+        return 0;
+    }
+}
+
+float_sw4 Haskell_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+{
+  const float_sw4 cutoff = par[0];
+  const float_sw4 b = par[1];
+  const float_sw4 tf = t*freq;
+  if( tf < 0 )
+    return 0;
+  else
+    {
+      if( -tf > cutoff )
+        return freq*exp(-tf)*
+          (2*(1+2*b-(1+4*b)*tf+b*tf*tf) +
+           tf*(-2-6*b+(1+6*b)*tf-b*tf*tf));
+      else
+        return 0;
+    }
+}
+
+float_sw4 HaskellSmoothed(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+{
+  const float_sw4 cutoff = par[0];
+  const float_sw4 b = par[1];
+  const float_sw4 tf = t*freq;
+  const float_sw4 h  = 2.31;
   const float_sw4 hi = 1/h;
-  const float_sw4 q = b + 1.0/6.0;
-  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
-  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
-  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
-  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+  const float_sw4 q  = b + 0.5;
+  const float_sw4 c3 = -3*q*hi;
+  const float_sw4 c4 = 3*q*hi*hi;
+  const float_sw4 c5 = -q*hi*hi*hi;
 
   if( tf < 0 )
     return 0;
   else if( tf < h )
-    return exp(-tf)*freq*((1.0/6.0-4*c4)*tf*tf*tf +
+    return 1-exp(-tf)*(1 + tf + 0.5*tf*tf + c3*tf*tf*tf +
+                       c4*tf*tf*tf*tf + c5*tf*tf*tf*tf*tf);
+  else
+    {
+      if( -tf > cutoff )
+        return 1-exp(-tf)*(1+tf-b*tf*tf);
+      else
+        return 1;
+    }
+}
+
+float_sw4 HaskellSmoothed_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+{
+  const float_sw4 cutoff = par[0];
+  const float_sw4 b = par[1];
+  const float_sw4 tf = t*freq;
+  const float_sw4 h  = 2.31;
+  const float_sw4 hi = 1/h;
+  const float_sw4 q  = b + 0.5;
+  const float_sw4 c3 = -3*q*hi;
+  const float_sw4 c4 = 3*q*hi*hi;
+  const float_sw4 c5 = -q*hi*hi*hi;
+
+  if( tf < 0 )
+    return 0;
+  else if( tf < h )
+    return exp(-tf)*freq*((0.5-3*c3)*tf*tf +
+                          (c3-4*c4)*tf*tf*tf +
                           (c4-5*c5)*tf*tf*tf*tf +
-                          (c5-6*c6)*tf*tf*tf*tf*tf +
-                          (c6-7*c7)*tf*tf*tf*tf*tf*tf + c7*tf*tf*tf*tf*tf*tf*tf);
+                          c5*tf*tf*tf*tf*tf);
   else
     {
       if( -tf > cutoff )
-        return freq*exp(-tf)*(1-tf+(0.5+3*b)*tf*tf-b*tf*tf*tf);
+        return freq*exp(-tf)*(tf+b*tf*(2-tf));
       else
         return 0;
     }
 }
 
-float_sw4 ModifiedHaskellSmoothed_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 HaskellSmoothed_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 cutoff = par[0];
   const float_sw4 b = par[1];
   const float_sw4 tf = t*freq;
-  const float_sw4 h = 2.31;
+  const float_sw4 h  = 2.31;
   const float_sw4 hi = 1/h;
-  const float_sw4 q = b + 1.0/6.0;
-  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
-  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
-  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
-  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+  const float_sw4 q  = b + 0.5;
+  const float_sw4 c3 = -3*q*hi;
+  const float_sw4 c4 = 3*q*hi*hi;
+  const float_sw4 c5 = -q*hi*hi*hi;
 
   if( tf < 0 )
     return 0;
   else if( tf < h )
-    return exp(-tf)*t*((1.0/6.0-4*c4)*tf*tf*tf +
+    return exp(-tf)*t*((0.5-3*c3)*tf*tf +
+                       (c3-4*c4)*tf*tf*tf +
                        (c4-5*c5)*tf*tf*tf*tf +
-                       (c5-6*c6)*tf*tf*tf*tf*tf +
-                       (c6-7*c7)*tf*tf*tf*tf*tf*tf + c7*tf*tf*tf*tf*tf*tf*tf);
+                       c5*tf*tf*tf*tf*tf);
   else
     {
       if( -tf > cutoff )
-        return t*exp(-tf)*(1-tf+(0.5+3*b)*tf*tf-b*tf*tf*tf);
+        return t*exp(-tf)*(tf+b*tf*(2-tf));
       else
         return 0;
     }
 }
 
-float_sw4 ModifiedHaskellSmoothed_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 HaskellSmoothed_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 cutoff = par[0];
   const float_sw4 b = par[1];
   const float_sw4 tf = t*freq;
-  const float_sw4 h = 2.31;
+  const float_sw4 h  = 2.31;
   const float_sw4 hi = 1/h;
-  const float_sw4 q = b + 1.0/6.0;
-  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
-  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
-  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
-  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
+  const float_sw4 q  = b + 0.5;
+  const float_sw4 c3 = -3*q*hi;
+  const float_sw4 c4 = 3*q*hi*hi;
+  const float_sw4 c5 = -q*hi*hi*hi;
 
   if( tf < 0 )
     return 0;
   else if( tf < h )
-    return exp(-tf)*freq*freq*(3*(1.0/6.0-4*c4)*tf*tf +
-                               (4*(c4-5*c5)-(1.0/6.0-4*c4))*tf*tf*tf +
-                               (5*(c5-6*c6)-(c4-5*c5))*tf*tf*tf*tf +
-                               (6*(c6-7*c7)-(c5-6*c6))*tf*tf*tf*tf*tf +
-                               (7*c7-(c6-7*c7))*tf*tf*tf*tf*tf*tf - c7*tf*tf*tf*tf*tf*tf*tf);
+    return exp(-tf)*( freq*freq*((1-6*c3)*tf +
+                                 (-0.5+6*c3-12*c4)*tf*tf +
+                                 (-c3+8*c4-20*c5)*tf*tf*tf +
+                                 (-c4+10*c5)*tf*tf*tf*tf -
+                                 c5*tf*tf*tf*tf*tf));
   else
     {
       if( -tf > cutoff )
-        return freq*freq*exp(-tf)*(-2+(2+6*b)*tf-(0.5+6*b)*tf*tf+b*tf*tf*tf);
+        return freq*freq*exp(-tf)*(1+2*b-(1+4*b)*tf+b*tf*tf);
       else
         return 0;
     }
 }
 
-float_sw4 ModifiedHaskellSmoothed_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 HaskellSmoothed_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 cutoff = par[0];
   const float_sw4 b = par[1];
   const float_sw4 tf = t*freq;
-  const float_sw4 h = 2.31;
+  const float_sw4 h  = 2.31;
   const float_sw4 hi = 1/h;
-  const float_sw4 q = b + 1.0/6.0;
-  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
-  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
-  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
-  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
-  const float_sw4 a3 = 1.0/6.0-4*c4;
-  const float_sw4 a4 = c4-5*c5;
-  const float_sw4 a5 = c5-6*c6;
-  const float_sw4 a6 = c6-7*c7;
-  const float_sw4 a7 = c7;
+  const float_sw4 q  = b + 0.5;
+  const float_sw4 c3 = -3*q*hi;
+  const float_sw4 c4 = 3*q*hi*hi;
+  const float_sw4 c5 = -q*hi*hi*hi;
 
   if( tf < 0 )
     return 0;
   else if( tf < h )
-    return exp(-tf)*freq*freq*freq*(6*a3*tf + (12*a4-6*a3)*tf*tf +
-                                    (20*a5-8*a4+a3)*tf*tf*tf +
-                                    (30*a6-10*a5+a4)*tf*tf*tf*tf +
-                                    (42*a7-12*a6+a5)*tf*tf*tf*tf*tf +
-                                    (a6-14*a7)*tf*tf*tf*tf*tf*tf + a7*tf*tf*tf*tf*tf*tf*tf);
+    return exp(-tf)*freq*freq*freq*((1-6*c3) +
+                                    (18*c3-2-24*c4)*tf +
+                                    (0.5-9*c3+36*c4-60*c5)*tf*tf +
+                                    (c3-12*c4+60*c5)*tf*tf*tf +
+                                    (c4-15*c5)*tf*tf*tf*tf +
+                                    c5*tf*tf*tf*tf*tf);
   else
     {
       if( -tf > cutoff )
-        return freq*freq*freq*exp(-tf)*(4+6*b-(3+18*b)*tf+(0.5+9*b)*tf*tf-b*tf*tf*tf);
+        return freq*freq*freq*exp(-tf)*
+          (-2-6*b+(1+6*b)*tf-b*tf*tf);
       else
         return 0;
     }
 }
 
-float_sw4 ModifiedHaskellSmoothed_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
+float_sw4 HaskellSmoothed_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar )
 {
   const float_sw4 cutoff = par[0];
   const float_sw4 b = par[1];
   const float_sw4 tf = t*freq;
-  const float_sw4 h = 2.31;
+  const float_sw4 h  = 2.31;
   const float_sw4 hi = 1/h;
-  const float_sw4 q = b + 1.0/6.0;
-  const float_sw4 c4 = -4*q*hi - 20*hi*hi*hi;
-  const float_sw4 c5 = 6*q*hi*hi + 45*hi*hi*hi*hi;
-  const float_sw4 c6 = -4*q*hi*hi*hi - 36*hi*hi*hi*hi*hi;
-  const float_sw4 c7 = q*hi*hi*hi*hi + 10*hi*hi*hi*hi*hi*hi;
-  const float_sw4 a3 = 1.0/6.0-4*c4;
-  const float_sw4 a4 = c4-5*c5;
-  const float_sw4 a5 = c5-6*c6;
-  const float_sw4 a6 = c6-7*c7;
-  const float_sw4 a7 = c7;
+  const float_sw4 q  = b + 0.5;
+  const float_sw4 c3 = -3*q*hi;
+  const float_sw4 c4 = 3*q*hi*hi;
+  const float_sw4 c5 = -q*hi*hi*hi;
 
   if( tf < 0 )
     return 0;
   else if( tf < h )
-    return exp(-tf)*freq*(12*a3*tf*tf + (20*a4-8*a3)*tf*tf*tf +
-                          (30*a5-10*a4+a3)*tf*tf*tf*tf +
-                          (42*a6-12*a5+a4)*tf*tf*tf*tf*tf +
-                          (56*a7-14*a6+a5)*tf*tf*tf*tf*tf*tf +
-                          (a6-16*a7)*tf*tf*tf*tf*tf*tf*tf + a7*tf*tf*tf*tf*tf*tf*tf*tf);
+    return exp(-tf)*freq*( tf*((1-6*c3) +
+                                (12*c3-1-24*c4)*tf +
+                                (-3*c3+24*c4-60*c5)*tf*tf +
+                                (-4*c4+40*c5)*tf*tf*tf -
+                                5*c5*tf*tf*tf*tf) +
+                       (2-tf)*((1-6*c3)*tf +
+                                (-0.5+6*c3-12*c4)*tf*tf +
+                                (-c3+8*c4-20*c5)*tf*tf*tf +
+                                (-c4+10*c5)*tf*tf*tf*tf -
+                                c5*tf*tf*tf*tf*tf));
   else
     {
       if( -tf > cutoff )
-        return freq*exp(-tf)*(-4+(8+18*b)*tf-(4+30*b)*tf*tf+(0.5+11*b)*tf*tf*tf-b*tf*tf*tf*tf);
+        return freq*exp(-tf)*
+          (2*(1+2*b-(1+4*b)*tf+b*tf*tf) +
+           tf*(-2-6*b+(1+6*b)*tf-b*tf*tf));
       else
         return 0;
     }
