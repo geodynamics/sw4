@@ -5877,9 +5877,10 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   if( tDep == iModifiedHaskellSmoothed )
   {
      CHECK_INPUT( b_set, err << "source command: b must be set for ModifiedHaskellSmoothed time function");
-     par = new float_sw4[1];
-     par[0] = b;
-     npar = 1;
+     par = new float_sw4[2];
+     par[0] = -700.0;
+     par[1] = b;
+     npar = 2;
   }
 
   // --------------------------------------------------------------------------- 

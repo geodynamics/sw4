@@ -175,6 +175,7 @@ float_sw4 C6SmoothBump_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
 float_sw4 C6SmoothBump_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 C6SmoothBump_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 
+// ModifiedHaskellSmoothed: par[0] is the exponential cutoff and par[1] is b.
 float_sw4 ModifiedHaskellSmoothed(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 ModifiedHaskellSmoothed_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 ModifiedHaskellSmoothed_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );

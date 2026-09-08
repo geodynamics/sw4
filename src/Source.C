@@ -434,7 +434,8 @@ void Source::adjust_t0( float_sw4 dt0 )
 float_sw4 Source::dt_to_resolve( int ppw ) const
 {
   float_sw4 dt_resolved = 0;
-  if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||  mTimeDependence == iDBrune)
+  if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
+      mTimeDependence == iDBrune || mTimeDependence == iModifiedHaskellSmoothed)
     {
       const float_sw4 t95 = 4.744/mFreq;
       dt_resolved = t95/ppw;
@@ -450,7 +451,8 @@ float_sw4 Source::dt_to_resolve( int ppw ) const
 int Source::ppw_to_resolve( float_sw4 dt ) const
 {
   int ppw = 1;
-  if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||  mTimeDependence == iDBrune)
+  if( mTimeDependence == iBrune || mTimeDependence == iBruneSmoothed ||
+      mTimeDependence == iDBrune || mTimeDependence == iModifiedHaskellSmoothed)
     {
       const float_sw4 t95 = 4.744/mFreq;
       ppw = static_cast<int>(t95/dt);
