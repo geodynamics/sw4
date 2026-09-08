@@ -175,4 +175,16 @@ float_sw4 C6SmoothBump_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar,
 float_sw4 C6SmoothBump_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 C6SmoothBump_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 
+float_sw4 ModifiedHaskellvSB(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_t(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_om(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_tt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_tom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_omom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_omtt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_tttom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 ModifiedHaskellvSB_ttomom(float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+
 #endif

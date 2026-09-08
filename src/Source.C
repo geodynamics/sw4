@@ -136,7 +136,8 @@ Source::Source(EW *a_ew,
    // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
    //    spline_interpolation();
    // else
-   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces ) // not sure about iDiscrete6moments
+   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces &&
+       mTimeDependence != iModifiedHaskellvSB ) // not sure about iDiscrete6moments
    {
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
@@ -215,7 +216,7 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
 
   if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
      spline_interpolation();
-  else
+  else if( mTimeDependence != iModifiedHaskellvSB )
   {
      mPar[0] = find_min_exponent();
      mPar[1] = mNcyc;
@@ -397,7 +398,8 @@ void Source::limit_frequency( int ppw, float_sw4 minvsoh )
    if( mTimeDependence == iBrune     || mTimeDependence == iBruneSmoothed || mTimeDependence == iDBrune ||
        mTimeDependence == iGaussian  || mTimeDependence == iErf || 
        mTimeDependence == iVerySmoothBump || mTimeDependence == iSmoothWave || 
-       mTimeDependence == iLiu || mTimeDependence == iC6SmoothBump )
+       mTimeDependence == iLiu || mTimeDependence == iC6SmoothBump ||
+       mTimeDependence == iModifiedHaskellvSB )
    {
       if( mFreq > 2*M_PI*freqlim )
 	 mFreq = 2*M_PI*freqlim;
@@ -2627,6 +2629,9 @@ void Source::filter_timefunc( Filter* filter_ptr, float_sw4 tstart, float_sw4 dt
 	 break;
       case iC6SmoothBump :
 	 timeFunc = C6SmoothBump;
+	 break;
+      case iModifiedHaskellvSB :
+	 timeFunc = ModifiedHaskellvSB;
 	 break;
       case iRickerInt :
 	 timeFunc = RickerInt;
