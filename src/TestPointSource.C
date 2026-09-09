@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Source.h"
+#include "PointSourceTimeFunctions.h"
 
 void TestPointSource::ubnd( Sarray& u, Sarray& xx, Sarray&  yy, Sarray&  zz, float_sw4 t, 
                             float_sw4 h, int npts, int sides[6] )
@@ -10,9 +11,10 @@ void TestPointSource::ubnd( Sarray& u, Sarray& xx, Sarray&  yy, Sarray&  zz, flo
    Source& source = *m_source_ptr;
    timeDep tD;
    if(!( source.getName() == "SmoothWave"   || source.getName() == "VerySmoothBump" ||
-	 source.getName() == "C6SmoothBump" || source.getName() == "Gaussian") )
+	 source.getName() == "C6SmoothBump" || source.getName() == "Gaussian" ||
+	 source.getName() == "Haskell" || source.getName() == "HaskellSmoothed") )
    {
-      std::cout << "TestPointSource::ubnd: Error, time dependency must be SmoothWave, VerySmoothBump, C6SmoothBump, or Gaussian, not "
+      std::cout << "TestPointSource::ubnd: Error, time dependency must be SmoothWave, VerySmoothBump, C6SmoothBump, Gaussian, Haskell, or HaskellSmoothed, not "
                 << source.getName() << std::endl;
       return;
    }
@@ -22,6 +24,10 @@ void TestPointSource::ubnd( Sarray& u, Sarray& xx, Sarray&  yy, Sarray&  zz, flo
       tD = iVerySmoothBump;
    else if( source.getName() == "C6SmoothBump" )
       tD = iC6SmoothBump;
+	 else if( source.getName() == "Haskell" )
+	    tD = iHaskell;
+	 else if( source.getName() == "HaskellSmoothed" )
+	    tD = iHaskellSmoothed;
    else
       tD = iGaussian;
 
@@ -116,6 +122,23 @@ void TestPointSource::ubnd( Sarray& u, Sarray& xx, Sarray&  yy, Sarray&  zz, flo
                            B = ( 1/pow(beta,2) * C6SmoothBump(time, fr*R, beta) -
                                  1/pow(fr*R,2) * C6SmoothBump_x_T_Integral(time, fr*R, alpha, beta) ) / (4*M_PI*rho*R) ;
                         }
+                        else if( tD == iHaskell || tD == iHaskellSmoothed )
+                        {
+                           const float_sw4 b = source.getParameter(1);
+                           const float_sw4 cutoff = source.getParameter(0);
+                           const bool smoothed = (tD == iHaskellSmoothed);
+                           const float_sw4 Rscaled = fr*R;
+                           const float_sw4 fa = sw4_point_source_time::haskell_value(
+                              time-Rscaled/alpha, b, cutoff, smoothed);
+                           const float_sw4 fb = sw4_point_source_time::haskell_value(
+                              time-Rscaled/beta, b, cutoff, smoothed);
+                           const float_sw4 integral = sw4_point_source_time::haskell_x_t_integral(
+                              time, Rscaled, alpha, beta, b, cutoff, smoothed);
+                           A = ( fa/pow(alpha,2) - fb/pow(beta,2) +
+                                 3/pow(Rscaled,2)*integral ) / (4*M_PI*rho*R*R*R);
+                           B = ( fb/pow(beta,2) - 1/pow(Rscaled,2)*integral ) /
+                                 (4*M_PI*rho*R);
+                        }
                         else if( tD == iGaussian )
                         {
                            A = ( 1/pow(alpha,2) * Gaussian(time, R, alpha,fr) - 1/pow(beta,2) * Gaussian(time, R, beta,fr) +
@@ -164,6 +187,26 @@ void TestPointSource::ubnd( Sarray& u, Sarray& xx, Sarray&  yy, Sarray&  zz, flo
                            C = C6SmoothBump_x_T_Integral(time, R, alpha, beta);
                            D = d_C6SmoothBump_dt(time, R, alpha) / pow(alpha,3) / R;
                            E = d_C6SmoothBump_dt(time, R, beta) / pow(beta,3) / R;
+                        }
+                        else if (tD == iHaskell || tD == iHaskellSmoothed)
+                        {
+                           const float_sw4 b = source.getParameter(1);
+                           const float_sw4 cutoff = source.getParameter(0);
+                           const bool smoothed = (tD == iHaskellSmoothed);
+                           const float_sw4 fa = sw4_point_source_time::haskell_value(
+                              time-R/alpha, b, cutoff, smoothed);
+                           const float_sw4 fb = sw4_point_source_time::haskell_value(
+                              time-R/beta, b, cutoff, smoothed);
+                           C = sw4_point_source_time::haskell_x_t_integral(
+                              time, R, alpha, beta, b, cutoff, smoothed);
+                           A = fa;
+                           B = fb;
+                           D = sw4_point_source_time::haskell_derivative(
+                              time-R/alpha, b, cutoff, smoothed) /
+                              pow(alpha,3) / R;
+                           E = sw4_point_source_time::haskell_derivative(
+                              time-R/beta, b, cutoff, smoothed) /
+                              pow(beta,3) / R;
                         }
                         else if (tD == iGaussian)
                         {

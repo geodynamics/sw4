@@ -581,13 +581,15 @@ void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
       }
 
       if( m_point_source_test && !(a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
-				   a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ||
-				   a_GlobalUniqueSources[0][0]->getName() == "SmoothWave" ||
-				   a_GlobalUniqueSources[0][0]->getName() == "Gaussian") )
+					       a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ||
+					       a_GlobalUniqueSources[0][0]->getName() == "SmoothWave" ||
+					       a_GlobalUniqueSources[0][0]->getName() == "Gaussian" ||
+					       a_GlobalUniqueSources[0][0]->getName() == "Haskell" ||
+					       a_GlobalUniqueSources[0][0]->getName() == "HaskellSmoothed") )
       {
 	if (proc_zero())
-	  cout << "Error: Point Source Test can only have source types" 
-	       << " VerySmoothBump, SmoothWave, or Gaussian" << endl
+	  cout << "Error: Point Source Test can only have source types"
+	       << " VerySmoothBump, SmoothWave, C6SmoothBump, Gaussian, Haskell, or HaskellSmoothed" << endl
 	       << "  Input name is " << a_GlobalUniqueSources[0][0]->getName() << endl;
 	sources_ok=false;
       }
