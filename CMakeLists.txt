@@ -207,7 +207,8 @@ SET(TEST_DIRS       twilight               twilight         twilight
 		    meshrefine             meshrefine       meshrefine
 		    meshrefine             meshrefine       meshrefine
                     lamb                   lamb             lamb
-                    pointsource            pointsource      pointsource)
+                    pointsource            pointsource      pointsource
+                    pointsource            pointsource)
 
 SET(RESULT_SUBDIRS  flat-twi-1             flat-twi-2       flat-twi-3
                     gauss-twi-1            gauss-twi-2      gauss-twi-3
@@ -216,7 +217,8 @@ SET(RESULT_SUBDIRS  flat-twi-1             flat-twi-2       flat-twi-3
                     refine-el-1            refine-att-1     refine-att-2nd-1
                     refine-el-2            refine-att-2     refine-att-2nd-2
                     lamb-1                 lamb-2           lamb-3
-                    pointsource-sg-1       pointsource-sg-2 pointsource-sg-3)
+                    pointsource-sg-1       pointsource-sg-2 pointsource-sg-3
+                    pointsource-haskell-1 pointsource-haskell-smoothed-1)
 
 SET(TEST_IN_FILES   flat-twi-1.in          flat-twi-2.in       flat-twi-3.in
                     gauss-twi-1.in         gauss-twi-2.in      gauss-twi-3.in
@@ -225,7 +227,8 @@ SET(TEST_IN_FILES   flat-twi-1.in          flat-twi-2.in       flat-twi-3.in
 		    refine-el-1.in         refine-att-1.in     refine-att-2nd-1.in
 		    refine-el-2.in         refine-att-2.in     refine-att-2nd-2.in
                     lamb-1.in              lamb-2.in           lamb-3.in
-                    pointsource-sg-1.in    pointsource-sg-2.in pointsource-sg-3.in)
+                    pointsource-sg-1.in    pointsource-sg-2.in pointsource-sg-3.in
+                    pointsource-haskell-1.in pointsource-haskell-smoothed-1.in)
 
 SET(TEST_BASE_FILES TwilightErr            TwilightErr             TwilightErr    
                     TwilightErr            TwilightErr             TwilightErr    
@@ -234,7 +237,8 @@ SET(TEST_BASE_FILES TwilightErr            TwilightErr             TwilightErr
                     TwilightErr            TwilightErr             TwilightErr    
                     TwilightErr            TwilightErr             TwilightErr
                     LambErr                LambErr                 LambErr
-                    PointSourceErr         PointSourceErr          PointSourceErr)
+                    PointSourceErr         PointSourceErr          PointSourceErr
+                    PointSourceErr         PointSourceErr)
 
 SET(TEST_CHECKS     compare             compare                 compare 
                     compare             compare                 compare 
@@ -243,7 +247,8 @@ SET(TEST_CHECKS     compare             compare                 compare
                     compare             compare                 compare 
 		    compare             compare                 compare
                     compare             compare                 compare
-                    compare             compare                 compare)
+                    compare             compare                 compare
+                    compare             compare)
 
 SET(TEST_LEVELS     0                       0                    1
                     0                       0                    1
@@ -252,7 +257,8 @@ SET(TEST_LEVELS     0                       0                    1
 		    0                       0                    0
 		    1                       1                    1
                     0                       1                    2
-                    0                       1                    2)
+                    0                       1                    2
+                    0                       0)
 
 SET(TEST_ERRINF_TOL 1e-5                    1e-5                 1e-5
                     1e-5                    1e-5                 1e-5
@@ -261,7 +267,8 @@ SET(TEST_ERRINF_TOL 1e-5                    1e-5                 1e-5
 		    1e-5                    1e-5                 1e-5
 		    1e-5                    1e-5                 1e-5
                     1e-5                    1e-5                 1e-5
-                    1e-5                    1e-5                 1e-5)
+                    1e-5                    1e-5                 1e-5
+                    1e-5                    1e-5)
 
 SET(TEST_ERRL2_TOL  1e-5                    1e-5                 1e-5
                     1e-5                    1e-5                 1e-5
@@ -270,7 +277,8 @@ SET(TEST_ERRL2_TOL  1e-5                    1e-5                 1e-5
 		    1e-5                    1e-5                 1e-5
 		    1e-5                    1e-5                 1e-5
                     1e-5                    1e-5                 1e-5
-                    1e-5                    1e-5                 1e-5)
+                    1e-5                    1e-5                 1e-5
+                    1e-5                    1e-5)
 
 SET(TEST_SOLINF_TOL 1e-2                    1e-2                 1e-2
                     1e-2                    1e-2                 1e-2
@@ -279,7 +287,8 @@ SET(TEST_SOLINF_TOL 1e-2                    1e-2                 1e-2
 		    1e-2                    1e-2                 1e-2
 		    1e-2                    1e-2                 1e-2
                     0                       0                    0
-                    0                       0                    0)
+                    0                       0                    0
+                    0                       0)
 
 LIST(LENGTH TEST_DIRS N)
 MATH(EXPR NUM_TESTS "${N}-1")
@@ -317,4 +326,3 @@ FOREACH(TEST_IND RANGE ${NUM_TESTS})
             )
     ENDIF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
 ENDFOREACH(TEST_IND RANGE ${NUM_AUTO_TESTS})
-

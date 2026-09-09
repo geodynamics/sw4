@@ -751,13 +751,14 @@ expected from the velocities or accelerations of the motion due to a seismic eve
 The Gaussian, Dirac, and Triangle functions integrate to one ($\int_{-\infty}^{\infty}
 g(t,t_0,\omega) \, dt = 1$), while the Sawtooth, Smoothwave, and Ricker functions integrate to zero
 and have maximum amplitude one. The RickerInt function is the time-integral of the Ricker function
-and integrates to zero. The GaussianInt, Brune, BruneSmoothed, and Liu functions tend to one
+and integrates to zero. The GaussianInt, Brune, BruneSmoothed, Haskell, HaskellSmoothed, and Liu
+functions tend to one
 ($\lim_{t\to\infty} g(t,t_0,\omega) = 1$).
 
 The initial conditions are homogeneous when \emph{SW4} is used to calculate the motion due to point
 force and moment tensor sources. In other words, the initial displacement and velocity are zero. To
 avoid incompatibilities, the source time functions must also start smoothly. Since the Triangle,
-Sawtooth, Ramp, Smoothwave, Brune, BruneSmoothed, Liu and VerySmoothBump functions are identically
+Sawtooth, Ramp, Smoothwave, Brune, BruneSmoothed, Haskell, HaskellSmoothed, Liu and VerySmoothBump functions are identically
 zero for $t<t_0$, these time functions must have $t_0\geq 0$. More care is required for the
 Gaussian, GaussianInt, Ricker, and RickerInt functions, because they are centered around $t=t_0$,
 with exponentially decaying tails for $t<t_0$. For these functions, incompatibilty problems can only
@@ -859,6 +860,50 @@ gives better accuracy for a given grid resolution.
   \label{fig:brunes}
 \end{centering}
 \end{figure}  
+
+\subsection{Haskell}
+\label{haskell}
+The Haskell function is a generalization of the Brune function with an additional dimensionless
+parameter $b$ that can be used to define the amount of "overshoot" in a spherical source (Figure~\ref{fig:haskells}),
+\[
+ g(t,t_0,\omega,b) = \left\{
+\begin{array}{ll}
+0, & t < t_0, \\
+1 - e^{-\omega(t-t_0)}\left[1+\omega(t-t_0)-b\left(\omega(t-t_0)\right)^2\right], & t \geq t_0.
+\end{array}
+\right.
+\]
+The parameter $b$ is specified with the {\tt b} keyword in the {\tt source} command and is required
+when either the Haskell or HaskellSmoothed time function is selected (Note: setting $b=0$ makes Haskell
+identical to Brune). The Haskell function has only one continuous derivative at $t=t_0$ and can
+therefore generate high-frequency numerical noise; use HaskellSmoothed when a smoother startup is
+desired.
+\begin{figure}
+\begin{centering}
+  \includegraphics[width=0.4\linewidth]{figures/f-haskell.png}
+  \includegraphics[width=0.4\linewidth]{figures/f-haskellsmoothed.png}
+  \caption{Haskell (left) and HaskellSmoothed (right) with $\omega=2$ and $t_0=-1$ and $b=1$.}
+  \label{fig:haskells}
+\end{centering}
+\end{figure}  
+
+\subsection{HaskellSmoothed}
+The HaskellSmoothed function modifies the Haskell function near $t=t_0$ to obtain the same smoother
+startup used by BruneSmoothed. Let $x=\omega(t-t_0)$ and let $h=2.31$. Then
+\[
+ g(t,t_0,\omega,b) = \left\{
+\begin{array}{ll}
+0, & t < t_0, \\
+1-e^{-x}\left[1+x+\dfrac{1}{2}x^2
+ -\dfrac{3q}{h}x^3+\dfrac{3q}{h^2}x^4-\dfrac{q}{h^3}x^5\right],
+ & 0\leq x<h, \\
+1-e^{-x}\left[1+x-bx^2\right], & x\geq h,
+\end{array}
+\right.
+\qquad q=b+\dfrac{1}{2}.
+\]
+The fixed value $h=2.31$ is dimensionless. The two branches join smoothly at $x=h$, while the
+polynomial startup reduces the high-frequency content generated at $t=t_0$.
 
 \subsection{Liu}
 \renewcommand{\arraystretch}{1.5}
@@ -1076,7 +1121,7 @@ $f_0$ and the {\tt freq} parameter is given by
 \begin{equation}\label{eq:angular-scaling}
 f_0 = \left\{ \begin{array}{ll}
  {\tt freq},& \mbox{for Ricker, RickerInt, VerySmoothBump, C6SmoothBump},\\
- \dfrac{\tt freq}{2\pi},& \mbox{for Liu, Brune, BruneSmoothed, Gaussian, GaussianInt, and GaussianWindow}.
+ \dfrac{\tt freq}{2\pi},& \mbox{for Liu, Brune, BruneSmoothed, Haskell, HaskellSmoothed, Gaussian, GaussianInt, and GaussianWindow}.
 \end{array}\right.
 \end{equation}
 The plots in Figure~\ref{fig:fouriers} were made with frequency parameter {\tt freq}=0.25 for the
@@ -1126,7 +1171,7 @@ t_0 \geq 6\sigma,\quad \sigma=\begin{cases}
 
 We remark that inspecting the Fourier transform of a time function only makes sense for functions
 that tend to zero for large times. Functions such as {\tt GaussianInt}, {\tt Liu}, {\tt Brune}, and
-{\tt BruneSmoothed} tend towards unity for large times. Their zero frequency (DC) component
+{\tt BruneSmoothed}, {\tt Haskell}, and {\tt HaskellSmoothed} tend towards unity for large times. Their zero frequency (DC) component
 therefore grows linearly with the length of the time interval, $T$. These functions need to be
 differentiated before applying the Fourier transform.
 
@@ -3034,7 +3079,7 @@ order  & order of filter (1-10) & int & None & 2 \\ \hline
 Syntax:\\ \tt source
 x=... y=... z=... lat=... lon=... depth=... topodepth=... m0=... mxx=... mxy=... mxz=...
 myy=... myz=... mzz=... f0=... fx=... fy=... fz=... rake=... strike=... dip=... t0=... 
-freq=... type=... ncyc=... dfile=...\\ 
+freq=... b=... type=... ncyc=... dfile=...\\
 \bf
 Required parameters:\\ \rm See below.
 \end{flushleft}
@@ -3061,8 +3106,9 @@ force or a point moment tensor source and should follow the following rules:
   name for a discrete time function (using the {\bf dfile} keyword).
 \end{itemize}
 Note that all pre-defined time functions use the {\bf t0} keyword, and all functions except {\bf
-  Dirac} also use the {\bf freq} keyword. The only pre-defined time function that uses the {\bf
-  ncyc} keyword is {\bf GaussianWindow}.
+  Dirac} also use the {\bf freq} keyword. The {\bf b} keyword is required for the Haskell and
+HaskellSmoothed time functions. The only pre-defined time function that uses the {\bf ncyc} keyword
+is {\bf GaussianWindow}.
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
@@ -3079,6 +3125,7 @@ lon & longitude geographical coordinate of the source & real & degrees & none \\
 \hline
 t0 & offset in time $(\geq 0)$ & real & s & 0.0 \\ \hline
 freq & frequency $(>0)$ (not used for Dirac)& real & Hz or rad/s & 1.0 \\ \hline
+b & coefficient used by Haskell and HaskellSmoothed & real & none & required \\ \hline
 type & Name of source time function & string & none & RickerInt \\ \hline
 ncyc & Number of cycles (must be specified for the GaussianWindow function) & int & none & 0
 \\ \hline
@@ -3086,13 +3133,15 @@ dfile & File name for discrete time function & string & none & none \\ \hline
 \end{tabular}
 \end{center}
 \index{source parameters!location - x, y, z, depth, topodepth, lat, lon} 
-\index{source parameters!t0, freq, type, ncyc, dfile} 
+\index{source parameters!t0, freq, b, type, ncyc, dfile}
 The {\bf type} keyword specifies the source time function. It can have
-the following values: {\tt GaussianInt, Erf, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth,
-  Smoothwave, VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac}, and {\tt
-  C6SmoothBump}. The functions are described in \S~\ref{sec:predefined}.  
+the following values: {\tt GaussianInt}, {\tt Erf}, {\tt Gaussian}, {\tt RickerInt}, {\tt Ricker},
+{\tt Ramp}, {\tt Triangle}, {\tt Sawtooth}, {\tt Smoothwave}, {\tt VerySmoothBump}, {\tt Brune},
+{\tt BruneSmoothed}, {\tt Haskell}, {\tt HaskellSmoothed}, {\tt GaussianWindow}, {\tt Liu},
+{\tt Dirac}, and {\tt C6SmoothBump}. The functions are described in \S~\ref{sec:predefined}.
 \index{source time function!GaussianInt, Gaussian, RickerInt, Ricker, Ramp, Triangle, Sawtooth, Smoothwave,
-  VerySmoothBump, Brune, BruneSmoothed, GaussianWindow, Liu, Dirac, C6SmoothBump}
+  VerySmoothBump, Brune, BruneSmoothed, Haskell, HaskellSmoothed, GaussianWindow, Liu, Dirac,
+  C6SmoothBump}
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf source command parameters (point moment tensor)}\\ \hline

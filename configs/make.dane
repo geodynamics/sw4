@@ -1,0 +1,24 @@
+# dane
+# fftw-3.3.10 depends on mvapich2-2.3.7
+# hdf5-parallel-1.14.0 depends on mvapich2-2.3.7 and configured with intel-2021.6.0/mvapich2-2.3.7
+# module load intel-classic/2021.6.0 mvapich2/2.3.7 fftw/3.3.10 mkl/2022.1.0 hdf5-parallel/1.14.0
+
+  etree = no
+  proj = no
+  fftw = yes
+  hdf5 = yes
+  FC = mpif90
+  CXX = mpicxx
+# Location of user built modules (e.g., proj4, which has not been rebuilt with the above toolchain)
+  SW4ROOT = /usr/apps/wpp
+# MKLROOT environmental variable is set upon module load mkl/2022.1.0
+  MKL_PATH = ${MKLROOT}/lib/intel64
+# HDF5 environmental variable is set upon module load hdf5-parallel/1.14.0
+  HDF5ROOT = ${HDF5}
+# FFTWHOME info is from module display fftw/3.3.10, no root environmental variable is set :(
+  FFTWHOME = /usr/tce/packages/fftw/fftw-3.3.10
+
+EXTRA_LINK_FLAGS = -Wl,-rpath=$(FFTWHOME)/lib -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=$(MKL_PATH) -L$(MKL_PATH) -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
+
+  debugdir := debug_dane
+  optdir := optimize_dane

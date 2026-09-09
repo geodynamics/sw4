@@ -101,6 +101,7 @@ public:
 
   // Frequency
   float_sw4 getFrequency() const;
+  float_sw4 getParameter( int index ) const { return mPar[index]; }
   timeDep getTfunc() const {return mTimeDependence;}
   void setMaxFrequency(float_sw4 max_freq);
 

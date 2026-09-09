@@ -5405,6 +5405,8 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   int ncyc = 0;
   int event=0;
   bool ncyc_set = false;
+  float_sw4 b = 0.0;
+  bool b_set = false;
 
   timeDep tDep = iRickerInt;
   char formstring[1000];
@@ -5671,6 +5673,10 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
 	    tDep = iDirac;
          else if (!strcmp("C6SmoothBump",formstring) )
 	    tDep = iC6SmoothBump;
+	 else if (!strcmp("Haskell",formstring) )
+	    tDep = iHaskell;
+	 else if (!strcmp("HaskellSmoothed",formstring) )
+	    tDep = iHaskellSmoothed;
 	 else
             if (m_myRank == 0)
 	      cout << "unknown time function: " << formstring << endl << " using default RickerInt function." << endl;
@@ -5682,6 +5688,12 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(ncyc > 0,
                  err << "source command: Number of cycles must be > 0");
          ncyc_set = true;
+      }
+      else if (startswith("b=", token))
+      {
+         token += 2; // skip b=
+         b = atof(token);
+         b_set = true;
       }
       else if (startswith("dfile=",token))
       {
@@ -5862,6 +5874,15 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
 	if( timereverse )
 	   revvector( npts, &par[offset+1]);
      }
+  }
+
+  if( tDep == iHaskell || tDep == iHaskellSmoothed )
+  {
+     CHECK_INPUT( b_set, err << "source command: b must be set for Haskell or HaskellSmoothed time function");
+     par = new float_sw4[2];
+     par[0] = -700.0;
+     par[1] = b;
+     npar = 2;
   }
 
   // --------------------------------------------------------------------------- 

@@ -128,6 +128,21 @@ float_sw4 BruneSmoothed_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npa
 float_sw4 BruneSmoothed_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 BruneSmoothed_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 
+// Haskell and HaskellSmoothed: par[0] is the exponential cutoff and par[1] is b.
+float_sw4 Haskell( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 Haskell_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 Haskell_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 Haskell_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 Haskell_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 Haskell_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+
+float_sw4 HaskellSmoothed( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 HaskellSmoothed_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 HaskellSmoothed_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 HaskellSmoothed_tt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 HaskellSmoothed_ttt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+float_sw4 HaskellSmoothed_omtt( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
+
 float_sw4 GaussianWindow( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 GaussianWindow_t( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
 float_sw4 GaussianWindow_om( float_sw4 freq, float_sw4 t, float_sw4* par, int npar, int* ipar, int nipar );
