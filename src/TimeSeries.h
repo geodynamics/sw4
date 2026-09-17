@@ -135,10 +135,10 @@ class TimeSeries {
   void set_shift(float_sw4 shift);
   float_sw4 get_shift() const;
   void add_shift(float_sw4 shift);
-  std::string getStationName() { return m_staName; }
-  std::string getFileName() { return m_fileName; }
-  std::string gethdf5FileName() { return m_hdf5Name; }
-  std::string getPath() { return m_path; }
+  const std::string& getStationName() const { return m_staName; }
+  const std::string& getFileName() const { return m_fileName; }
+  const std::string& gethdf5FileName() const { return m_hdf5Name; }
+  const std::string& getPath() const { return m_path; }
   float_sw4 getDt() { return m_dt; }
   float_sw4 getLastTimeStep() { return mLastTimeStep; }
 

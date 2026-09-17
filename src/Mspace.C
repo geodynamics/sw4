@@ -256,9 +256,9 @@ void *operator new(std::size_t size, Space loc) throw() {
       global_variables.max_mem =
           std::max(global_variables.max_mem, global_variables.curr_mem);
 #if defined(ENABLE_CUDA)
-      SW4_CheckDeviceError(cudaMemAdvise(ptr, size,
-                                         cudaMemAdviseSetPreferredLocation,
-                                         global_variables.device));
+      SW4_CheckDeviceError(sw4::cuda::mem_advise(
+          ptr, size, cudaMemAdviseSetPreferredLocation,
+          global_variables.device));
 #endif
       if (ptr == NULL) {
         std::cerr << "NULL POINTER \n" << std::flush;
@@ -364,9 +364,9 @@ void *operator new[](std::size_t size, Space loc) throw() {
       global_variables.max_mem =
           std::max(global_variables.max_mem, global_variables.curr_mem);
 #if defined(ENABLE_CUDA)
-      SW4_CheckDeviceError(cudaMemAdvise(ptr, size,
-                                         cudaMemAdviseSetPreferredLocation,
-                                         global_variables.device));
+      SW4_CheckDeviceError(sw4::cuda::mem_advise(
+          ptr, size, cudaMemAdviseSetPreferredLocation,
+          global_variables.device));
 #endif
       return ptr;
     }
@@ -375,7 +375,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void *>(allocator.allocate(size));
 #if defined(ENABLE_CUDA)
-    SW4_CheckDeviceError(cudaMemAdvise(
+    SW4_CheckDeviceError(sw4::cuda::mem_advise(
         ptr, size, cudaMemAdviseSetPreferredLocation, global_variables.device));
 #endif
     // std::cout<<"PTR 2 "<<ptr<<"\n";
@@ -656,7 +656,7 @@ void prefetch_to_device(const float_sw4 *ptr) {
   if (ss != NULL) {
     if (ss->size > 0) {
       SW4_MARK_BEGIN(" prefetch_to_device");
-      SW4_CheckDeviceError(cudaMemPrefetchAsync(ptr, ss->size, 0, 0));
+      SW4_CheckDeviceError(sw4::cuda::mem_prefetch_async(ptr, ss->size, 0, 0));
       SW4_MARK_END(" prefetch_to_device");
     }  // else std::cerr<<"Zero size prefetch \n";
   } else
@@ -850,11 +850,11 @@ void global_prefetch() {
               << size << " , " << std::get<1>(v) << "\n";
 #define PREFETCH_ALL 1
 #ifdef PREFETCH_ALL
-    SW4_CheckDeviceError(cudaMemPrefetchAsync(std::get<0>(v), std::get<1>(v),
-                                              global_variables.device, 0));
+    SW4_CheckDeviceError(sw4::cuda::mem_prefetch_async(
+        std::get<0>(v), std::get<1>(v), global_variables.device, 0));
 #else
-    SW4_CheckDeviceError(
-        cudaMemPrefetchAsync(std::get<0>(v), size, global_variables.device, 0));
+    SW4_CheckDeviceError(sw4::cuda::mem_prefetch_async(
+        std::get<0>(v), size, global_variables.device, 0));
 #endif
     SW4_CheckDeviceError(cudaStreamSynchronize(0));
     count++;

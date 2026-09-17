@@ -71,6 +71,11 @@ optdir := optimize
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
 
+# Accept the *_HOME names used by current machine configuration files while
+# retaining compatibility with older configurations that set *_ROOT.
+H5ZROOT ?= $(H5Z_HOME)
+ZFPROOT ?= $(ZFP_HOME)
+
 emptystring := ""
 foundincfile := $(emptystring)
 
@@ -151,7 +156,7 @@ ifeq ($(proj),yes)
 #   linklibs += -L$(SW4LIB) -lproj
    proj  := "proj_4"
 else ifeq ($(proj_6),yes)
-   CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
+   CXXFLAGS += -DENABLE_PROJ_6 -I$(PROJ_HOME)/include
    linklibs += -lproj -lcurl -lssl -lcrypto
    proj  := "proj_6"
 else
@@ -272,7 +277,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -arch=sm_90 $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
+	cd $(builddir); nvcc $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
@@ -343,12 +348,18 @@ clean:
 test:
 	echo "Running tests..."
 	/opt/local/bin/ctest --force-new-ctest-process $(ARGS)
+.PHONY: cuda-compat-test
+cuda-compat-test: $(builddir)/test_cuda_compat
+$(builddir)/test_cuda_compat: pytest/test_cuda_compat.cu src/CudaCompat.h
+	/bin/mkdir -p $(builddir)
+	nvcc $(DLINKFLAGS) -std=c++11 -I$(fullpath)/src $< -o $@
+
 format:
 	clang-format -style Google -i src/*.C
 	clang-format -style Google -i src/*.h
 ptest: 
-	cd $(builddir); $(CXX) -O3 -std=c++11 --expt-extended-lambda -arch=sm_90 -I$(RAJA_LOCATION)/include -x cu -c -dc ../src/Policies.C
-	cd $(builddir); nvcc -O3 -arch=sm_90 -dlink -o file_link.o Policies.o
-	cd $(builddir); nvcc -O3 -arch=sm_90 -o p file_link.o Policies.o -L$(RAJA_LOCATION)/lib -lRAJA
+	cd $(builddir); $(CXX) -O3 -std=c++20 --expt-extended-lambda $(DLINKFLAGS) -I$(RAJA_HOME)/include -x cu -c -dc ../src/Policies.C
+	cd $(builddir); nvcc -O3 $(DLINKFLAGS) -dlink -o file_link.o Policies.o
+	cd $(builddir); nvcc -O3 $(DLINKFLAGS) -o p file_link.o Policies.o -L$(RAJA_HOME)/lib -lRAJA
 tags:
 	etags -o src/TAGS src/*.C src/*.h 

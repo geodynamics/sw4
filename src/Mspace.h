@@ -38,7 +38,7 @@ void check_affinity(int rank);
 #include <cuda_profiler_api.h>
 #include <nvml.h>
 
-#include "cuda_runtime.h"
+#include "CudaCompat.h"
 
 bool mpi_supports_device_buffers();
 void CheckError(cudaError_t const err, const char *file, char const *const fun,
