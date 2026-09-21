@@ -57,6 +57,7 @@ class ESSI3DHDF5 {
   void ensure_progress_datasets();
   void write_topo(void* window_array);
 
+  void open_output_datasets();
   void write_vel(void* window_array, int comp, int cycle, int nstep);
   void write_progress(int sw4_timestep, int output_index);
 
@@ -87,6 +88,8 @@ class ESSI3DHDF5 {
 
   hid_t m_file_id;
   hid_t m_es_id;
+  hid_t m_vel_dset_ids[3];
+  hid_t m_progress_dset_ids[2];
 #endif  // def USE_HDF5
 };
 

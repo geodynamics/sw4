@@ -399,6 +399,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
         m_hdf5helper->write_topo(m_doubleField[0]);
     }
   }
+  m_hdf5helper->open_output_datasets();
 
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 
