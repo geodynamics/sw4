@@ -2518,7 +2518,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
       size_t npts = a_U[g].m_npts;
       float_sw4* uexact = SW4_NEW(Space::Managed, float_sw4[npts]);
 #if defined(ENABLE_CUDA)
-      SW4_CheckDeviceError(cudaMemPrefetchAsync(
+      SW4_CheckDeviceError(sw4::cuda::mem_prefetch_async(
           uexact, npts * sizeof(float_sw4), global_variables.device, 0));
 #endif
       //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );

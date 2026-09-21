@@ -125,7 +125,18 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     nersc_sys = os.getenv('NERSC_HOST')
 
 
-    if 'quartz' in node_name:
+    if nersc_sys == 'perlmutter':
+        if omp_threads <= 0: omp_threads = 32
+        if mpi_tasks <= 0: mpi_tasks = 4
+        if mpi_tasks > 4:
+            raise ValueError("Perlmutter GPU tests support at most four MPI tasks per node")
+        os.environ["MPICH_GPU_SUPPORT_ENABLED"] = "1"
+        gpu_map = ",".join(str(gpu) for gpu in range(mpi_tasks))
+        mpirun_cmd = (
+            "srun -N 1 -n " + str(mpi_tasks) + " -c " + str(omp_threads) +
+            " --gpus-per-task=1 --gpu-bind=map_gpu:" + gpu_map + " --cpu-bind=cores"
+        )
+    elif 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
         # the following setting is needed to combine h5py and subprocess.run on LC
@@ -145,10 +156,6 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # for Haswell nodes
         sw_threads = omp_threads 
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
-        # For Perlmutter
-        if nersc_sys == 'perlmutter':
-            mpirun_cmd="srun -N 1 -n 4 -c 32 --gpu-bind=single:1 --cpu-bind=cores  --gpus-per-task=1 "
-            mpirun_cmd="srun -N 1 -n 4 -c 32 --gpus-per-task=1 --gpu-bind=map_gpu:0,1,2,3 "
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4

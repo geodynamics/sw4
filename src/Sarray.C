@@ -1270,7 +1270,7 @@ void Sarray::prefetch(int device) {
 #if defined(ENABLE_CUDA)
   if (!prefetched) {
     SW4_MARK_BEGIN("PREFETCH");
-    SW4_CheckDeviceError(cudaMemPrefetchAsync(
+    SW4_CheckDeviceError(sw4::cuda::mem_prefetch_async(
         m_data, m_nc * m_ni * m_nj * m_nk * sizeof(float_sw4), device, 0));
     SW4_MARK_END("PREFETCH");
     prefetched = true;
@@ -1285,7 +1285,7 @@ void Sarray::forceprefetch(int device) {
 #else
 #if defined(ENABLE_CUDA)
   SW4_MARK_BEGIN("FORCE_PREFETCH");
-  SW4_CheckDeviceError(cudaMemPrefetchAsync(
+  SW4_CheckDeviceError(sw4::cuda::mem_prefetch_async(
       m_data, m_nc * m_ni * m_nj * m_nk * sizeof(float_sw4), device, 0));
   SW4_MARK_END("FORCE_PREFETCH");
   prefetched = true;
