@@ -79,6 +79,8 @@ class ESSI3D {
                          std::vector<Sarray>& a_U, std::string& a_path,
                          Sarray& a_Z);
 
+  void flush_pending(int sw4_timestep);
+
   void finalize_hdf5();
 
  protected:

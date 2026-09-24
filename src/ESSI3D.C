@@ -42,6 +42,15 @@
 #include "Require.h"
 #include "mpi.h"
 
+namespace {
+// The final solver step is written even if it is not on a dump boundary.
+// Reserve a distinct SSI slot for that partial final interval.
+int ssi_output_cycle(int sw4_cycle, int dump_interval) {
+  if (dump_interval <= 0) return sw4_cycle;
+  return sw4_cycle / dump_interval + (sw4_cycle % dump_interval != 0);
+}
+}  // namespace
+
 int ESSI3D::mPreceedZeros = 0;
 int ESSI3D::mNumberOfTimeSteps = -1;
 
@@ -225,7 +234,7 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 
   if (m_dumpInterval != -1) {
     if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) return;
-    a_cycle /= m_dumpInterval;
+    a_cycle = ssi_output_cycle(a_cycle, m_dumpInterval);
   }
 
   write_image_hdf5(a_cycle, o_cycle, a_path, a_time, a_U);
@@ -258,6 +267,25 @@ void ESSI3D::force_write_image(float_sw4 a_time, int a_cycle,
               << std::endl;
 #endif
   return;
+}
+
+//-----------------------------------------------------------------------
+void ESSI3D::flush_pending(int sw4_timestep) {
+#ifdef USE_HDF5
+  if (!m_fileOpen || m_nbufstep == 0) return;
+
+  int cycle = m_dumpInterval > 0 ? sw4_timestep / m_dumpInterval
+                                 : sw4_timestep;
+  int last_output_step = m_dumpInterval > 0 ? cycle * m_dumpInterval
+                                             : sw4_timestep;
+  for (int i = 0; i < 3; i++) {
+    void* field = m_precision == 4 ? (void*)m_floatField[i]
+                                   : (void*)m_doubleField[i];
+    m_hdf5helper->write_vel(field, i, cycle, m_nbufstep);
+  }
+  m_hdf5helper->write_progress(last_output_step, cycle - 1);
+  m_nbufstep = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -365,7 +393,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   MPI_Barrier(comm);
 
   if (m_dumpInterval > 0) {
-    int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
+    int nstep = ssi_output_cycle(m_ntimestep, m_dumpInterval);
     if (m_compressionMode > 0)
       m_hdf5helper->init_write_vel(m_isRestart, nstep, m_compressionMode,
                                    m_compressionPar, m_bufferInterval);
@@ -428,7 +456,7 @@ void ESSI3D::write_image_hdf5(int cycle, int sw4_timestep, std::string& path,
   /* debug = true; */
 
   for (int i = 0; i < 3; i++) {
-    int nstep = (int)floor(m_ntimestep / m_dumpInterval);
+    int nstep = ssi_output_cycle(m_ntimestep, m_dumpInterval);
     compute_image(a_U[g], i, cycle);
     if (cycle > 0 &&
         (m_nbufstep == m_bufferInterval - 1 || cycle == nstep)) {

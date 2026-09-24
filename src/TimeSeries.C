@@ -1189,7 +1189,7 @@ void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
   write_data = y;
 
   if (mDownSample > 1) {
-    write_npts = (int)npts / mDownSample;
+    write_npts = npts > 0 ? 1 + (npts - 1) / mDownSample : 0;
     write_data = new float[write_npts];
     for (int i = 0; i < write_npts; i++) write_data[i] = y[i * mDownSample];
   }
@@ -1208,6 +1208,8 @@ void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
     ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1,
                         &start, &count, write_npts, btime, cmpinc, cmpaz,
                         m_isIncAzWritten, isLast);
+  CHECK_INPUT(ret == 1, "Could not write receiver HDF5 component " << var
+                        << " for station " << m_staName);
 
   if (isLast && ret == 1) {
     m_nptsWritten += count;
@@ -3024,47 +3026,57 @@ static int cubic_interp(float* xi, float* yi, int nin, float* xo, float* yo,
   return 0;
 }
 
-void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
+bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
   /* bool debug = false; */
-  hid_t fid, grp;
+  hid_t fid, grp = -1;
   /* char data[128]; */
   /* hsize_t ndim, dims[4]; */
   int ret;
 
-  if (!m_myPoint) return;
+  if (!m_myPoint) return true;
 
   /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
   fid = H5Fopen(FileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
-    return;
+    return false;
   }
+
+  auto fail = [&]() {
+    if (grp >= 0) H5Gclose(grp);
+    H5Fclose(fid);
+    return false;
+  };
 
   char datetime[128];
-  readAttrStr(fid, "DATETIME", datetime);
+  if (readAttrStr(fid, "DATETIME", datetime) < 0) return fail();
 
   if (sscanf(datetime, "%4d-%2d-%2dT%2d:%2d:%2d.%d", &m_utc[0], &m_utc[1],
-             &m_utc[2], &m_utc[3], &m_utc[4], &m_utc[5], &m_utc[6]) == EOF) {
+             &m_utc[2], &m_utc[3], &m_utc[4], &m_utc[5], &m_utc[6]) != 7) {
     cout << "ERROR reading observation " << m_fileName << " , UTC parse ["
          << datetime << "] failed!" << endl;
-  } else {
-    int utcrefsim[7];
-    m_ew->get_utc(utcrefsim, m_event);
-    m_t0 = utc_distance(utcrefsim, m_utc);
+    return fail();
   }
+  int utcrefsim[7];
+  m_ew->get_utc(utcrefsim, m_event);
+  m_t0 = utc_distance(utcrefsim, m_utc);
 
   // dt may be downsampled
   int downsample;
-  readAttrInt(fid, "DOWNSAMPLE", &downsample);
+  if (readAttrInt(fid, "DOWNSAMPLE", &downsample) < 0) return fail();
   if (downsample < 1) {
-    cout << "ERROR: downsample=" << downsample << " is invalid! Setting to 1"
-         << endl;
-    downsample = 1;
+    cout << "ERROR: downsample=" << downsample << " is invalid!" << endl;
+    return fail();
+  }
+  if (downsample != mDownSample) {
+    cout << "ERROR: receiver downsample mismatch for station " << m_staName
+         << ": file=" << downsample << ", input=" << mDownSample << endl;
+    return fail();
   }
 
   std::string dset_names[3];
   char unit[128];
-  readAttrStr(fid, "UNIT", unit);
+  if (readAttrStr(fid, "UNIT", unit) < 0) return fail();
   bool foundd = (strstr(unit, "m") != NULL);
   bool foundv = (strstr(unit, "m/s") != NULL);
 
@@ -3073,13 +3085,19 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     bool cartesian = false;
 
     grp = H5Gopen(fid, m_staName.c_str(), H5P_DEFAULT);
-    if (grp < 0) cout << "ERROR opening group [" << m_staName << "] !" << endl;
+    if (grp < 0) {
+      cout << "ERROR opening group [" << m_staName << "] !" << endl;
+      return fail();
+    }
 
     int is_nsew, npts, sw4npts;
-    readAttrInt(grp, "ISNSEW", &is_nsew);
+    if (readAttrInt(grp, "ISNSEW", &is_nsew) < 0) return fail();
 
-    bool has_nsew = H5Lexists(grp, "EW", H5P_DEFAULT) > 0;
-    bool has_xyz = H5Lexists(grp, "X", H5P_DEFAULT) > 0;
+    htri_t nsew_status = H5Lexists(grp, "EW", H5P_DEFAULT);
+    htri_t xyz_status = H5Lexists(grp, "X", H5P_DEFAULT);
+    if (nsew_status < 0 || xyz_status < 0) return fail();
+    bool has_nsew = nsew_status > 0;
+    bool has_xyz = xyz_status > 0;
 
     if (has_nsew && (is_nsew == 1 || !has_xyz)) {
       dset_names[0] = "EW";
@@ -3093,21 +3111,19 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     } else {
       cout << "ERROR: no complete displacement component set in group ["
            << m_staName << "]" << endl;
-      H5Gclose(grp);
-      H5Fclose(fid);
-      return;
+      return fail();
     }
     m_xyzcomponent = cartesian;
 
-    readAttrInt(grp, "NPTS", &npts);
+    if (readAttrInt(grp, "NPTS", &npts) < 0) return fail();
     if (npts <= 1) {
       cout << "ERROR: observed data is too short" << endl;
       cout << "    File " << FileName << " not read." << endl;
-      return;
+      return fail();
     }
 
     float dt, tstart;
-    readAttrFloat(fid, "DELTA", &dt);
+    if (readAttrFloat(fid, "DELTA", &dt) < 0) return fail();
 
     sw4npts = (npts - 1) * downsample + 1;
 
@@ -3116,25 +3132,19 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       // Assumes starting from time 0 and timestep 0
       tstart = 0;
       allocateRecordingArrays(sw4npts, m_t0 + tstart, tstart);
-    } else {
-      m_nptsWritten = npts;
     }
 
-    if (mAllocatedSize <= 0) {
-      cout << "ERROR: recording arrays not allocated!" << endl;
-      return;
+    if (mAllocatedSize <= 0 || sw4npts > mAllocatedSize) {
+      cout << "ERROR: receiver history exceeds recording array for station "
+           << m_staName << endl;
+      return fail();
     }
 
-    m_dt = dt / downsample;
-    mLastTimeStep = sw4npts - 1;
-
-    float* buf_0 = new float[npts];
-    float* buf_1 = new float[npts];
-    float* buf_2 = new float[npts];
-
-    readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0);
-    readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1);
-    readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2);
+    std::vector<float> buf_0(npts), buf_1(npts), buf_2(npts);
+    if (readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0.data()) < 0 ||
+        readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1.data()) < 0 ||
+        readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2.data()) < 0)
+      return fail();
 
     // Mapping to invert (e,n) to (x,y) components, Only needed in the
     // non-cartesian case.
@@ -3145,34 +3155,33 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     float_sw4 a22 = m_thynrm * deti;
 
     if (downsample > 1) {
-      float* buf_0up = new float[sw4npts];
-      float* buf_1up = new float[sw4npts];
-      float* buf_2up = new float[sw4npts];
-      float* x = new float[npts];
-      float* nx = new float[sw4npts];
+      std::vector<float> buf_0up(sw4npts), buf_1up(sw4npts),
+          buf_2up(sw4npts), x(npts), nx(sw4npts);
       for (int i = 0; i < npts; i++) x[i] = i * downsample;
 
       for (int i = 0; i < sw4npts; i++) nx[i] = i;
 
       // Cubic interpolation
-      ret = cubic_interp(x, buf_0, npts, nx, buf_0up, sw4npts);
+      ret = cubic_interp(x.data(), buf_0.data(), npts, nx.data(),
+                         buf_0up.data(), sw4npts);
       if (ret < 0) {
         cout << "ERROR: cubic_interp failed!" << endl;
-        return;
+        return fail();
       }
-      ret = cubic_interp(x, buf_1, npts, nx, buf_1up, sw4npts);
+      ret = cubic_interp(x.data(), buf_1.data(), npts, nx.data(),
+                         buf_1up.data(), sw4npts);
       if (ret < 0) {
         cout << "ERROR: cubic_interp failed!" << endl;
-        return;
+        return fail();
       }
-      ret = cubic_interp(x, buf_2, npts, nx, buf_2up, sw4npts);
+      ret = cubic_interp(x.data(), buf_2.data(), npts, nx.data(),
+                         buf_2up.data(), sw4npts);
       if (ret < 0) {
         cout << "ERROR: cubic_interp failed!" << endl;
-        return;
+        return fail();
       }
 
-      for (int i = 0; i < mAllocatedSize; i++) {
-        /* for (int i = 0; i < npts; i++) { */
+      for (int i = 0; i < sw4npts; i++) {
         if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
@@ -3186,13 +3195,8 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
         }
       }
 
-      delete[] buf_0up;
-      delete[] buf_1up;
-      delete[] buf_2up;
-      delete[] x;
-      delete[] nx;
     } else {
-      for (int i = 0; i < mAllocatedSize; i++) {
+      for (int i = 0; i < sw4npts; i++) {
         if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
@@ -3207,22 +3211,26 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       }
     }
 
-    for (int i = 0; i < mAllocatedSize; i++) {
+    for (int i = 0; i < sw4npts; i++) {
       mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
       mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
       mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
     }
 
-    delete[] buf_0;
-    delete[] buf_1;
-    delete[] buf_2;
-    H5Gclose(grp);
+    m_dt = dt / downsample;
+    mLastTimeStep = sw4npts - 1;
+    if (H5Gclose(grp) < 0) {
+      grp = -1;
+      return fail();
+    }
+    grp = -1;
   } else {
     cout << "ERROR: unit [" << unit
          << "] is unrecognized! Currently supports m or m/s" << endl;
+    return fail();
   }
 
-  H5Fclose(fid);
+  return H5Fclose(fid) >= 0;
 }
 #endif
 
@@ -3247,7 +3255,18 @@ void TimeSeries::doRestart(EW* ew, bool ignore_utc, float_sw4 shift,
     std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_hdf5Name;
 #ifdef USE_HDF5
-    if (m_myPoint) readSACHDF5(ew, fullFilePath, ignore_utc);
+    CHECK_INPUT(readSACHDF5(ew, fullFilePath, ignore_utc),
+                "Could not restore receiver history for station "
+                    << m_staName << " from " << fullFilePath << ". ");
+    int last_required_sample =
+        ((beginCycle - 1) / mDownSample) * mDownSample;
+    CHECK_INPUT(!m_myPoint || mLastTimeStep >= last_required_sample,
+                "Receiver history for station " << m_staName << " in "
+                    << fullFilePath << " ends before checkpoint cycle "
+                    << beginCycle << ". ");
+    // Receiver output can extend beyond the latest usable checkpoint.
+    // Resume writing at the checkpoint, replacing that uncheckpointed tail.
+    if (m_myPoint) m_nptsWritten = beginCycle / mDownSample;
 #else
     cout
         << "readSACHDF5: read from HDF5 file but sw4 is not compiled with HDF5!"
@@ -3381,7 +3400,9 @@ int TimeSeries::closeHDF5File() {
   return 0;
 }
 void TimeSeries::resetHDF5file() {
-  m_nptsWritten = 0;
+  // doRestart has already positioned the writer at the checkpoint. Reopening
+  // the HDF5 handle must not move it back to the start of the receiver file.
+  if (!mIsRestart) m_nptsWritten = 0;
   m_isMetaWritten = m_isIncAzWritten = false;
   closeHDF5File();
 }

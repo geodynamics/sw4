@@ -214,7 +214,16 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
 
   filespace = H5Dget_space(dset);
   H5Sget_simple_extent_dims(filespace, dims, NULL);
-  if (dims[0] < start[0] + count[0]) count[0] = dims[0] - start[0];
+  if (start[0] > dims[0] || count[0] > dims[0] - start[0]) {
+    printf("%s: receiver dataset [%s] has %llu slots, write needs [%llu, %llu)\n",
+           __func__, name, (unsigned long long)dims[0],
+           (unsigned long long)start[0],
+           (unsigned long long)(start[0] + count[0]));
+    H5Pclose(dxpl);
+    H5Sclose(filespace);
+    H5Dclose(dset);
+    return -1;
+  }
   H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
 
   ret = H5Dwrite(dset, type_id, H5S_ALL, filespace, dxpl, data);
@@ -511,12 +520,15 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
       dset_names[8] = "DUZDZ";
     }
 
+    int station_downsample = TimeSeries[ts]->getDownSample();
+    if (totalSteps < 1 || station_downsample < 1) {
+      printf("%s: invalid receiver steps=%d or downSample=%d\n", __func__,
+             totalSteps, station_downsample);
+      return -1;
+    }
+    // Include the sample at step zero and every eligible sample thereafter.
+    total_dims = 1 + ((hsize_t)totalSteps - 1) / station_downsample;
     for (int i = 0; i < ndset; i++) {
-      total_dims = (hsize_t)(totalSteps / TimeSeries[ts]->getDownSample());
-      if (total_dims == 0) {
-        printf("%s: Error with dataset length 0\n", __func__);
-        return -1;
-      }
       dset_space = H5Screate_simple(1, &total_dims, NULL);
       dset = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space,
                        H5P_DEFAULT, dcpl, H5P_DEFAULT);
