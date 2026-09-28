@@ -1,0 +1,16 @@
+# Optional regression for repeated parallel writes to ZFP-compressed SSI data.
+# This case intentionally crosses several buffer boundaries so every velocity
+# dataset is reused after the first collective write.
+
+grid h=200 x=30000 y=30000 z=17000 extrapolate=1
+time steps=6
+fileio path=.
+
+supergrid gp=30
+
+block vp=6000 vs=3464 rho=2700
+block vp=4000 vs=2000 rho=2600 z2=1000
+
+source x=15000 y=15000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 type=Gaussian
+
+ssioutput file=ssi-zfp xmin=10000 xmax=12000 ymin=10000 ymax=12000 depth=200 precision=4 zfp-accuracy=1e-2 bufferInterval=2 dumpInterval=1

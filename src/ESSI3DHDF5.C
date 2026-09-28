@@ -98,6 +98,8 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
 
   m_file_id = 0;
   m_es_id = 0;
+  for (int i = 0; i < 3; i++) m_vel_dset_ids[i] = H5I_INVALID_HID;
+  for (int i = 0; i < 2; i++) m_progress_dset_ids[i] = H5I_INVALID_HID;
 #endif
 }
 
@@ -144,11 +146,50 @@ void ESSI3DHDF5::create_file(bool is_restart, bool is_root) {
 
   if (m_file_id <= 0) {
     cerr << "Could not open hdf5 file: " << m_filename << endl;
-    MPI_Abort(comm, m_file_id);
+    MPI_Abort(comm, -1);
   }
   H5Pclose(fapl);
 #endif
   return;
+}
+
+void ESSI3DHDF5::open_output_datasets() {
+#ifdef USE_HDF5
+  // Dataset opens are collective when collective metadata is enabled. Keep
+  // the handles for the file lifetime so each buffered write only performs
+  // collective data I/O, rather than reopening metadata on every component.
+  const char* velocity_names[3] = {"vel_0 ijk layout", "vel_1 ijk layout",
+                                   "vel_2 ijk layout"};
+  const char* progress_names[2] = {"lastsw4timestep", "lastoutputindex"};
+
+  for (int i = 0; i < 3; i++) {
+#ifdef USE_HDF5_ASYNC
+    m_vel_dset_ids[i] =
+        H5Dopen_async(m_file_id, velocity_names[i], H5P_DEFAULT, m_es_id);
+#else
+    m_vel_dset_ids[i] = H5Dopen(m_file_id, velocity_names[i], H5P_DEFAULT);
+#endif
+    if (m_vel_dset_ids[i] < 0) {
+      cerr << "Error opening ssioutput velocity dataset " << velocity_names[i]
+           << endl;
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+  }
+
+  for (int i = 0; i < 2; i++) {
+#ifdef USE_HDF5_ASYNC
+    m_progress_dset_ids[i] =
+        H5Dopen_async(m_file_id, progress_names[i], H5P_DEFAULT, m_es_id);
+#else
+    m_progress_dset_ids[i] = H5Dopen(m_file_id, progress_names[i], H5P_DEFAULT);
+#endif
+    if (m_progress_dset_ids[i] < 0) {
+      cerr << "Error opening ssioutput progress dataset " << progress_names[i]
+           << endl;
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+  }
+#endif
 }
 
 void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
@@ -364,9 +405,14 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   }
 
   ierr = H5Sclose(dataspace_id);
+  ierr = H5Sclose(window_id);
   ierr = H5Dclose(dataset_id);
 
-  H5Fflush(m_file_id, H5F_SCOPE_LOCAL);
+  ierr = H5Fflush(m_file_id, H5F_SCOPE_LOCAL);
+  if (ierr < 0) {
+    cerr << "Error flushing ssioutput z coordinates" << endl;
+    MPI_Abort(comm, ierr);
+  }
   if (debug && (myRank == 0))
     cerr << "Done writing hdf5 z coordinate: " << m_filename << endl;
 #endif
@@ -396,8 +442,10 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
 
   if (ntimestep > 0)
     m_cycle_dims[0] = ntimestep;
-  else
-    printf("Error with m_ntimestep=%d!\n", ntimestep);
+  else {
+    cerr << "Invalid ssioutput timestep count " << ntimestep << endl;
+    MPI_Abort(MPI_COMM_WORLD, -1);
+  }
 
   hsize_t my_chunk[4] = {0, 0, 0, 0};
 
@@ -434,30 +482,35 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
       total_chunk_size /= 2;
     }
 
-    H5Pset_chunk(prop_id, num_dims, my_chunk);
+    herr_t ierr = H5Pset_chunk(prop_id, num_dims, my_chunk);
+    if (ierr < 0) {
+      cerr << "Error setting ssioutput HDF5 chunk dimensions" << endl;
+      MPI_Abort(MPI_COMM_WORLD, ierr);
+    }
 
     if (myRank == 0) {
       /* if (debug && myRank == 0) { */
-      printf("SSI ouput chunk sizes:");
-      for (int i = 0; i < num_dims; i++) printf("%llu  ", my_chunk[i]);
+      printf("SSI output chunk sizes:");
+      for (int i = 0; i < num_dims; i++)
+        printf("%llu  ", (unsigned long long)my_chunk[i]);
       printf("\n");
       fflush(stdout);
     }
 
     if (compressionMode == SW4_SZIP) {
-      H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
+      ierr = H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
     } else if (compressionMode == SW4_ZLIB) {
-      H5Pset_deflate(prop_id, (int)compressionPar);
+      ierr = H5Pset_deflate(prop_id, (int)compressionPar);
     }
 #ifdef USE_ZFP
     else if (compressionMode == SW4_ZFP_MODE_RATE) {
-      H5Pset_zfp_rate(prop_id, compressionPar);
+      ierr = H5Pset_zfp_rate(prop_id, compressionPar);
     } else if (compressionMode == SW4_ZFP_MODE_PRECISION) {
-      H5Pset_zfp_precision(prop_id, (unsigned int)compressionPar);
+      ierr = H5Pset_zfp_precision(prop_id, (unsigned int)compressionPar);
     } else if (compressionMode == SW4_ZFP_MODE_ACCURACY) {
-      H5Pset_zfp_accuracy(prop_id, compressionPar);
+      ierr = H5Pset_zfp_accuracy(prop_id, compressionPar);
     } else if (compressionMode == SW4_ZFP_MODE_REVERSIBLE) {
-      H5Pset_zfp_reversible(prop_id);
+      ierr = H5Pset_zfp_reversible(prop_id);
     }
 #endif
 #ifdef USE_SZ
@@ -468,10 +521,15 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
       if (m_precision == 4) dataType = SZ_FLOAT;
       SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3],
                            m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
-      H5Pset_filter(prop_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts,
-                    cd_values);
+      ierr = H5Pset_filter(prop_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY,
+                           cd_nelmts, cd_values);
     }
 #endif
+    if (ierr < 0) {
+      cerr << "Error configuring ssioutput HDF5 compression mode "
+           << compressionMode << endl;
+      MPI_Abort(MPI_COMM_WORLD, ierr);
+    }
   }
 
   if (debug && myRank == 0) {
@@ -502,6 +560,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
         MPI_Abort(MPI_COMM_WORLD, -1);
       }
       H5Dclose(dset);
+      H5Sclose(dspace);
     }
     H5Fclose(m_file_id);
     m_file_id = 0;
@@ -520,7 +579,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   herr_t ierr;
   double write_time_start, write_time;
   int myRank;
-  int write_size = m_precision;
   m_end_cycle = cycle;  // save for header for later when we close the file
   time_t now;
 
@@ -533,8 +591,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   hid_t dtype = H5T_NATIVE_DOUBLE;
   if (m_precision == 4) dtype = H5T_NATIVE_FLOAT;
 
-  for (int i = 0; i < 4; i++) write_size *= m_window_dims[i];
-
   if (enable_timing) write_time_start = MPI_Wtime();
 
   hsize_t vel_dims = 4;
@@ -543,6 +599,8 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   buf_window_dims[1] = m_window_dims[1];
   buf_window_dims[2] = m_window_dims[2];
   buf_window_dims[3] = m_window_dims[3];
+  size_t write_size = m_precision;
+  for (int i = 0; i < 4; i++) write_size *= buf_window_dims[i];
 
   hid_t window_id = H5Screate_simple(vel_dims, buf_window_dims, NULL);
 
@@ -563,7 +621,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
     fflush(stdout);
   }
 
-  hid_t dset, dspace;
+  hid_t dspace;
   hsize_t my_size = 1;
   hsize_t num_dims = 4;
   for (int i = 0; i < vel_dims; i++) my_size *= m_window_dims[i];
@@ -582,34 +640,26 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
     }
   }
 
-  char var[100];
-  sprintf(var, "vel_%d ijk layout", comp);
-#ifdef USE_HDF5_ASYNC
-  dset = H5Dopen_async(m_file_id, var, H5P_DEFAULT, m_es_id);
-#else
-  dset = H5Dopen(m_file_id, var, H5P_DEFAULT);
-#endif
-  if (dset < 0) {
-    cerr << "Error from vel H5Dopen " << myRank << endl;
-    MPI_Abort(comm, ierr);
+  if (comp < 0 || comp >= 3 || m_vel_dset_ids[comp] < 0) {
+    cerr << "Invalid ssioutput velocity dataset for component " << comp
+         << " on rank " << myRank << endl;
+    MPI_Abort(comm, -1);
   }
 
 #ifdef USE_HDF5_ASYNC
-  ierr = H5Dwrite_async(dset, dtype, window_id, dspace, dxpl, window_array,
-                        m_es_id);
+  ierr = H5Dwrite_async(m_vel_dset_ids[comp], dtype, window_id, dspace, dxpl,
+                        window_array, m_es_id);
 #else
-  ierr = H5Dwrite(dset, dtype, window_id, dspace, dxpl, window_array);
+  ierr = H5Dwrite(m_vel_dset_ids[comp], dtype, window_id, dspace, dxpl,
+                  window_array);
 #endif
   if (ierr < 0) {
     cerr << "Error from vel H5Dwrite " << endl;
     MPI_Abort(comm, ierr);
   }
 
-#ifdef USE_HDF5_ASYNC
-  H5Dclose_async(dset, m_es_id);
-#else
-  H5Dclose(dset);
-#endif
+  H5Sclose(window_id);
+  H5Sclose(dspace);
 
   if (enable_timing) {
     time(&now);
@@ -623,9 +673,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   }
 
   H5Pclose(dxpl);
-/* #ifndef USE_HDF5_ASYNC */
-  H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
-/* #endif */
 
 #endif
   return;
@@ -637,8 +684,9 @@ void ESSI3DHDF5::write_progress(int sw4_timestep, int output_index) {
   // The progress values must never get ahead of pending velocity writes.
   size_t num_in_progress;
   hbool_t op_failed;
-  H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
-  if (op_failed) {
+  herr_t wait_ierr =
+      H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+  if (wait_ierr < 0 || op_failed) {
     cerr << "Error completing asynchronous ssioutput writes" << endl;
     MPI_Abort(MPI_COMM_WORLD, -1);
   }
@@ -655,35 +703,75 @@ void ESSI3DHDF5::write_progress(int sw4_timestep, int output_index) {
   int values[2] = {sw4_timestep, output_index};
 
   for (int i = 0; i < 2; i++) {
-    hid_t dset = H5Dopen(m_file_id, names[i], H5P_DEFAULT);
-    if (dset < 0) {
+    if (m_progress_dset_ids[i] < 0) {
       cerr << "Error opening ssioutput progress dataset " << names[i] << endl;
       MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    hid_t filespace = H5Dget_space(dset);
+    hid_t filespace = H5Dget_space(m_progress_dset_ids[i]);
+    if (filespace < 0) {
+      cerr << "Error getting ssioutput progress dataspace " << names[i]
+           << endl;
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
     if (myRank != 0) {
       H5Sselect_none(memspace);
       H5Sselect_none(filespace);
     }
     herr_t ierr =
-        H5Dwrite(dset, H5T_NATIVE_INT, memspace, filespace, dxpl, &values[i]);
+        H5Dwrite(m_progress_dset_ids[i], H5T_NATIVE_INT, memspace, filespace,
+                 dxpl, &values[i]);
     if (ierr < 0) {
       cerr << "Error writing ssioutput progress dataset " << names[i] << endl;
       MPI_Abort(MPI_COMM_WORLD, ierr);
     }
     H5Sclose(filespace);
-    H5Dclose(dset);
   }
 
   H5Sclose(memspace);
   H5Pclose(dxpl);
-  H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
+  // Progress describes a complete three-component buffer. Flush once here
+  // so velocity data and its completion markers become durable together.
+  herr_t ierr = H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
+  if (ierr < 0) {
+    cerr << "Error flushing completed ssioutput buffer" << endl;
+    MPI_Abort(MPI_COMM_WORLD, ierr);
+  }
 #endif
   return;
 }
 
 void ESSI3DHDF5::close_file() {
 #ifdef USE_HDF5
+  herr_t ierr;
+  for (int i = 0; i < 3; i++) {
+    if (m_vel_dset_ids[i] >= 0) {
+#ifdef USE_HDF5_ASYNC
+      ierr = H5Dclose_async(m_vel_dset_ids[i], m_es_id);
+#else
+      ierr = H5Dclose(m_vel_dset_ids[i]);
+#endif
+      if (ierr < 0) {
+        cerr << "Error closing ssioutput velocity dataset " << i << endl;
+        MPI_Abort(MPI_COMM_WORLD, ierr);
+      }
+      m_vel_dset_ids[i] = H5I_INVALID_HID;
+    }
+  }
+  for (int i = 0; i < 2; i++) {
+    if (m_progress_dset_ids[i] >= 0) {
+#ifdef USE_HDF5_ASYNC
+      ierr = H5Dclose_async(m_progress_dset_ids[i], m_es_id);
+#else
+      ierr = H5Dclose(m_progress_dset_ids[i]);
+#endif
+      if (ierr < 0) {
+        cerr << "Error closing ssioutput progress dataset " << i << endl;
+        MPI_Abort(MPI_COMM_WORLD, ierr);
+      }
+      m_progress_dset_ids[i] = H5I_INVALID_HID;
+    }
+  }
+
   // Updated header with final start,end cycle
   /* hsize_t dim = 2; */
   /* hid_t dataspace_id = H5Screate_simple(1, &dim, NULL); */
@@ -698,10 +786,14 @@ void ESSI3DHDF5::close_file() {
   /* ierr = H5Sclose(dataspace_id); */
 
 #ifdef USE_HDF5_ASYNC
-  H5Fclose_async(m_file_id, m_es_id);
+  ierr = H5Fclose_async(m_file_id, m_es_id);
 #else
-  H5Fclose(m_file_id);
+  ierr = H5Fclose(m_file_id);
 #endif
+  if (ierr < 0) {
+    cerr << "Error closing ssioutput file " << m_filename << endl;
+    MPI_Abort(MPI_COMM_WORLD, ierr);
+  }
   m_file_id = 0;
 
 #endif
@@ -712,8 +804,20 @@ void ESSI3DHDF5::finalize_hdf5() {
 #ifdef USE_HDF5_ASYNC
   size_t num_in_progress;
   hbool_t op_failed;
-  if (m_es_id > 0)
-    H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+  if (m_es_id > 0) {
+    herr_t ierr =
+        H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+    if (ierr < 0 || op_failed) {
+      cerr << "Error completing asynchronous ssioutput operations" << endl;
+      MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+    ierr = H5ESclose(m_es_id);
+    if (ierr < 0) {
+      cerr << "Error closing asynchronous ssioutput event set" << endl;
+      MPI_Abort(MPI_COMM_WORLD, ierr);
+    }
+    m_es_id = 0;
+  }
 #endif
   return;
 }

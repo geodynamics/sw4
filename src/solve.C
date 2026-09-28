@@ -1510,6 +1510,34 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // Write check point, if requested (timeToWrite returns false if
     // checkpointing is not used)
     if (m_check_point->timeToWrite(t, currentTimeStep, mDt)) {
+      // Output through this cycle must be durable before the checkpoint can
+      // advertise a restart point, including a partial SSI buffer.
+      for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+        mESSI3DFiles[i3]->flush_pending(currentTimeStep);
+      double time_chkpt_timeseries = MPI_Wtime();
+      for (int ts = 0; ts < a_TimeSeries.size(); ts++)
+        a_TimeSeries[ts]->writeFile();
+#ifdef USE_HDF5
+      MPI_Barrier(MPI_COMM_WORLD);
+      for (map<string, vector<TimeSeries*> >::iterator it =
+               hdf5TimeSeries.begin();
+           it != hdf5TimeSeries.end(); ++it) {
+        hid_t* fid = it->second[0]->getFidPtr();
+        CHECK_INPUT(fid && *fid > 0 && H5Fflush(*fid, H5F_SCOPE_GLOBAL) >= 0,
+                    "Could not flush receiver HDF5 file before checkpoint: "
+                        << it->first);
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+#endif
+      double time_chkpt_timeseries_tmp = MPI_Wtime() - time_chkpt_timeseries;
+      if (m_output_detailed_timing) {
+        MPI_Allreduce(&time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1,
+                      MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        if (m_myRank == 0)
+          cout << "Wallclock time to write all checkpoint time series files "
+               << time_chkpt_timeseries << " seconds " << endl;
+      }
+
       double time_chkpt = MPI_Wtime();
 #ifndef SW4_USE_SCR
       if (!m_check_point->useHDF5())
@@ -1538,19 +1566,6 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         if (m_myRank == 0)
           cout << "Wallclock time to write check point file " << time_chkpt
                << " seconds " << endl;
-      }
-      // Force write all the TimeSeries files for restart
-      double time_chkpt_timeseries = MPI_Wtime();
-      for (int ts = 0; ts < a_TimeSeries.size(); ts++) {
-        a_TimeSeries[ts]->writeFile();
-      }
-      double time_chkpt_timeseries_tmp = MPI_Wtime() - time_chkpt_timeseries;
-      if (m_output_detailed_timing) {
-        MPI_Allreduce(&time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1,
-                      MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        if (m_myRank == 0)
-          cout << "Wallclock time to write all checkpoint time series files "
-               << time_chkpt_timeseries << " seconds " << endl;
       }
     }
 

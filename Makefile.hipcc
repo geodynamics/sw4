@@ -25,6 +25,8 @@
 # Do not make changes below this line (don't blame us if you do!)
 #-----------------------------------------------------------------------
 
+.DEFAULT_GOAL := sw4
+
 ifeq ($(debug),yes)
    optlevel = DEBUG
 else
@@ -223,6 +225,11 @@ endif
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
+
+# Compiler and dependency paths come from the included configuration file.
+# Rebuild objects when either makefile changes so stale objects are not linked
+# against a different version of an external library.
+$(FSW4) $(FOBJ): $(MAKEFILE_LIST)
 
 # prefix
 ifeq ($(raja_cuda),yes)
