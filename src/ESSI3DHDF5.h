@@ -52,10 +52,14 @@ class ESSI3DHDF5 {
   void create_file(bool is_restart, bool is_root);
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
-                    double (&origin)[3], int cycle, double t, double dt);
+                    double (&origin)[3], int cycle, double t, double dt,
+                    double output_timestep);
+  void ensure_progress_datasets();
   void write_topo(void* window_array);
 
+  void open_output_datasets();
   void write_vel(void* window_array, int comp, int cycle, int nstep);
+  void write_progress(int sw4_timestep, int output_index);
 
   void init_write_vel(bool m_isRestart, int ntimestep, int ZFPmode,
                       double ZFPpar, int dumpInterval);
@@ -84,6 +88,8 @@ class ESSI3DHDF5 {
 
   hid_t m_file_id;
   hid_t m_es_id;
+  hid_t m_vel_dset_ids[3];
+  hid_t m_progress_dset_ids[2];
 #endif  // def USE_HDF5
 };
 

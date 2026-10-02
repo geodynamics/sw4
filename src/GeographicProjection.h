@@ -59,6 +59,9 @@ class GeographicProjection
    PJ *m_P;
    PJ *m_Pgmg;
 #endif
+   std::string m_geographic_crs;
+   std::string m_gmg_crs_from_cache;
+   std::string m_gmg_crs_to_cache;
    double m_xoffset, m_yoffset, m_az, m_deg2rad;
 };
 

@@ -239,14 +239,19 @@ main(int argc, char **argv)
 #ifdef USE_HDF5
         myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
         if( ts == GlobalTimeSeries[0].size()-1) {
-	  GlobalTimeSeries[0][ts]->closeHDF5File();
-
           MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
           if( myRank == 0 )
             cout << "  ==> Max wallclock time to write time-series data is " << allWriteTime << " seconds." << endl;
         }
 #endif
       }
+
+#ifdef USE_HDF5
+      // Close each output file's shared handle after all receivers are written.
+      for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
+        if (GlobalTimeSeries[0][ts]->getUseHDF5())
+          GlobalTimeSeries[0][ts]->closeHDF5File();
+#endif
 
       if( myRank == 0 )
       {

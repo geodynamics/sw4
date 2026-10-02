@@ -103,6 +103,7 @@ class MaterialGMG : public MaterialData
  
     bool m_use_attenuation;
     int m_npatches;
+    int m_idx_rho, m_idx_vp, m_idx_vs, m_idx_qp, m_idx_qs;
     double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;
     char *m_CRS;
 #ifdef USE_HDF5
@@ -110,6 +111,7 @@ class MaterialGMG : public MaterialData
 #else
     size_t m_Top_dims[2];
 #endif
+    double m_Top_hx, m_Top_hy;
     float* m_Top_surface;
     vector<double> m_hv, m_hh, m_ztop;
     vector<int> m_ni, m_nj, m_nk, m_nc;
