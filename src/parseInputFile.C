@@ -2966,9 +2966,13 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
    //      i++;
    if( buf == "//:::." )
    {
-      float fsec;
+      double fsec;
       //      cout << "x" << datestr << "x" << endl;
-      sscanf(datestr,"%d/%d/%d:%d:%d:%f",&month,&day,&year,&hour,&minute,&fsec);
+      if(sscanf(datestr,"%d/%d/%d:%d:%d:%lf",&month,&day,&year,&hour,&minute,&fsec)!=6 ||
+         !std::isfinite(fsec)) {
+         fail=1;
+         return;
+      }
       //      cout << " mon " << month << " day " << day << " year " << year << endl;
       //      cout << " hour " << hour<< " minute " << minute << " fsec = " << fsec << endl;
       if( year < 1000 || year > 3000 )

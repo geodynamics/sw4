@@ -117,7 +117,7 @@ def main():
            for orientation in (0,1) for downsample in (1,3) for topo in (False,True)]
     cases += [(mode,0,1,False) for mode in ('div','curl','strains','displacementgradient')]
     cases = [(*case, '234567') for case in cases]
-    cases += [('displacement',0,1,False,fraction) for fraction in ('000123','999999')]
+    cases += [('displacement',0,1,False,fraction) for fraction in ('000123','999999','59.234567','59.999999')]
     for mode,orientation,downsample,topo,fraction in cases:
         name=f'{mode}-nsew{orientation}-ds{downsample}-topo{int(topo)}-utc{fraction}'
         directory=root/name;directory.mkdir(exist_ok=True)
@@ -125,7 +125,8 @@ def main():
             group=stream.create_group('station');group['STX,STY,STZ']=[1800.,1800.,200.]
             group['ISNSEW']=np.array([orientation],dtype=np.int32);group['USEZVALUE']=np.array([1],dtype=np.int32)
         text='grid h=100 x=4000 y=4000 z=4000 lat=37 lon=-122 az=27\n'
-        text+=f'time t=0.5 utcstart=10/02/2026:01:02:03.{fraction}\nsupergrid gp=8\nfileio path=output\ndeveloper cfl=0.8\n'
+        seconds=fraction if '.' in fraction else f'03.{fraction}'
+        text+=f'time t=0.5 utcstart=10/02/2026:01:02:{seconds}\nsupergrid gp=8\nfileio path=output\ndeveloper cfl=0.8\n'
         if topo:
             text+='topography input=gaussian zmax=2000 order=4 gaussianAmp=100 gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500\n'
         text+='block vp=6000 vs=3464 rho=2700\nsource x=1600 y=1600 z=600 mxy=1e15 t0=0.05 freq=20 type=Gaussian\n'
@@ -141,6 +142,12 @@ def main():
         if result.returncode:raise RuntimeError(f'Solver failed: {directory}/run.log')
         check_solver_log(directory/'run.log')
         report[name]=check(directory,mode,orientation,downsample)
+        with h5py.File(directory/'output/receivers.h5') as stream:
+            stamp=stream.attrs['DATETIME']
+            if isinstance(stamp,bytes):stamp=stamp.decode()
+            expected=datetime.strptime(f'10/02/2026:01:02:{seconds}','%m/%d/%Y:%H:%M:%S.%f')
+            if datetime.fromisoformat(stamp)!=expected:
+                raise ValueError(f'Output reference UTC does not match input: {stamp}, expected {expected}')
         if args.reader:
             # The native reader executable runs on CPUs even for GPU-written files.
             reader_command=['srun','--exclusive','--exact','--gres=none','-N','1','-n',str(args.tasks),'-c','4',
