@@ -2587,4 +2587,3 @@ c$$$     *                bc*bforce_rhs(3,i,j) - dc*met(4,i,j,k)*m4sg )
 !$OMP END DO
 !$OMP END PARALLEL
       end
-

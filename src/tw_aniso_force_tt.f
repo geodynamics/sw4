@@ -1376,4 +1376,3 @@ c extract all the phase angles for the stress matrix
 !$OMP END PARALLEL
       return
       end
-

@@ -346,4 +346,3 @@ c s=6
       enddo
 !$OMP END PARALLEL
       end
-

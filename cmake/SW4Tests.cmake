@@ -35,20 +35,20 @@ SET(TEST_IN_FILES   flat-twi-1.in          flat-twi-2.in       flat-twi-3.in
                     lamb-1.in              lamb-2.in           lamb-3.in
                     pointsource-sg-1.in    pointsource-sg-2.in pointsource-sg-3.in)
 
-SET(TEST_BASE_FILES TwilightErr            TwilightErr             TwilightErr    
-                    TwilightErr            TwilightErr             TwilightErr    
-                    TwilightErr            TwilightErr             TwilightErr    
-                    TwilightErr            TwilightErr             TwilightErr    
-                    TwilightErr            TwilightErr             TwilightErr    
+SET(TEST_BASE_FILES TwilightErr            TwilightErr             TwilightErr
+                    TwilightErr            TwilightErr             TwilightErr
+                    TwilightErr            TwilightErr             TwilightErr
+                    TwilightErr            TwilightErr             TwilightErr
+                    TwilightErr            TwilightErr             TwilightErr
                     TwilightErr            TwilightErr             TwilightErr
                     LambErr                LambErr                 LambErr
                     PointSourceErr         PointSourceErr          PointSourceErr)
 
-SET(TEST_CHECKS     compare             compare                 compare 
-                    compare             compare                 compare 
-                    compare             compare                 compare 
-                    compare             compare                 compare 
-                    compare             compare                 compare 
+SET(TEST_CHECKS     compare             compare                 compare
+                    compare             compare                 compare
+                    compare             compare                 compare
+                    compare             compare                 compare
+                    compare             compare                 compare
 		    compare             compare                 compare
                     compare             compare                 compare
                     compare             compare                 compare)
@@ -125,4 +125,3 @@ FOREACH(TEST_IND RANGE ${NUM_TESTS})
             )
     ENDIF (NOT ${TESTING_LEVEL} LESS ${TEST_LEVEL})
 ENDFOREACH(TEST_IND RANGE ${NUM_AUTO_TESTS})
-

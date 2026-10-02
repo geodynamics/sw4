@@ -808,68 +808,18 @@ void TimeSeries::writeFile( string suffix )
 
   stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#ifdef USE_HDF5
-  // Open the output HDF5 file if not already opened
-  std::string h5fname, fidName;
-  hid_t fid, grp = 0;
-  double stlalodp[3], stxyz[3];
-  float origintime;
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-
-  // create a new function to write metadata only
-  if (m_hdf5Format) {
-    /* if (myRank == 0) { */
-    /*   printf("Writing station timeseries data\n", myRank, m_staName.c_str());
-     */
-    /*   fflush(stdout); */
-    /* } */
-    fid = openHDF5File(suffix);
-
-    if (fid <= 0)
-      printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank,
-             __func__, filePrefix.str().c_str());
-    else {
-      grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
-      if (grp < 0)
-        printf("TimeSeries::writeFile Error opening group [%s]\n",
-               m_staName.c_str());
-
-      if (grp > 0 && !m_isMetaWritten) {
-        stlalodp[0] = double(m_rec_lat);
-        stlalodp[1] = double(m_rec_lon);
-        stlalodp[2] = double(m_sta_z);
-
-        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
-
-        stxyz[0] = double(mX);
-        stxyz[1] = double(mY);
-        stxyz[2] = double(m_sta_z);
-        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
-
-        origintime = float(m_epi_time_offset);
-        openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
-
-        m_isMetaWritten = true;
-      }
-    }
-  }
-
-#endif
-
-  // Write out displacement components (ux, uy, uz)
-
-
-#else // SW4 backend
 #ifdef USE_HDF5
   // Open the output HDF5 file if not already opened
   std::string h5fname, fidName;
   hid_t fid, grp = 0;
   double stlalodp[3], stxyz[3], dist;
-  float origintime, windows[4];
+  float origintime;
   int myRank;
+#if defined(SW4_USE_RAJA)
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+#else
   MPI_Comm_rank(m_ew->m_1d_communicator, &myRank);
+#endif
 
   // create a new function to write metadata only
   if( m_hdf5Format )
@@ -928,7 +878,7 @@ void TimeSeries::writeFile( string suffix )
 // Write out displacement components (ux, uy, uz)
 
 
-#endif // SW4 backend
+
 if( m_sacFormat || m_hdf5Format)
   {
     string mode = "ASCII";

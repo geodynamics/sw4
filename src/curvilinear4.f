@@ -1287,4 +1287,3 @@ c          lu(3,i,j,k) = r1*ijac
 !$OMP ENDDO
 !$OMP END PARALLEL
       end
-

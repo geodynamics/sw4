@@ -60,6 +60,9 @@ code is shared; `SW4_USE_RAJA` selects sections that differ between the
 implementations. CMake applies this definition only to GPU targets. It is not
 a runtime option and is not a request to run RAJA OpenMP on CPU.
 
+The CPU implementation is the reference for shared SW4 behavior unless evidence
+shows it is incorrect. Changes to numerical behavior require scientific review.
+
 Native and RAJA source manifests are explicit in `cmake/SW4Sources.cmake`.
 Native material inversion sources are retained. GPU-only kernels, policies,
 allocation and profiling helpers, and legacy Fortran kernels are retained.
@@ -85,6 +88,10 @@ python tests/backends/run_hdf5.py --backend OPENMP \
 python tests/backends/run_hdf5.py --backend CUDA \
   --sw4 build/cuda/bin/sw4 --work-dir "$SCRATCH/sw4-tests/cuda"
 
+python tests/backends/compare_waveforms.py \
+  --cpu build/openmp/bin/sw4 --gpu build/cuda/bin/sw4 \
+  --work-dir "$SCRATCH/sw4-tests/comparison"
+
 cmake --build build/cuda --target sw4_cuda_compat
 srun -n 1 --gpus-per-task=1 build/cuda/bin/sw4_cuda_compat
 ```
@@ -94,3 +101,14 @@ restart-output-offset and compressed SSI regression scripts. It preserves
 logs, rejects skips, and supplies GPU launch bindings without editing those
 scripts. Run the existing solver suite separately on each backend. Preserve
 inputs, compiler options, and output identity when comparing CPU and GPU runs.
+
+The waveform driver checks inline and Sfile materials, topography station
+placement, attenuation, mesh refinement, and text/HDF5 ruptures. It generates
+its inputs and retains logs and a JSON comparison report. Select individual
+cases with repeated `--case` arguments. Waveforms must be finite and nonzero;
+the maximum difference for each component must not exceed
+`atol + rtol * max(abs(cpu_waveform))`. Defaults are `rtol=2e-5` and
+`atol=1e-12`; these are regression thresholds, not a general scientific
+acceptance criterion. Requested and sampled station positions are also checked.
+SRF coordinates in the fixture are exactly representable in single precision,
+so the HDF5 converter's float32 storage does not move the test sources.

@@ -13,12 +13,12 @@ set(SW4_NATIVE_CXX_SOURCES src/EW.C src/Sarray.C src/version.C src/parseInputFil
     src/sachdf5.C src/readhdf5.C src/TestTwilight.C src/TestPointSource.C src/curvilinear4sgwind.C
     src/TestEcons.C src/GridGenerator.C src/GridGeneratorGeneral.C src/GridGeneratorGaussianHill.C
     src/CurvilinearInterface2.C src/SfileOutput.C src/pseudohess.C src/fastmarching.C src/solveTT.C
-    src/rhs4th3point.C src/MaterialGMG.C src/addsgdc.C src/bcfortc.C src/bcfortanisgc.C 
-    src/bcfreesurfcurvanic.C src/boundaryOpc.C src/energy4c.C src/checkanisomtrlc.C src/computedtanisoc.C 
-    src/curvilinear4sgc.C src/gradientsc.C src/randomfield3dc.C src/innerloop-ani-sgstr-vcc.C 
-    src/ilanisocurvc.C src/rhs4curvilinearc.C src/rhs4curvilinearsgc.C src/rhs4th3fortc.C src/solerr3c.C 
-    src/testsrcc.C src/rhs4th3windc.C src/tw_aniso_forcec.C src/tw_aniso_force_ttc.C src/velsumc.C 
-    src/twilightfortc.C src/twilightsgfortc.C src/tw_ani_stiffc.C src/anisomtrltocurvilinearc.C 
+    src/rhs4th3point.C src/MaterialGMG.C src/addsgdc.C src/bcfortc.C src/bcfortanisgc.C
+    src/bcfreesurfcurvanic.C src/boundaryOpc.C src/energy4c.C src/checkanisomtrlc.C src/computedtanisoc.C
+    src/curvilinear4sgc.C src/gradientsc.C src/randomfield3dc.C src/innerloop-ani-sgstr-vcc.C
+    src/ilanisocurvc.C src/rhs4curvilinearc.C src/rhs4curvilinearsgc.C src/rhs4th3fortc.C src/solerr3c.C
+    src/testsrcc.C src/rhs4th3windc.C src/tw_aniso_forcec.C src/tw_aniso_force_ttc.C src/velsumc.C
+    src/twilightfortc.C src/twilightsgfortc.C src/tw_ani_stiffc.C src/anisomtrltocurvilinearc.C
     src/scalar_prodc.C src/updatememvarc.C src/addsg4windc.C src/bndryOpNoGhostc.C src/rhs4th3windc2.C
    )
 

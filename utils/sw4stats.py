@@ -27,7 +27,7 @@ def main():
     sample="Jun 23 15:59:03 2022"
     s2="Thu Jun 23 16:07:42 2022"
     pattern = "%m %d %H:%M:%S %Y"
-    
+
     i1=time.strptime(s2)
     epoch = int(time.mktime(time.strptime(s2)))
     count=0
@@ -75,7 +75,7 @@ def main():
                     timestep.append(int(t))
                     if count==1:
                         step=int(data[2])-laststep
-                    
+
                 last=epoch
                 laststep=int(data[2])
                 count=count+1

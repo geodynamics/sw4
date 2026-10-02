@@ -159,4 +159,3 @@ c s=6
       endif
 !$OMP END PARALLEL
       end
-

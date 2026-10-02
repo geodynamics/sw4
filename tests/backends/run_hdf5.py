@@ -38,7 +38,7 @@ def main():
         wrapper = launch / 'srun'
         extra = ['--exclusive', '--exact']
         if args.backend != 'OPENMP':
-            extra += ['--gpus-per-task=1', '--gpu-bind=closest']
+            extra += ['--gpus-per-task=1', '--gpu-bind=single:1']
         wrapper.write_text('#!/bin/sh\nexec ' + shlex.join([real_srun, *extra]) + ' "$@"\n')
         wrapper.chmod(0o755)
         env['PATH'] = str(launch) + os.pathsep + env.get('PATH', '')

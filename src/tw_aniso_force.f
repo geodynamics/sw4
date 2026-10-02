@@ -1629,5 +1629,3 @@ c the do loops should span jfirst,jlast and ifirst,ilast
 !$OMP ENDDO
 !$OMP END PARALLEL
       end
-
-
