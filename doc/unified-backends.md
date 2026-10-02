@@ -27,6 +27,8 @@ the current installed packages; `SW4_GPU_CXX_STANDARD` can select the standard
 required by an older dependency installation. CUDA architecture selection
 uses CMake's standard `CMAKE_CUDA_ARCHITECTURES`; HIP uses
 `CMAKE_HIP_ARCHITECTURES`. HIP configuration requires CMake 3.21 or newer.
+CUDA defaults its host compiler to `CMAKE_CXX_COMPILER` before enabling CUDA;
+an explicit `CMAKE_CUDA_HOST_COMPILER` or `CUDAHOSTCXX` takes precedence.
 The retained RAJA implementation uses double precision. Native builds can
 select `SW4_PRECISION=single` as well as the default `double`.
 
@@ -152,16 +154,22 @@ override because it can violate the one-definition rule. `SW4_GPU_MPI_BUFFERS` s
 `STAGED` (host-staged, default for both GPU presets) or `MANAGED` (the legacy
 HIP Make setting). Staged validation uses `MPICH_GPU_SUPPORT_ENABLED=0`.
 Managed buffers require a compatible memory/MPI transport configuration; the
-CUDA curvilinear interface explicitly requires GPU-aware MPI in that mode. HIP builds omit
-CUDA/NVML and disable legacy roctracer instrumentation. The old Make config's
-optional SCR, Caliper, HPCToolkit and site-specific GPU-aware MPI transport
-libraries are not mandatory CMake dependencies. Their instrumentation is not
-enabled by these presets. HIP compilation and runtime acceptance must be
+CUDA curvilinear interface explicitly requires GPU-aware MPI in that mode.
+For Cray GPU-aware MPI, set `SW4_GPU_MPI_TRANSPORT_LIBRARY` to the full path of
+`libmpi_gtl_cuda.so` or `libmpi_gtl_hsa.so`, as appropriate. CMake retains this
+indirectly loaded library in the link and adds its directory to the build RPATH.
+It is optional for staged runs with `MPICH_GPU_SUPPORT_ENABLED=0`; native builds
+do not discover or link GPU transport libraries. This reproduces the Frontier
+Make configuration's HSA transport link without hardcoding a site installation.
+HIP builds omit CUDA/NVML and disable legacy roctracer instrumentation. The old
+Make config's optional SCR, Caliper and HPCToolkit instrumentation is disabled
+by these presets. HIP compilation and runtime acceptance must be
 completed on a ROCm system; Perlmutter has no HIP toolchain.
 
 Per-array CUDA prefetch is disabled by default, matching the working RAJA
-Make build. Enabling `SW4_CUDA_ARRAY_PREFETCH` is experimental: the existing
-implementation targets device zero and stalled the refinement regression.
+Make build. Enabling `SW4_CUDA_ARRAY_PREFETCH` is experimental: the legacy
+raw-pointer helper targets device zero, and prefetch is outside the accepted
+configuration.
 `SW4_CUDA_POOL_PREFETCH=ON` separately enables the existing Umpire pool prefetch
 before time stepping and requires Umpire. Neither option changes the numerical
 kernels. CMake preserves ordinary floating-point compilation; it does not

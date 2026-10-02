@@ -77,7 +77,14 @@ def main():
         p.error('Invalid repeats or acceptance threshold')
     if not os.environ.get('SLURM_JOB_ID'):
         p.error('An existing four-node Slurm allocation is required')
+    job_id = os.environ['SLURM_JOB_ID']
+    job_info = subprocess.check_output(['scontrol', 'show', 'job', '-o', job_id], text=True)
+    allocated_nodes = re.search(r'\bNumNodes=(\d+)', job_info)
+    allocation_node_list = re.search(r'\bNodeList=(\S+)', job_info)
+    if not allocated_nodes or int(allocated_nodes.group(1)) < 4 or not allocation_node_list:
+        p.error('The selected Slurm job must have at least four allocated nodes')
     executables = {key: getattr(args, key).resolve(strict=True) for key in ('baseline', 'candidate')}
+    executable_hashes = {key: digest(exe) for key, exe in executables.items()}
     model, source = args.model.resolve(strict=True), args.input.resolve(strict=True)
     if any(c.isspace() for c in str(model)):
         p.error('SW4 model paths must not contain whitespace')
@@ -87,7 +94,9 @@ def main():
     common = {'source_input_sha256': digest(source), 'relocated_input_sha256': hashlib.sha256(text.encode()).hexdigest(),
               'model': str(model), 'model_size': model.stat().st_size, 'model_mtime_ns': model.stat().st_mtime_ns,
               'nodes': 4, 'tasks': 16, 'tasks_per_node': 4, 'cpus_per_task': 4, 'gpus_per_task': 1,
-              'omp_threads': 1, 'mpi_gpu_support': 0}
+              'omp_threads': 1, 'mpi_gpu_support': 0,
+              'omp_proc_bind': os.environ.get('OMP_PROC_BIND'),
+              'omp_places': os.environ.get('OMP_PLACES')}
     records = {}
     for i in range(args.repeats):
         order = ('baseline', 'candidate') if i % 2 == 0 else ('candidate', 'baseline')
@@ -95,7 +104,9 @@ def main():
             if args.only and key != args.only:
                 continue
             exe = executables[key]
-            identity = dict(common, executable=str(exe), executable_sha256=digest(exe))
+            if digest(exe) != executable_hashes[key]:
+                raise ValueError(f'Executable changed during profiling: {exe}')
+            identity = dict(common, executable=str(exe), executable_sha256=executable_hashes[key])
             directory = work / f'{key}-{i}'
             record_file = directory / 'result.json'
             if args.resume and record_file.exists():
@@ -124,8 +135,10 @@ def main():
                     raise RuntimeError(f'Incomplete SW4 run: {directory / "run.log"}')
                 waveform = directory / 'output/sta1.txt'
                 compare(waveform, waveform, args.rtol, args.atol)
-                record = {'identity': identity, 'job_id': os.environ['SLURM_JOB_ID'],
-                          'node_list': os.environ.get('SLURM_JOB_NODELIST'), 'command': command,
+                record = {'identity': identity, 'job_id': job_id,
+                          'allocation_node_list': allocation_node_list.group(1),
+                          'node_list': allocation_node_list.group(1) if int(allocated_nodes.group(1)) == 4 else None,
+                          'command': command,
                           'wall_seconds': wall, 'solver_seconds': 3600 * int(match.group(1) or 0) + 60 * int(match.group(2) or 0) + float(match.group(3)),
                           'waveform_sha256': digest(waveform)}
                 record_file.write_text(json.dumps(record, indent=2) + '\n')
