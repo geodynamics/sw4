@@ -581,16 +581,22 @@ make_type(send_type1, bufs_type1, nj * nk, m_ppadding, ni, nk,
                       &m_send_type3[2 * g]);
       MPI_Type_vector(nk, 3 * m_ppadding * ni, 3 * ni * nj, m_mpifloat,
                       &m_send_type3[2 * g + 1]);
+      make_type(send_type3, bufs_type3, nj * nk, 3 * m_ppadding, 3 * ni,
+                nk, 3 * m_ppadding * ni, 3 * ni * nj, g);
 
       MPI_Type_vector(nj * nk, 4 * m_ppadding, 4 * ni, m_mpifloat,
                       &m_send_type4[2 * g]);
       MPI_Type_vector(nk, 4 * m_ppadding * ni, 4 * ni * nj, m_mpifloat,
                       &m_send_type4[2 * g + 1]);
+      make_type(send_type4, bufs_type4, nj * nk, 4 * m_ppadding, 4 * ni,
+                nk, 4 * m_ppadding * ni, 4 * ni * nj, g);
 
       MPI_Type_vector(nj * nk, 21 * m_ppadding, 21 * ni, m_mpifloat,
                       &m_send_type21[2 * g]);
       MPI_Type_vector(nk, 21 * m_ppadding * ni, 21 * ni * nj, m_mpifloat,
                       &m_send_type21[2 * g + 1]);
+      make_type(send_type21, bufs_type21, nj * nk, 21 * m_ppadding, 21 * ni,
+                nk, 21 * m_ppadding * ni, 21 * ni * nj, g);
     }
 
 #else // SW4 backend
@@ -1331,8 +1337,8 @@ void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
   // u.forceprefetch();
   // u.prefetch(cudaCpuDeviceId);
-  REQUIRE2(u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
-           "Communicate array, only implemented for nc=1,3, and 4 "
+  REQUIRE2(u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4 || u.m_nc == 21,
+           "Communicate array, only implemented for nc=1,3,4, and 21 "
                << " nc = " << u.m_nc);
   int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb,
       kb = u.m_kb;  //,ke=u.m_ke;
@@ -1449,7 +1455,6 @@ void EW::communicate_array_async(Sarray& u, int grid) {
                     &status);
     }
   } else if (u.m_nc == 21) {
-    std::cerr << "WARNING:: untested u.m_nc=21 branch being used \n";
     int xtag1 = 345;
     int xtag2 = 346;
     int ytag1 = 347;

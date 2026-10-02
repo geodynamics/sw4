@@ -6,6 +6,7 @@ No tests are registered with pytest/CTest. Existing suites remain unchanged.
 """
 import argparse
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -46,9 +47,16 @@ def cases(root):
     # Both sides of the Cartesian interface, including fractional locations.
     refinement=GRID.replace('h=200','h=100')+common.replace('gp=4','gp=8')
     refinement+='refinement zmax=2000\ndeveloper ctol=1e-10 cmaxit=400 crelax=0.2\n'+block
-    for depth in (1747,1847,1947,2047,2247,2447):
+    coarse_h=float(re.search(r'h=([0-9.]+)',GRID)[1])
+    fine_h=coarse_h/2
+    interface=2000.
+    fine_nz=round(interface/fine_h)+1
+    depths=[(kc-1+.46)*fine_h for kc in (fine_nz-3,fine_nz-2,fine_nz-1,fine_nz-6)]
+    depths += [interface+(kc-1+.47)*coarse_h for kc in (1,2,3,6)]
+    depths += [interface+epsilon for epsilon in (-1e-7,0.,1e-7)]
+    for depth in depths:
         for kind,source in (('force','fx=1e10 fy=2e10 fz=-5e9'),('moment','mxy=1e15 mxz=2e15 myy=5e14')):
-            inputs[f'interface-{kind}-z{depth}']=refinement+f'source x=1637 y=1643 z={depth} '+source+' type=Gaussian freq=20 t0=0.05\n'+RECEIVERS
+            inputs[f'interface-{kind}-z{depth:.10g}']=refinement+f'source x=1637 y=1643 z={depth} '+source+' type=Gaussian freq=20 t0=0.05\n'+RECEIVERS
     inputs['low-vp-vs']=GRID+common+'block vp=3540 vs=3000 rho=2700\n'+position+'mxy=1e15 type=Gaussian freq=20 t0=0.05\n'+RECEIVERS
     # Isotropic stiffness represented through the anisotropic operator.
     rho=2700; mu=rho*3464**2;lam=rho*6000**2-2*mu
@@ -68,6 +76,21 @@ def cases(root):
     return inputs
 
 
+
+def interface_selection(name, log):
+    depth=float(name.split('-z')[1])
+    grids={int(g):(float(h),int(nz)) for g,h,nz in
+           re.findall(r'^\s*(\d+)\s+(\S+)\s+\d+\s+\d+\s+(\d+)\s+\d+\s+Cartesian\s*$',log.read_text(),re.MULTILINE)}
+    if set(grids)!={0,1}:raise ValueError('Unexpected actual refinement grids')
+    fine_h,fine_nz=grids[1];coarse_h,coarse_nz=grids[0]
+    interface=(fine_nz-1)*fine_h
+    if interface!=2000 or coarse_h!=2*fine_h:raise ValueError('Actual grids differ from source sweep')
+    g=0 if depth>=interface else 1
+    h,nz=grids[g];zmin=interface if g==0 else 0.
+    kc=max(1,min(int(np.floor((depth-zmin)/h+1)),nz-1))
+    return {'grid':g,'kc':kc,'Nz':nz,'h':h,'depth':depth}
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--cpu',type=Path,required=True)
@@ -78,15 +101,20 @@ def main():
     args=parser.parse_args()
     root=args.work_dir.resolve();root.mkdir(parents=True,exist_ok=True)
     report={}
+    coverage={}
     for name,text in cases(root).items():
         if args.case and not any(name.startswith(prefix) for prefix in args.case):continue
         # Interface receivers observe meaningful arrivals on both grids.
         coordinates=[('station',(1800,1800,1600)),('edge',(1800,1800,2800))]
         native=run(args.cpu.resolve(strict=True),root/name/'cpu',text,args.tasks,False,coordinates)
         if name=='event-default-paths':native=root/name/'cpu/receivers.h5'
+        if name.startswith('interface-'):
+            coverage[name]=interface_selection(name,root/name/'cpu/run.log')
         if args.gpu:
             gpu=run(args.gpu.resolve(strict=True),root/name/'gpu',text,args.tasks,True,coordinates)
             if name=='event-default-paths':gpu=root/name/'gpu/receivers.h5'
+            if name.startswith('interface-') and interface_selection(name,root/name/'gpu/run.log')!=coverage[name]:
+                raise ValueError('Backend source grid/stencil selections differ')
             report[name]=compare(native,gpu,2e-5,1e-12,arrival_after=.15)
         else:
             report[name]=compare(native,native,2e-5,1e-12,arrival_after=.15)
@@ -94,6 +122,7 @@ def main():
         # A generous ceiling prevents matching unstable traces from passing.
         if max(item['reference_peak'] for item in report[name].values()) > 1e3:
             raise ValueError(f'Unphysical displacement in fixed regression fixture: {name}')
+        (root/'interface-coverage.json').write_text(json.dumps(coverage,indent=2)+'\n')
         (root/'comparison.json').write_text(json.dumps(report,indent=2)+'\n')
         print('PASS:',name,flush=True)
     # Check the independent isotropic limit for each backend that was executed.

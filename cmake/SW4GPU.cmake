@@ -62,8 +62,9 @@ file(GENERATE OUTPUT "${PROJECT_BINARY_DIR}/gpu_sources/main.${SW4_GPU_SUFFIX}"
   CONTENT "#include \"${PROJECT_SOURCE_DIR}/src/main.C\"\n")
 set_source_files_properties("${PROJECT_BINARY_DIR}/gpu_sources/main.${SW4_GPU_SUFFIX}"
   PROPERTIES LANGUAGE ${SW4_GPU_LANGUAGE})
-add_executable(sw4 "${PROJECT_BINARY_DIR}/gpu_sources/main.${SW4_GPU_SUFFIX}"
-  ${SW4_GPU_SOURCES} ${SW4_QUADPACK_SOURCES})
+add_library(sw4_gpu STATIC ${SW4_GPU_SOURCES} ${SW4_QUADPACK_SOURCES})
+add_executable(sw4 "${PROJECT_BINARY_DIR}/gpu_sources/main.${SW4_GPU_SUFFIX}")
+target_link_libraries(sw4 PRIVATE sw4_gpu)
 if(TARGET RAJA::RAJA)
   set(SW4_RAJA_TARGET RAJA::RAJA)
 elseif(TARGET RAJA)
@@ -71,7 +72,7 @@ elseif(TARGET RAJA)
 else()
   message(FATAL_ERROR "RAJA package exports neither RAJA::RAJA nor RAJA")
 endif()
-target_link_libraries(sw4 PRIVATE sw4_dependencies ${SW4_RAJA_TARGET})
+target_link_libraries(sw4_gpu PUBLIC sw4_dependencies ${SW4_RAJA_TARGET})
 set(SW4_GPU_MPI_TRANSPORT_LIBRARY "" CACHE FILEPATH
   "Optional GPU-aware MPI transport library, such as Cray mpi_gtl_cuda or mpi_gtl_hsa")
 if(SW4_GPU_MPI_TRANSPORT_LIBRARY)
@@ -79,77 +80,77 @@ if(SW4_GPU_MPI_TRANSPORT_LIBRARY)
     message(FATAL_ERROR "SW4_GPU_MPI_TRANSPORT_LIBRARY does not exist: ${SW4_GPU_MPI_TRANSPORT_LIBRARY}")
   endif()
   # MPI loads the transport indirectly; as-needed linking can otherwise drop it.
-  target_link_libraries(sw4 PRIVATE "-Wl,--no-as-needed"
+  target_link_libraries(sw4_gpu PUBLIC "-Wl,--no-as-needed"
     "${SW4_GPU_MPI_TRANSPORT_LIBRARY}" "-Wl,--as-needed")
 endif()
 if(SW4_GPU_HOST_OPENMP)
-  target_link_libraries(sw4 PRIVATE OpenMP::OpenMP_CXX OpenMP::OpenMP_Fortran)
+  target_link_libraries(sw4_gpu PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_Fortran)
   separate_arguments(SW4_HOST_OPENMP_FLAGS NATIVE_COMMAND "${OpenMP_CXX_FLAGS}")
   foreach(flag IN LISTS SW4_HOST_OPENMP_FLAGS)
     if(SW4_BACKEND STREQUAL CUDA)
-      target_compile_options(sw4 PRIVATE "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=${flag}>")
+      target_compile_options(sw4_gpu PUBLIC "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=${flag}>")
     else()
-      target_compile_options(sw4 PRIVATE "$<$<COMPILE_LANGUAGE:HIP>:${flag}>")
+      target_compile_options(sw4_gpu PUBLIC "$<$<COMPILE_LANGUAGE:HIP>:${flag}>")
     endif()
   endforeach()
 else()
-  target_compile_definitions(sw4 PRIVATE SW4_NOOMP=1)
+  target_compile_definitions(sw4_gpu PUBLIC SW4_NOOMP=1)
 endif()
 string(TOUPPER "${SW4_GPU_MPI_BUFFERS}" SW4_GPU_MPI_BUFFERS)
 if(NOT SW4_GPU_MPI_BUFFERS MATCHES "^(STAGED|MANAGED)$")
   message(FATAL_ERROR "SW4_GPU_MPI_BUFFERS must be STAGED or MANAGED")
 endif()
-target_compile_definitions(sw4 PRIVATE SW4_${SW4_GPU_MPI_BUFFERS}_MPI_BUFFERS=1)
-target_compile_definitions(sw4 PRIVATE SW4_USE_RAJA=1 ENABLE_MPI_TIMING_BARRIER=1
+target_compile_definitions(sw4_gpu PUBLIC SW4_${SW4_GPU_MPI_BUFFERS}_MPI_BUFFERS=1)
+target_compile_definitions(sw4_gpu PUBLIC SW4_USE_RAJA=1 ENABLE_MPI_TIMING_BARRIER=1
   USE_DIRECT_INVERSE=1 SW4_GHCOF_NO_GP_IS_ZERO=1
   SW4_CROUTINES RAJA_USE_RESTRICT_PTR)
 # Umpire already contains its compiled fmt implementation. Its exported
 # header-only fmt definition triggers an NVCC 13 host-code generation bug;
 # use the same compiled-library mode as the existing GPU Make workflow.
-target_compile_options(sw4 PRIVATE "$<$<COMPILE_LANGUAGE:CUDA>:-UFMT_HEADER_ONLY>")
+target_compile_options(sw4_gpu PUBLIC "$<$<COMPILE_LANGUAGE:CUDA>:-UFMT_HEADER_ONLY>")
 if(SW4_USE_UMPIRE)
-  target_compile_definitions(sw4 PRIVATE SW4_USE_UMPIRE=1)
+  target_compile_definitions(sw4_gpu PUBLIC SW4_USE_UMPIRE=1)
   if(TARGET umpire::umpire)
-    target_link_libraries(sw4 PRIVATE umpire::umpire)
+    target_link_libraries(sw4_gpu PUBLIC umpire::umpire)
   else()
-    target_link_libraries(sw4 PRIVATE umpire)
+    target_link_libraries(sw4_gpu PUBLIC umpire)
   endif()
 endif()
-set_target_properties(sw4 PROPERTIES CXX_STANDARD ${SW4_GPU_CXX_STANDARD}
+set_target_properties(sw4_gpu sw4 PROPERTIES CXX_STANDARD ${SW4_GPU_CXX_STANDARD}
   CXX_STANDARD_REQUIRED ON)
 if(SW4_BACKEND STREQUAL CUDA)
-  set_target_properties(sw4 PROPERTIES CUDA_STANDARD ${SW4_GPU_CXX_STANDARD}
+  set_target_properties(sw4_gpu sw4 PROPERTIES CUDA_STANDARD ${SW4_GPU_CXX_STANDARD}
     CUDA_STANDARD_REQUIRED ON CUDA_SEPARABLE_COMPILATION ON)
-  target_compile_definitions(sw4 PRIVATE ENABLE_CUDA=1 SW4_USE_CMEM=1)
-  target_compile_options(sw4 PRIVATE
+  target_compile_definitions(sw4_gpu PUBLIC ENABLE_CUDA=1 SW4_USE_CMEM=1)
+  target_compile_options(sw4_gpu PUBLIC
     "$<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda;--expt-relaxed-constexpr>")
   if(NOT SW4_CUDA_ARRAY_PREFETCH)
     # Match the RAJA Make build; leave legacy per-array prefetch opt-in.
-    target_compile_definitions(sw4 PRIVATE DISABLE_PREFETCH=1)
+    target_compile_definitions(sw4_gpu PUBLIC DISABLE_PREFETCH=1)
   endif()
   if(SW4_CUDA_POOL_PREFETCH)
     if(NOT SW4_USE_UMPIRE)
       message(FATAL_ERROR "SW4_CUDA_POOL_PREFETCH requires SW4_USE_UMPIRE=ON")
     endif()
-    target_compile_definitions(sw4 PRIVATE SW4_MASS_PREFETCH=1)
+    target_compile_definitions(sw4_gpu PUBLIC SW4_MASS_PREFETCH=1)
   endif()
-  target_link_libraries(sw4 PRIVATE CUDA::cudart CUDA::cuda_driver)
+  target_link_libraries(sw4_gpu PUBLIC CUDA::cudart CUDA::cuda_driver)
   # NVML provides the existing device reporting and affinity support.
   find_library(SW4_NVML_LIBRARY NAMES nvidia-ml
     HINTS "${CUDAToolkit_LIBRARY_DIR}/stubs" "${CUDAToolkit_LIBRARY_ROOT}/lib64/stubs")
   if(NOT SW4_NVML_LIBRARY)
     message(FATAL_ERROR "CUDA backend requires NVML (libnvidia-ml)")
   endif()
-  target_link_libraries(sw4 PRIVATE "${SW4_NVML_LIBRARY}")
+  target_link_libraries(sw4_gpu PUBLIC "${SW4_NVML_LIBRARY}")
 else()
-  set_target_properties(sw4 PROPERTIES HIP_STANDARD ${SW4_GPU_CXX_STANDARD}
+  set_target_properties(sw4_gpu sw4 PROPERTIES HIP_STANDARD ${SW4_GPU_CXX_STANDARD}
     HIP_STANDARD_REQUIRED ON)
-  target_compile_definitions(sw4 PRIVATE ENABLE_HIP=1 SW4_NO_ROCTRACER=1)
+  target_compile_definitions(sw4_gpu PUBLIC ENABLE_HIP=1 SW4_NO_ROCTRACER=1)
   # Makefile.hipcc compiles and links relocatable device code.
-  target_compile_options(sw4 PRIVATE "$<$<COMPILE_LANGUAGE:HIP>:-fgpu-rdc>")
-  target_link_options(sw4 PRIVATE "$<$<LINK_LANGUAGE:HIP>:-fgpu-rdc>")
-  set_target_properties(sw4 PROPERTIES LINKER_LANGUAGE HIP)
-  target_link_libraries(sw4 PRIVATE hip::host)
+  target_compile_options(sw4_gpu PUBLIC "$<$<COMPILE_LANGUAGE:HIP>:-fgpu-rdc>")
+  target_link_options(sw4_gpu PUBLIC "$<$<LINK_LANGUAGE:HIP>:-fgpu-rdc>")
+  set_target_properties(sw4_gpu sw4 PROPERTIES LINKER_LANGUAGE HIP)
+  target_link_libraries(sw4_gpu PUBLIC hip::host)
 endif()
 
 # Built and executed only when explicitly requested; never added to CTest.
@@ -159,3 +160,22 @@ if(SW4_BACKEND STREQUAL CUDA)
   target_link_libraries(sw4_cuda_compat PRIVATE CUDA::cudart)
   set_target_properties(sw4_cuda_compat PROPERTIES CUDA_STANDARD 11)
 endif()
+
+# On-demand transport/source checks share the production initialization and core.
+foreach(check IN ITEMS halo interface)
+  string(TOUPPER "${check}" macro)
+  set(wrapper "${PROJECT_BINARY_DIR}/gpu_sources/${check}_check.${SW4_GPU_SUFFIX}")
+  file(GENERATE OUTPUT "${wrapper}" CONTENT
+    "#define SW4_${macro}_CHECK 1\n#include \"${PROJECT_SOURCE_DIR}/src/main.C\"\n")
+  set_source_files_properties("${wrapper}" PROPERTIES LANGUAGE ${SW4_GPU_LANGUAGE})
+  add_executable(sw4_${check}_check EXCLUDE_FROM_ALL "${wrapper}")
+  target_link_libraries(sw4_${check}_check PRIVATE sw4_gpu)
+  set_target_properties(sw4_${check}_check PROPERTIES
+    ${SW4_GPU_LANGUAGE}_STANDARD ${SW4_GPU_CXX_STANDARD}
+    ${SW4_GPU_LANGUAGE}_STANDARD_REQUIRED ON)
+  if(SW4_BACKEND STREQUAL CUDA)
+    set_target_properties(sw4_${check}_check PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+  else()
+    set_target_properties(sw4_${check}_check PROPERTIES LINKER_LANGUAGE HIP)
+  endif()
+endforeach()

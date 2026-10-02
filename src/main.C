@@ -63,6 +63,12 @@
 #endif
 #endif // SW4 backend
 #include "version.h"
+#ifdef SW4_HALO_CHECK
+#include "../tests/backends/halo_check.h"
+#endif
+#ifdef SW4_INTERFACE_CHECK
+#include "../tests/backends/source_interfaces.h"
+#endif
 
 #if defined(SW4_USE_RAJA) // SW4 backend
 #ifdef ENABLE_CUDA
@@ -422,6 +428,16 @@ cout << "Error: simulation object not ready for time stepping" << endl;
     }
     else
     {
+#ifdef SW4_HALO_CHECK
+      status = sw4_check_halos(simulation);
+      MPI_Finalize();
+      return status;
+#endif
+#ifdef SW4_INTERFACE_CHECK
+      status = sw4_check_source_interfaces(simulation);
+      MPI_Finalize();
+      return status;
+#endif
       if (myRank == 0)
       {
          int nth=1;
