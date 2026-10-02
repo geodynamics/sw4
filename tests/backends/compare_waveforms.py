@@ -52,6 +52,8 @@ def run(exe, directory, text, tasks, gpu):
     command = ['srun', '--exclusive', '--exact', '-N', '1', '-n', str(tasks), '-c', '1']
     if gpu:
         command += ['--gpus-per-task=1', '--gpu-bind=single:1']
+    else:
+        command += ['--gres=none']
     command += [str(exe), str(input_file)]
     env = os.environ.copy()
     env.update(OMP_NUM_THREADS='1', MPICH_GPU_SUPPORT_ENABLED='0')
@@ -113,7 +115,7 @@ def main():
         'topography': GRID + COMMON + 'topography input=gaussian zmax=2000 order=4 '
             'gaussianAmp=100 gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500\n'
             + BLOCK + SOURCE + RECEIVERS,
-        'mesh-refinement': GRID + COMMON + 'refinement zmax=2000\n' + BLOCK + SOURCE + RECEIVERS,
+        'mesh-refinement': GRID.replace('h=200', 'h=100') + COMMON.replace('gp=4', 'gp=8') + 'refinement zmax=2000\ndeveloper ctol=1e-10 cmaxit=100 crelax=0.92\n' + BLOCK + SOURCE + RECEIVERS,
         'attenuation': GRID + COMMON + 'attenuation nmech=1\n'
             + BLOCK.replace('rho=2700', 'rho=2700 qp=200 qs=100').replace('rho=2600', 'rho=2600 qp=200 qs=100')
             + SOURCE + RECEIVERS,

@@ -21,9 +21,10 @@ def main():
     parser.add_argument('--backend', choices=('OPENMP', 'CUDA', 'HIP'), default='OPENMP')
     parser.add_argument('--work-dir', type=Path, required=True)
     parser.add_argument('--tasks', type=int, default=4)
+    parser.add_argument('--nodes', type=int, default=1)
     args = parser.parse_args()
-    if args.tasks < 1:
-        parser.error('--tasks must be positive')
+    if args.tasks < 1 or args.nodes < 1:
+        parser.error('--tasks and --nodes must be positive')
     sw4 = args.sw4.resolve(strict=True)
     real_srun = shutil.which('srun')
     if not real_srun:
@@ -31,14 +32,18 @@ def main():
     work = args.work_dir.resolve()
     work.mkdir(parents=True, exist_ok=True)
     repo = Path(__file__).resolve().parents[2]
-    env = os.environ.copy()
+    # Do not inherit resource limits from a smaller coordinator step.
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith('SLURM_') or k == 'SLURM_JOB_ID'}
     env.update(OMP_NUM_THREADS='1', MPICH_GPU_SUPPORT_ENABLED='0')
     with tempfile.TemporaryDirectory(prefix='launch-', dir=work) as name:
         launch = Path(name)
         wrapper = launch / 'srun'
-        extra = ['--exclusive', '--exact']
+        extra = ['--exclusive', '--exact', '-N', str(args.nodes)]
         if args.backend != 'OPENMP':
             extra += ['--gpus-per-task=1', '--gpu-bind=single:1']
+        else:
+            extra += ['--gres=none']
         wrapper.write_text('#!/bin/sh\nexec ' + shlex.join([real_srun, *extra]) + ' "$@"\n')
         wrapper.chmod(0o755)
         env['PATH'] = str(launch) + os.pathsep + env.get('PATH', '')

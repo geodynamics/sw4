@@ -37,8 +37,7 @@
       "inherits": "base",
       "displayName": "RAJA HIP GPU",
       "cacheVariables": {
-        "SW4_BACKEND": "HIP",
-        "SW4_GPU_MPI_BUFFERS": "MANAGED"
+        "SW4_BACKEND": "HIP"
       }
     }
   ],

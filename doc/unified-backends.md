@@ -112,3 +112,75 @@ the maximum difference for each component must not exceed
 acceptance criterion. Requested and sampled station positions are also checked.
 SRF coordinates in the fixture are exactly representable in single precision,
 so the HDF5 converter's float32 storage does not move the test sources.
+
+## Build presets and HIP handoff
+
+CMake 3.21 or newer provides `cpu`, `cuda`, and `hip` presets with independent
+build directories. For example:
+
+```sh
+cmake --preset cpu -DSW4_BUILD_MOPT=ON
+cmake --build --preset cpu -j 16
+cmake --preset cuda -DCMAKE_CUDA_ARCHITECTURES=80 \
+  -DCMAKE_PREFIX_PATH='/path/to/cuda-raja;/path/to/cuda-umpire'
+cmake --build --preset cuda -j 16
+cmake --preset hip -DCMAKE_HIP_ARCHITECTURES=gfx90a \
+  -DCMAKE_HIP_COMPILER=/path/to/rocm/llvm/bin/clang++ \
+  -DCMAKE_CXX_COMPILER=/path/to/rocm/llvm/bin/clang++ \
+  -DCMAKE_PREFIX_PATH='/path/to/hip-raja;/path/to/hip-umpire'
+cmake --build --preset hip -j 16
+```
+
+Load the site's MPI, Fortran, BLAS/LAPACK and optional shared-library modules
+first. Select a host compiler and OpenMP runtime compatible with the ROCm
+compiler; `SW4_GPU_HOST_OPENMP=OFF` disables host OpenMP for GPU executables
+without changing native CPU or inversion targets. CMake obtains host OpenMP
+flags from the compiler instead of assuming GCC flags. `cmake --install`
+installs the executables under `CMAKE_INSTALL_PREFIX`.
+
+The HIP setup follows `raja:Makefile.hipcc` and the Frontier configuration:
+it compiles the same GPU source manifest, links with the HIP compiler and
+uses `-fgpu-rdc` for compilation and linking, with
+`CAMP_USE_PLATFORM_DEFAULT_STREAM=1` as in the Frontier Make configuration. `SW4_GPU_MPI_BUFFERS` selects
+`STAGED` (host-staged, default for both GPU presets) or `MANAGED` (the legacy
+HIP Make setting). Staged validation uses `MPICH_GPU_SUPPORT_ENABLED=0`.
+Managed buffers require a compatible memory/MPI transport configuration; the
+CUDA curvilinear interface explicitly requires GPU-aware MPI in that mode. HIP builds omit
+CUDA/NVML and disable legacy roctracer instrumentation. The old Make config's
+optional SCR, Caliper, HPCToolkit and site-specific GPU-aware MPI transport
+libraries are not mandatory CMake dependencies. Their instrumentation is not
+enabled by these presets. HIP compilation and runtime acceptance must be
+completed on a ROCm system; Perlmutter has no HIP toolchain.
+
+Per-array CUDA prefetch is disabled by default, matching the working RAJA
+Make build. Enabling `SW4_CUDA_ARRAY_PREFETCH` is experimental: the existing
+implementation targets device zero and stalled the refinement regression.
+`SW4_CUDA_POOL_PREFETCH=ON` separately enables the existing Umpire pool prefetch
+before time stepping and requires Umpire. Neither option changes the numerical
+kernels. CMake preserves ordinary floating-point compilation; it does not
+implicitly enable CUDA fast math.
+
+## Four-node performance acceptance on demand
+
+Export the original profiling input without changing simulation parameters:
+
+```sh
+git show raja:performance/large/hmr3.in > "$SCRATCH/hmr3-raja.in"
+python tests/backends/profile_hmr3.py \
+  --baseline /path/to/exact-raja/sw4 --candidate build/cuda/bin/sw4 \
+  --input "$SCRATCH/hmr3-raja.in" \
+  --model /path/to/USGSBayAreaVM-08.3.0-corder.rfile \
+  --work-dir "$SCRATCH/hmr3-comparison"
+```
+
+Run inside an existing allocation of four GPU nodes. The driver launches
+16 MPI ranks, four per node, one GPU per rank and one OpenMP thread. It runs
+the full nine-second simulation three times per executable in alternating
+order. Only the model and output paths are relocated. Logs, executable/input
+SHA256 identities, model size/mtime, commands, timings and finite station
+waveform comparisons are retained. Acceptance requires the peak-scaled waveform
+tolerance used above and a candidate median solver time no more than 5% slower
+than the baseline. `--max-slowdown` changes this threshold explicitly. Record
+both build configurations alongside the report, especially fast-math and
+prefetch differences. `--only baseline --repeats 1` prepares the first run;
+`--resume` reuses completed runs only when their identities match.
