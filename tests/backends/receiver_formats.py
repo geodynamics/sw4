@@ -124,8 +124,8 @@ def main():
         with h5py.File(directory/'stations.h5','w') as stream:
             group=stream.create_group('station');group['STX,STY,STZ']=[1800.,1800.,200.]
             group['ISNSEW']=np.array([orientation],dtype=np.int32);group['USEZVALUE']=np.array([1],dtype=np.int32)
-        text='grid h=200 x=4000 y=4000 z=4000 lat=37 lon=-122 az=27\n'
-        text+=f'time t=0.5 utcstart=10/02/2026:01:02:03.{fraction}\nsupergrid gp=4\nfileio path=output\ndeveloper cfl=0.8\n'
+        text='grid h=100 x=4000 y=4000 z=4000 lat=37 lon=-122 az=27\n'
+        text+=f'time t=0.5 utcstart=10/02/2026:01:02:03.{fraction}\nsupergrid gp=8\nfileio path=output\ndeveloper cfl=0.8\n'
         if topo:
             text+='topography input=gaussian zmax=2000 order=4 gaussianAmp=100 gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500\n'
         text+='block vp=6000 vs=3464 rho=2700\nsource x=1600 y=1600 z=600 mxy=1e15 t0=0.05 freq=20 type=Gaussian\n'
@@ -141,10 +141,10 @@ def main():
         if result.returncode:raise RuntimeError(f'Solver failed: {directory}/run.log')
         check_solver_log(directory/'run.log')
         report[name]=check(directory,mode,orientation,downsample)
-        if args.reader and mode=='displacement' and orientation==0 and downsample==1:
+        if args.reader and mode in ('displacement','velocity') and downsample==1:
             # The native reader executable runs on CPUs even for GPU-written files.
             reader_command=['srun','--exclusive','--exact','--gres=none','-N','1','-n',str(args.tasks),'-c','4',
-                            str(args.reader.resolve(strict=True)),str(directory/'case.in'),str(directory/'output')]
+                            str(args.reader.resolve(strict=True)),str(directory/'case.in'),str(directory/'output'),mode,str(orientation)]
             with (directory/'reader.log').open('w') as log:
                 reader=subprocess.run(reader_command,cwd=directory,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=300)
             check_solver_log(directory/'reader.log')

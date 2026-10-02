@@ -12,7 +12,7 @@ import numpy as np
 
 from compare_waveforms import run, compare, GRID as COARSE_GRID, RECEIVERS
 
-# Keep the boundary closures separated and resolve the source pulse.
+# Avoid the growing amplitudes observed in the coarser trial fixtures.
 GRID = COARSE_GRID.replace('h=200', 'h=100')
 
 
@@ -90,6 +90,10 @@ def main():
             report[name]=compare(native,gpu,2e-5,1e-12,arrival_after=.15)
         else:
             report[name]=compare(native,native,2e-5,1e-12,arrival_after=.15)
+        # These fixed sources should produce metre-scale displacements.
+        # A generous ceiling prevents matching unstable traces from passing.
+        if max(item['reference_peak'] for item in report[name].values()) > 1e3:
+            raise ValueError(f'Unphysical displacement in fixed regression fixture: {name}')
         (root/'comparison.json').write_text(json.dumps(report,indent=2)+'\n')
         print('PASS:',name,flush=True)
     # Check the independent isotropic limit for each backend that was executed.

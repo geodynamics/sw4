@@ -148,3 +148,44 @@ gate on CPU. Their failures are retained in `curvi-controls/`, `curvi-thicker/`
 and `curvi-constant/`. They are not counted as passing extrapolation validation.
 GPU runtime, four-node performance, the current inversion rerun, velocity
 receiver read-back, and ROCm/HIP execution remain open gates.
+
+## Extended receiver checks and queued execution
+
+The forward format fixtures now use the same stable 100 m/eight-point supergrid
+configuration used for the source checks, with `cfl=0.8`. All 22 OpenMP forward
+format cases passed. SAC and rechdf5 stored samples agree exactly for these
+fixtures; comparisons permit floating-point differences and compare USGS text
+using the documented component-relative tolerance. Evidence:
+`/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/formats-cpu-fine-forward/`.
+
+The optional real-reader probe now checks all three components and selects
+displacement/velocity and Cartesian/geographic filenames. Geographic
+displacement round-trip passed, including horizontal components. Two newly
+exposed inherited failures await scientific approval rather than being hidden
+by a looser threshold:
+
+- Rechdf5 velocity reading searches for displacement datasets and fails.
+  `velocity-read-before.log` retains the reproduced failure. GPU SAC restart
+  also selects Cartesian displacement filenames regardless of mode/orientation.
+- Cartesian SAC observation loading applies a geographic conversion to grid
+  components; a tested horizontal sample changed by about `1e-6 m` from
+  `2e-3 m`. USGS/rechdf5 load the original grid components.
+  `displacement-xyz-read-difference.log` retains the reproduced failure.
+
+The on-demand probe therefore intentionally fails affected Cartesian/velocity
+read-back checks until their corrections are approved and validated. Forward
+output equivalence is distinct from observation/restart equivalence. Native
+SAC restart's raw copy of geographic components and rechdf5's handling of
+`ignore_utc` also need follow-up inspection/validation.
+
+The fixed source regression inputs additionally reject displacement above
+1000 m, a deliberately generous sanity ceiling for their fixed source strengths.
+This prevents agreement between two growing solutions from being counted as a
+pass; it is not a general amplitude limit for SW4 simulations.
+
+Queued CUDA jobs use frozen executable copies with SHA-256 checks:
+`59219272` runs the unchanged solver suite, forward format checks and the
+converged source/material comparisons. `59219270` runs three alternating pairs
+of the exact RAJA hmr3 case on four nodes, followed by two-node HDF5 regressions.
+Pending state is not runtime or performance acceptance. The earlier two queued
+GPU jobs were replaced before execution to separate these workloads.

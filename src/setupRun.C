@@ -1388,6 +1388,10 @@ int NumberOfCurviGrids = mNumberOfGrids - mNumberOfCartesianGrids;
       } // end for g
     } // end if mMaterialExtrapolate > 0 and NumberOfCurviGrids > 1
 
+#if defined(SW4_USE_RAJA)
+   SW4_MARK_END("SetMat::Section 1");
+#endif
+
 // tmp
 //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n", m_useVelocityThresholds, m_vpMin, m_vsMin);
 // Extrapolate to ghost points in x and y, if they were not set by the previous routines.
