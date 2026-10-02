@@ -82,3 +82,32 @@ start-time/sample-interval errors below `1e-8` seconds and matching vertical
 samples within the same floating-point tolerance. Evidence:
 `/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/formats-cpu-v6/`.
 CUDA format execution remains pending allocation.
+
+## Cartesian anisotropic residuals
+
+The inherited native Cartesian C operator computed but did not store the three
+residual components in its interior and bottom boundary closure. Those rows now
+store the existing residuals with the same `1/h²` scaling as the top closure.
+The user explicitly approved this scientific correction. Affected anisotropic
+runs can differ substantially from earlier results.
+
+```sh
+cmake --build build --target sw4_anisotropic_check
+srun -n 2 build/bin/sw4_anisotropic_check case.in
+```
+
+This on-demand probe calls the real operator with each quadratic monomial in
+all three displacement components. It checks every physical vertical row,
+including both closures, against the independent continuum tensor contraction
+`C_(i,a,l,b) * d_a d_b u_l`. Materials include an isotropic tensor and a coupled,
+positive definite anisotropic tensor. The unfixed operator failed the initial
+isotropic test with maximum error 14. The corrected operator passed the broader
+check with maximum error `8.5e-12` (limit `2e-10`). Evidence:
+`/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/aniso-operator-general.log`.
+
+The native propagation check also passed the isotropic limit, including a remote
+receiver. It uses a 100 m grid and eight supergrid points. Coarser initial inputs
+produced growing amplitudes and are retained as failed evidence, not acceptance.
+The production timestep/default grid policies were not changed. Evidence:
+`/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/review-cpu-fine/`.
+CUDA propagation and anisotropic topography remain additional acceptance gates.

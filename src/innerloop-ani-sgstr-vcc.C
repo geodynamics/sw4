@@ -1124,9 +1124,9 @@ void innerloopanisgstrvc_ci( int ifirst, int ilast, int jfirst, int jlast, int k
   r1 = r1 + stry(j)*ac1;
   r2 = r2 + stry(j)*ac2;
   r3 = r3 + stry(j)*ac3;
-
-
-
+  lu(1,i,j,k) = r1*cof;
+  lu(2,i,j,k) = r2*cof;
+  lu(3,i,j,k) = r3*cof;
             }
 
    }
@@ -1701,7 +1701,9 @@ float_sw4  cp2 = c(1,i+1,j,k)*strx(i+1)-0.75*(c(1,i,j,k)*strx(i)+
      +a2*(c(18,i,j,k+2)*dup2-c(18,i,j,k-2)*dum2));
   r3 = r3 +stry(j)*strz(k)*(a1*(c(20,i,j,k+1)*dup1-c(20,i,j,k-1)*dum1)
      +a2*(c(20,i,j,k+2)*dup2-c(20,i,j,k-2)*dum2));
-
+  lu(1,i,j,k) = r1*cof;
+  lu(2,i,j,k) = r2*cof;
+  lu(3,i,j,k) = r3*cof;
          }
    }
 }
