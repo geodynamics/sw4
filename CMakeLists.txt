@@ -164,3 +164,9 @@ install(TARGETS sw4 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 if(SW4_BUILD_MOPT)
   install(TARGETS sw4mopt RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
+
+# Source-history checks link the real native solver and run only on request.
+if(TARGET sw4_native)
+  add_executable(sw4_source_check EXCLUDE_FROM_ALL tests/backends/source_timefunc.C)
+  target_link_libraries(sw4_source_check PRIVATE sw4_native)
+endif()

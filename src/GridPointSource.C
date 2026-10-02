@@ -289,24 +289,10 @@ switch(mTimeDependence)
        break;
     case iDiscrete :
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-mTimeFunc = Discrete;
-      mTimeFunc_t = Discrete_t;
-      mTimeFunc_tt = Discrete_tt;
-      mTimeFunc_ttt = Discrete_ttt;
-      mTimeFunc_om = Discrete_om;
-      mTimeFunc_omtt = Discrete_omtt;
-      break;
-
-#else // SW4 backend
-#endif // SW4 backend
 case iDiscrete6moments :
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 case iDiscrete3forces :
 
-#endif // SW4 backend
 mTimeFunc = Discrete;
        mTimeFunc_t = Discrete_t;
        mTimeFunc_tt = Discrete_tt;
@@ -324,11 +310,10 @@ mTimeFunc = Discrete;
       break;
     default :
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
+#if !defined(SW4_USE_RAJA)
 std::cout << "incorrect argument to GridPointSource constructor : default RickerWavelet used " << std::endl;
+#endif
 
-#endif // SW4 backend
 mTimeFunc = RickerWavelet;
       mTimeFunc_t = RickerWavelet_t;
       mTimeFunc_tt = RickerWavelet_tt;
@@ -362,23 +347,10 @@ mTimeFunc = RickerWavelet;
      break;
   case iDiscrete :
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-mTimeFunc_tttt = Discrete_tttt;
-      mTimeFunc_tttom = Discrete_tttom;
-      mTimeFunc_ttomom = Discrete_ttomom;
-      mTimeFunc_tom = Discrete_tom;
-      mTimeFunc_omom = Discrete_omom;
-      break;
-
-#else // SW4 backend
-#endif // SW4 backend
 case iDiscrete6moments :
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 case iDiscrete3forces :
 
-#endif // SW4 backend
 mTimeFunc_tttt = Discrete_tttt;
      mTimeFunc_tttom = Discrete_tttom;
      mTimeFunc_ttomom = Discrete_ttomom;
@@ -398,42 +370,16 @@ mTimeFunc_tttt = Discrete_tttt;
 }
 
 //-----------------------------------------------------------------------
-#if defined(SW4_USE_RAJA) // SW4 backend
+#if defined(SW4_USE_RAJA)
 RAJA_HOST_DEVICE
-void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
-
-#else // SW4 backend
-void GridPointSource::getFxyz( float_sw4 t, float_sw4* fxyz ) const
+void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz)
+#else
+void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) const
+#endif
 {
 
-#endif // SW4 backend
 float_sw4 afun, afunv[6];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#ifndef NO_DEVICE_FUNCTION_POINTERS
-  // printf("FXYZ VALUE = %d %d\n",mTimeDependence,m_derivative);
-  if (mTimeDependence != iDiscrete6moments)
-    afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-  else {
-    int npts = mIpar[0];
-    int size = 6 * (npts - 1) + 1;
-    size_t pos = 0;
-    afunv[0] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[1] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[2] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[3] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[4] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[5] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-  }
-#endif
-
-
-#else // SW4 backend
 if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
       afun= mTimeFunc(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
    else if( mTimeDependence == iDiscrete6moments )
@@ -466,43 +412,27 @@ if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces 
    }
 
 
-#endif // SW4 backend
-#if defined(SW4_USE_RAJA) // SW4 backend
-int lm_derivative;
-#if defined(SOURCE_INVERSION)
-  lm_derivative = m_derivative;
+#if !defined(SW4_USE_RAJA) || defined(SOURCE_INVERSION)
+  if( m_derivative==-1)
 #else
-  lm_derivative = -1;
+  if(true)
 #endif
-  if (lm_derivative == -1) {
-    if (mTimeDependence != iDiscrete6moments) {
-
-#else // SW4 backend
-if( m_derivative==-1)
   {
      if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
      {
 
-#endif // SW4 backend
 fxyz[0] = mForces[0]*afun;
         fxyz[1] = mForces[1]*afun;
         fxyz[2] = mForces[2]*afun;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-} else {
-
-#else // SW4 backend
 }
      else if( mTimeDependence == iDiscrete6moments )
      {
 
-#endif // SW4 backend
 fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
         fxyz[1] = mForces[0]*afunv[1]+mForces[1]*afunv[3]+mForces[2]*afunv[4];
         fxyz[2] = mForces[0]*afunv[2]+mForces[1]*afunv[4]+mForces[2]*afunv[5];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 }
      else if( mTimeDependence == iDiscrete3forces )
      {
@@ -510,20 +440,10 @@ fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
         fxyz[1] = mForces[0]*afunv[1];
         fxyz[2] = mForces[0]*afunv[2];
 
-#endif // SW4 backend
 }
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-} else if (lm_derivative >= 0 && lm_derivative <= 8) {
-#if defined(SOURCE_INVERSION)
-    fxyz[0] = m_jacobian[m_derivative * 3] * afun;
-    fxyz[1] = m_jacobian[m_derivative * 3 + 1] * afun;
-    fxyz[2] = m_jacobian[m_derivative * 3 + 2] * afun;
-#endif
-  } else if (lm_derivative == 9) {
-
-#else // SW4 backend
 }
+#if !defined(SW4_USE_RAJA) || defined(SOURCE_INVERSION)
   else if( m_derivative >= 0 && m_derivative <= 8 )
   {
      fxyz[0] = m_jacobian[m_derivative*3]*afun;
@@ -533,49 +453,20 @@ fxyz[0] = mForces[0]*afunv[0]+mForces[1]*afunv[1]+mForces[2]*afunv[2];
   else if( m_derivative == 9 )
   {
 
-#endif // SW4 backend
 afun = -mTimeFunc_t(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
      fxyz[0] = mForces[0]*afun;
      fxyz[1] = mForces[1]*afun;
      fxyz[2] = mForces[2]*afun;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-} else if (lm_derivative == 10) {
-
-#else // SW4 backend
 }
   else if( m_derivative == 10 )
   {
 
-#endif // SW4 backend
 afun = mTimeFunc_om(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
      fxyz[0] = mForces[0]*afun;
      fxyz[1] = mForces[1]*afun;
      fxyz[2] = mForces[2]*afun;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-} else if (lm_derivative == 11) {
-#if defined(SOURCE_INVERSION)
-    fxyz[0] = fxyz[1] = fxyz[2] = 0;
-    int i;
-    for (i = 0; i < 9; i++) {
-      fxyz[0] += afun * m_jacobian[i * 3] * m_dir[i];
-      fxyz[1] += afun * m_jacobian[i * 3 + 1] * m_dir[i];
-      fxyz[2] += afun * m_jacobian[i * 3 + 2] * m_dir[i];
-    }
-    i = 9;
-    afun = -mTimeFunc_t(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-    fxyz[0] += afun * mForces[0] * m_dir[i];
-    fxyz[1] += afun * mForces[1] * m_dir[i];
-    fxyz[2] += afun * mForces[2] * m_dir[i];
-    i = 10;
-    afun = mTimeFunc_om(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-    fxyz[0] += afun * mForces[0] * m_dir[i];
-    fxyz[1] += afun * mForces[1] * m_dir[i];
-    fxyz[2] += afun * mForces[2] * m_dir[i];
-#endif
-
-#else // SW4 backend
 }
   else if( m_derivative == 11 )
   {
@@ -598,8 +489,8 @@ afun = mTimeFunc_om(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
      fxyz[1] += afun*mForces[1]*m_dir[i];
      fxyz[2] += afun*mForces[2]*m_dir[i];
 
-#endif // SW4 backend
 }
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -620,30 +511,6 @@ void GridPointSource::getFxyztt( float_sw4 t, float_sw4* fxyz ) const
 {
    float_sw4 afun, afunv[6];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#ifndef NO_DEVICE_FUNCTION_POINTERS
-  if (mTimeDependence != iDiscrete6moments)
-    afun = mTimeFunc_tt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-  else {
-    int npts = mIpar[0];
-    int size = 6 * (npts - 1) + 1;
-    size_t pos = 0;
-    afunv[0] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[1] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[2] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[3] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[4] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-    pos += size;
-    afunv[5] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-  }
-#endif
-
-  //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
-#else // SW4 backend
 if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
       afun= mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar );
    else if( mTimeDependence == iDiscrete6moments )
@@ -677,71 +544,11 @@ if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces 
 
    //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
 
-#endif // SW4 backend
-#if defined(SW4_USE_RAJA) // SW4 backend
-#if defined(SOURCE_INVERSION)
-  if (m_derivative == -1) {
-    if (mTimeDependence != iDiscrete6moments) {
-      fxyz[0] = mForces[0] * afun;
-      fxyz[1] = mForces[1] * afun;
-      fxyz[2] = mForces[2] * afun;
-    } else {
-      fxyz[0] =
-          mForces[0] * afunv[0] + mForces[1] * afunv[1] + mForces[2] * afunv[2];
-      fxyz[1] =
-          mForces[0] * afunv[1] + mForces[1] * afunv[3] + mForces[2] * afunv[4];
-      fxyz[2] =
-          mForces[0] * afunv[2] + mForces[1] * afunv[4] + mForces[2] * afunv[5];
-    }
-  } else if (m_derivative >= 0 && m_derivative <= 8) {
-    fxyz[0] = m_jacobian[m_derivative * 3] * afun;
-    fxyz[1] = m_jacobian[m_derivative * 3 + 1] * afun;
-    fxyz[2] = m_jacobian[m_derivative * 3 + 2] * afun;
-  } else if (m_derivative == 9) {
-    afun = -mTimeFunc_ttt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-    fxyz[0] = mForces[0] * afun;
-    fxyz[1] = mForces[1] * afun;
-    fxyz[2] = mForces[2] * afun;
-  } else if (m_derivative == 10) {
-    afun = mTimeFunc_omtt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-    fxyz[0] = mForces[0] * afun;
-    fxyz[1] = mForces[1] * afun;
-    fxyz[2] = mForces[2] * afun;
-  } else if (m_derivative == 11) {
-    fxyz[0] = fxyz[1] = fxyz[2] = 0;
-    int i;
-    for (i = 0; i < 9; i++) {
-      fxyz[0] += afun * m_jacobian[i * 3] * m_dir[i];
-      fxyz[1] += afun * m_jacobian[i * 3 + 1] * m_dir[i];
-      fxyz[2] += afun * m_jacobian[i * 3 + 2] * m_dir[i];
-    }
-    i = 9;
-    afun = -mTimeFunc_ttt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-    fxyz[0] += afun * mForces[0] * m_dir[i];
-    fxyz[1] += afun * mForces[1] * m_dir[i];
-    fxyz[2] += afun * mForces[2] * m_dir[i];
-    i = 10;
-    afun = mTimeFunc_omtt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-    fxyz[0] += afun * mForces[0] * m_dir[i];
-    fxyz[1] += afun * mForces[1] * m_dir[i];
-    fxyz[2] += afun * mForces[2] * m_dir[i];
-  }
+#if !defined(SW4_USE_RAJA) || defined(SOURCE_INVERSION)
+  if( m_derivative==-1)
 #else
-  if (mTimeDependence != iDiscrete6moments) {
-    fxyz[0] = mForces[0] * afun;
-    fxyz[1] = mForces[1] * afun;
-    fxyz[2] = mForces[2] * afun;
-  } else {
-    fxyz[0] =
-        mForces[0] * afunv[0] + mForces[1] * afunv[1] + mForces[2] * afunv[2];
-    fxyz[1] =
-        mForces[0] * afunv[1] + mForces[1] * afunv[3] + mForces[2] * afunv[4];
-    fxyz[2] =
-        mForces[0] * afunv[2] + mForces[1] * afunv[4] + mForces[2] * afunv[5];
-  }
+  if(true)
 #endif
-#else // SW4 backend
-if( m_derivative==-1)
   {
      if( mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces )
      {
@@ -762,6 +569,7 @@ if( m_derivative==-1)
         fxyz[2] = mForces[0]*afunv[2];
      }
   }
+#if !defined(SW4_USE_RAJA) || defined(SOURCE_INVERSION)
   else if( m_derivative >= 0 && m_derivative <= 8 )
   {
      fxyz[0] = m_jacobian[m_derivative*3]*afun;
@@ -803,7 +611,7 @@ if( m_derivative==-1)
      fxyz[1] += afun*mForces[1]*m_dir[i];
      fxyz[2] += afun*mForces[2]*m_dir[i];
   }
-#endif // SW4 backend
+#endif
 }
 
 //-----------------------------------------------------------------------

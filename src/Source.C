@@ -80,6 +80,27 @@ using namespace std;
 
 #define SQR(x) ((x)*(x))
 
+namespace {
+// Time-function metadata is shared by host preparation and device evaluation.
+template<class T> T* allocate_source_parameters(size_t count)
+{
+#if defined(SW4_USE_RAJA)
+   return SW4_NEW(Space::Managed, T[count]);
+#else
+   return new T[count];
+#endif
+}
+template<class T> void free_source_parameters(T* data)
+{
+#if defined(SW4_USE_RAJA)
+   ::operator delete[](data, Space::Managed);
+#else
+   delete[] data;
+#endif
+}
+}
+
+
 //-----------------------------------------------------------------------
 // Constructor,
 //
@@ -192,14 +213,8 @@ mIpar  = new int[1];
    //    spline_interpolation();
    // else
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (mTimeDependence != iDiscrete &&
-      mTimeDependence != iDiscrete6moments)  // not sure about iDiscrete6moments
-
-#else // SW4 backend
 if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces ) // not sure about iDiscrete6moments
 
-#endif // SW4 backend
 {
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
@@ -260,15 +275,10 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   m_is_filtered(false),
   mShearModulusFactor(correctForMu),
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-m_myPoint(false) {
-
-#else // SW4 backend
 m_myPoint(false),
   m_timeFuncIsReady(false)
 {
 
-#endif // SW4 backend
 mForces.resize(3);
   mForces[0] = Fx;
   mForces[1] = Fy;
@@ -279,13 +289,8 @@ mForces.resize(3);
   if( mNpar > 0 )
   {
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
+mPar = allocate_source_parameters<float_sw4>(mNpar);
 
-#else // SW4 backend
-mPar   = new float_sw4[mNpar];
-
-#endif // SW4 backend
 for( int i= 0 ; i < mNpar ; i++ )
         mPar[i] = pars[i];
   }
@@ -293,38 +298,27 @@ for( int i= 0 ; i < mNpar ; i++ )
   {
      mNpar = 2;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-mPar = SW4_NEW(Space::Managed, float_sw4[2]);
+mPar = allocate_source_parameters<float_sw4>(2);
 
-#else // SW4 backend
-mPar = new float_sw4[2];
-
-#endif // SW4 backend
 }
 
   mNipar = nipar;
   if( mNipar > 0 )
   {
-     mIpar = new int[mNipar];
+     mIpar = allocate_source_parameters<int>(mNipar);
      for( int i= 0 ; i < mNipar ; i++ )
         mIpar[i] = ipars[i];
   }
   else
   {
      mNipar = 1;
-     mIpar  = new int[1];
+     mIpar = allocate_source_parameters<int>(1);
   }
 
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments)
-
-#else // SW4 backend
-if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
-
-#endif // SW4 backend
-spline_interpolation();
-  else
+// Keep raw histories until optional filtering and spline preparation at placement.
+  if (mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments &&
+      mTimeDependence != iDiscrete3forces)
   {
      mPar[0] = find_min_exponent();
      mPar[1] = mNcyc;
@@ -334,13 +328,6 @@ spline_interpolation();
 
 // Correct source location for discrepancy between raw and smoothed topography
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-a_ew->computeNearestGridPoint2(m_i0, m_j0, m_k0, m_grid, mX0, mY0, mZ0);
-
-  // Correct source location for discrepancy between raw and smoothed topography
-
-#else // SW4 backend
-#endif // SW4 backend
 correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
   compute_grid_point( a_ew );
 }
@@ -1338,18 +1325,15 @@ alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
 //------ filter and fix up any discrete time functions ----------------
 void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSamples, Filter* sw4_filter)
 {
+   // Placement can revisit a source across ranks, interfaces, or inversion solves.
+   if (m_timeFuncIsReady)
+      return;
 
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments) {
-    // new approach for Discrete time functions
-
-#else // SW4 backend
 if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
    {
       // new approach for Discrete time functions
 
-#endif // SW4 backend
 if (!doFilter)
       {
          spline_interpolation();
@@ -1372,79 +1356,45 @@ if (!doFilter)
          int nPadding = static_cast<int>(ceil(preCursorTime/dt));
 // current number of points
          int npts = mIpar[0];
-         float_sw4 tstart = mPar[0];
-         int ext_npts = npts + 2*nPadding;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-float_sw4* ext_par = SW4_NEW(Space::Managed, float_sw4[ext_npts + 1]);
-
-#else // SW4 backend
-float_sw4 *ext_par = new float_sw4[ext_npts+1];
-
-#endif // SW4 backend
-float_sw4 ext_tstart = tstart - nPadding*dt;
-// setup ext_par
-         ext_par[0] = ext_tstart;
-         int i;
-// initial zeros
-         for (i=0; i<nPadding; i++)
-            ext_par[i+1] = 0.0;
-// copy values from origianla time series
-#pragma omp parallel for
-         for (int i=0; i<npts; i++)
-            ext_par[i + nPadding + 1] = mPar[i+1];
-// trailing zeros
-         for (i=nPadding+npts; i<ext_npts; i++)
-            ext_par[i+1] = 0.0;
-
-// Filter the extended time series (ext_par[0] = ext_tstart and should not be filtered)
-         my_filter.evaluate( ext_npts, &ext_par[1], &ext_par[1] );
-
-// Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter (copied from below)
-         if( my_filter.get_passes() == 2 && my_filter.get_type() == bandPass )
+         const int components = mTimeDependence == iDiscrete6moments ? 6 :
+                                mTimeDependence == iDiscrete3forces ? 3 : 1;
+         CHECK_INPUT(mNpar == components*(npts+1),
+                     "Invalid raw source histories before filtering");
+         const int ext_npts = npts + 2*nPadding;
+         const int stride = ext_npts + 1;
+         float_sw4* ext_par = allocate_source_parameters<float_sw4>(components*stride);
+         const float_sw4 ext_tstart = mPar[0] - nPadding*dt;
+         for (int component=0; component<components; ++component)
          {
-            float_sw4 wghv, xi;
-            int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
-            if( p0+p <= ext_npts ) // only do this if the time series is long enough
+            float_sw4* output = ext_par + component*stride;
+            const float_sw4* input = mPar + component*(npts+1);
+            output[0] = input[0] - nPadding*dt;
+            for (int i=0; i<ext_npts; ++i)
+               output[i+1] = i>=nPadding && i<nPadding+npts ? input[i-nPadding+1] : 0;
+            my_filter.evaluate(ext_npts, output+1, output+1);
+            // Preserve the scalar two-pass bandpass startup ramp for each history.
+            if (my_filter.get_passes() == 2 && my_filter.get_type() == bandPass)
             {
-               for( int i=1 ; i<=p0-1 ; i++ )
+               const int p0=3, width=20;
+               if (p0+width <= ext_npts)
                {
-                  ext_par[i] = 0;
-               }
-               for( int i=p0 ; i<=p0+p ; i++ )
-               {
-                  wghv = 0;
-                  xi = (i-p0)/((float_sw4) p);
-         // polynomial P(xi), P(0) = 0, P(1)=1
-                  wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
-                  ext_par[i] *=wghv;
+                  for (int i=1; i<p0; ++i)
+                     output[i] = 0;
+                  for (int i=p0; i<=p0+width; ++i)
+                  {
+                     const float_sw4 xi = (i-p0)/static_cast<float_sw4>(width);
+                     output[i] *= xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+                  }
                }
             }
          }
-
-   // update parameters for the discrete function
          mNipar = 1;
-//      mIpar = new int[mNipar];
          mIpar[0] = ext_npts;
-//      mFreq = 1./dt;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-::operator delete[](
-          mPar, Space::Managed);  // return memory for the previous time series
-
-#else // SW4 backend
-delete[] mPar; // return memory for the previous time series
-
-#endif // SW4 backend
-mNpar = ext_npts+1;
+         free_source_parameters(mPar);
+         mNpar = components*stride;
          mPar = ext_par;
-         mPar[0] = ext_tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
          mT0 = ext_tstart;
-      // for( int i=0 ; i < nsteps; i++ )
-      //    mPar[i+1] = discfunc[i];
-      // delete[] discfunc;
-
-   // Build the spline representation
+         // Build the representation once, after all components are filtered.
          spline_interpolation();
          m_is_filtered = true;
 // only do the filtering once
@@ -1478,17 +1428,9 @@ mNpar = ext_npts+1;
 // Don't mess with t0.
 // Instead, warn the user of potential transients due to unsmooth start
            printf(
-#if defined(SW4_USE_RAJA) // SW4 backend
-"\n*** WARNING: the 2 pass prefilter has an estimated precursor of "
-            "length %e s\n"
-            "*** To avoid artifacts due to sudden startup, increase t0 in the "
-            "source named '%s' by at least %e\n\n",
-
-#else // SW4 backend
 "\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
                    "*** To avoid artifacts due to sudden startup, increase t0 in the source named '%s' by at least %e\n\n",
 
-#endif // SW4 backend
 t0_min, getName().c_str(), t0_inc);
         }
 
@@ -1818,11 +1760,8 @@ for( int j=jc-2 ; j <= jc+3 ; j++ )
 if( gridrefbndry )
    {
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 float_sw4 sw=1.0/3;
 
-#endif // SW4 backend
 if( lowerbndry )
       {
          if( kc == Nz-1 )
@@ -1832,32 +1771,20 @@ if( lowerbndry )
             //            wghkref[3]  = wghk[3]*0.5;
             //            wghk[3]     = wghk[3]*0.5;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-wghkref[3] = wghk[3] * 0.5;
-        wghk[3] = wghk[3] * 0.5;
-
-#else // SW4 backend
 wghkref[3]  = wghk[3]*(1-sw);
             wghk[3]     = wghk[3]*sw;
 
 
-#endif // SW4 backend
 wghkref[4]  = wghk[4];
             wghkref[5]  = wghk[5];
 
             //            dwghkref[3] = dwghk[3]*0.5;
             //            dwghk[3]    = dwghk[3]*0.5;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-dwghkref[3] = dwghk[3] * 0.5;
-        dwghk[3] = dwghk[3] * 0.5;
-
-#else // SW4 backend
 dwghkref[3] = dwghk[3]*(1-sw);
             dwghk[3]    = dwghk[3]*sw;
 
 
-#endif // SW4 backend
 dwghkref[4] = dwghk[4];
             dwghkref[5] = dwghk[5];
 
@@ -1883,30 +1810,18 @@ dwghkref[4] = dwghk[4];
             //            wghkref[4]  = wghk[4]*0.5;
             //            wghk[4]     = wghk[4]*0.5;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-wghkref[4] = wghk[4] * 0.5;
-        wghk[4] = wghk[4] * 0.5;
-
-#else // SW4 backend
 wghkref[4]  = wghk[4]*(1-sw);
             wghk[4]     = wghk[4]*sw;
 
 
-#endif // SW4 backend
 wghkref[5]  = wghk[5];
 
             //            dwghkref[4] = dwghk[4]*0.5;
             //            dwghk[4]    = dwghk[4]*0.5;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-dwghkref[4] = dwghk[4] * 0.5;
-        dwghk[4] = dwghk[4] * 0.5;
-
-#else // SW4 backend
 dwghkref[4] = dwghk[4]*(1-sw);
             dwghk[4]    = dwghk[4]*sw;
 
-#endif // SW4 backend
 dwghkref[5] = dwghk[5];
 
             wghkref[4] /= normwgh[0];
@@ -1931,17 +1846,6 @@ dwghkref[5] = dwghk[5];
             //            dwghkref[5] = dwghk[5]*0.5;
             //            dwghk[5]    = dwghk[5]*0.5;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-wghkref[5] = wghk[5] * 0.5;
-        wghk[5] = wghk[5] * 0.5;
-        dwghkref[5] = dwghk[5] * 0.5;
-        dwghk[5] = dwghk[5] * 0.5;
-        //	       cout << " sumwgh = " <<
-        // dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] <<
-        // endl;
-
-
-#else // SW4 backend
 wghkref[5]  = wghk[5]*(1-sw);
             wghk[5]     = wghk[5]*sw;
             dwghkref[5] = dwghk[5]*(1-sw);
@@ -1949,7 +1853,6 @@ wghkref[5]  = wghk[5]*(1-sw);
             //	       cout << " sumwgh = " << dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] << endl;
 
 
-#endif // SW4 backend
 wghkref[5] /= normwgh[0];
             wghk[5]    /= normwgh[0];
             wghk[4]    /= normwgh[1];
@@ -1972,33 +1875,13 @@ wghkref[5] /= normwgh[0];
             wghkref[0]  = wghk[0];
             wghkref[1]  = wghk[1];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-wghkref[2] = wghk[2] * 0.5;
-        wghk[2] = wghk[2] * 0.5;
-
-
-#else // SW4 backend
 wghkref[2]  = wghk[2]*sw;
             wghk[2]     = wghk[2]*(1-sw);
 
 
-#endif // SW4 backend
 dwghkref[0] = dwghk[0];
             dwghkref[1] = dwghk[1];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-dwghkref[2] = dwghk[2] * 0.5;
-        dwghk[2] = dwghk[2] * 0.5;
-
-        //	       cout << "kc = 1  ref:  " << wghkref[0] << " " <<
-        // wghkref[1] << " " << wghkref[2] << endl; 	       cout << " this: "
-        // << wghk[2] << " " << wghk[3] << " " << wghk[4] << " " << wghk[5] <<
-        // endl; 	       cout << "  middle sum: " << wghk[2]+wghkref[2] <<
-        // endl; 	       cout <<
-        //" 2*ci = " << 2*ci << endl;
-
-
-#else // SW4 backend
 dwghkref[2] = dwghk[2]*sw;
             dwghk[2]    = dwghk[2]*(1-sw);
 
@@ -2008,7 +1891,6 @@ dwghkref[2] = dwghk[2]*sw;
 //	       cout << " 2*ci = " << 2*ci << endl;
 
 
-#endif // SW4 backend
 wghkref[0] /= normwgh[2];
             wghkref[1] /= normwgh[1];
             wghkref[2] /= normwgh[0];
@@ -2037,30 +1919,16 @@ wghkref[0] /= normwgh[2];
 
             wghkref[0]  = wghk[0];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-wghkref[1] = wghk[1] * 0.5;
-        wghk[1] = wghk[1] * 0.5;
-
-
-#else // SW4 backend
 wghkref[1]  = wghk[1]*sw;
             wghk[1]     = wghk[1]*(1-sw);
 
 
-#endif // SW4 backend
 dwghkref[0] = dwghk[0];
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-dwghkref[1] = dwghk[1] * 0.5;
-        dwghk[1] = dwghk[1] * 0.5;
-
-
-#else // SW4 backend
 dwghkref[1] = dwghk[1]*sw;
             dwghk[1]    = dwghk[1]*(1-sw);
 
 
-#endif // SW4 backend
 wghkref[0] /= normwgh[1];
             wghkref[1] /= normwgh[0];
             wghk[1]    /= normwgh[0];
@@ -2089,21 +1957,12 @@ wghkref[0] /= normwgh[1];
                dwghk[k] *= 0.5;
             getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-wghkref[0] = wghk[0] * 0.5;
-        wghk[0] = wghk[0] * 0.5;
-        dwghkref[0] = dwghk[0] * 0.5;
-        dwghk[0] = dwghk[0] * 0.5;
-
-
-#else // SW4 backend
 wghkref[0]  = wghk[0]*sw;
             wghk[0]     = wghk[0]*(1-sw);
             dwghkref[0] = dwghk[0]*sw;
             dwghk[0]    = dwghk[0]*(1-sw);
 
 
-#endif // SW4 backend
 wghkref[0] /= normwgh[0];
             wghk[0]    /= normwgh[0];
             wghk[1]    /= normwgh[1];
@@ -3242,131 +3101,31 @@ mPar[0] = tstart; // regular (like Gaussian) time functions are defined from t=t
 //-----------------------------------------------------------------------
 int Source::spline_interpolation( )
 {
-   // Assume mPar[1], to mPar[npts] contain the function
-   // Assume mIpar[0] contains npts
-   // Assume mFreq contains 1/dt, and mPar[0] is tstart.
-   // Compute the six spline coefficients for each interval and return in mPar[1],to mPar[6*(npts-1)]
-   if( mTimeDependence == iDiscrete )
-   {
-      int npts = mIpar[0];
-
-// tmp
-      // int myRank;
-      // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-      // if (myRank == 0)
-      // {
-      // 	cout << "before spline interp" << endl;
-      // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq << endl;
-      // 	for( int i=0 ; i < npts ; i++ )
-      // 	  cout << "fun[" << i << "] = "<< mPar[i+1] << endl;
-      // }
-
-
-Qspline quinticspline( npts, &mPar[1], mPar[0], 1/mFreq );
-      float_sw4 tstart = mPar[0];
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-::operator delete[](mPar, Space::Managed);
-    mPar = SW4_NEW(Space::Managed, float_sw4[6 * (npts - 1) + 1]);
-
-#else // SW4 backend
-delete[] mPar;
-      mPar = new float_sw4[6*(npts-1)+1];
-
-#endif // SW4 backend
-mNpar = 6*(npts-1)+1;
-      mPar[0] = tstart;
-      float_sw4* qsppt = quinticspline.get_polycof_ptr();
-      for( int i=0 ; i < 6*(npts-1) ; i++ )
-         mPar[i+1] = qsppt[i];
-      //      cout << "after spline interp" << endl;
-      //      for( int i=0 ; i < npts ; i++ )
-      //	 cout << "fun[" << i << "] = "<< mPar[6*i+1] << endl;
-
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
-return 1;
-   }
-   else if( mTimeDependence == iDiscrete3forces )
-   {
-      int npts = mIpar[0];
-      // Three different time function, one for each displacement component.
-      // Store sequentially in mPar, i.e.,
-      // mPar = [tstart, first time func, tstart, second time func, ...]
-      // tstart before each function ---> Can reuse time function iDiscrete.
-
-      float_sw4* parin = new float_sw4[(npts+1)*3];
-      for( int i=0 ; i < (npts+1)*3; i++ )
-         parin[i] = mPar[i];
-      float_sw4 tstart = mPar[0];
-      delete[] mPar;
-      mNpar = 3*(6*(npts-1)+1);
-      mPar = new float_sw4[mNpar];
-
-      size_t pos_in=0, pos_out=0;
-      for( int tf=0 ; tf < 3 ; tf++ )
-      {
-         Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
-         pos_in += npts+1;
-         mPar[pos_out] = tstart;
-         float_sw4* qsppt = quinticspline.get_polycof_ptr();
-         for( int i=0 ; i < 6*(npts-1) ; i++ )
-            mPar[pos_out+i+1] = qsppt[i];
-         pos_out += 6*(npts-1)+1;
-      }
-      delete[] parin;
-
-#endif // SW4 backend
-return 1;
-   }
-   else if( mTimeDependence == iDiscrete6moments )
-   {
-      int npts = mIpar[0];
-      // Six different time function, one for each momentum component.
-      // Store sequentially in mPar, i.e.,
-      // mPar = [tstart, first time func, tstart, second time func, ...]
-      // tstart before each function ---> Can reuse time function iDiscrete.
-
-      float_sw4* parin = new float_sw4[(npts+1)*6];
-      for( int i=0 ; i < (npts+1)*6; i++ )
-         parin[i] = mPar[i];
-      float_sw4 tstart = mPar[0];
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-::operator delete[](mPar, Space::Managed);
-
-#else // SW4 backend
-delete[] mPar;
-
-#endif // SW4 backend
-mNpar = 6*(6*(npts-1)+1);
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
-
-
-#else // SW4 backend
-mPar = new float_sw4[mNpar];
-
-
-#endif // SW4 backend
-size_t pos_in=0, pos_out=0;
-      for( int tf=0 ; tf < 6 ; tf++ )
-      {
-         Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
-         pos_in += npts+1;
-         mPar[pos_out] = tstart;
-         float_sw4* qsppt = quinticspline.get_polycof_ptr();
-         for( int i=0 ; i < 6*(npts-1) ; i++ )
-            mPar[pos_out+i+1] = qsppt[i];
-         pos_out += 6*(npts-1)+1;
-      }
-      delete[] parin;
-      return 1;
-   }
-   else
+   const int components = mTimeDependence == iDiscrete6moments ? 6 :
+                          mTimeDependence == iDiscrete3forces ? 3 :
+                          mTimeDependence == iDiscrete ? 1 : 0;
+   if (!components)
       return 0;
+   const int npts = mIpar[0];
+   const int input_stride = npts + 1;
+   const int output_stride = 6*(npts-1) + 1;
+   CHECK_INPUT(npts >= 7 && mNpar == components*input_stride,
+               "Invalid raw discrete source history for spline preparation");
+   float_sw4* coefficients = allocate_source_parameters<float_sw4>(components*output_stride);
+   for (int component=0; component<components; ++component)
+   {
+      const float_sw4* samples = mPar + component*input_stride;
+      Qspline spline(npts, const_cast<float_sw4*>(samples+1), samples[0], 1/mFreq);
+      float_sw4* result = coefficients + component*output_stride;
+      result[0] = samples[0];
+      const float_sw4* poly = spline.get_polycof_ptr();
+      for (int i=0; i<output_stride-1; ++i)
+         result[i+1] = poly[i];
+   }
+   free_source_parameters(mPar);
+   mPar = coefficients;
+   mNpar = components*output_stride;
+   return 1;
 }
 
 //-----------------------------------------------------------------------
@@ -3422,7 +3181,7 @@ for( int i=0 ; i < mNpar ; i++ )
       retval->mPar[i] = mPar[i];
 
    retval->mNipar = mNipar;
-   retval->mIpar = new int[mNipar];
+   retval->mIpar = allocate_source_parameters<int>(mNipar);
    for( int i=0 ; i < mNipar ; i++ )
       retval->mIpar[i] = mIpar[i];
 
@@ -3432,6 +3191,7 @@ for( int i=0 ; i < mNpar ; i++ )
    for( int i=0 ; i < 11 ; i++ )
       retval->m_dir[i] = m_dir[i];
    retval->m_is_filtered = m_is_filtered;
+   retval->m_timeFuncIsReady = m_timeFuncIsReady;
 
    retval->m_zTopo = m_zTopo;
    retval->mIgnore = mIgnore;
