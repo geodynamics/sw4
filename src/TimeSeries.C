@@ -1424,8 +1424,11 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   setfhv( nm[2], depmen, nerr);
   setnhv( nm[3], npts,nerr);
   setfhv( nm[4], dt  ,nerr);
-  setfhv( nm[5], btime  ,nerr);
-  e = btime + (npts -1 )*dt;
+  // SAC's reference UTC has millisecond precision. Keep the remaining
+  // microseconds in its relative times so absolute sample times are preserved.
+  const float utc_remainder = (m_utc[6] % 1000)*1.e-6;
+  setfhv( nm[5], btime + utc_remainder, nerr);
+  e = btime + utc_remainder + (npts -1 )*dt;
   setfhv( nm[6], e, nerr);
   setlhv( nm[7], 1, nerr);
   setlhv( nm[8], 1, nerr);
@@ -1444,7 +1447,7 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
      setnhv( nm[12], m_utc[3], nerr);
      setnhv( nm[13], m_utc[4], nerr);
      setnhv( nm[14], m_utc[5], nerr);
-     setnhv( nm[15], m_utc[6], nerr);
+     setnhv( nm[15], m_utc[6]/1000, nerr);
      //  }
      //  else
      //  {
@@ -1469,7 +1472,7 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   setfhv( nm[20], m_epi_lon, nerr);
   setfhv( nm[21], m_epi_depth/1000.0, nerr); // in km, not meters
   // time offset for epicenter source
-  setfhv( nm[22], m_epi_time_offset, nerr);
+  setfhv( nm[22], m_epi_time_offset + utc_remainder, nerr);
 
   // set inclination and azimuthal angle
   setfhv( nm[23], cmpinc, nerr);
@@ -1639,8 +1642,8 @@ void TimeSeries::write_usgs_format(string a_fileName)
    fprintf(fd, "# Author: SW4\n");
    fprintf(fd, "# Scenario: %s\n", "test"/*a_ew->m_scenario.c_str()*/);
 //   if( m_utc_set )
-// AP: micro-second field is padded from left with 0, i.e., 1 micro sec gets written as 001, second is also padded by a zero, if needed
-   fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%02i.%.3i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
+// UTC fractions are microseconds, including leading zeroes.
+   fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%02i.%.6i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
            m_utc[4], m_utc[5], m_utc[6] );
       //   else
       //      fprintf(fd, "# Date: %i-%s-%i\n", mEventDay, mname[mEventMonth].c_str(), mEventYear);
@@ -4117,8 +4120,9 @@ cout << "readSACheader: ERROR, size of datatypes do not match the SAC specificat
    utc[3] = int35[2];
    utc[4] = int35[3];
    utc[5] = int35[4];
-   utc[6] = int35[5];
+   utc[6] = 1000*int35[5]; // SAC milliseconds to SW4 microseconds
    npts   = int35[9];
+   fclose(fd);
 }
 
 //-----------------------------------------------------------------------

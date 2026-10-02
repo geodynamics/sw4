@@ -29,6 +29,30 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include "TimeSeries.h"
+#ifdef USE_HDF5
+namespace {
+// Match the component conventions used by TimeSeries::writeFile for SAC.
+// Tensor/gradient orientations retain SAC's existing descriptive convention.
+void receiver_orientation(TimeSeries* series, int component,
+                           float& azimuth, float& inclination)
+{
+  const auto mode = series->getMode();
+  int axis = component;
+  if (mode == TimeSeries::Strains)
+    axis = component < 3 ? component : 0;
+  else if (mode == TimeSeries::DisplacementGradient)
+    axis = component == 4 ? 1 : component == 8 ? 2 : 0;
+  const bool geographic = !series->getXYZcomponent() &&
+      (mode == TimeSeries::Displacement || mode == TimeSeries::Velocity);
+  azimuth = axis == 2 ? 0.f : geographic ? (axis == 0 ? 90.f : 0.f)
+                                         : series->getXaz() + 90.f*axis;
+  inclination = axis == 2 ? (geographic ? 0.f : 180.f) : 90.f;
+}
+}
+
+#endif
+
 #if defined(SW4_USE_RAJA) // SW4 backend
 #ifndef SACHDF5_C
 #define SACHDF5_C
@@ -53,6 +77,7 @@
 #ifdef USE_HDF5
 
 #include "sachdf5.h"
+
 
 int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id) {
   hid_t attr, dcpl;
@@ -534,6 +559,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
     // Include the sample at step zero and every eligible sample thereafter.
     total_dims = 1 + ((hsize_t)totalSteps - 1) / station_downsample;
     for (int i = 0; i < ndset; i++) {
+      receiver_orientation(TimeSeries[ts], i, cmpazs[i], cmpincs[i]);
       dset_space = H5Screate_simple(1, &total_dims, NULL);
       dset = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space,
                        H5P_DEFAULT, dcpl, H5P_DEFAULT);
@@ -545,9 +571,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
       /* createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
       /* createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
       createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1,
-                      &cmpazs[i]);
-      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1,
                       &cmpincs[i]);
+      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1,
+                      &cmpazs[i]);
 #else
       /* createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1); */
       /* createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1); */
@@ -1234,6 +1260,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     // Include the sample at step zero and every eligible sample thereafter.
     total_dims = 1 + ((hsize_t)totalSteps - 1) / station_downsample;
     for (int i = 0; i < ndset; i++) {
+      receiver_orientation(TimeSeries[ts], i, cmpazs[i], cmpincs[i]);
       dset_space = H5Screate_simple(1, &total_dims, NULL);
       dset = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space,
                        H5P_DEFAULT, dcpl, H5P_DEFAULT);
@@ -1244,8 +1271,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       std::string azname  = dset_names[i] + "CMPAZ";
       /* createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
       /* createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
-      createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
-      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
+      createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
+      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
 #else
       /* createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1); */
       /* createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1); */

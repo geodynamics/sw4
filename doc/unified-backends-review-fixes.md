@@ -41,3 +41,44 @@ interface sweeps, broader regressions and performance are still pending.
 
 These additional checks are excluded from default builds and are not registered
 with pytest or CTest. The existing pytest suites are unchanged.
+
+## Receiver format consistency
+
+SAC UTC stores milliseconds; SW4 internally stores microseconds. SAC now writes
+the millisecond portion into `NZMSEC` and includes the remaining microseconds in
+`B`, `E`, and `O`. Reading SAC converts milliseconds back to microseconds. USGS
+text writes a six-digit fractional second, including leading zeroes. Samples and
+the simulation's time integration are unchanged by these metadata corrections.
+
+Rechdf5 component inclination and azimuth now have the correct names and match
+SAC's Cartesian or geographic component conventions, including derivative
+output modes. Geographic EW/NS azimuths are 90/0 degrees. The user approved both
+metadata corrections because they can affect downstream timing/rotation.
+
+```sh
+cmake --build build --target sw4_receiver_check
+python tests/backends/receiver_formats.py --backend OPENMP \
+  --sw4 build/bin/sw4 --reader build/bin/sw4_receiver_check \
+  --work-dir "$SCRATCH/sw4-formats"
+```
+
+The on-demand driver checks displacement, velocity, divergence, curl, strains,
+and displacement gradient; Cartesian/geographic components; flat/Gaussian
+topography; HDF5 downsampling by one/three; partial writes and the final sample;
+UTC fractions `.234567`, `.000123`, and `.999999`; origin/sample timing and
+component metadata. It rejects nonfinite samples and missing signals.
+SAC/rechdf5 float32 samples are compared with USGS solver-precision samples using
+`1e-12 + 2e-6 * component_peak`. Displacement/velocity use metres/metres per
+second, matching USGS headings and HDF5's `UNIT` attribute.
+
+Downsampling is an HDF5-only option in the existing documented contract. A
+downsampled HDF5 trace is checked against the corresponding SAC/USGS samples;
+full-rate outputs have matching counts and samples. SAC `B` must be interpreted
+together with its reference UTC, rather than compared alone with USGS times.
+
+Fresh OpenMP execution passed all 22 format cases. Four displacement fixtures
+also passed read-back through SW4's real SAC, USGS and rechdf5 readers, with
+start-time/sample-interval errors below `1e-8` seconds and matching vertical
+samples within the same floating-point tolerance. Evidence:
+`/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/formats-cpu-v6/`.
+CUDA format execution remains pending allocation.
