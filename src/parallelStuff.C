@@ -1502,16 +1502,11 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
 
   SW4_MARK_END("THE REST");
-#if defined(ENABLE_MPI_TIMING_BARRIER)
+  // Halo exchanges are point-to-point. A world barrier here can deadlock
+  // when refinement-interface work differs between ranks.
 #if defined(SW4_TRACK_MPI)
   std::chrono::high_resolution_clock::time_point t1, t2;
   t1 = SW4_CHRONO_NOW;
-#endif
-  MPI_Barrier(MPI_COMM_WORLD);
-#if defined(SW4_TRACK_MPI)
-  t2 = SW4_CHRONO_NOW;
-  coll_sm.insert(0, SW4_CHRONO_DURATION_US(t1, t2));
-#endif
 #endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL");
 
@@ -1521,12 +1516,6 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
   }
 
 #if defined(SW4_TRACK_MPI)
-#if defined(ENABLE_MPI_TIMING_BARRIER)
-  t1 = SW4_CHRONO_NOW;
-  MPI_Barrier(MPI_COMM_WORLD);
-  t2 = SW4_CHRONO_NOW;
-  coll_sm.insert(1, SW4_CHRONO_DURATION_US(t1, t2));
-#endif
   SYNC_STREAM;  // Avoid adding the buffering time to the MPI bandwdth
   t1 = SW4_CHRONO_NOW;
 #endif
@@ -2064,16 +2053,11 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
 
   SW4_MARK_END("THE REST2");
-#if defined(ENABLE_MPI_TIMING_BARRIER)
+  // Halo exchanges are point-to-point. A world barrier here can deadlock
+  // when refinement-interface work differs between ranks.
 #if defined(SW4_TRACK_MPI)
   std::chrono::high_resolution_clock::time_point t1, t2;
   t1 = SW4_CHRONO_NOW;
-#endif
-  MPI_Barrier(MPI_COMM_WORLD);
-#if defined(SW4_TRACK_MPI)
-  t2 = SW4_CHRONO_NOW;
-  coll_sm.insert(2, SW4_CHRONO_DURATION_US(t1, t2));
-#endif
 #endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL2");
 
@@ -2083,7 +2067,9 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
     {
 #endif
       // getbuffer_device(a,std::get<0>(buf),sendt,true);
-#ifdef SW4_A100
+// Pack/unpack on the GPU to preserve ordering with GPU-produced data.
+// CPU accesses to managed arrays can otherwise race an outstanding kernel.
+#if defined(ENABLE_GPU)
       getbuffer_device(a, std::get<0>(buf), sendt);
 #else
       getbuffer_host(a, std::get<0>(buf), sendt);
@@ -2133,7 +2119,9 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 #if defined(SW4_TRACK_MPI)
       auto t1 = SW4_CHRONO_NOW;
 #endif
-#ifdef SW4_A100
+// Pack/unpack on the GPU to preserve ordering with GPU-produced data.
+// CPU accesses to managed arrays can otherwise race an outstanding kernel.
+#if defined(ENABLE_GPU)
       putbuffer_device(b, std::get<1>(buf), recvt);
 #else
       putbuffer_host(b, std::get<1>(buf), recvt);

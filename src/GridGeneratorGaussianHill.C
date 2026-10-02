@@ -470,7 +470,7 @@ Sarray& topo )
    z = - m_amp*exp( -(x-m_xc)*(x-m_xc)*m_ixl2 - (y-m_yc)*(y-m_yc)*m_iyl2);
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-return -1;
+return 1;
 #else // SW4 backend
 return true;
 #endif // SW4 backend

@@ -2037,43 +2037,12 @@ bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth)
 //     if (r<rMin) r=rMin;
 //     if (r>rMax) r=rMax;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-int gCurv = mNumberOfGrids - 1;
-    float_sw4 h = mGridSize[gCurv];
-    float_sw4 q = x / h + 1.0;
-    float_sw4 r = y / h + 1.0;
-
-    // define the depth for ghost points (in x or y) to equal the depth on the
-    // nearest boundary point
-
-#else // SW4 backend
-#endif // SW4 backend
-#if defined(SW4_USE_RAJA) // SW4 backend
-float_sw4 qMin = 1.0;
-    float_sw4 qMax = (float_sw4)m_global_nx[gCurv];
-    float_sw4 rMin = 1.0;
-    float_sw4 rMax = (float_sw4)m_global_ny[gCurv];
-
-
-#else // SW4 backend
-#endif // SW4 backend
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (q < qMin) q = qMin;
-    if (q > qMax) q = qMax;
-    if (r < rMin) r = rMin;
-    if (r > rMax) r = rMax;
-
-    // // evaluate elevation of topography on the grid (smoothed topo)
-
-#else // SW4 backend
-if (x<0) x=0;
+     // Clamp physical coordinates before evaluating boundary ghost points.
+     if (x<0) x=0;
      if (x>m_global_xmax) x=m_global_xmax;
      if (y<0) y=0;
      if (y>m_global_ymax) y=m_global_ymax;
 
-// // evaluate elevation of topography on the grid (smoothed topo)
-
-#endif // SW4 backend
 success=true;
 
 #if defined(SW4_USE_RAJA) // SW4 backend

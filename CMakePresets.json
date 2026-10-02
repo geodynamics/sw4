@@ -1,0 +1,59 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
+      "name": "cpu",
+      "inherits": "base",
+      "displayName": "Native OpenMP CPU",
+      "cacheVariables": {
+        "SW4_BACKEND": "OPENMP"
+      }
+    },
+    {
+      "name": "cuda",
+      "inherits": "base",
+      "displayName": "RAJA CUDA GPU",
+      "cacheVariables": {
+        "SW4_BACKEND": "CUDA"
+      }
+    },
+    {
+      "name": "hip",
+      "inherits": "base",
+      "displayName": "RAJA HIP GPU",
+      "cacheVariables": {
+        "SW4_BACKEND": "HIP",
+        "SW4_GPU_MPI_BUFFERS": "MANAGED"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cpu",
+      "configurePreset": "cpu"
+    },
+    {
+      "name": "cuda",
+      "configurePreset": "cuda"
+    },
+    {
+      "name": "hip",
+      "configurePreset": "hip"
+    }
+  ]
+}
