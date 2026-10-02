@@ -16,6 +16,8 @@ import time
 
 import numpy as np
 
+from validation import check_solver_log
+
 
 def digest(path):
     h = hashlib.sha256()
@@ -54,7 +56,7 @@ def compare(a, b, rtol, atol):
     np.testing.assert_allclose(x[:, 0], y[:, 0], rtol=1e-10, atol=1e-10)
     peaks = np.max(np.abs(x[:, 1:]), axis=0)
     delta = np.max(np.abs(x[:, 1:] - y[:, 1:]), axis=0)
-    if not np.any(peaks > 0) or np.any(delta > atol + rtol * peaks):
+    if not np.any(peaks > 10*atol) or np.any(delta > atol + rtol * peaks):
         raise ValueError(f'Waveform mismatch: delta={delta}, reference peaks={peaks}')
     return {'max_difference': delta.tolist(), 'reference_peak': peaks.tolist()}
 
@@ -93,6 +95,7 @@ def main():
     text = relocate(source.read_text(), model)
     common = {'source_input_sha256': digest(source), 'relocated_input_sha256': hashlib.sha256(text.encode()).hexdigest(),
               'model': str(model), 'model_size': model.stat().st_size, 'model_mtime_ns': model.stat().st_mtime_ns,
+              'model_sha256': digest(model),
               'nodes': 4, 'tasks': 16, 'tasks_per_node': 4, 'cpus_per_task': 4, 'gpus_per_task': 1,
               'omp_threads': 1, 'mpi_gpu_support': 0,
               'omp_proc_bind': os.environ.get('OMP_PROC_BIND'),
@@ -113,6 +116,9 @@ def main():
                 record = json.loads(record_file.read_text())
                 if record['identity'] != identity:
                     raise ValueError(f'Cannot resume a different simulation: {record_file}')
+                check_solver_log(directory / 'run.log')
+                if digest(directory / 'output/sta1.txt') != record['waveform_sha256']:
+                    raise ValueError(f'Waveform changed since the recorded run: {record_file}')
             else:
                 directory.mkdir(exist_ok=False)
                 input_file = directory / 'hmr3.in'
@@ -129,6 +135,7 @@ def main():
                     result = subprocess.run(command, cwd=directory, env=env, stdout=log,
                                             stderr=subprocess.STDOUT, timeout=2400)
                 wall = time.monotonic() - started
+                check_solver_log(directory / 'run.log')
                 log_text = (directory / 'run.log').read_text()
                 match = re.search(r'Execution time, solver phase\s+(?:(\d+) hours?\s+)?(?:(\d+) minutes?\s+)?([\d.]+) seconds', log_text)
                 if result.returncode or not match or 'program sw4 finished!' not in log_text:

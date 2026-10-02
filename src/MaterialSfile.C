@@ -281,14 +281,24 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
    delete [] jst;
 
    mEW->communicate_arrays( rho );
-   mEW->communicate_arrays( cs );
-   mEW->communicate_arrays( cp );
+#if defined(SW4_USE_RAJA)
+   mEW->communicate_host_arrays(cs);
+   mEW->communicate_host_arrays(cp);
+#else
+   mEW->communicate_arrays(cs);
+   mEW->communicate_arrays(cp);
+#endif
    mEW->material_ic( rho );
    mEW->material_ic( cs );
    mEW->material_ic( cp );
    if( use_q ) {
-      mEW->communicate_arrays( xis );
-      mEW->communicate_arrays( xip );
+#if defined(SW4_USE_RAJA)
+      mEW->communicate_host_arrays(xis);
+      mEW->communicate_host_arrays(xip);
+#else
+      mEW->communicate_arrays(xis);
+      mEW->communicate_arrays(xip);
+#endif
       mEW->material_ic( xis);
       mEW->material_ic( xip );
    }

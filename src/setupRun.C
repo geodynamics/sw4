@@ -1316,17 +1316,6 @@ g, kFrom, m_kEnd[g], m_kEndInt[g]);
 
 // repeat for the curvilinear grids
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-SW4_MARK_END("SetMat::Section 1");
-    // tmp
-    //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n",
-    //    m_useVelocityThresholds, m_vpMin, m_vsMin);
-    // Extrapolate to ghost points in x and y, if they were not set by the
-    // previous routines.
-    //    cout << "min rho before " << mRho[0].minimum() << endl;
-
-
-#else // SW4 backend
 int NumberOfCurviGrids = mNumberOfGrids - mNumberOfCartesianGrids;
 
     if (mMaterialExtrapolate > 0 && NumberOfCurviGrids > 1)
@@ -1405,7 +1394,6 @@ int NumberOfCurviGrids = mNumberOfGrids - mNumberOfCartesianGrids;
 //    cout << "min rho before " << mRho[0].minimum() << endl;
 
 
-#endif // SW4 backend
 extrapolateInXY( mRho );
     extrapolateInXY( mMu );
     extrapolateInXY( mLambda );

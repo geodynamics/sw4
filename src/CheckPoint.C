@@ -28,6 +28,9 @@
 #include <cstdio>
 
 #endif // SW4 backend
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
+#endif
 #ifdef USE_ZFP
 #include "H5Zzfp_lib.h"
 #include "H5Zzfp_props.h"
@@ -39,10 +42,6 @@
 #endif
 
 #else // SW4 backend
-#ifdef USE_SZ
-#include "H5Z_SZ.h"
-#endif
-
 #endif // SW4 backend
 CheckPoint* CheckPoint::nil=static_cast<CheckPoint*>(0);
 
@@ -1328,18 +1327,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     H5Pset_zfp_reversible(dcpl);
   }
 #endif
-#ifdef USE_SZ
-  else if (mCompMode == SW4_SZ) {
-    size_t cd_nelmts;
-    unsigned int* cd_values = NULL;
-    int dataType = SZ_DOUBLE;
-    if (m_precision == 4) dataType = SZ_FLOAT;
-    SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3],
-                         m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
-    H5Pset_filter(dcpl, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts,
-                  cd_values);
-  }
-#endif
+
 
   char dset_name[128];
   hsize_t* npts = new hsize_t[mEW->mNumberOfGrids];
@@ -1376,6 +1364,24 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   if (myrank == 0) {
     for (int g = 0; g < mEW->mNumberOfGrids; g++) {
       dspace = H5Screate_simple(1, &total[g], NULL);
+#ifdef USE_SZ
+      if (mCompMode == SW4_SZ) {
+        unsigned filter_config = 0;
+        CHECK_INPUT(H5Zfilter_avail(H5Z_FILTER_SZ) > 0 &&
+                    H5Zget_filter_info(H5Z_FILTER_SZ, &filter_config) >= 0 &&
+                    (filter_config & H5Z_FILTER_CONFIG_ENCODE_ENABLED),
+                    "Checkpoint SZ filter is unavailable for encoding");
+        size_t cd_nelmts = 0;
+        unsigned int* cd_values = NULL;
+        SZ_metaDataToCdArray(&cd_nelmts, &cd_values,
+                            m_double ? SZ_DOUBLE : SZ_FLOAT, 0, 0, 0, 0, total[g]);
+        CHECK_INPUT(H5Pset_filter(dcpl, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY,
+                                cd_nelmts, cd_values) >= 0,
+                    "Cannot configure checkpoint SZ filter");
+        free(cd_values);
+      }
+#endif
+
 
       sprintf(dset_name, "Um%d", g);
       create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
@@ -2134,25 +2140,25 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     for (int g = 0; g < mEW->mNumberOfGrids; g++) {
         dspace = H5Screate_simple(1, &total[g], NULL);
 
-#ifdef USE_SZ
-        if (mCompMode == SW4_SZ) {
-          size_t cd_nelmts;
-          unsigned int* cd_values = NULL;
-          unsigned filter_config;
-          int dataType = SZ_DOUBLE;
-          if (!m_double) dataType = SZ_FLOAT;
-          SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType,
-                               0, 0, 0, 0, total[g]);
-          H5Pset_filter(dcpl, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY,
-                        cd_nelmts, cd_values);
 
-          if(g == 0 && H5Zfilter_avail(H5Z_FILTER_SZ)) {
-            H5Zget_filter_info(H5Z_FILTER_SZ, &filter_config);
-            if(!(filter_config & H5Z_FILTER_CONFIG_ENCODE_ENABLED))
-              printf("Error SZ filter is NOT available!\n");
-          }
-        }
+#ifdef USE_SZ
+      if (mCompMode == SW4_SZ) {
+        unsigned filter_config = 0;
+        CHECK_INPUT(H5Zfilter_avail(H5Z_FILTER_SZ) > 0 &&
+                    H5Zget_filter_info(H5Z_FILTER_SZ, &filter_config) >= 0 &&
+                    (filter_config & H5Z_FILTER_CONFIG_ENCODE_ENABLED),
+                    "Checkpoint SZ filter is unavailable for encoding");
+        size_t cd_nelmts = 0;
+        unsigned int* cd_values = NULL;
+        SZ_metaDataToCdArray(&cd_nelmts, &cd_values,
+                            m_double ? SZ_DOUBLE : SZ_FLOAT, 0, 0, 0, 0, total[g]);
+        CHECK_INPUT(H5Pset_filter(dcpl, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY,
+                                cd_nelmts, cd_values) >= 0,
+                    "Cannot configure checkpoint SZ filter");
+        free(cd_values);
+      }
 #endif
+
         sprintf(dset_name, "Um%d", g);
         create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
 

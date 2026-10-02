@@ -83,13 +83,7 @@ void EW::check_materials()
    //   lambda >0 requires cp/cs > sqrt(2)
    //  const float_sw4 mincpcsratio = 1.2;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-const float_sw4 mincpcsratio = 1.2;
-
-#else // SW4 backend
 const float_sw4 mincpcsratio = sqrt(4.0/3);
-
-#endif // SW4 backend
 const float_sw4 la_min_fact = mincpcsratio*mincpcsratio-2;
 
   float_sw4 mins[8],maxs[8];
@@ -778,6 +772,8 @@ void EW::extrapolateInZvector( int g, Sarray& field, bool lowk, bool highk )
 //--------- Material properties for MR ---------------
 #if defined(SW4_USE_RAJA) // SW4 backend
 void EW::setup_MR_coefficients() {
+  if (m_anisotropic)
+    return;
   SW4_MARK_FUNCTION;
 // stretching on the fine side
 #else // SW4 backend

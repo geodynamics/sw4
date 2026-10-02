@@ -48,7 +48,9 @@ All backends use the same switches:
 - `USE_PROJ=ON`: PROJ 6 or newer, located using its CMake package.
 - `USE_HDF5=ON`: parallel HDF5, located using `HDF5_ROOT` or package defaults.
 - `USE_ZFP=ON`: ZFP and H5Z-ZFP CMake packages; requires HDF5.
-- `USE_SZ=ON`: SZ headers/library, located using `SZ_ROOT`; requires HDF5.
+- `USE_SZ=ON`: SZ plus its HDF5 filter (`H5Z_SZ.h` and filter library),
+  located using `SZ_ROOT` and `SZ_FILTER_ROOT`; requires HDF5. Configuration
+  checks that the selected filter compiles and links.
 - `USE_FFTW3=ON`: precision-matched FFTW and MPI FFTW, using `FFTW_ROOT`.
 - `SW4_USE_UMPIRE=OFF`: GPU builds use the retained non-Umpire allocator.
 
@@ -152,7 +154,7 @@ it compiles the same GPU source manifest, links with the HIP compiler and
 uses `-fgpu-rdc` for compilation and linking, with
 the platform default stream used by SW4's explicit copies and synchronization.
 Build CAMP/RAJA with `-DCAMP_USE_PLATFORM_DEFAULT_STREAM=ON`; the HIP policy
-checks the installed configuration. Modern CAMP rejects a command-line macro
+checks the installed configuration, as do the CUDA policies. Modern CAMP rejects a command-line macro
 override because it can violate the one-definition rule. `SW4_GPU_MPI_BUFFERS` selects
 `STAGED` (host-staged, default for both GPU presets) or `MANAGED` (the legacy
 HIP Make setting). Staged validation uses `MPICH_GPU_SUPPORT_ENABLED=0`.
@@ -202,3 +204,17 @@ than the baseline. `--max-slowdown` changes this threshold explicitly. Record
 both build configurations alongside the report, especially fast-math and
 prefetch differences. `--only baseline --repeats 1` prepares the first run;
 `--resume` reuses completed runs only when their identities match.
+
+## Production review follow-up
+
+See [the review correction record](unified-backends-review-fixes.md) for approved
+scientific changes, on-demand regression commands and current acceptance limits.
+GPU anisotropic operations use the reference host implementation with explicit
+stream waits before reading GPU-updated arrays. Anisotropic mesh refinement
+remains unsupported by the existing input contract.
+
+GPU event commands share the native name and default-path behavior.
+`event parallel=yes` is rejected in GPU builds because existing GPU operations
+use world communicators and cannot safely isolate event groups. Native OpenMP
+inversion retains parallel-event support. GPU events can run in independent jobs.
+This explicit restriction does not establish full GPU inversion/event parity.

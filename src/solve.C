@@ -122,8 +122,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // New space switching
   SW4_MARK_BEGIN("Solve::Host->Managed");
   for (int g = 0; g < mNumberOfGrids; g++) {
-    mMu[g].switch_space(Space::Managed);
-    mLambda[g].switch_space(Space::Managed);
+    if (!m_anisotropic) {
+      mMu[g].switch_space(Space::Managed);
+      mLambda[g].switch_space(Space::Managed);
+    }
     for (int a = 0; a < m_number_mechanisms; a++) {
       mMuVE[g][a].switch_space(Space::Managed);
       mLambdaVE[g][a].switch_space(Space::Managed);
@@ -3496,6 +3498,8 @@ void EW::enforceBCanisotropic( vector<Sarray> & a_U, vector<Sarray>& a_C,
 
 #if defined(SW4_USE_RAJA) // SW4 backend
 SW4_MARK_FUNCTION;
+  // The anisotropic operator uses the reference host implementation.
+  SYNC_STREAM;
 
 #else // SW4 backend
 #endif // SW4 backend

@@ -2,6 +2,10 @@
 #define __CUDA_POLICIES_H__
 #include "RAJA/RAJA.hpp"
 
+#if !defined(CAMP_USE_PLATFORM_DEFAULT_STREAM) || !CAMP_USE_PLATFORM_DEFAULT_STREAM
+#error "Build CAMP/RAJA with CAMP_USE_PLATFORM_DEFAULT_STREAM=ON for SW4 CUDA"
+#endif
+
 #define SW4_FORCEINLINE __forceinline__
 #define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))

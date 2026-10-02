@@ -111,3 +111,40 @@ produced growing amplitudes and are retained as failed evidence, not acceptance.
 The production timestep/default grid policies were not changed. Evidence:
 `/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/review-cpu-fine/`.
 CUDA propagation and anisotropic topography remain additional acceptance gates.
+
+## Remaining review corrections and acceptance gates
+
+Sfile setup now communicates Vp/Vs and Q arrays through host packing while those
+arrays reside in host storage. Curvilinear material extrapolation uses the native
+loop, including attenuation fields. GPU anisotropic setup skips undefined
+isotropic refinement/material arrays and waits for the GPU stream before host
+operators read solution data. Both material checks use the native Vp/Vs lower
+limit `sqrt(4/3)`. SAC source parsing reads lengths before allocating histories.
+Both backends complete all four requests in the curvilinear setup exchange.
+Event defaults follow native behavior; unsafe GPU parallel events are rejected.
+
+SZ checkpoint compression now uses each grid's actual one-dimensional dataset
+length and configured precision, releases filter metadata, and checks encoding
+availability. CMake requires both SZ and the HDF5 filter and verifies linking.
+SZ runtime validation is unavailable on this system because those dependencies
+are absent; configuration rejects that missing dependency explicitly.
+
+Validation drivers reject nonconvergence, nonfinite output and noise-only
+references. Interface comparisons require meaningful late arrivals on both
+grids. Performance records include the material-model SHA-256; resumed results
+require valid logs and unchanged receiver checksums. The negative acceptance
+checks passed (`python tests/backends/check_acceptance.py`).
+
+Fresh OpenMP results include the existing solver suite (20 passes, five existing
+skips), four existing HDF5 regressions, and 22 source/interface/material/event
+propagation cases, including the anisotropic isotropic limit. The default
+standalone OpenMP build succeeded with RAJA and Umpire discovery disabled.
+Fresh CUDA with native inversion compiled successfully. These compile results
+do not substitute for CUDA runtime acceptance. Evidence is retained under
+`/pscratch/sd/h/houhun/sw4-review-fixes.l5lzya/`.
+
+Additional curvilinear physical-source fixtures currently fail their convergence
+gate on CPU. Their failures are retained in `curvi-controls/`, `curvi-thicker/`
+and `curvi-constant/`. They are not counted as passing extrapolation validation.
+GPU runtime, four-node performance, the current inversion rerun, velocity
+receiver read-back, and ROCm/HIP execution remain open gates.

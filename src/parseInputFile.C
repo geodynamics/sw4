@@ -6999,48 +6999,25 @@ npar = npts+1;
      string basename = dfile;
      string fname;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-npts = 1;  // THis is potential bug source.
-    std::cerr << " npts set randomly in parseinfput file line 5216."
-              << std::flush;
-    abort();
-    // END CHANGES
-
-
-#else // SW4 backend
-#endif // SW4 backend
 if( isMomentType )
      {
         tDep = iDiscrete6moments;
         fname = basename + ".xx";
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-npar = 6 * (npts + 1);
-
-#else // SW4 backend
-#endif // SW4 backend
 }
      else
      {
         tDep = iDiscrete3forces;
         fname = basename + ".x";
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-npar = 3 * (npts + 1);
-
-#else // SW4 backend
-#endif // SW4 backend
 }
      bool byteswap;
      readSACheader( fname.c_str(), dt, t0, latsac, lonsac, cmpazsac, cmpincsac, utcsac, npts, byteswap );
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 npar = 3*(npts+1);
      if( isMomentType ) npar  = 6*(npts+1);
 
 
-#endif // SW4 backend
 if( !useB )
         t0 = 0;
 
@@ -7052,13 +7029,7 @@ if( !useB )
         {
            if( proc_zero() )
               cout
-#if defined(SW4_USE_RAJA) // SW4 backend
-<< "WARNING in processSource: reading sac files: (lat,lon) "
-                 "location on sac file different from (lat,lon) on command line"
-
-#else // SW4 backend
 << "WARNING in processSource: reading sac files: (lat,lon) location on sac file different from (lat,lon) on command line"
-#endif // SW4 backend
 << endl;
         }
      }
@@ -11205,12 +11176,9 @@ void EW::processEvent( char* buffer, int enr )
                "ERROR: not an event line: " << token);
    token = strtok(NULL, " \t");
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 bool pathdefined=false, obspathdefined=false, namedefined=false;
 
 
-#endif // SW4 backend
 while (token != NULL)
    {
       // while there are tokens in the string still
@@ -11226,11 +11194,8 @@ while (token != NULL)
          //	 mPath[enr] = token;
          //	 mPath[enr] += '/';
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 pathdefined=true;
 
-#endif // SW4 backend
 }
       else if (startswith("obspath=", token))
       {
@@ -11241,11 +11206,8 @@ pathdefined=true;
          //	 mObsPath[enr] = token;
          //	 mObsPath[enr] += '/';
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 obspathdefined=true;
 
-#endif // SW4 backend
 }
       else if( startswith("name=",token) )
       {
@@ -11254,40 +11216,36 @@ obspathdefined=true;
          CHECK_INPUT(it == m_event_names.end(), "ERROR: processEvent, name = " << token << " multiply defined");
          m_event_names[token]=enr;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 namedefined=true;
       }
       else if( startswith("parallel=",token) )
       {
          token += 9;
          std::string p=token;
-         m_events_parallel = (p =="1" || p == "yes" || p=="on") || m_events_parallel;
+         const bool parallel = p == "1" || p == "yes" || p == "on";
+#if defined(SW4_USE_RAJA)
+         CHECK_INPUT(!parallel,
+                     "GPU parallel events are not supported; use native sw4mopt "
+                     "or independent GPU jobs. World-communicator GPU operations "
+                     "cannot safely run separate event groups.");
+#endif
+         m_events_parallel = parallel || m_events_parallel;
 
-#endif // SW4 backend
 }
       else
       {
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-badOption("randomblock", token);
-
-#else // SW4 backend
 badOption("event", token);
 
-#endif // SW4 backend
 }
       token = strtok(NULL, " \t");
    }
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
 CHECK_INPUT(namedefined,"ERROR processing 'event' command, name must be given");
    if( !pathdefined )
       mPath.push_back("./");
    if( !obspathdefined )
       mObsPath.push_back("./");
-#endif // SW4 backend
 }
 
 //-----------------------------------------------------------------------

@@ -2999,6 +2999,9 @@ MPI_Request req1, req2, req3, req4;
 
   MPI_Wait( &req1, &status );
   MPI_Wait( &req2, &status );
+  // Temporary setup storage cannot be released while MPI still owns a send.
+  MPI_Wait( &req3, &status );
+  MPI_Wait( &req4, &status );
 }
 #if defined(SW4_USE_RAJA) // SW4 backend
 void CurvilinearInterface2::compute_icstresses_curv(

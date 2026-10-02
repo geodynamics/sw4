@@ -14,6 +14,8 @@ import sys
 import h5py
 import numpy as np
 
+from validation import check_solver_log
+
 GRID = 'grid h=200 x=4000 y=4000 z=4000 lat=37 lon=-122 az=0\n'
 BLOCK = 'block vp=6000 vs=3464 rho=2700\nblock vp=4000 vs=2000 rho=2600 z2=800\n'
 SOURCE = 'source x=1600 y=1600 z=600 mxy=1e15 t0=0.05 freq=20 type=Gaussian\n'
@@ -21,9 +23,9 @@ COMMON = 'time steps=16\nsupergrid gp=4\nfileio path=output\n'
 RECEIVERS = 'rechdf5 infile=stations.h5 outfile=receivers.h5 writeEvery=3\n'
 
 
-def stations(path):
+def stations(path, coordinates=None):
     with h5py.File(path, 'w') as f:
-        for name, xyz in [('station', (1800, 1800, 200)), ('edge', (3200, 2800, 200))]:
+        for name, xyz in (coordinates or [('station', (1800, 1800, 200)), ('edge', (3200, 2800, 200))]):
             g = f.create_group(name)
             g['STX,STY,STZ'] = np.asarray(xyz, dtype=np.float64)
             g['USEZVALUE'] = np.asarray([1], dtype=np.int32)
@@ -44,28 +46,30 @@ def srf(path):
     path.write_text('\n'.join(lines) + '\n')
 
 
-def run(exe, directory, text, tasks, gpu):
+def run(exe, directory, text, tasks, gpu, coordinates=None):
     directory.mkdir(parents=True, exist_ok=True)
-    stations(directory / 'stations.h5')
+    stations(directory / 'stations.h5', coordinates)
     input_file = directory / 'case.in'
     input_file.write_text(text)
-    command = ['srun', '--exclusive', '--exact', '-N', '1', '-n', str(tasks), '-c', '1']
+    command = ['srun', '--exclusive', '--exact', '-N', '1', '-n', str(tasks), '-c', '4']
     if gpu:
         command += ['--gpus-per-task=1', '--gpu-bind=single:1']
     else:
         command += ['--gres=none']
     command += [str(exe), str(input_file)]
-    env = os.environ.copy()
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith('SLURM_') or k == 'SLURM_JOB_ID'}
     env.update(OMP_NUM_THREADS='1', MPICH_GPU_SUPPORT_ENABLED='0')
     with (directory / 'run.log').open('w') as log:
         result = subprocess.run(command, cwd=directory, env=env, stdout=log,
                                 stderr=subprocess.STDOUT, timeout=300)
     if result.returncode:
         raise RuntimeError(f'SW4 failed: {directory / "run.log"}')
+    check_solver_log(directory / 'run.log')
     return directory / 'output' / 'receivers.h5'
 
 
-def compare(a, b, rtol, atol):
+def compare(a, b, rtol, atol, arrival_after=None):
     errors = {}
     with h5py.File(a) as fa, h5py.File(b) as fb:
         np.testing.assert_allclose(fa['DELTA'][:], fb['DELTA'][:], rtol=1e-12, atol=1e-12)
@@ -73,7 +77,7 @@ def compare(a, b, rtol, atol):
             ga, gb = fa[station], fb[station]
             for name in ('NPTS', 'ISNSEW', 'STX,STY,STZ', 'ACTUALSTX,STY,STZ'):
                 np.testing.assert_allclose(ga[name][:], gb[name][:], rtol=1e-12, atol=1e-12)
-            signal = 0.0
+            signal = candidate_signal = arrival_signal = candidate_arrival = 0.0
             for component in ('X', 'Y', 'Z'):
                 x, y = ga[component][:], gb[component][:]
                 assert x.shape == y.shape and np.all(np.isfinite(x)) and np.all(np.isfinite(y))
@@ -81,8 +85,21 @@ def compare(a, b, rtol, atol):
                 delta = float(np.max(np.abs(x-y)))
                 assert delta <= atol + rtol * scale, (station, component, delta, scale)
                 signal = max(signal, scale)
+                candidate_signal = max(candidate_signal, float(np.max(np.abs(y))))
+                if arrival_after is not None:
+                    dt = float(np.asarray(fa['DELTA']).reshape(-1)[0])
+                    first = int(np.ceil(arrival_after / dt))
+                    if first >= len(x):
+                        raise ValueError('Trace ends before the required interface arrival window')
+                    arrival_signal = max(arrival_signal, float(np.max(np.abs(x[first:]))))
+                    candidate_arrival = max(candidate_arrival, float(np.max(np.abs(y[first:]))))
                 errors[f'{station}/{component}'] = {'max_difference': delta, 'reference_peak': scale}
-            assert signal > 0, f'No signal at {station}'
+            # A noise-only reference is not evidence of propagated waves.
+            floor = max(10*atol, np.finfo(np.float64).tiny)
+            if min(signal, candidate_signal) <= floor:
+                raise ValueError(f'Insufficient signal at {station}: {signal}, {candidate_signal}')
+            if arrival_after is not None and min(arrival_signal, candidate_arrival) <= floor:
+                raise ValueError(f'No meaningful late interface arrival at {station}')
     return errors
 
 
@@ -115,7 +132,12 @@ def main():
         'topography': GRID + COMMON + 'topography input=gaussian zmax=2000 order=4 '
             'gaussianAmp=100 gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500\n'
             + BLOCK + SOURCE + RECEIVERS,
-        'mesh-refinement': GRID.replace('h=200', 'h=100') + COMMON.replace('gp=4', 'gp=8') + 'refinement zmax=2000\ndeveloper ctol=1e-10 cmaxit=100 crelax=0.92\n' + BLOCK + SOURCE + RECEIVERS,
+        # Underrelaxation is needed for this physical material/grid combination;
+        # the old 0.92 fixture diverged. Observe both sides of the interface.
+        'mesh-refinement': GRID.replace('h=200', 'h=100')
+            + COMMON.replace('gp=4', 'gp=8').replace('time steps=16', 'time t=0.9')
+            + 'refinement zmax=2000\ndeveloper ctol=1e-10 cmaxit=400 crelax=0.2\n'
+            + BLOCK + SOURCE.replace('z=600', 'z=1900') + RECEIVERS,
         'attenuation': GRID + COMMON + 'attenuation nmech=1\n'
             + BLOCK.replace('rho=2700', 'rho=2700 qp=200 qs=100').replace('rho=2600', 'rho=2600 qp=200 qs=100')
             + SOURCE + RECEIVERS,
@@ -131,9 +153,11 @@ def main():
     for name, text in cases.items():
         if args.case and name not in args.case:
             continue
-        a = run(cpu, work/name/'cpu', text, args.tasks, False)
-        b = run(gpu, work/name/'gpu', text, args.tasks, True)
-        report[name] = compare(a, b, args.rtol, args.atol)
+        coordinates = [('station', (1800, 1800, 1600)), ('edge', (1800, 1800, 2400))] if name == 'mesh-refinement' else None
+        a = run(cpu, work/name/'cpu', text, args.tasks, False, coordinates)
+        b = run(gpu, work/name/'gpu', text, args.tasks, True, coordinates)
+        report[name] = compare(a, b, args.rtol, args.atol,
+                               arrival_after=0.15 if name == 'mesh-refinement' else None)
         (work/'comparison.json').write_text(json.dumps(report, indent=2)+'\n')
         print(f'PASS: {name}', flush=True)
     # Readers of the same rupture representation should agree on each backend.

@@ -1,5 +1,12 @@
 # Perlmutter validation, 2026-10-02
 
+**Review correction:** the seven-case waveform comparator reported a pass for
+the small Cartesian refinement fixture even though both solvers printed severe
+interface nonconvergence. That fixture is not a valid correctness acceptance
+result. See `review-unified-backends-62825bc7/REPORT.md` finding F01. The independent
+existing solver regressions and full hmr3 measurements remain separate evidence.
+Review fixes and new acceptance runs are in progress.
+
 The native OpenMP and CUDA configurations pass the checks below. HIP compilation,
 correctness and performance remain to be tested on Frontier. The existing
 `pytest/` and `pytest-sw4mopt/` sources are unchanged from `fix-sfile-srf`.

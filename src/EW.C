@@ -1174,6 +1174,10 @@ for (int i=0; i<6; i++)
 #if defined(SW4_USE_RAJA) // SW4 backend
 m_nevents_specified = findNumberOfEvents();
   m_nevent = m_nevents_specified > 0 ? m_nevents_specified : 1;
+  if (m_nevents_specified == 0) {
+    mPath.assign(1, "./");
+    mObsPath.assign(1, "./");
+  }
   // std::cout<<"EVENTS "<<m_nevents_specified<<"  "<<m_nevent<<"\n";
   // Allocate storage
 
@@ -8611,6 +8615,8 @@ if (m_croutines) {
 void EW::evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                             vector<Sarray>& a_Uacc) {
   SW4_MARK_FUNCTION;
+  // The anisotropic operator uses the reference host implementation.
+  SYNC_STREAM;
 
 #else // SW4 backend
 }
