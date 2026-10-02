@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 {
    MPI_Init(&argc,&argv);
    try {
-      if(argc!=5 && argc!=6) throw std::runtime_error("Usage: sw4_receiver_check case.in output-directory quantity nsew [downsample]");
+      if(argc<5 || argc>7) throw std::runtime_error("Usage: sw4_receiver_check case.in output-directory quantity nsew [downsample [grid|ignore-utc]]");
       std::vector<std::vector<Source*>> sources;
       std::vector<std::vector<TimeSeries*>> receivers;
       EW ew(argv[1],sources,receivers);
@@ -26,7 +26,11 @@ int main(int argc, char** argv)
       if(found==modes.end()) throw std::runtime_error("Unknown quantity");
       const auto mode=found->second;
       const bool geographic=std::string(argv[4])=="1";
-      const int downsample=argc==6 ? std::stoi(argv[5]):1;
+      const int downsample=argc>=6 ? std::stoi(argv[5]):1;
+      const std::string option=argc==7 ? argv[6]:"";
+      if(!option.empty() && option!="grid" && option!="ignore-utc")
+         throw std::runtime_error("Unknown reader option");
+      const bool ignore_utc=option=="ignore-utc";
       const auto components=sw4::receiver_components(mode,!geographic);
       const std::string prefix=std::string(argv[2])+"/ascii";
       TimeSeries sac(&ew,"sac","station",mode,true,true,false,"",
@@ -37,10 +41,10 @@ int main(int argc, char** argv)
                      1800,1800,200,false,0,downsample,!geographic);
       std::vector<std::string> files;
       for(const auto& component:components) files.push_back(prefix+"."+component.suffix);
-      if(!sac.readSACcomponents(&ew,files,false)) throw std::runtime_error("SAC receiver read failed");
-      text.readFile(&ew,false);
+      if(!sac.readSACcomponents(&ew,files,ignore_utc,option=="grid")) throw std::runtime_error("SAC receiver read failed");
+      text.readFile(&ew,ignore_utc);
 #ifdef USE_HDF5
-      if(!hdf.readSACHDF5(&ew,std::string(argv[2])+"/receivers.h5",false))
+      if(!hdf.readSACHDF5(&ew,std::string(argv[2])+"/receivers.h5",ignore_utc))
          throw std::runtime_error("Receiver HDF5 read failed");
 #else
       throw std::runtime_error("This check requires USE_HDF5");
@@ -49,7 +53,8 @@ int main(int argc, char** argv)
       if(text.myPoint()) {
          if(text.getLastTimeStep()<1) throw std::runtime_error("Reader did not load samples");
          for(TimeSeries* series: {&sac,&text,&hdf}) {
-            if(series->getLastTimeStep()!=(series==&hdf ? (text.getLastTimeStep()/downsample)*downsample:text.getLastTimeStep()))
+            const int last=static_cast<int>(text.getLastTimeStep());
+            if(series->getLastTimeStep()!=(series==&hdf ? (last/downsample)*downsample:last))
                throw std::runtime_error("Reader sample counts differ");
             const double start=series->getStartTime()+series->getTimeShift();
             local_error=std::max(local_error,std::abs(start));

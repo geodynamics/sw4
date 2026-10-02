@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Explicit real-reader checks for malformed histories, endian and instrument basis."""
 import argparse
+from datetime import datetime, timedelta
 import os
 from pathlib import Path
 import shutil
@@ -23,7 +24,8 @@ def main():
     cases=('sac-missing','sac-truncated','sac-nan','sac-wrong-quantity','sac-different-dt',
            'hdf-missing','hdf-wrong-unit','hdf-nan','hdf-count-shape','hdf-short-component',
            'hdf-long-string','hdf-wrong-basis','hdf-zero-dt','hdf-wrong-downsample',
-           'usgs-incomplete-row','usgs-wrong-quantity','sac-big-endian','instrument13','instrument45')
+           'usgs-incomplete-row','usgs-wrong-quantity','sac-big-endian','instrument13','instrument45',
+           'legacy-grid','ignore-utc')
     for name in cases:
         work=root/name;work.mkdir(exist_ok=True)
         output=work/'output';shutil.copytree(fixture/'output',output,dirs_exist_ok=True)
@@ -60,6 +62,28 @@ def main():
                 lines=text.splitlines();lines[-1]=' '.join(lines[-1].split()[:-1]);text='\n'.join(lines)+'\n'
             else:text=text.replace('X displacement (m)','X velocity (m/s)')
             path.write_text(text)
+        elif name=='legacy-grid':
+            for path in output.glob('ascii.[xyz]'):
+                data=bytearray(path.read_bytes())
+                data[440+17*8:440+18*8]=b' '*8
+                path.write_bytes(data)
+        elif name=='ignore-utc':
+            # Change absolute references by a day, leaving relative sample
+            # times unchanged. Remove SAC's sub-millisecond reference residue
+            # from B/E/O so its relative time starts at zero like text/HDF5.
+            for path in output.glob('ascii.[xyz]'):
+                data=bytearray(path.read_bytes())
+                ints=np.frombuffer(data,dtype='<i4',count=40,offset=280)
+                ints[1]+=1
+                floats=np.frombuffer(data,dtype='<f4',count=70)
+                floats[[5,6,7]]-=.000567
+                path.write_bytes(data)
+            with h5py.File(output/'receivers.h5','r+') as f:
+                value=f.attrs['DATETIME']
+                if isinstance(value,bytes): value=value.decode()
+                f.attrs['DATETIME']=(datetime.fromisoformat(value)+timedelta(days=1)).isoformat()
+            path=output/'ascii.txt'
+            path.write_text(path.read_text().replace('10/02/2026:','10/03/2026:'))
         else:
             angle=float(name.removeprefix('instrument'))
             traces=[read_sac(output/f'ascii.{c}') for c in 'xyz']
@@ -74,10 +98,12 @@ def main():
                 data[632:]=np.asarray(signal,dtype='<f4').tobytes();path.write_bytes(data)
         command=['srun','--exclusive','--exact','--gres=none','-N','1','-n','2','-c','1',
                  str(args.reader.resolve(strict=True)),str(work/'case.in'),str(output),'displacement','0']
+        if name in ('legacy-grid','ignore-utc'):
+            command+=['1','grid' if name=='legacy-grid' else 'ignore-utc']
         with (work/'reader.log').open('w') as log:
             result=subprocess.run(command,cwd=work,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=120)
         log=(work/'reader.log').read_text()
-        positive=name in ('sac-big-endian','instrument13','instrument45')
+        positive=name in ('sac-big-endian','instrument13','instrument45','legacy-grid','ignore-utc')
         if positive:
             valid=result.returncode==0 and 'PASS:' in log
         else:

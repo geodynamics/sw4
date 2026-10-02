@@ -2984,15 +2984,9 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
       if( fsec < 0 )
          fail = 8;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-second = static_cast<int>(std::trunc(fsec));
-    msecond = static_cast<int>(std::round((fsec - second) * 1000));
-
-#else // SW4 backend
-second = static_cast<int>(trunc(fsec));
+      // SW4's reference UTC uses microseconds on every backend.
+      second = static_cast<int>(trunc(fsec));
       msecond = static_cast<int>( round((fsec-second)*1000000));
-
-#endif // SW4 backend
 if( second < 0 || second > 60 )
          fail = 7;
       //      cout << " second = " << second << " msecond = " << msecond <<endl;

@@ -14,6 +14,18 @@ from validation import check_solver_log
 MODES=('displacement','velocity','div','curl','strains','displacementgradient')
 
 
+def anisotropic_material():
+    # Strict diagonal dominance provides an independent positive-definiteness
+    # check; nonzero off-diagonal entries exercise all stiffness components.
+    diagonal=np.array([110.,130.,150.,32.,36.,40.])*1e9
+    tensor=np.array([[diagonal[i] if i==j else .25e9*(i+j+1)
+                      for j in range(6)] for i in range(6)])
+    if np.min(np.linalg.eigvalsh(tensor))<=0:
+        raise ValueError('Anisotropic regression stiffness is not positive definite')
+    return 'anisotropy\nablock rho=2700 '+ ' '.join(
+        f'c{i+1}{j+1}={tensor[i,j]:.17g}' for i in range(6) for j in range(i,6))+'\n'
+
+
 def receivers():
     lines=[]
     for mode in MODES:
@@ -81,6 +93,8 @@ def main():
     parser.add_argument('--work-dir',type=Path,required=True)
     parser.add_argument('--tasks',type=int,default=2)
     parser.add_argument('--case',action='append')
+    parser.add_argument('--anisotropic',action='store_true',
+                        help='Run coupled-tensor Cartesian/topographic restart checks')
     args=parser.parse_args()
     root=args.work_dir.resolve();root.mkdir(parents=True,exist_ok=True)
     env={k:v for k,v in os.environ.items() if not k.startswith('SLURM_') or k=='SLURM_JOB_ID'}
@@ -89,15 +103,21 @@ def main():
     command+=['--gres=none'] if args.backend=='OPENMP' else ['--gpus-per-task=1','--gpu-bind=single:1']
     command += [str(args.sw4.resolve(strict=True))]
     report={}
-    for az,att,ref in ((0,False,False),(27,False,False),(27,True,False),(27,False,True)):
-        name=f'az{az}-att{int(att)}-ref{int(ref)}'
+    cases=((27,False,False),(27,False,True)) if args.anisotropic else (
+        (0,False,False),(27,False,False),(27,True,False),(27,False,True))
+    for az,att,ref in cases:
+        name=f'az{az}-aniso-topo{int(ref)}' if args.anisotropic else f'az{az}-att{int(att)}-ref{int(ref)}'
         if args.case and name not in args.case:continue
         work=root/name;work.mkdir(exist_ok=True)
         common=f'grid h=100 x=4000 y=4000 z=4000 lat=37 lon=-122 az={az}\n'
         common+='time steps=48 utcstart=10/02/2026:01:02:03.234567\nfileio path=.\nsupergrid gp=8\n'
-        if ref:common+='refinement zmax=2000\ndeveloper ctol=1e-10 cmaxit=400 crelax=0.2\n'
+        if ref:
+            if args.anisotropic:
+                common+='topography input=gaussian zmax=2000 order=4 gaussianAmp=100 gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500\n'
+            else:
+                common+='refinement zmax=2000\ndeveloper ctol=1e-10 cmaxit=400 crelax=0.2\n'
         if att:common+='attenuation nmech=3\n'
-        common+='block vp=6000 vs=3464 rho=2700'+(' qp=200 qs=100' if att else '')+'\n'
+        common+=anisotropic_material() if args.anisotropic else 'block vp=6000 vs=3464 rho=2700'+(' qp=200 qs=100' if att else '')+'\n'
         common+='source x=1637 y=1643 z=1000 mxy=1e15 mxz=2e15 myy=5e14 type=Gaussian freq=10 t0=0.3\n'
         common+=receivers()+'checkpoint cycleInterval=24 restartpath=. file=restart hdf5=yes'
         def launch(label,restart=None,steps=48):
