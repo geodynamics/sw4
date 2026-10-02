@@ -56,7 +56,10 @@ def cases(root):
     depths += [interface+epsilon for epsilon in (-1e-7,0.,1e-7)]
     for depth in depths:
         for kind,source in (('force','fx=1e10 fy=2e10 fz=-5e9'),('moment','mxy=1e15 mxz=2e15 myy=5e14')):
-            inputs[f'interface-{kind}-z{depth:.10g}']=refinement+f'source x=1637 y=1643 z={depth} '+source+' type=Gaussian freq=20 t0=0.05\n'+RECEIVERS
+            name=f'interface-{kind}-z{depth:.17g}'
+            if name in inputs:
+                raise ValueError(f'Duplicate interface source depth: {name}')
+            inputs[name]=refinement+f'source x=1637 y=1643 z={depth} '+source+' type=Gaussian freq=20 t0=0.05\n'+RECEIVERS
     inputs['low-vp-vs']=GRID+common+'block vp=3540 vs=3000 rho=2700\n'+position+'mxy=1e15 type=Gaussian freq=20 t0=0.05\n'+RECEIVERS
     # Isotropic stiffness represented through the anisotropic operator.
     rho=2700; mu=rho*3464**2;lam=rho*6000**2-2*mu
