@@ -1,5 +1,8 @@
 # Native OpenMP and optional RAJA GPU builds
 
+See the [Perlmutter validation record](unified-backends-validation.md) for the
+CPU/CUDA regression results and measured four-node performance.
+
 The default backend is native OpenMP. It does not discover, include, build, or
 link RAJA, Umpire, CUDA, HIP, or NVML. GPU execution is an explicit build choice.
 Use separate build directories for different backends and dependency stacks.

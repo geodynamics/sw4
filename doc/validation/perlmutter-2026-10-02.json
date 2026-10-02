@@ -1,0 +1,545 @@
+{
+  "date": "2026-10-02",
+  "branch": "unified-backends",
+  "configuration_commit": "e55076b4",
+  "cuda_solver_source_commit": "5055a1a6",
+  "cpu_reference_commit": "5e6746ce",
+  "raja_reference_commit": "52b51c9253c0c30b608744ef17ee7a28661939bc",
+  "artifact_directory": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr",
+  "native_executable_sha256": "f2393a6d6c66e8ac24be4bd3daf3e2d1eb73171eb0ba704313892f04736a754f",
+  "native_inversion_executable_sha256": "2203c3e8c54e9f404491166f34a440ce2aa961e4f40f3c811d2fa1c32236a518",
+  "existing_pytest_unchanged": true,
+  "native_level_zero": {
+    "passed": 20,
+    "skipped": 5,
+    "failed": 0
+  },
+  "cuda_level_zero": {
+    "passed": 20,
+    "skipped": 5,
+    "failed": 0
+  },
+  "native_inversion": {
+    "passed": 4,
+    "failed": 0,
+    "logs": [
+      "suite-mopt-v4.log",
+      "mopt-final/batch.log"
+    ],
+    "onepoint_job": "59203804"
+  },
+  "native_hdf5": {
+    "passed": 4,
+    "failed": 0
+  },
+  "cuda_hdf5": {
+    "passed": 4,
+    "failed": 0
+  },
+  "cpu_cuda_waveforms": {
+    "inline": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.20137564837932587
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.20137564837932587
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.2762379050254822
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.02131584659218788
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.013242483139038086
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.010029841214418411
+      }
+    },
+    "topography": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.15060976147651672
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.15060976147651672
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.2151748687028885
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.00807378999888897
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.005838233046233654
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.007310888729989529
+      }
+    },
+    "mesh-refinement": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.056436687707901
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.056436687707901
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.182514488697052
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 1.8887635409134454e-27
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 1.6550234383988774e-27
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 6.666640206270444e-28
+      }
+    },
+    "attenuation": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.1972421556711197
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.1972421556711197
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.2750305235385895
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.02021128311753273
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.01309963595122099
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.0093802185729146
+      }
+    },
+    "srf-text": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.011072671972215176
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.0028643931727856398
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.005697065033018589
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.00024121892056427896
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.00021682519582100213
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 9.987846715375781e-05
+      }
+    },
+    "srf-hdf5": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.011072671972215176
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.002864393638446927
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.005697065498679876
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.00024121890601236373
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.00021682515216525644
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 9.987844532588497e-05
+      }
+    },
+    "sfile": {
+      "station/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.20137564837932587
+      },
+      "station/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.20137564837932587
+      },
+      "station/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.2762379050254822
+      },
+      "edge/X": {
+        "max_difference": 0.0,
+        "reference_peak": 0.02131584659218788
+      },
+      "edge/Y": {
+        "max_difference": 0.0,
+        "reference_peak": 0.013242483139038086
+      },
+      "edge/Z": {
+        "max_difference": 0.0,
+        "reference_peak": 0.010029841214418411
+      }
+    }
+  },
+  "srf_text_hdf5_consistency": {
+    "cpu": true,
+    "cuda": true
+  },
+  "waveform_tolerance": {
+    "rtol": 2e-05,
+    "atol": 1e-12,
+    "scaling": "per-component reference peak"
+  },
+  "cuda_mpi_transport": {
+    "reference": "release staged CUDA, MPICH_GPU_SUPPORT_ENABLED=0",
+    "candidate": "same CUDA objects linked by generated CMake transport command, MPICH_GPU_SUPPORT_ENABLED=1",
+    "transport": "/opt/cray/pe/mpich/9.1.0/ofi/gnu/12.3/lib/libmpi_gtl_cuda.so",
+    "rtol": 2e-05,
+    "atol": 1e-12,
+    "max_absolute_difference": 0.0,
+    "passed": true
+  },
+  "hmr3": {
+    "runs": {
+      "baseline-0": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "executable_sha256": "8a32e3e83094bf46a2fb59370397f61f27060e58a823806c9af2b812327e20de"
+        },
+        "job_id": "59206992",
+        "allocation_node_list": "nid[001288-001289,001292-001293]",
+        "node_list": "nid[001288-001289,001292-001293]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/hmr3-profile-release/baseline-0/hmr3.in"
+        ],
+        "wall_seconds": 133.15077693900093,
+        "solver_seconds": 82.47,
+        "waveform_sha256": "7cec881177c0913f16ca325e8fde97d3102ebba4653cd2715bf2279cac8215bb"
+      },
+      "candidate-0": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/cuda-release/bin/sw4",
+          "executable_sha256": "220c2dd7b0dd1d5fb6e059d636a19163f1a55c039096dbc413f36ecf9179a6c0"
+        },
+        "job_id": "59206992",
+        "allocation_node_list": "nid[001288-001289,001292-001293]",
+        "node_list": "nid[001288-001289,001292-001293]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/cuda-release/bin/sw4",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/hmr3-profile-release/candidate-0/hmr3.in"
+        ],
+        "wall_seconds": 148.84174560301472,
+        "solver_seconds": 79.36,
+        "waveform_sha256": "0342acbb564479f3e049d99780be4974c79bcf6d5831ae48fb5060dd2f5f3134"
+      },
+      "candidate-1": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/cuda-release/bin/sw4",
+          "executable_sha256": "220c2dd7b0dd1d5fb6e059d636a19163f1a55c039096dbc413f36ecf9179a6c0"
+        },
+        "job_id": "59206992",
+        "allocation_node_list": "nid[001288-001289,001292-001293]",
+        "node_list": "nid[001288-001289,001292-001293]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/cuda-release/bin/sw4",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/hmr3-profile-release/candidate-1/hmr3.in"
+        ],
+        "wall_seconds": 153.57599928299896,
+        "solver_seconds": 79.65,
+        "waveform_sha256": "1cba256fd98024d2ae62e0cf935b0fa050e425e9fcc3cb5ccc06eab6254ec5ce"
+      },
+      "baseline-1": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "executable_sha256": "8a32e3e83094bf46a2fb59370397f61f27060e58a823806c9af2b812327e20de"
+        },
+        "job_id": "59206992",
+        "allocation_node_list": "nid[001288-001289,001292-001293]",
+        "node_list": "nid[001288-001289,001292-001293]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/hmr3-profile-release/baseline-1/hmr3.in"
+        ],
+        "wall_seconds": 149.14418233605102,
+        "solver_seconds": 82.16,
+        "waveform_sha256": "2933bbed783f461876444814e8877f065e6b975f692731203aac0c9ee7dd8dcb"
+      },
+      "baseline-2": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "executable_sha256": "8a32e3e83094bf46a2fb59370397f61f27060e58a823806c9af2b812327e20de"
+        },
+        "job_id": "59206992",
+        "allocation_node_list": "nid[001288-001289,001292-001293]",
+        "node_list": "nid[001288-001289,001292-001293]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/hmr3-profile-release/baseline-2/hmr3.in"
+        ],
+        "wall_seconds": 128.23780946293846,
+        "solver_seconds": 82.13,
+        "waveform_sha256": "c1e27b03707707d6647425cbb0821f954dcc49723fb808a7e489f64003923b46"
+      },
+      "candidate-2": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/cuda-release/bin/sw4",
+          "executable_sha256": "220c2dd7b0dd1d5fb6e059d636a19163f1a55c039096dbc413f36ecf9179a6c0"
+        },
+        "job_id": "59206992",
+        "allocation_node_list": "nid[001288-001289,001292-001293]",
+        "node_list": "nid[001288-001289,001292-001293]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/cuda-release/bin/sw4",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/hmr3-profile-release/candidate-2/hmr3.in"
+        ],
+        "wall_seconds": 125.4239337099716,
+        "solver_seconds": 79.65,
+        "waveform_sha256": "b25c50eeafece6bba4acd0b1125ecc3a98f9ed82f65272a2fbac0930b8398da4"
+      }
+    },
+    "waveform_comparisons": [
+      {
+        "max_difference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_peak": [
+          0.010414740749608258,
+          0.017414508763719125,
+          0.00800837108477504
+        ]
+      },
+      {
+        "max_difference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_peak": [
+          0.010414740749608258,
+          0.017414508763719125,
+          0.00800837108477504
+        ]
+      },
+      {
+        "max_difference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_peak": [
+          0.010414740749608258,
+          0.017414508763719125,
+          0.00800837108477504
+        ]
+      }
+    ],
+    "rtol": 2e-05,
+    "atol": 1e-12,
+    "median_solver_seconds": {
+      "baseline": 82.16,
+      "candidate": 79.65
+    },
+    "slowdown": -0.030550146056475103,
+    "max_slowdown": 0.05,
+    "performance_passed": true
+  },
+  "hip_status": "Compilation, correctness and performance deferred to Frontier; no HIP toolchain on Perlmutter"
+}
