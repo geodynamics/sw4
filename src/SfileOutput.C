@@ -29,11 +29,26 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <fcntl.h>
+#include <math.h>
+#include <unistd.h>
+
+#include <cstring>
+#include <ctime>
+
+#else // SW4 backend
 #include "mpi.h"
 
+#endif // SW4 backend
 #include "EW.h"
 #include "Require.h"
 #include "SfileOutput.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "mpi.h"
+
+// static variable definition (in class only declaration):
+#else // SW4 backend
 #include <fcntl.h>
 #include <ctime>
 #include <cstring>
@@ -41,6 +56,7 @@
 #include <unistd.h>
 
 // static variable definition (in class only declaration):
+#endif // SW4 backend
 int SfileOutput::mPreceedZeros = 0;
 
 SfileOutput* SfileOutput::nil=static_cast<SfileOutput*>(0);
@@ -229,11 +245,21 @@ void SfileOutput::define_pio( )
     int iwrite = 0;
     int nrwriters = mEW->getNumberOfWritersPFS();
     int nproc=0, myid=0;
-    MPI_Comm_size( mEW->m_1d_communicator, &nproc);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
+    // new hack
+
+#else // SW4 backend
+MPI_Comm_size( mEW->m_1d_communicator, &nproc);
     MPI_Comm_rank( mEW->m_1d_communicator, &myid);
 
     // new hack
-    int* owners = new int[nproc];
+
+#endif // SW4 backend
+int* owners = new int[nproc];
     int i=0;
     for( int p=0 ; p<nproc ; p++ )
       if( m_ihavearray[g] )
@@ -257,9 +283,16 @@ void SfileOutput::define_pio( )
         iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-    m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start,
+    m_parallel_io[g-glow] =
+#if defined(SW4_USE_RAJA) // SW4 backend
+new Parallel_IO(iwrite, mEW->usingParallelFS(), global, local, start);
+
+#else // SW4 backend
+new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start,
                                              mEW->m_1d_communicator );
-    delete[] owners;
+
+#endif // SW4 backend
+delete[] owners;
   }
   m_isDefinedMPIWriters = true;
 }
@@ -351,11 +384,19 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 {
   int stH = mSampleH;
   int stV = mSampleV;
-  vector<int> hh(mEW->mNumberOfGrids, 1);
-  double my_z, up_z, down_z, up_v, down_v;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+vector<int> hh(mEW->mNumberOfGrids, 1);
+
+#endif // SW4 backend
+double my_z, up_z, down_z, up_v, down_v;
 
   // Calculate horizontal factor of each grid for topo data access
-  for (int i = mEW->mNumberOfGrids-2; i >= 0; i--) {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+for (int i = mEW->mNumberOfGrids-2; i >= 0; i--) {
     // No h increase from Cartesian to Curvilinear
     if (i == mEW->mNumberOfCartesianGrids-1)
       hh[i] = hh[i+1];
@@ -378,7 +419,9 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
   /*     } */
   /* } */
 
-  for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
+
+#endif // SW4 backend
+for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
     int nkw = (mWindow[g][5]-mWindow[g][4])/stV+1;
     int njkw=nkw*((mWindow[g][3]-mWindow[g][2])/stH+1);
     int gz = g;
@@ -405,15 +448,28 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     if( mMode == RHO || mMode == QP || mMode == QS ) { // these modes just copy the values straight from the array
       if( m_double ) {
         /* #pragma omp parallel for */
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma omp parallel for
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
               size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
-              if (g < mEW->mNumberOfCartesianGrids) 
+              if (g < mEW->mNumberOfCartesianGrids)
                 m_doubleField[g][ind] = (double)((*data1)(1,i,j,k));
               else {
-                double z_kl = a_Z[gz](i,j,kl);
-                double z_ku = a_Z[gz](i,j,ku);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+double z_kl = -mEW->mTopo(i, j, 1);
+
+#else // SW4 backend
+double z_kl = a_Z[gz](i,j,kl);
+
+#endif // SW4 backend
+double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
                 while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
@@ -430,15 +486,28 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       }
       else {
         /* #pragma omp parallel for */
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma omp parallel for
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
               size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
-              if (g < mEW->mNumberOfCartesianGrids) 
+              if (g < mEW->mNumberOfCartesianGrids)
                 m_floatField[g][ind] = (float)((*data1)(1,i,j,k));
               else {
-                double z_kl = a_Z[gz](i,j,kl);
-                double z_ku = a_Z[gz](i,j,ku);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+double z_kl = -mEW->mTopo(i, j, 1);
+
+#else // SW4 backend
+double z_kl = a_Z[gz](i,j,kl);
+
+#endif // SW4 backend
+double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
                 while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
@@ -457,15 +526,28 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     else if( mMode == P ) {
       if( m_double ) {
         /* #pragma omp parallel for */
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma omp parallel for
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
               size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
-              if (g < mEW->mNumberOfCartesianGrids) 
+              if (g < mEW->mNumberOfCartesianGrids)
                 m_doubleField[g][ind] = (double)sqrt((2*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
               else {
-                double z_kl = a_Z[gz](i,j,kl);
-                double z_ku = a_Z[gz](i,j,ku);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+double z_kl = -mEW->mTopo(i, j, 1);
+
+#else // SW4 backend
+double z_kl = a_Z[gz](i,j,kl);
+
+#endif // SW4 backend
+double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
                 while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
@@ -491,15 +573,28 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       }
       else {
         /* #pragma omp parallel for */
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma omp parallel for
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
               size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
-              if (g < mEW->mNumberOfCartesianGrids) 
+              if (g < mEW->mNumberOfCartesianGrids)
                 m_floatField[g][ind] = (float)sqrt((2.0*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
               else {
-                double z_kl = a_Z[gz](i,j,kl);
-                double z_ku = a_Z[gz](i,j,ku);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+double z_kl = -mEW->mTopo(i, j, 1);
+
+#else // SW4 backend
+double z_kl = a_Z[gz](i,j,kl);
+
+#endif // SW4 backend
+double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
                 while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
@@ -513,7 +608,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 /*  if( NULL == mEW->use_twilight_forcing() ) { */
                 /*     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
                 /*     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
-                /*     /1* if (i==1&&j==1&&gz==1) *1/ */ 
+                /*     /1* if (i==1&&j==1&&gz==1) *1/ */
                 /*     /1*   printf("after reverse (1,1,%d) mu=%f, lambda=%f\n", t, down_mu, down_lambda); *1/ */
                 /*  } */
                 /* } */
@@ -523,7 +618,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 m_floatField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
                 /* // TODO: debug */
                 /* if (i==1&&j==1&&gz==1) { */
-                /*     printf("k=%d, my_z=%f, up_z=%f, down_z=%f, up_v[%d]=%f, down_v[%d]=%f, my_v=%f\n", */ 
+                /*     printf("k=%d, my_z=%f, up_z=%f, down_z=%f, up_v[%d]=%f, down_v[%d]=%f, my_v=%f\n", */
                 /*             k, my_z, up_z, down_z, t-1, up_v, t, down_v, m_floatField[g][ind]); */
                 /* } */
 
@@ -534,15 +629,28 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     else if( mMode == S ) {
       if( m_double ) {
         /* #pragma omp parallel for */
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma omp parallel for
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
               size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
-              if (g < mEW->mNumberOfCartesianGrids) 
+              if (g < mEW->mNumberOfCartesianGrids)
                 m_doubleField[g][ind] = (double)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
               else {
-                double z_kl = a_Z[gz](i,j,kl);
-                double z_ku = a_Z[gz](i,j,ku);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+double z_kl = -mEW->mTopo(i, j, 1);
+
+#else // SW4 backend
+double z_kl = a_Z[gz](i,j,kl);
+
+#endif // SW4 backend
+double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
                 while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
@@ -567,15 +675,28 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       }
       else {
         /* #pragma omp parallel for */
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma omp parallel for
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
               size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
-              if (g < mEW->mNumberOfCartesianGrids) 
+              if (g < mEW->mNumberOfCartesianGrids)
                 m_floatField[g][ind] = (float)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
               else {
-                double z_kl = a_Z[gz](i,j,kl);
-                double z_ku = a_Z[gz](i,j,ku);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+double z_kl = -mEW->mTopo(i, j, 1);
+
+#else // SW4 backend
+double z_kl = a_Z[gz](i,j,kl);
+
+#endif // SW4 backend
+double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
                 while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
@@ -605,12 +726,27 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     if( m_extraz[g] == 1 ) {
       /* cout << "g=" << g << ", need extrapolate extra z" << endl; */
       int k = mWindow[g][5]+stV;
-      size_t ind, ind_1, ind_2, npts;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+size_t ind, ind_1, ind_2;
+#ifdef BZ_DEBUG
+      size_t npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
+                    ((mWindow[g][3] - mWindow[g][2]) / stH + 1) *
+                    ((mWindow[g][5] - mWindow[g][4]) / stV + 1 + m_extraz[g]);
+#endif
+
+      // Linear extrapolation assumes that
+      // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
+
+#else // SW4 backend
+size_t ind, ind_1, ind_2, npts;
       npts = ( (size_t)(mWindow[g][1] - mWindow[g][0])/stH + 1 )*( (mWindow[g][3] - mWindow[g][2])/stH + 1)*( (mWindow[g][5] - mWindow[g][4])/stV + 1 + m_extraz[g]);
 
       // Linear extrapolation assumes that
       // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
-      int ok = 2;
+
+#endif // SW4 backend
+int ok = 2;
       if( mWindow[g][5] -mWindow[g][4] < stV )
         ok = 1;
 
@@ -676,6 +812,405 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
   else if( mMode == QS )
     m_modestring = "Qs";
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5
+  hid_t h5_fid, grp, grp2, dset, attr, dspace, attr_space1, attr_space2,
+      attr_space3, fapl, dxpl, filespace, memspace;
+  int ret;
+  int myid = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
+  hsize_t offsets[3], counts[3];
+  char dname[128], gname[128];
+
+  int ng = mEW->mNumberOfGrids;
+
+  ASSERT(m_isDefinedMPIWriters);
+  int gridinfo = 0;
+  if (mEW->topographyExists()) gridinfo = 1;
+
+  bool iwrite = false;
+  for (int g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
+
+  int stV = mSampleV;
+  int stH = mSampleH;
+
+  int alignment = 65536;
+  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+
+  // Open file from processor zero and write header.
+  if (m_parallel_io[0]->proc_zero() && !m_isCreated) {
+    hsize_t dims2 = 2, dims3 = 3;
+
+    fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_alignment(fapl, alignment, alignment);
+
+    h5_fid = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    if (h5_fid < 0)
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating HDF5 file "
+                     << fname << " for writing header");
+
+    std::cout << "writing Sfile to " << fname
+              << ", with horizontal sample factor=" << stH
+              << ", vertical sample factor=" << stV << std::endl;
+
+    attr_space1 = H5Screate(H5S_SCALAR);
+    attr_space2 = H5Screate_simple(1, &dims2, NULL);
+    attr_space3 = H5Screate_simple(1, &dims3, NULL);
+
+    const char* aname;
+    aname = "Origin longitude, latitude, azimuth";
+    double lonlataz[3];
+    lonlataz[0] = mEW->getLonOrigin();
+    lonlataz[1] = mEW->getLatOrigin();
+    lonlataz[2] = mEW->getGridAzimuth();
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space3, H5P_DEFAULT,
+                     H5P_DEFAULT);
+    if (attr < 0)
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+    H5Awrite(attr, H5T_NATIVE_DOUBLE, lonlataz);
+    H5Aclose(attr);
+
+    aname = "Coarsest horizontal grid spacing";
+    double spacing = mEW->mGridSize[ng - 1] * stH;
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT,
+                     H5P_DEFAULT);
+    if (attr < 0)
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+    H5Awrite(attr, H5T_NATIVE_DOUBLE, &spacing);
+    H5Aclose(attr);
+
+    aname = "Attenuation";
+    int att = mEW->usingAttenuation();
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
+                     H5P_DEFAULT);
+    if (attr < 0)
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+    H5Awrite(attr, H5T_NATIVE_INT, &att);
+    H5Aclose(attr);
+
+    aname = "ngrids";
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
+                     H5P_DEFAULT);
+    if (attr < 0)
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+    H5Awrite(attr, H5T_NATIVE_INT, &ng);
+    H5Aclose(attr);
+
+    aname = "Min, max depth";
+    double minmaxdp[2];
+    minmaxdp[0] = mEW->getGlobalZmin();
+    minmaxdp[1] = mEW->getGlobalZmax();
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space2, H5P_DEFAULT,
+                     H5P_DEFAULT);
+    if (attr < 0)
+      VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+    H5Awrite(attr, H5T_NATIVE_DOUBLE, minmaxdp);
+    H5Aclose(attr);
+
+    grp = H5Gcreate(h5_fid, "Z_interfaces", H5P_DEFAULT, H5P_DEFAULT,
+                    H5P_DEFAULT);
+    if (grp < 0)
+      VERIFY2(0,
+              "ERROR: SfileOutput::write_image, error creating Z_interfaces");
+
+    // Top interface (topo)
+    hsize_t globalSize[3];
+    globalSize[0] =
+        (hsize_t)(mGlobalDims[ng - 1][1] - mGlobalDims[ng - 1][0]) / stH + 1;
+    globalSize[1] =
+        (hsize_t)(mGlobalDims[ng - 1][3] - mGlobalDims[ng - 1][2]) / stH + 1;
+    sprintf(dname, "z_values_%d", 0);
+
+    dspace = H5Screate_simple(2, globalSize, NULL);
+    hid_t dcpl;
+    float intf = 0.0;
+    // No topo fill all 0s to top interface
+    dcpl = H5Pcreate(H5P_DATASET_CREATE);
+    if (gridinfo == 0) H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &intf);
+    dset = H5Dcreate(grp, dname, H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, dcpl,
+                     H5P_DEFAULT);
+
+    H5Pclose(dcpl);
+    H5Sclose(dspace);
+    H5Dclose(dset);
+
+    // Create interfaces other than top one
+    for (int g = ng - 1; g >= 0; g--) {
+      sprintf(dname, "z_values_%d", ng - g);
+      globalSize[0] =
+          (hsize_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / stH + 1;
+      globalSize[1] =
+          (hsize_t)(mGlobalDims[g][3] - mGlobalDims[g][2]) / stH + 1;
+
+      dspace = H5Screate_simple(2, globalSize, NULL);
+      dcpl = H5Pcreate(H5P_DATASET_CREATE);
+      // Cartisian grid, fill with a const value
+      if (g <= mEW->mNumberOfCartesianGrids) {
+        if (g == 0)
+          intf = mEW->getGlobalZmax();
+        else
+          intf = mEW->m_zmin[g - 1];
+        /* std::cout << "Setting const z value to intf " << ng-g << " with " <<
+         * intf << std::endl; */
+        H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &intf);
+      }
+
+      dset = H5Dcreate(grp, dname, H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, dcpl,
+                       H5P_DEFAULT);
+
+      /* double h = (double) mEW->mGridSize[g]*stH; */
+      /* aname = "Horizontal grid size"; */
+      /* attr = H5Acreate(dset, aname, H5T_NATIVE_DOUBLE, attr_space1,
+       * H5P_DEFAULT, H5P_DEFAULT); */
+      /* if( attr < 0 ) */
+      /*   VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " <<
+       * aname); */
+      /* H5Awrite(attr, H5T_NATIVE_DOUBLE, &h); */
+      /* H5Aclose(attr); */
+
+      H5Pclose(dcpl);
+      H5Sclose(dspace);
+      H5Dclose(dset);
+    }
+    H5Gclose(grp);
+
+    // Create material dsets
+    grp = H5Gcreate(h5_fid, "Material_model", H5P_DEFAULT, H5P_DEFAULT,
+                    H5P_DEFAULT);
+    if (grp < 0)
+      VERIFY2(0,
+              "ERROR: SfileOutput::write_image, error creating Material model "
+              "group");
+
+    for (int g = 0; g < ng; g++) {
+      sprintf(gname, "grid_%d", ng - g - 1);
+      grp2 = H5Gcreate(grp, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      if (grp2 < 0)
+        VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << gname);
+
+      double h = (double)mEW->mGridSize[g] * stH;
+      aname = "Horizontal grid size";
+      attr = H5Acreate(grp2, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT,
+                       H5P_DEFAULT);
+      if (attr < 0)
+        VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+      H5Awrite(attr, H5T_NATIVE_DOUBLE, &h);
+      H5Aclose(attr);
+
+      aname = "Number of components";
+      int ncomp = m_att ? 5 : 3;
+      attr = H5Acreate(grp2, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
+                       H5P_DEFAULT);
+      if (attr < 0)
+        VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
+      H5Awrite(attr, H5T_NATIVE_INT, &ncomp);
+      H5Aclose(attr);
+
+      globalSize[0] =
+          (hsize_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / stH + 1;
+      globalSize[1] =
+          (hsize_t)(mGlobalDims[g][3] - mGlobalDims[g][2]) / stH + 1;
+      globalSize[2] = (hsize_t)(mGlobalDims[g][5] - mGlobalDims[g][4]) / stV +
+                      1 + m_extraz[g];
+      dspace = H5Screate_simple(3, globalSize, NULL);
+
+      dset = H5Dcreate(grp2, "Cp", H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT,
+                       H5P_DEFAULT, H5P_DEFAULT);
+      H5Dclose(dset);
+      dset = H5Dcreate(grp2, "Cs", H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT,
+                       H5P_DEFAULT, H5P_DEFAULT);
+      H5Dclose(dset);
+      dset = H5Dcreate(grp2, "Rho", H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT,
+                       H5P_DEFAULT, H5P_DEFAULT);
+      H5Dclose(dset);
+      if (m_att) {
+        dset = H5Dcreate(grp2, "Qp", H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT,
+                         H5P_DEFAULT, H5P_DEFAULT);
+        H5Dclose(dset);
+        dset = H5Dcreate(grp2, "Qs", H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT,
+                         H5P_DEFAULT, H5P_DEFAULT);
+        H5Dclose(dset);
+      }
+      H5Sclose(dspace);
+      H5Gclose(grp2);
+    }
+
+    H5Gclose(grp);
+
+    // Top interface (topo)
+    H5Sclose(attr_space1);
+    H5Sclose(attr_space2);
+    H5Sclose(attr_space3);
+    H5Pclose(fapl);
+    H5Fclose(h5_fid);
+    m_isCreated = true;
+  }
+
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_alignment(fapl, alignment, alignment);
+  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+  h5_fid = H5Fopen(fname, H5F_ACC_RDWR, fapl);
+  if (h5_fid < 0) {
+    cout << "Rank " << myid << " error opening file [" << fname << "]" << endl;
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  // Write interfaces
+  if (gridinfo == 1 && m_modestring == "Rho") {
+    for (int g = mEW->mNumberOfCartesianGrids; g < ng; g++) {
+      int real_g = g + 1;
+      bool is_topo = (g == ng - 1);
+      if (is_topo) real_g = g;
+
+      size_t npts =
+          ((size_t)(mGlobalDims[real_g][1] - mGlobalDims[real_g][0]) / stH +
+           1) *
+          ((mGlobalDims[real_g][3] - mGlobalDims[real_g][2]) / stH + 1);
+
+      int nj = (int)(mWindow[real_g][3] - mWindow[real_g][2]) / stH + 1;
+      int nk = mWindow[real_g][5];
+      float* zfp = new float[npts];
+#pragma omp parallel for
+      for (int j = mWindow[real_g][2]; j <= mWindow[real_g][3]; j += stH)
+        for (int i = mWindow[real_g][0]; i <= mWindow[real_g][1]; i += stH) {
+          size_t ind = (size_t)(j - mWindow[real_g][2]) / stH +
+                       nj * (i - mWindow[real_g][0]) / stH;
+          /* ASSERT(ind < npts); */
+          if (is_topo) zfp[ind] = (float)-mEW->mTopo(i, j, 1);
+          /* zfp[ind] = (float) a_Z[real_g](i,j,1); */
+          else
+            zfp[ind] = (float)a_Z[real_g](i, j, nk);
+        }
+
+      sprintf(gname, "Z_interfaces");
+      grp = H5Gopen(h5_fid, gname, H5P_DEFAULT);
+      if (grp < 0) {
+        cout << "Rank " << myid << " error opening [" << gname
+             << "] group from file [" << fname << "]" << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+
+      sprintf(dname, "z_values_%d", ng - g - 1);
+      dset = H5Dopen(grp, dname, H5P_DEFAULT);
+      if (dset < 0) {
+        cout << "Rank " << myid << " error opening [" << dname
+             << "] dset from file [" << fname << "]" << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+
+      offsets[0] = mWindow[real_g][0] / stH == 0
+                       ? 0
+                       : ceil((double)mWindow[real_g][0] / stH) - 1;
+      offsets[1] = mWindow[real_g][2] / stH == 0
+                       ? 0
+                       : ceil((double)mWindow[real_g][2] / stH) - 1;
+      counts[0] = (hsize_t)(mWindow[real_g][1] - mWindow[real_g][0]) / stH + 1;
+      counts[1] = (hsize_t)(mWindow[real_g][3] - mWindow[real_g][2]) / stH + 1;
+
+      filespace = H5Dget_space(dset);
+      H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsets, NULL, counts,
+                          NULL);
+
+      memspace = H5Screate_simple(2, counts, NULL);
+
+      ret = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl, zfp);
+      if (ret < 0) {
+        cout << "Sfileoutput error writing interface!" << endl;
+        cout << "Rank " << myid << ": offsets " << offsets[0] << ", "
+             << offsets[1] << ", " << offsets[2] << endl;
+        cout << "Rank " << myid << ": counts  " << counts[0] << ", "
+             << counts[1] << ", " << counts[2] << endl;
+        cout << "Rank " << myid << ": mWindow " << mWindow[real_g][0] << ", "
+             << mWindow[real_g][1] << ", " << mWindow[real_g][2] << ", "
+             << mWindow[real_g][3] << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+
+      H5Sclose(memspace);
+      H5Sclose(filespace);
+      H5Dclose(dset);
+      H5Gclose(grp);
+
+      delete[] zfp;
+    }  // end for g (curvilinear)
+
+  }  // end if grid info
+
+  for (int g = 0; g < ng; g++) {
+    // Sfile grid order is reverse of sw4 grid order
+    sprintf(gname, "/Material_model/grid_%d", ng - g - 1);
+
+    grp = H5Gopen(h5_fid, gname, H5P_DEFAULT);
+    if (grp < 0) {
+      cout << "Rank " << myid << " error opening [" << gname
+           << "] group from file [" << fname << "]" << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    dset = H5Dopen(grp, m_modestring.c_str(), H5P_DEFAULT);
+    if (dset < 0) {
+      cout << "Rank " << myid << " error opening [" << m_modestring
+           << "] dset from file [" << fname << "]" << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    offsets[0] =
+        mWindow[g][0] / stH == 0 ? 0 : ceil((double)mWindow[g][0] / stH) - 1;
+    offsets[1] =
+        mWindow[g][2] / stH == 0 ? 0 : ceil((double)mWindow[g][2] / stH) - 1;
+    offsets[2] =
+        mWindow[g][4] / stV == 0 ? 0 : ceil((double)mWindow[g][4] / stV) - 1;
+
+    counts[0] = (hsize_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1;
+    counts[1] = (hsize_t)(mWindow[g][3] - mWindow[g][2]) / stH + 1;
+    counts[2] = (hsize_t)(mWindow[g][5] - mWindow[g][4]) / stV + 1;
+
+    filespace = H5Dget_space(dset);
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsets, NULL, counts, NULL);
+
+    memspace = H5Screate_simple(3, counts, NULL);
+
+    /* if (g == 2) { */
+    /*   cout << "Rank " << myid << ": offsets " << offsets[0]<< ", "
+     * <<offsets[1]<< ", " <<offsets[2] << endl; */
+    /*   cout << "Rank " << myid << ": counts  " << counts[0]<< ", "
+     * <<counts[1]<< ", " <<counts[2] << endl; */
+    /*   printf("Rank %d: grid %d, mWindow (%d, %d, %d, %d, %d, %d)\n", myid, g,
+     * mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
+     * mWindow[g][4], mWindow[g][5]); */
+    /* } */
+
+    if (m_double)
+      ret = H5Dwrite(dset, H5T_NATIVE_DOUBLE, memspace, filespace, dxpl,
+                     m_doubleField[g]);
+    else
+      ret = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl,
+                     m_floatField[g]);
+
+    if (ret < 0) {
+      cout << "Sfileoutput error writing " << m_modestring << " dataset!"
+           << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    H5Sclose(memspace);
+    H5Sclose(filespace);
+    H5Dclose(dset);
+    H5Gclose(grp);
+  }
+
+  H5Pclose(fapl);
+  H5Pclose(dxpl);
+  H5Fclose(h5_fid);
+#else
+  cout << "ERROR: cannot write sfile without sw4 compiled with HDF5 library!"
+       << endl;
+#endif
+#else // SW4 backend
 #ifdef USE_HDF5
   hid_t h5_fid, grp, grp2, dset, attr, dtype, dspace, attr_space1, attr_space2, attr_space3, fapl, dxpl, filespace, memspace;
   int ret;
@@ -933,24 +1468,24 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
         cout << "Rank " << myid <<" error opening [" << gname << "] group from file [" << fname << "]" << endl;
         MPI_Abort(MPI_COMM_WORLD,1);
       }
-  
+
       sprintf(dname, "z_values_%d", ng-g-1);
       dset = H5Dopen(grp, dname, H5P_DEFAULT);
       if (dset < 0) {
         cout << "Rank " << myid <<" error opening [" << dname << "] dset from file [" << fname << "]" << endl;
         MPI_Abort(MPI_COMM_WORLD,1);
       }
-  
-      offsets[0] = mWindow[real_g][0]/stH == 0 ? 0 : ceil((double)mWindow[real_g][0]/stH) - 1; 
-      offsets[1] = mWindow[real_g][2]/stH == 0 ? 0 : ceil((double)mWindow[real_g][2]/stH) - 1; 
+
+      offsets[0] = mWindow[real_g][0]/stH == 0 ? 0 : ceil((double)mWindow[real_g][0]/stH) - 1;
+      offsets[1] = mWindow[real_g][2]/stH == 0 ? 0 : ceil((double)mWindow[real_g][2]/stH) - 1;
       counts[0]  = (hsize_t)(mWindow[real_g][1]-mWindow[real_g][0])/stH + 1;
       counts[1]  = (hsize_t)(mWindow[real_g][3]-mWindow[real_g][2])/stH + 1;
 
       filespace = H5Dget_space(dset);
       H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offsets, NULL, counts, NULL);
-  
+
       memspace = H5Screate_simple(2, counts, NULL);
-  
+
       ret = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl, zfp);
       if (ret < 0) {
         cout << "Sfileoutput error writing interface!" << endl;
@@ -959,7 +1494,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
         cout << "Rank " << myid << ": mWindow " << mWindow[real_g][0]<< ", " <<mWindow[real_g][1]<<  ", " <<mWindow[real_g][2] << ", " <<mWindow[real_g][3] << endl;
         MPI_Abort(MPI_COMM_WORLD,1);
       }
-  
+
       H5Sclose(memspace);
       H5Sclose(filespace);
       H5Dclose(dset);
@@ -986,9 +1521,9 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
       MPI_Abort(MPI_COMM_WORLD,1);
     }
 
-    offsets[0] = mWindow[g][0]/stH == 0 ? 0 : ceil((double)mWindow[g][0]/stH) - 1; 
-    offsets[1] = mWindow[g][2]/stH == 0 ? 0 : ceil((double)mWindow[g][2]/stH) - 1; 
-    offsets[2] = mWindow[g][4]/stV == 0 ? 0 : ceil((double)mWindow[g][4]/stV) - 1; 
+    offsets[0] = mWindow[g][0]/stH == 0 ? 0 : ceil((double)mWindow[g][0]/stH) - 1;
+    offsets[1] = mWindow[g][2]/stH == 0 ? 0 : ceil((double)mWindow[g][2]/stH) - 1;
+    offsets[2] = mWindow[g][4]/stV == 0 ? 0 : ceil((double)mWindow[g][4]/stV) - 1;
 
     counts[0]  = (hsize_t)(mWindow[g][1]-mWindow[g][0])/stH + 1;
     counts[1]  = (hsize_t)(mWindow[g][3]-mWindow[g][2])/stH + 1;
@@ -1005,7 +1540,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     /*   printf("Rank %d: grid %d, mWindow (%d, %d, %d, %d, %d, %d)\n", myid, g, mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5]); */
     /* } */
 
-    if( m_double ) 
+    if( m_double )
       ret = H5Dwrite(dset, H5T_NATIVE_DOUBLE, memspace, filespace, dxpl, m_doubleField[g]);
     else
       ret = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl, m_floatField[g]);
@@ -1027,4 +1562,5 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
 #else
   cout << "ERROR: cannot write sfile without sw4 compiled with HDF5 library!" << endl;
 #endif
+#endif // SW4 backend
 }

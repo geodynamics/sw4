@@ -1,13 +1,13 @@
 #include <cmath>
 #include "sw4.h"
 void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		     int nk, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_c,
-		     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
-		     int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-		     float_sw4* __restrict__  a_ghcof, float_sw4* __restrict__ a_strx,
-		     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz )
+                     int nk, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_c,
+                     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
+                     int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
+                     float_sw4* __restrict__  a_ghcof, float_sw4* __restrict__ a_strx,
+                     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz )
 {
-//  Assumes that metric terms have been merged into the material tensor a_c before 
+//  Assumes that metric terms have been merged into the material tensor a_c before
 //  calling this routine
 
    const float_sw4 i6 = 1.0/6;
@@ -27,8 +27,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
  // Direct reuse of fortran code by these macro definitions:
 #define c(m,i,j,k)     a_c[base3+(i)+ni*(j)+nij*(k)+nijk*(m)]
 #define jac(i,j,k)   a_jac[base+(i)+ni*(j)+nij*(k)]
-#define u(m,i,j,k)     a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(m)]   
-#define lu(m,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(m)]   
+#define u(m,i,j,k)     a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(m)]
+#define lu(m,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(m)]
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
 #define strz(k) a_strz[k-kfirst0]
@@ -42,18 +42,22 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
       int ke = klast-2;
       if( onesided[4] == 1 )
       {
-	 kb = 7;
+         kb = 7;
 #pragma omp for
-	 for( int k= 1; k <= 6 ; k++ )
-	    for( int j=jfirst+2; j <= jlast-2 ; j++ )
-	       //#pragma simd
-#pragma ivdep	 
-	       for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	       {
-		  float_sw4 r1=0, r2=0, r3=0;
-		  float_sw4 ac1, ac2, ac3, ac4, ac5, ac6;
-		  float_sw4 dum2, dum1, du, dup1, dup2;
-		  float_sw4 ijac=1/jac(i,j,k);
+         for( int k= 1; k <= 6 ; k++ )
+            for( int j=jfirst+2; j <= jlast-2 ; j++ )
+               //#pragma simd
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma simd
+#else // SW4 backend
+#endif // SW4 backend
+#pragma ivdep
+               for( int i=ifirst+2; i <= ilast-2 ; i++ )
+               {
+                  float_sw4 r1=0, r2=0, r3=0;
+                  float_sw4 ac1, ac2, ac3, ac4, ac5, ac6;
+                  float_sw4 dum2, dum1, du, dup1, dup2;
+                  float_sw4 ijac=1/jac(i,j,k);
 
   float_sw4 cm2 = c(1,i-1,j,k)*strx(i-1)-0.75*(c(1,i,j,k)*strx(i)+
      c(1,i-2,j,k)*strx(i-2));
@@ -64,9 +68,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   float_sw4 cp2 = c(1,i+1,j,k)*strx(i+1)-0.75*(c(1,i,j,k)*strx(i)+
      c(1,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(2,i-1,j,k)*strx(i-1)-0.75*(c(2,i,j,k)*strx(i)+
      c(2,i-2,j,k)*strx(i-2));
@@ -77,13 +81,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(2,i+1,j,k)*strx(i+1)-0.75*(c(2,i,j,k)*strx(i)+
      c(2,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
-  r2 = r2+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(3,i-1,j,k)*strx(i-1)-0.75*(c(3,i,j,k)*strx(i)+
      c(3,i-2,j,k)*strx(i-2));
@@ -94,13 +98,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(3,i+1,j,k)*strx(i+1)-0.75*(c(3,i,j,k)*strx(i)+
      c(3,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
-  r3 = r3+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(4,i-1,j,k)*strx(i-1)-0.75*(c(4,i,j,k)*strx(i)+
      c(4,i-2,j,k)*strx(i-2));
@@ -111,9 +115,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(4,i+1,j,k)*strx(i+1)-0.75*(c(4,i,j,k)*strx(i)+
      c(4,i+2,j,k)*strx(i+2));
 
-  r2 = r2+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
   cm2 = c(5,i-1,j,k)*strx(i-1)-0.75*(c(5,i,j,k)*strx(i)+
      c(5,i-2,j,k)*strx(i-2));
@@ -124,13 +128,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(5,i+1,j,k)*strx(i+1)-0.75*(c(5,i,j,k)*strx(i)+
      c(5,i+2,j,k)*strx(i+2));
 
-  r2 = r2+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
-  r3 = r3+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
   cm2 = c(6,i-1,j,k)*strx(i-1)-0.75*(c(6,i,j,k)*strx(i)+
      c(6,i-2,j,k)*strx(i-2));
@@ -141,9 +145,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(6,i+1,j,k)*strx(i+1)-0.75*(c(6,i,j,k)*strx(i)+
      c(6,i+2,j,k)*strx(i+2));
 
-  r3 = r3+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
   cm2 = c(7,i,j-1,k)*stry(j-1)-0.75*(c(7,i,j,k)*stry(j)+
      c(7,i,j-2,k)*stry(j-2));
@@ -154,9 +158,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(7,i,j+1,k)*stry(j+1)-0.75*(c(7,i,j,k)*stry(j)+
      c(7,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(8,i,j-1,k)*stry(j-1)-0.75*(c(8,i,j,k)*stry(j)+
      c(8,i,j-2,k)*stry(j-2));
@@ -167,13 +171,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(8,i,j+1,k)*stry(j+1)-0.75*(c(8,i,j,k)*stry(j)+
      c(8,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
-  r2 = r2+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(9,i,j-1,k)*stry(j-1)-0.75*(c(9,i,j,k)*stry(j)+
      c(9,i,j-2,k)*stry(j-2));
@@ -184,13 +188,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(9,i,j+1,k)*stry(j+1)-0.75*(c(9,i,j,k)*stry(j)+
      c(9,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r3 = r3+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(10,i,j-1,k)*stry(j-1)-0.75*(c(10,i,j,k)*stry(j)+
      c(10,i,j-2,k)*stry(j-2));
@@ -201,9 +205,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(10,i,j+1,k)*stry(j+1)-0.75*(c(10,i,j,k)*stry(j)+
      c(10,i,j+2,k)*stry(j+2));
 
-  r2 = r2+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
   cm2 = c(11,i,j-1,k)*stry(j-1)-0.75*(c(11,i,j,k)*stry(j)+
      c(11,i,j-2,k)*stry(j-2));
@@ -214,13 +218,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(11,i,j+1,k)*stry(j+1)-0.75*(c(11,i,j,k)*stry(j)+
      c(11,i,j+2,k)*stry(j+2));
 
-  r2 = r2+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r3 = r3+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
   cm2 = c(12,i,j-1,k)*stry(j-1)-0.75*(c(12,i,j,k)*stry(j)+
      c(12,i,j-2,k)*stry(j-2));
@@ -231,35 +235,35 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(12,i,j+1,k)*stry(j+1)-0.75*(c(12,i,j,k)*stry(j)+
      c(12,i,j+2,k)*stry(j+2));
 
-  r3 = r3+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r1 = r1 + ghcof(k)*c(13,i,j,1)*u(1,i,j,0) + 
-     ghcof(k)*c(14,i,j,1)*u(2,i,j,0) + 
+  r1 = r1 + ghcof(k)*c(13,i,j,1)*u(1,i,j,0) +
+     ghcof(k)*c(14,i,j,1)*u(2,i,j,0) +
      ghcof(k)*c(15,i,j,1)*u(3,i,j,0);
-  r2 = r2 + ghcof(k)*c(14,i,j,1)*u(1,i,j,0) + 
-     ghcof(k)*c(16,i,j,1)*u(2,i,j,0) + 
+  r2 = r2 + ghcof(k)*c(14,i,j,1)*u(1,i,j,0) +
+     ghcof(k)*c(16,i,j,1)*u(2,i,j,0) +
      ghcof(k)*c(17,i,j,1)*u(3,i,j,0);
-  r3 = r3 + ghcof(k)*c(15,i,j,1)*u(1,i,j,0) + 
-     ghcof(k)*c(17,i,j,1)*u(2,i,j,0) + 
+  r3 = r3 + ghcof(k)*c(15,i,j,1)*u(1,i,j,0) +
+     ghcof(k)*c(17,i,j,1)*u(2,i,j,0) +
      ghcof(k)*c(18,i,j,1)*u(3,i,j,0);
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   ac1=0;
   ac2=0;
   ac3=0;
   ac4=0;
   ac5=0;
   ac6=0;
-  for( int m=1; m <= 8 ; m++) 
- { 
-  ac1=  ac1+ acof(k,q,m)*c(13,i,j,m); 
-  ac2=  ac2+ acof(k,q,m)*c(14,i,j,m); 
-  ac3=  ac3+ acof(k,q,m)*c(15,i,j,m); 
-  ac4=  ac4+ acof(k,q,m)*c(16,i,j,m); 
-  ac5=  ac5+ acof(k,q,m)*c(17,i,j,m); 
-  ac6=  ac6+ acof(k,q,m)*c(18,i,j,m); 
+  for( int m=1; m <= 8 ; m++)
+ {
+  ac1=  ac1+ acof(k,q,m)*c(13,i,j,m);
+  ac2=  ac2+ acof(k,q,m)*c(14,i,j,m);
+  ac3=  ac3+ acof(k,q,m)*c(15,i,j,m);
+  ac4=  ac4+ acof(k,q,m)*c(16,i,j,m);
+  ac5=  ac5+ acof(k,q,m)*c(17,i,j,m);
+  ac6=  ac6+ acof(k,q,m)*c(18,i,j,m);
   }
   r1 = r1 + ac1*u(1,i,j,q) + ac2*u(2,i,j,q) + ac3*u(3,i,j,q);
   r2 = r2 + ac2*u(1,i,j,q) + ac4*u(2,i,j,q) + ac5*u(3,i,j,q);
@@ -368,8 +372,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   dup2 = dup2 +bop(k,q)*u(1,i+2,j,q);
   dup1 = dup1 +bop(k,q)*u(1,i+1,j,q);
   dum1 = dum1 +bop(k,q)*u(1,i-1,j,q);
@@ -387,8 +391,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   dup2 = dup2 +bop(k,q)*u(2,i+2,j,q);
   dup1 = dup1 +bop(k,q)*u(2,i+1,j,q);
   dum1 = dum1 +bop(k,q)*u(2,i-1,j,q);
@@ -406,8 +410,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   dup2 = dup2 +bop(k,q)*u(3,i+2,j,q);
   dup1 = dup1 +bop(k,q)*u(3,i+1,j,q);
   dum1 = dum1 +bop(k,q)*u(3,i-1,j,q);
@@ -424,8 +428,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
      du = a2*(u(1,i+2,j,q)-u(1,i-2,j,q))+
      a1*( u(1,i+1,j,q)-u(1,i-1,j,q));;
      ac1 = ac1+bop(k,q)*c(28,i,j,q)*du;
@@ -441,8 +445,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
      du = a2*(u(2,i+2,j,q)-u(2,i-2,j,q))+
      a1*( u(2,i+1,j,q)-u(2,i-1,j,q));;
      ac1 = ac1+bop(k,q)*c(31,i,j,q)*du;
@@ -458,8 +462,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
      du = a2*(u(3,i+2,j,q)-u(3,i-2,j,q))+
      a1*( u(3,i+1,j,q)-u(3,i-1,j,q));;
      ac1 = ac1+bop(k,q)*c(34,i,j,q)*du;
@@ -476,8 +480,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   dup2 = dup2 +bop(k,q)*u(1,i,j+2,q);
   dup1 = dup1 +bop(k,q)*u(1,i,j+1,q);
   dum1 = dum1 +bop(k,q)*u(1,i,j-1,q);
@@ -495,8 +499,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   dup2 = dup2 +bop(k,q)*u(2,i,j+2,q);
   dup1 = dup1 +bop(k,q)*u(2,i,j+1,q);
   dum1 = dum1 +bop(k,q)*u(2,i,j-1,q);
@@ -514,8 +518,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
   dup2 = dup2 +bop(k,q)*u(3,i,j+2,q);
   dup1 = dup1 +bop(k,q)*u(3,i,j+1,q);
   dum1 = dum1 +bop(k,q)*u(3,i,j-1,q);
@@ -532,8 +536,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
      du = a2*(u(1,i,j+2,q)-u(1,i,j-2,q))+
      a1*( u(1,i,j+1,q)-u(1,i,j-1,q));;
      ac1 = ac1+bop(k,q)*c(37,i,j,q)*du;
@@ -549,8 +553,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
      du = a2*(u(2,i,j+2,q)-u(2,i,j-2,q))+
      a1*( u(2,i,j+1,q)-u(2,i,j-1,q));;
      ac1 = ac1+bop(k,q)*c(40,i,j,q)*du;
@@ -566,8 +570,8 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for( int q=1; q <= 8 ; q++) 
- { 
+  for( int q=1; q <= 8 ; q++)
+ {
      du = a2*(u(3,i,j+2,q)-u(3,i,j-2,q))+
      a1*( u(3,i,j+1,q)-u(3,i,j-1,q));;
      ac1 = ac1+bop(k,q)*c(43,i,j,q)*du;
@@ -581,22 +585,26 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   lu(2,i,j,k) = r2*ijac;
   lu(3,i,j,k) = r3*ijac;
 
-	       }
+               }
       }
       if( onesided[5] == 1 )
       {
-	 ke = nk-6;
+         ke = nk-6;
 #pragma omp for
-	 for( int k=nk-5; k <= nk ; k++ )
-	    for( int j=jfirst+2; j <= jlast-2 ; j++ )
-	       //#pragma simd
-#pragma ivdep	 
-	       for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	       {
-		  float_sw4 r1=0, r2=0, r3=0;
-		  float_sw4 ac1, ac2, ac3, ac4, ac5, ac6;
-		  float_sw4 dum2, dum1, du, dup1, dup2;
-		  float_sw4 ijac=1/jac(i,j,k);
+         for( int k=nk-5; k <= nk ; k++ )
+            for( int j=jfirst+2; j <= jlast-2 ; j++ )
+               //#pragma simd
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma simd
+#else // SW4 backend
+#endif // SW4 backend
+#pragma ivdep
+               for( int i=ifirst+2; i <= ilast-2 ; i++ )
+               {
+                  float_sw4 r1=0, r2=0, r3=0;
+                  float_sw4 ac1, ac2, ac3, ac4, ac5, ac6;
+                  float_sw4 dum2, dum1, du, dup1, dup2;
+                  float_sw4 ijac=1/jac(i,j,k);
   float_sw4 cm2 = c(1,i-1,j,k)*strx(i-1)-0.75*(c(1,i,j,k)*strx(i)+
      c(1,i-2,j,k)*strx(i-2));
   float_sw4 cm1 = c(1,i-2,j,k)*strx(i-2)+c(1,i+1,j,k)*strx(i+1)+3*(
@@ -606,9 +614,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   float_sw4 cp2 = c(1,i+1,j,k)*strx(i+1)-0.75*(c(1,i,j,k)*strx(i)+
      c(1,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(2,i-1,j,k)*strx(i-1)-0.75*(c(2,i,j,k)*strx(i)+
      c(2,i-2,j,k)*strx(i-2));
@@ -619,13 +627,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(2,i+1,j,k)*strx(i+1)-0.75*(c(2,i,j,k)*strx(i)+
      c(2,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
-  r2 = r2+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(3,i-1,j,k)*strx(i-1)-0.75*(c(3,i,j,k)*strx(i)+
      c(3,i-2,j,k)*strx(i-2));
@@ -636,13 +644,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(3,i+1,j,k)*strx(i+1)-0.75*(c(3,i,j,k)*strx(i)+
      c(3,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
-  r3 = r3+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(4,i-1,j,k)*strx(i-1)-0.75*(c(4,i,j,k)*strx(i)+
      c(4,i-2,j,k)*strx(i-2));
@@ -653,9 +661,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(4,i+1,j,k)*strx(i+1)-0.75*(c(4,i,j,k)*strx(i)+
      c(4,i+2,j,k)*strx(i+2));
 
-  r2 = r2+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
   cm2 = c(5,i-1,j,k)*strx(i-1)-0.75*(c(5,i,j,k)*strx(i)+
      c(5,i-2,j,k)*strx(i-2));
@@ -666,13 +674,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(5,i+1,j,k)*strx(i+1)-0.75*(c(5,i,j,k)*strx(i)+
      c(5,i+2,j,k)*strx(i+2));
 
-  r2 = r2+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
-  r3 = r3+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
   cm2 = c(6,i-1,j,k)*strx(i-1)-0.75*(c(6,i,j,k)*strx(i)+
      c(6,i-2,j,k)*strx(i-2));
@@ -683,9 +691,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(6,i+1,j,k)*strx(i+1)-0.75*(c(6,i,j,k)*strx(i)+
      c(6,i+2,j,k)*strx(i+2));
 
-  r3 = r3+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
   cm2 = c(7,i,j-1,k)*stry(j-1)-0.75*(c(7,i,j,k)*stry(j)+
      c(7,i,j-2,k)*stry(j-2));
@@ -696,9 +704,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(7,i,j+1,k)*stry(j+1)-0.75*(c(7,i,j,k)*stry(j)+
      c(7,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(8,i,j-1,k)*stry(j-1)-0.75*(c(8,i,j,k)*stry(j)+
      c(8,i,j-2,k)*stry(j-2));
@@ -709,13 +717,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(8,i,j+1,k)*stry(j+1)-0.75*(c(8,i,j,k)*stry(j)+
      c(8,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
-  r2 = r2+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(9,i,j-1,k)*stry(j-1)-0.75*(c(9,i,j,k)*stry(j)+
      c(9,i,j-2,k)*stry(j-2));
@@ -726,13 +734,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(9,i,j+1,k)*stry(j+1)-0.75*(c(9,i,j,k)*stry(j)+
      c(9,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r3 = r3+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(10,i,j-1,k)*stry(j-1)-0.75*(c(10,i,j,k)*stry(j)+
      c(10,i,j-2,k)*stry(j-2));
@@ -743,9 +751,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(10,i,j+1,k)*stry(j+1)-0.75*(c(10,i,j,k)*stry(j)+
      c(10,i,j+2,k)*stry(j+2));
 
-  r2 = r2+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
   cm2 = c(11,i,j-1,k)*stry(j-1)-0.75*(c(11,i,j,k)*stry(j)+
      c(11,i,j-2,k)*stry(j-2));
@@ -756,13 +764,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(11,i,j+1,k)*stry(j+1)-0.75*(c(11,i,j,k)*stry(j)+
      c(11,i,j+2,k)*stry(j+2));
 
-  r2 = r2+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r3 = r3+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
   cm2 = c(12,i,j-1,k)*stry(j-1)-0.75*(c(12,i,j,k)*stry(j)+
      c(12,i,j-2,k)*stry(j-2));
@@ -773,20 +781,20 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(12,i,j+1,k)*stry(j+1)-0.75*(c(12,i,j,k)*stry(j)+
      c(12,i,j+2,k)*stry(j+2));
 
-  r3 = r3+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r1 = r1 + ghcof(nk-k+1)*c(13,i,j,nk)*u(1,i,j,nk+1) + 
-     ghcof(nk-k+1)*c(14,i,j,nk)*u(2,i,j,nk+1) + 
+  r1 = r1 + ghcof(nk-k+1)*c(13,i,j,nk)*u(1,i,j,nk+1) +
+     ghcof(nk-k+1)*c(14,i,j,nk)*u(2,i,j,nk+1) +
      ghcof(nk-k+1)*c(15,i,j,nk)*u(3,i,j,nk+1);
-  r2 = r2 + ghcof(nk-k+1)*c(14,i,j,nk)*u(1,i,j,nk+1) + 
-     ghcof(nk-k+1)*c(16,i,j,nk)*u(2,i,j,nk+1) + 
+  r2 = r2 + ghcof(nk-k+1)*c(14,i,j,nk)*u(1,i,j,nk+1) +
+     ghcof(nk-k+1)*c(16,i,j,nk)*u(2,i,j,nk+1) +
      ghcof(nk-k+1)*c(17,i,j,nk)*u(3,i,j,nk+1);
-  r3 = r3 + ghcof(nk-k+1)*c(15,i,j,nk)*u(1,i,j,nk+1) + 
-     ghcof(nk-k+1)*c(17,i,j,nk)*u(2,i,j,nk+1) + 
+  r3 = r3 + ghcof(nk-k+1)*c(15,i,j,nk)*u(1,i,j,nk+1) +
+     ghcof(nk-k+1)*c(17,i,j,nk)*u(2,i,j,nk+1) +
      ghcof(nk-k+1)*c(18,i,j,nk)*u(3,i,j,nk+1);
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   ac1=0;
   ac2=0;
@@ -794,14 +802,14 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac4=0;
   ac5=0;
   ac6=0;
-  for(int m=nk-7; m <= nk; m++ ) 
+  for(int m=nk-7; m <= nk; m++ )
  {
-  ac1=  ac1+ acof(nk-k+1,nk-q+1,nk-m+1)*c(13,i,j,m); 
-  ac2=  ac2+ acof(nk-k+1,nk-q+1,nk-m+1)*c(14,i,j,m); 
-  ac3=  ac3+ acof(nk-k+1,nk-q+1,nk-m+1)*c(15,i,j,m); 
-  ac4=  ac4+ acof(nk-k+1,nk-q+1,nk-m+1)*c(16,i,j,m); 
-  ac5=  ac5+ acof(nk-k+1,nk-q+1,nk-m+1)*c(17,i,j,m); 
-  ac6=  ac6+ acof(nk-k+1,nk-q+1,nk-m+1)*c(18,i,j,m); 
+  ac1=  ac1+ acof(nk-k+1,nk-q+1,nk-m+1)*c(13,i,j,m);
+  ac2=  ac2+ acof(nk-k+1,nk-q+1,nk-m+1)*c(14,i,j,m);
+  ac3=  ac3+ acof(nk-k+1,nk-q+1,nk-m+1)*c(15,i,j,m);
+  ac4=  ac4+ acof(nk-k+1,nk-q+1,nk-m+1)*c(16,i,j,m);
+  ac5=  ac5+ acof(nk-k+1,nk-q+1,nk-m+1)*c(17,i,j,m);
+  ac6=  ac6+ acof(nk-k+1,nk-q+1,nk-m+1)*c(18,i,j,m);
   }
   r1 = r1 + ac1*u(1,i,j,q) + ac2*u(2,i,j,q) + ac3*u(3,i,j,q);
   r2 = r2 + ac2*u(1,i,j,q) + ac4*u(2,i,j,q) + ac5*u(3,i,j,q);
@@ -910,7 +918,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   dup2 = dup2 -bop(nk-k+1,nk-q+1)*u(1,i+2,j,q);
   dup1 = dup1 -bop(nk-k+1,nk-q+1)*u(1,i+1,j,q);
@@ -929,7 +937,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   dup2 = dup2 -bop(nk-k+1,nk-q+1)*u(2,i+2,j,q);
   dup1 = dup1 -bop(nk-k+1,nk-q+1)*u(2,i+1,j,q);
@@ -948,7 +956,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   dup2 = dup2 -bop(nk-k+1,nk-q+1)*u(3,i+2,j,q);
   dup1 = dup1 -bop(nk-k+1,nk-q+1)*u(3,i+1,j,q);
@@ -966,7 +974,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
      du = a2*(u(1,i+2,j,q)-u(1,i-2,j,q))+
      a1*( u(1,i+1,j,q)-u(1,i-1,j,q));;
@@ -983,7 +991,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
      du = a2*(u(2,i+2,j,q)-u(2,i-2,j,q))+
      a1*( u(2,i+1,j,q)-u(2,i-1,j,q));;
@@ -1000,7 +1008,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
      du = a2*(u(3,i+2,j,q)-u(3,i-2,j,q))+
      a1*( u(3,i+1,j,q)-u(3,i-1,j,q));;
@@ -1018,7 +1026,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   dup2 = dup2 -bop(nk-k+1,nk-q+1)*u(1,i,j+2,q);
   dup1 = dup1 -bop(nk-k+1,nk-q+1)*u(1,i,j+1,q);
@@ -1037,7 +1045,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   dup2 = dup2 -bop(nk-k+1,nk-q+1)*u(2,i,j+2,q);
   dup1 = dup1 -bop(nk-k+1,nk-q+1)*u(2,i,j+1,q);
@@ -1056,7 +1064,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   dum1=0;
   dup1=0;
   dup2=0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
   dup2 = dup2 -bop(nk-k+1,nk-q+1)*u(3,i,j+2,q);
   dup1 = dup1 -bop(nk-k+1,nk-q+1)*u(3,i,j+1,q);
@@ -1074,7 +1082,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
      du = a2*(u(1,i,j+2,q)-u(1,i,j-2,q))+
      a1*( u(1,i,j+1,q)-u(1,i,j-1,q));;
@@ -1091,7 +1099,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
      du = a2*(u(2,i,j+2,q)-u(2,i,j-2,q))+
      a1*( u(2,i,j+1,q)-u(2,i,j-1,q));;
@@ -1108,7 +1116,7 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   ac1 = 0;
   ac2 = 0;
   ac3 = 0;
-  for(int q=nk-7; q <= nk; q++ ) 
+  for(int q=nk-7; q <= nk; q++ )
  {
      du = a2*(u(3,i,j+2,q)-u(3,i,j-2,q))+
      a1*( u(3,i,j+1,q)-u(3,i,j-1,q));;
@@ -1122,18 +1130,22 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   lu(1,i,j,k) = r1*ijac;
   lu(2,i,j,k) = r2*ijac;
   lu(3,i,j,k) = r3*ijac;
-	       }
+               }
       }
 #pragma omp for
       for( int k=kb; k <= ke ; k++ )
-	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-	    //#pragma simd
-#pragma ivdep	 
-	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-	    {
-	       float_sw4 r1=0, r2=0, r3=0;
-	       float_sw4 dum2, dum1, dup1, dup2;
-	       float_sw4 ijac=1/jac(i,j,k);
+         for( int j=jfirst+2; j <= jlast-2 ; j++ )
+            //#pragma simd
+#if defined(SW4_USE_RAJA) // SW4 backend
+#pragma simd
+#else // SW4 backend
+#endif // SW4 backend
+#pragma ivdep
+            for( int i=ifirst+2; i <= ilast-2 ; i++ )
+            {
+               float_sw4 r1=0, r2=0, r3=0;
+               float_sw4 dum2, dum1, dup1, dup2;
+               float_sw4 ijac=1/jac(i,j,k);
   float_sw4 cm2 = c(1,i-1,j,k)*strx(i-1)-0.75*(c(1,i,j,k)*strx(i)+
      c(1,i-2,j,k)*strx(i-2));
   float_sw4 cm1 = c(1,i-2,j,k)*strx(i-2)+c(1,i+1,j,k)*strx(i+1)+3*(
@@ -1143,9 +1155,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   float_sw4 cp2 = c(1,i+1,j,k)*strx(i+1)-0.75*(c(1,i,j,k)*strx(i)+
      c(1,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(2,i-1,j,k)*strx(i-1)-0.75*(c(2,i,j,k)*strx(i)+
      c(2,i-2,j,k)*strx(i-2));
@@ -1156,13 +1168,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(2,i+1,j,k)*strx(i+1)-0.75*(c(2,i,j,k)*strx(i)+
      c(2,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
-  r2 = r2+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(3,i-1,j,k)*strx(i-1)-0.75*(c(3,i,j,k)*strx(i)+
      c(3,i-2,j,k)*strx(i-2));
@@ -1173,13 +1185,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(3,i+1,j,k)*strx(i+1)-0.75*(c(3,i,j,k)*strx(i)+
      c(3,i+2,j,k)*strx(i+2));
 
-  r1 = r1+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r1 = r1+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
-  r3 = r3+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(1,i-2,j,k)-u(1,i,j,k)) +
+     cm1*(u(1,i-1,j,k)-u(1,i,j,k)) +
+     cp1*(u(1,i+1,j,k)-u(1,i,j,k)) +
      cp2*(u(1,i+2,j,k)-u(1,i,j,k)) );
   cm2 = c(4,i-1,j,k)*strx(i-1)-0.75*(c(4,i,j,k)*strx(i)+
      c(4,i-2,j,k)*strx(i-2));
@@ -1190,9 +1202,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(4,i+1,j,k)*strx(i+1)-0.75*(c(4,i,j,k)*strx(i)+
      c(4,i+2,j,k)*strx(i+2));
 
-  r2 = r2+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
   cm2 = c(5,i-1,j,k)*strx(i-1)-0.75*(c(5,i,j,k)*strx(i)+
      c(5,i-2,j,k)*strx(i-2));
@@ -1203,13 +1215,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(5,i+1,j,k)*strx(i+1)-0.75*(c(5,i,j,k)*strx(i)+
      c(5,i+2,j,k)*strx(i+2));
 
-  r2 = r2+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r2 = r2+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
-  r3 = r3+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(2,i-2,j,k)-u(2,i,j,k)) +
+     cm1*(u(2,i-1,j,k)-u(2,i,j,k)) +
+     cp1*(u(2,i+1,j,k)-u(2,i,j,k)) +
      cp2*(u(2,i+2,j,k)-u(2,i,j,k)) );
   cm2 = c(6,i-1,j,k)*strx(i-1)-0.75*(c(6,i,j,k)*strx(i)+
      c(6,i-2,j,k)*strx(i-2));
@@ -1220,9 +1232,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(6,i+1,j,k)*strx(i+1)-0.75*(c(6,i,j,k)*strx(i)+
      c(6,i+2,j,k)*strx(i+2));
 
-  r3 = r3+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) + 
+  r3 = r3+i6*strx(i)*(cm2*(u(3,i-2,j,k)-u(3,i,j,k)) +
+     cm1*(u(3,i-1,j,k)-u(3,i,j,k)) +
+     cp1*(u(3,i+1,j,k)-u(3,i,j,k)) +
      cp2*(u(3,i+2,j,k)-u(3,i,j,k)) );
   cm2 = c(7,i,j-1,k)*stry(j-1)-0.75*(c(7,i,j,k)*stry(j)+
      c(7,i,j-2,k)*stry(j-2));
@@ -1233,9 +1245,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(7,i,j+1,k)*stry(j+1)-0.75*(c(7,i,j,k)*stry(j)+
      c(7,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(8,i,j-1,k)*stry(j-1)-0.75*(c(8,i,j,k)*stry(j)+
      c(8,i,j-2,k)*stry(j-2));
@@ -1246,13 +1258,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(8,i,j+1,k)*stry(j+1)-0.75*(c(8,i,j,k)*stry(j)+
      c(8,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
-  r2 = r2+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(9,i,j-1,k)*stry(j-1)-0.75*(c(9,i,j,k)*stry(j)+
      c(9,i,j-2,k)*stry(j-2));
@@ -1263,13 +1275,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(9,i,j+1,k)*stry(j+1)-0.75*(c(9,i,j,k)*stry(j)+
      c(9,i,j+2,k)*stry(j+2));
 
-  r1 = r1+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r1 = r1+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r3 = r3+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(1,i,j-2,k)-u(1,i,j,k)) +
+     cm1*(u(1,i,j-1,k)-u(1,i,j,k)) +
+     cp1*(u(1,i,j+1,k)-u(1,i,j,k)) +
      cp2*(u(1,i,j+2,k)-u(1,i,j,k)) );
   cm2 = c(10,i,j-1,k)*stry(j-1)-0.75*(c(10,i,j,k)*stry(j)+
      c(10,i,j-2,k)*stry(j-2));
@@ -1280,9 +1292,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(10,i,j+1,k)*stry(j+1)-0.75*(c(10,i,j,k)*stry(j)+
      c(10,i,j+2,k)*stry(j+2));
 
-  r2 = r2+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
   cm2 = c(11,i,j-1,k)*stry(j-1)-0.75*(c(11,i,j,k)*stry(j)+
      c(11,i,j-2,k)*stry(j-2));
@@ -1293,13 +1305,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(11,i,j+1,k)*stry(j+1)-0.75*(c(11,i,j,k)*stry(j)+
      c(11,i,j+2,k)*stry(j+2));
 
-  r2 = r2+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r2 = r2+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
-  r3 = r3+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(2,i,j-2,k)-u(2,i,j,k)) +
+     cm1*(u(2,i,j-1,k)-u(2,i,j,k)) +
+     cp1*(u(2,i,j+1,k)-u(2,i,j,k)) +
      cp2*(u(2,i,j+2,k)-u(2,i,j,k)) );
   cm2 = c(12,i,j-1,k)*stry(j-1)-0.75*(c(12,i,j,k)*stry(j)+
      c(12,i,j-2,k)*stry(j-2));
@@ -1310,9 +1322,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(12,i,j+1,k)*stry(j+1)-0.75*(c(12,i,j,k)*stry(j)+
      c(12,i,j+2,k)*stry(j+2));
 
-  r3 = r3+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) + 
+  r3 = r3+i6*stry(j)*(cm2*(u(3,i,j-2,k)-u(3,i,j,k)) +
+     cm1*(u(3,i,j-1,k)-u(3,i,j,k)) +
+     cp1*(u(3,i,j+1,k)-u(3,i,j,k)) +
      cp2*(u(3,i,j+2,k)-u(3,i,j,k)) );
   cm2 = c(13,i,j,k-1)*strz(k-1)-0.75*(c(13,i,j,k)*strz(k)+
      c(13,i,j,k-2)*strz(k-2));
@@ -1323,9 +1335,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(13,i,j,k+1)*strz(k+1)-0.75*(c(13,i,j,k)*strz(k)+
      c(13,i,j,k+2)*strz(k+2));
 
-  r1 = r1+i6*strz(k)*(cm2*(u(1,i,j,k-2)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j,k-1)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j,k+1)-u(1,i,j,k)) + 
+  r1 = r1+i6*strz(k)*(cm2*(u(1,i,j,k-2)-u(1,i,j,k)) +
+     cm1*(u(1,i,j,k-1)-u(1,i,j,k)) +
+     cp1*(u(1,i,j,k+1)-u(1,i,j,k)) +
      cp2*(u(1,i,j,k+2)-u(1,i,j,k)) );
   cm2 = c(14,i,j,k-1)*strz(k-1)-0.75*(c(14,i,j,k)*strz(k)+
      c(14,i,j,k-2)*strz(k-2));
@@ -1336,13 +1348,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(14,i,j,k+1)*strz(k+1)-0.75*(c(14,i,j,k)*strz(k)+
      c(14,i,j,k+2)*strz(k+2));
 
-  r1 = r1+i6*strz(k)*(cm2*(u(2,i,j,k-2)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j,k-1)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j,k+1)-u(2,i,j,k)) + 
+  r1 = r1+i6*strz(k)*(cm2*(u(2,i,j,k-2)-u(2,i,j,k)) +
+     cm1*(u(2,i,j,k-1)-u(2,i,j,k)) +
+     cp1*(u(2,i,j,k+1)-u(2,i,j,k)) +
      cp2*(u(2,i,j,k+2)-u(2,i,j,k)) );
-  r2 = r2+i6*strz(k)*(cm2*(u(1,i,j,k-2)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j,k-1)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j,k+1)-u(1,i,j,k)) + 
+  r2 = r2+i6*strz(k)*(cm2*(u(1,i,j,k-2)-u(1,i,j,k)) +
+     cm1*(u(1,i,j,k-1)-u(1,i,j,k)) +
+     cp1*(u(1,i,j,k+1)-u(1,i,j,k)) +
      cp2*(u(1,i,j,k+2)-u(1,i,j,k)) );
   cm2 = c(15,i,j,k-1)*strz(k-1)-0.75*(c(15,i,j,k)*strz(k)+
      c(15,i,j,k-2)*strz(k-2));
@@ -1353,13 +1365,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(15,i,j,k+1)*strz(k+1)-0.75*(c(15,i,j,k)*strz(k)+
      c(15,i,j,k+2)*strz(k+2));
 
-  r1 = r1+i6*strz(k)*(cm2*(u(3,i,j,k-2)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j,k-1)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j,k+1)-u(3,i,j,k)) + 
+  r1 = r1+i6*strz(k)*(cm2*(u(3,i,j,k-2)-u(3,i,j,k)) +
+     cm1*(u(3,i,j,k-1)-u(3,i,j,k)) +
+     cp1*(u(3,i,j,k+1)-u(3,i,j,k)) +
      cp2*(u(3,i,j,k+2)-u(3,i,j,k)) );
-  r3 = r3+i6*strz(k)*(cm2*(u(1,i,j,k-2)-u(1,i,j,k)) + 
-     cm1*(u(1,i,j,k-1)-u(1,i,j,k)) + 
-     cp1*(u(1,i,j,k+1)-u(1,i,j,k)) + 
+  r3 = r3+i6*strz(k)*(cm2*(u(1,i,j,k-2)-u(1,i,j,k)) +
+     cm1*(u(1,i,j,k-1)-u(1,i,j,k)) +
+     cp1*(u(1,i,j,k+1)-u(1,i,j,k)) +
      cp2*(u(1,i,j,k+2)-u(1,i,j,k)) );
   cm2 = c(16,i,j,k-1)*strz(k-1)-0.75*(c(16,i,j,k)*strz(k)+
      c(16,i,j,k-2)*strz(k-2));
@@ -1370,9 +1382,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(16,i,j,k+1)*strz(k+1)-0.75*(c(16,i,j,k)*strz(k)+
      c(16,i,j,k+2)*strz(k+2));
 
-  r2 = r2+i6*strz(k)*(cm2*(u(2,i,j,k-2)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j,k-1)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j,k+1)-u(2,i,j,k)) + 
+  r2 = r2+i6*strz(k)*(cm2*(u(2,i,j,k-2)-u(2,i,j,k)) +
+     cm1*(u(2,i,j,k-1)-u(2,i,j,k)) +
+     cp1*(u(2,i,j,k+1)-u(2,i,j,k)) +
      cp2*(u(2,i,j,k+2)-u(2,i,j,k)) );
   cm2 = c(17,i,j,k-1)*strz(k-1)-0.75*(c(17,i,j,k)*strz(k)+
      c(17,i,j,k-2)*strz(k-2));
@@ -1383,13 +1395,13 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(17,i,j,k+1)*strz(k+1)-0.75*(c(17,i,j,k)*strz(k)+
      c(17,i,j,k+2)*strz(k+2));
 
-  r2 = r2+i6*strz(k)*(cm2*(u(3,i,j,k-2)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j,k-1)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j,k+1)-u(3,i,j,k)) + 
+  r2 = r2+i6*strz(k)*(cm2*(u(3,i,j,k-2)-u(3,i,j,k)) +
+     cm1*(u(3,i,j,k-1)-u(3,i,j,k)) +
+     cp1*(u(3,i,j,k+1)-u(3,i,j,k)) +
      cp2*(u(3,i,j,k+2)-u(3,i,j,k)) );
-  r3 = r3+i6*strz(k)*(cm2*(u(2,i,j,k-2)-u(2,i,j,k)) + 
-     cm1*(u(2,i,j,k-1)-u(2,i,j,k)) + 
-     cp1*(u(2,i,j,k+1)-u(2,i,j,k)) + 
+  r3 = r3+i6*strz(k)*(cm2*(u(2,i,j,k-2)-u(2,i,j,k)) +
+     cm1*(u(2,i,j,k-1)-u(2,i,j,k)) +
+     cp1*(u(2,i,j,k+1)-u(2,i,j,k)) +
      cp2*(u(2,i,j,k+2)-u(2,i,j,k)) );
   cm2 = c(18,i,j,k-1)*strz(k-1)-0.75*(c(18,i,j,k)*strz(k)+
      c(18,i,j,k-2)*strz(k-2));
@@ -1400,9 +1412,9 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   cp2 = c(18,i,j,k+1)*strz(k+1)-0.75*(c(18,i,j,k)*strz(k)+
      c(18,i,j,k+2)*strz(k+2));
 
-  r3 = r3+i6*strz(k)*(cm2*(u(3,i,j,k-2)-u(3,i,j,k)) + 
-     cm1*(u(3,i,j,k-1)-u(3,i,j,k)) + 
-     cp1*(u(3,i,j,k+1)-u(3,i,j,k)) + 
+  r3 = r3+i6*strz(k)*(cm2*(u(3,i,j,k-2)-u(3,i,j,k)) +
+     cm1*(u(3,i,j,k-1)-u(3,i,j,k)) +
+     cp1*(u(3,i,j,k+1)-u(3,i,j,k)) +
      cp2*(u(3,i,j,k+2)-u(3,i,j,k)) );
 
 
@@ -1696,6 +1708,6 @@ void ilanisocurv_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
   lu(1,i,j,k) = r1*ijac;
   lu(2,i,j,k) = r2*ijac;
   lu(3,i,j,k) = r3*ijac;
-	    }
+            }
    }
 }

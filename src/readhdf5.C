@@ -2,33 +2,33 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 
 #ifndef READHDF5_C
 #define READHDF5_C
@@ -77,7 +77,7 @@ struct traverse_data_t {
   bool usey;
   bool usez;
   float_sw4 t0;
-  bool scalefactor_set; 
+  bool scalefactor_set;
   float_sw4 scalefactor;
 } traverse_data_t;
 
@@ -312,7 +312,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       a_ew->computeCartesianCoord(x, y, lon, lat);
 
     bool inCurvilinear=false;
-    // we are in or above the curvilinear grid 
+    // we are in or above the curvilinear grid
     if ( a_ew->topographyExists() && z < a_ew->m_zmin[a_ew->mNumberOfCartesianGrids-1])
       inCurvilinear = true;
 
@@ -321,18 +321,18 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       // The location of this station was outside the domain, so don't include it in the global list
       if (op_data->myRank == 0 && a_ew->getVerbosity() > 0) {
         stringstream receivererr;
-    
-        receivererr << endl 
-  		  << "***************************************************" << endl
-  		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+
+        receivererr << endl
+                  << "***************************************************" << endl
+                  << " WARNING:  RECEIVER positioned outside grid!" << endl;
         receivererr << " No RECEIVER file will be generated for file = " << op_data->outFileName<< endl;
         if (geoCoordSet) {
-  	  receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+          receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
         }
         else {
-    	  receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+          receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
         }
-        
+
         receivererr << "***************************************************" << endl;
         cerr << receivererr.str();
         cerr.flush();
@@ -387,7 +387,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 
           // Set reference UTC to simulation UTC, for easier plotting.
           ts_ptr->set_utc_to_simulation_utc();
-      
+
           // Set window, in simulation time
           if( op_data->winlset || op_data->winrset )
           {
@@ -404,19 +404,19 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
           // Exclude some components
           if( !op_data->usex || !op_data->usey || !op_data->usez )
              ts_ptr->exclude_component( op_data->usex, op_data->usey, op_data->usez );
-      
+
           // Add extra shift from command line, use with care.
           if( op_data->t0 != 0 )
              ts_ptr->add_shift( op_data->t0 );
           //DBG
           //          ts_ptr->set_shift(0.0);
-      
+
           // Set scale factor if given
           if( op_data->scalefactor_set )
              ts_ptr->set_scalefactor( op_data->scalefactor );
           }
       }
-  
+
       // include the receiver in the global list
       (*op_data->GlobalTimeSeries)[op_data->event].push_back(ts_ptr);
     }
@@ -595,7 +595,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  if (nreader <= 0) 
+  if (nreader <= 0)
       nreader = 1;
   if (nreader > world_size)
       nreader = world_size;
@@ -660,16 +660,16 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     fapl = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(fapl, read_comm, MPI_INFO_NULL);
     fid = H5Fopen(fname, H5F_ACC_RDONLY, fapl);
-    if (fid <= 0) 
+    if (fid <= 0)
       cout << "Rupture HDF5 file " << fname << " not found" << endl;
-    
-    if (world_rank == 0) 
+
+    if (world_rank == 0)
       printf("Opened rupture file '%s'\n", fname);
 
     attr = H5Aopen(fid, "VERSION", H5P_DEFAULT);
     H5Aread(attr, H5T_NATIVE_DOUBLE, &rVersion);
     H5Aclose(attr);
-    if (world_rank == 0) 
+    if (world_rank == 0)
       printf("Version = %.1f\n", rVersion);
 
     // read each header block
@@ -679,16 +679,16 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     nseg = (int)dims;
     srf_metadata = (struct srf_meta_t *)malloc(nseg * sizeof(struct srf_meta_t));
     H5Sclose(aspace);
-    if (world_rank == 0) 
+    if (world_rank == 0)
       printf("Number of segments in header block: %i\n", nseg);
     H5Aread(attr, ctype, srf_metadata);
     H5Aclose(attr);
 
     if (world_rank == 0) {
       for (int seg=0; seg<nseg; seg++) {
-        printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n", 
+        printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n",
                 seg+1, srf_metadata[seg].elon, srf_metadata[seg].elat, srf_metadata[seg].nstk, srf_metadata[seg].ndip, srf_metadata[seg].len, srf_metadata[seg].wid);
-        printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n", 
+        printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n",
                 srf_metadata[seg].stk, srf_metadata[seg].dip, srf_metadata[seg].dtop, srf_metadata[seg].shyp, srf_metadata[seg].dhyp);
       }
     }
@@ -701,10 +701,10 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     }
     else {
       dspace = H5Dget_space(dset);
- 
+
       H5Sget_simple_extent_dims(dspace, &dims, NULL);
       npts = (int)dims;
-      if (world_rank == 0) 
+      if (world_rank == 0)
         printf("Number of point sources in data block: %i\n", npts);
 
       point_data = (struct srf_data_t*)malloc(npts*sizeof(struct srf_data_t));
@@ -720,7 +720,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     }
     else {
       dspace = H5Dget_space(dset);
- 
+
       H5Sget_simple_extent_dims(dspace, &dims, NULL);
       nsr1 = (int)dims;
 
@@ -734,17 +734,17 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   }// End read_color=0
   etime = MPI_Wtime();
 
-  if (is_debug && world_rank == 0) 
+  if (is_debug && world_rank == 0)
       printf("Read SRF-HDF5 takes %.2f seconds\n", etime-stime);
 
   MPI_Bcast(&npts, 1, MPI_INT, 0, node_comm);
   /* MPI_Bcast(&npts, 1, MPI_INT, 0, MPI_COMM_WORLD); */
-  if (npts == -1) 
+  if (npts == -1)
     return;
 
   MPI_Bcast(&nsr1, 1, MPI_INT, 0, node_comm);
   /* MPI_Bcast(&nsr1, 1, MPI_INT, 0, MPI_COMM_WORLD); */
-  if (nsr1 == -1) 
+  if (nsr1 == -1)
     return;
 
   if (read_color != 0) {
@@ -762,7 +762,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   MPI_Comm_free(&node_comm);
   MPI_Comm_free(&read_comm);
 
-  if (is_debug && world_rank == 0) 
+  if (is_debug && world_rank == 0)
       printf("Bcast SRF-HDF5 takes %.2f seconds\n", stime-etime);
 
   Source* sourcePtr;
@@ -781,7 +781,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   int* ipar=NULL;
   int npar=0, nipar=0, ncyc=0, sr1pos=0;
   // read all point sources
-  for (int pts=0; pts<npts; pts++) 
+  for (int pts=0; pts<npts; pts++)
   {
     double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
     int nt1, nt2, nt3;
@@ -807,18 +807,18 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
 
     if (world_rank == 0 && mVerbose >= 2)
     {
-      printf("point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n", 
+      printf("point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n",
              pts+1, lon, lat, dep, stk, dip, area, tinit, dt);
-      printf("          rake=%g, slip1=%g, nt1=%i, slip2=%g, nt2=%i, slip3=%g, nt3=%i\n", 
+      printf("          rake=%g, slip1=%g, nt1=%i, slip2=%g, nt2=%i, slip3=%g, nt3=%i\n",
              rake, slip1, nt1, slip2, nt2, slip3, nt3);
     }
-    
+
   // read discrete time series for u1
     if (nt1>0)
     {
       nu1++;
       // note that the first data point is always zero, but the last is not
-      // for this reason we always pad the time zeries with a '0' 
+      // for this reason we always pad the time zeries with a '0'
       // also note that we need at least 7 data points, i.e. nt1>=6
       int nt1dim = max(6,nt1);
       par = new float_sw4[nt1dim+2];
@@ -826,26 +826,26 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       t0      = tinit;
       freq    = 1/dt;
       ipar    = new int[1];
-      ipar[0] = nt1dim+1; // add an extra point 
+      ipar[0] = nt1dim+1; // add an extra point
 
-      for( int i=0 ; i < nt1 ; i++ ) 
+      for( int i=0 ; i < nt1 ; i++ )
         par[i+1] = sr_data[sr1pos++];
-      
+
       // pad with 0
       if (nt1 < 6) {
         for (int j=nt1; j<6; j++)
           par[j+1]=0.;
       }
-      
+
       // last 0
       par[nt1dim+1]= 0.0;
-  
+
       // scale cm/s to m/s
       for (int i=1; i<=nt1dim+1; i++)
       {
         par[i] *= 1e-2;
       }
-  
+
       // AP: Mar. 1, 2016: Additional scaling is needed to make the integral of the time function = 1
       float_sw4 slip_m=slip1*1e-2;
       float_sw4 slip_sum=0;
@@ -854,7 +854,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
         slip_sum += par[i];
       }
       slip_sum *=dt;
-  
+
       if (world_rank == 0 && mVerbose >= 2)
       {
          printf("INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n", slip_sum, slip_m);
@@ -889,48 +889,48 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
            printf("INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n", slip_sum);
         }
       }
-      //done scaling        
-      
+      //done scaling
+
       npar = nt1dim+2;
       nipar = 1;
-  
+
       // printf("Read discrete time series: tinit=%g, dt=%g, nt1=%i\n", tinit, dt, nt1);
       // for (int i=0; i<nt1+1; i++)
       //   printf("Sv1[%i]=%g\n", i+1, par[i+1]);
-  
+
   // convert lat, lon, depth to (x,y,z)
       ew->computeCartesianCoord(x, y, lon, lat);
   // convert depth in [km] to [m]
       z = dep * 1e3;
-  
+
   // convert strike, dip, rake to Mij
       float_sw4 radconv = M_PI / 180.;
       float_sw4 S, D, R;
       stk -= mGeoAz; // subtract off the grid azimuth
       S = stk*radconv; D = dip*radconv; R = rake*radconv;
-    
+
       mxx = -1.0 * ( sin(D) * cos(R) * sin (2*S) + sin(2*D) * sin(R) * sin(S)*sin(S) );
       myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
-      mzz = -1.0 * ( mxx + myy );	
+      mzz = -1.0 * ( mxx + myy );
       mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
       mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
       myz = -1.0 * ( cos(D) * cos(R) * sin (S)   - cos(2*D) * sin(R) * cos(S) );
-  
+
   // scale (note that the shear modulus is not yet available. Also note that we convert [cm] to [m])
       m0 = area*1e-4 * slip1*1e-2;
-    
+
       mxx *= m0;
       mxy *= m0;
       mxz *= m0;
       myy *= m0;
       myz *= m0;
       mzz *= m0;
-  
+
   // before creating the source, make sure (x,y,z) is inside the computational domain
-  
-  // only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+
+  // only check the z>zmin when we have topography. For a flat free surface, we will remove sources too
   // close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
-  
+
       if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
       {
         stringstream sourceposerr;
@@ -939,27 +939,27 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
                      << " ERROR:  Source positioned outside grid!  " << endl
                      << endl
                      << " Source from rupture file @" << endl
-                     << "  x=" << x << " y=" << y << " z=" << z << endl 
-                     << "  lat=" << lat << " lon=" << lon << " dep=" << dep << endl 
+                     << "  x=" << x << " y=" << y << " z=" << z << endl
+                     << "  lat=" << lat << " lon=" << lon << " dep=" << dep << endl
                      << endl;
-          
+
         if ( x < xmin )
-          sourceposerr << " x is " << xmin - x << 
+          sourceposerr << " x is " << xmin - x <<
             " meters away from min x (" << xmin << ")" << endl;
         else if ( x > m_global_xmax)
-          sourceposerr << " x is " << x - m_global_xmax << 
+          sourceposerr << " x is " << x - m_global_xmax <<
             " meters away from max x (" << m_global_xmax << ")" << endl;
         if ( y < ymin )
-          sourceposerr << " y is " << ymin - y << 
+          sourceposerr << " y is " << ymin - y <<
             " meters away from min y (" << ymin << ")" << endl;
         else if ( y > m_global_ymax)
-          sourceposerr << " y is " << y - m_global_ymax << 
+          sourceposerr << " y is " << y - m_global_ymax <<
             " meters away from max y (" << m_global_ymax << ")" << endl;
         if ( z < zmin )
-          sourceposerr << " z is " << zmin - z << 
+          sourceposerr << " z is " << zmin - z <<
             " meters away from min z (" << zmin << ")" << endl;
         else if ( z > m_global_zmax)
-          sourceposerr << " z is " << z - m_global_zmax << 
+          sourceposerr << " z is " << z - m_global_zmax <<
             " meters away from max z (" << m_global_zmax << ")" << endl;
         sourceposerr << "***************************************************" << endl;
         if (world_rank == 0)
@@ -969,7 +969,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       {
         sourcePtr = new Source(ew, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
                                tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true ); // true is correctStrengthForMu
-  
+
         if (sourcePtr->ignore())
         {
           delete sourcePtr;
@@ -980,13 +980,13 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
           nSources++;
         }
       }
-  
+
       // deallocate temporary arrays...
       delete[] par;
       delete[] ipar;
-  
+
     } // end if nt1 >0
-  
+
     // read past discrete time series for u2
     if (nt2>0)
     {
@@ -995,7 +995,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       if (world_rank == 0)
         printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
     } // end if nt2 > 0
-  
+
     // read past discrete time series for u3
     if (nt3>0)
     {
@@ -1004,7 +1004,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       if (world_rank == 0)
         printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
     } // end if nt3 > 0
-    
+
   } // end for all sources
   if (world_rank == 0)
     printf("Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n", npts, nSources, nu1, nu2, nu3);
@@ -1012,7 +1012,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     printf("Skipped %i rupture points with zero slip-velocity integral in u1.\n", nskip_zero_slip);
 
   etime = MPI_Wtime();
-  if (is_debug && world_rank == 0) 
+  if (is_debug && world_rank == 0)
       printf("Create source takes %.2f seconds\n", etime-stime);
 
 

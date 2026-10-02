@@ -2,59 +2,86 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <fenv.h>
+
+#else // SW4 backend
 #include "mpi.h"
 #include "GridPointSource.h"
 #include "Source.h"
 #include "Require.h"
 #include "GridGenerator.h"
 
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include <fenv.h>
+#endif // SW4 backend
 #include <cmath>
 
 #include  "EW.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "F77_FUNC.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "Filter.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "GridPointSource.h"
+#include "Mspace.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "Qspline.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "Require.h"
+#include "Source.h"
+#include "caliper.h"
+#include "mpi.h"
+#else // SW4 backend
 #include "GridGenerator.h"
 
+#endif // SW4 backend
 #include "time_functions.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "F77_FUNC.h"
 
 //#include <fcntl.h>
 //#include <unistd.h>
 
+#endif // SW4 backend
 using namespace std;
 
 #define SQR(x) ((x)*(x))
 
 //-----------------------------------------------------------------------
-// Constructor, 
+// Constructor,
 //
 //    ncyc is only used in the 'GaussianWindow' time function
 //
@@ -67,23 +94,23 @@ using namespace std;
 //    When the source time function is not 'Discrete', the input pars and ipars will
 //    not be used.
 //
-Source::Source(EW *a_ew, 
-	       float_sw4 frequency, 
-	       float_sw4 t0,
-	       float_sw4 x0, 
-	       float_sw4 y0, 
-	       float_sw4 z0,
-	       float_sw4 Mxx,
-	       float_sw4 Mxy,
-	       float_sw4 Mxz,
-	       float_sw4 Myy,
-	       float_sw4 Myz,
-	       float_sw4 Mzz,
-	       timeDep tDep,
-	       const char *name,
-	       bool topodepth, 
-	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu):
+Source::Source(EW *a_ew,
+               float_sw4 frequency,
+               float_sw4 t0,
+               float_sw4 x0,
+               float_sw4 y0,
+               float_sw4 z0,
+               float_sw4 Mxx,
+               float_sw4 Mxy,
+               float_sw4 Mxz,
+               float_sw4 Myy,
+               float_sw4 Myz,
+               float_sw4 Mzz,
+               timeDep tDep,
+               const char *name,
+               bool topodepth,
+               int ncyc,
+               float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu):
   mIsMomentSource(true),
   mFreq(frequency),
   mT0(t0),
@@ -111,33 +138,69 @@ Source::Source(EW *a_ew,
    mNpar = npar;
    if( mNpar > 0 )
    {
-      mPar   = new float_sw4[mNpar];
-      for( int i= 0 ; i < mNpar ; i++ )
-	 mPar[i] = pars[i];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
+
+#else // SW4 backend
+mPar   = new float_sw4[mNpar];
+
+#endif // SW4 backend
+for( int i= 0 ; i < mNpar ; i++ )
+         mPar[i] = pars[i];
    }
    else
    {
       mNpar = 2;
-      mPar = new float_sw4[2];
-   }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mPar = SW4_NEW(Space::Managed, float_sw4[2]);
+
+#else // SW4 backend
+mPar = new float_sw4[2];
+
+#endif // SW4 backend
+}
    mNipar = nipar;
    if( mNipar > 0 )
    {
-      mIpar = new int[mNipar];
-      for( int i= 0 ; i < mNipar ; i++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mIpar = SW4_NEW(Space::Managed, int[mNipar]);
+
+#else // SW4 backend
+mIpar = new int[mNipar];
+
+#endif // SW4 backend
+for( int i= 0 ; i < mNipar ; i++ )
          mIpar[i] = ipars[i];
    }
    else
    {
       mNipar = 1;
-      mIpar  = new int[1];
-   }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mIpar = SW4_NEW(Space::Managed, int[1]);
+
+#else // SW4 backend
+mIpar  = new int[1];
+
+#endif // SW4 backend
+}
 
    // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
    //    spline_interpolation();
    // else
-   if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces ) // not sure about iDiscrete6moments
-   {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mTimeDependence != iDiscrete &&
+      mTimeDependence != iDiscrete6moments)  // not sure about iDiscrete6moments
+
+#else // SW4 backend
+if( mTimeDependence != iDiscrete && mTimeDependence != iDiscrete6moments && mTimeDependence != iDiscrete3forces ) // not sure about iDiscrete6moments
+
+#endif // SW4 backend
+{
       mPar[0] = find_min_exponent();
       mPar[1] = mNcyc;
    }
@@ -145,27 +208,45 @@ Source::Source(EW *a_ew,
    //   a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
 // Correct source location for discrepancy between raw and smoothed topography
-   correct_Z_level( a_ew ); 
-   compute_grid_point( a_ew ); 
-   if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+a_ew->computeNearestGridPoint2(m_i0, m_j0, m_k0, m_grid, mX0, mY0, mZ0);
+
+  // Correct source location for discrepancy between raw and smoothed topography
+
+#else // SW4 backend
+#endif // SW4 backend
+correct_Z_level( a_ew );
+
+compute_grid_point( a_ew );
+
+if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
    {
-      printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
+      printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, "
+        "j=%d, k=%d, in grid=%d\n",
+
+#else // SW4 backend
+"Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n",
+#endif // SW4 backend
+mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
    }
-  
+
 
 }
 
 //-----------------------------------------------------------------------
 Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
-	       float_sw4 x0, float_sw4 y0, float_sw4 z0,
-	       float_sw4 Fx,
-	       float_sw4 Fy,
-	       float_sw4 Fz,
-	       timeDep tDep,
-	       const char *name, 
-	       bool topodepth,
-	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu ):
+               float_sw4 x0, float_sw4 y0, float_sw4 z0,
+               float_sw4 Fx,
+               float_sw4 Fy,
+               float_sw4 Fz,
+               timeDep tDep,
+               const char *name,
+               bool topodepth,
+               int ncyc,
+               float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu ):
   mIsMomentSource(false),
   mFreq(frequency),
   mT0(t0),
@@ -178,10 +259,17 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   m_derivative(-1),
   m_is_filtered(false),
   mShearModulusFactor(correctForMu),
-  m_myPoint(false),
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_myPoint(false) {
+
+#else // SW4 backend
+m_myPoint(false),
   m_timeFuncIsReady(false)
 {
-  mForces.resize(3);
+
+#endif // SW4 backend
+mForces.resize(3);
   mForces[0] = Fx;
   mForces[1] = Fy;
   mForces[2] = Fz;
@@ -190,15 +278,29 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   mNpar = npar;
   if( mNpar > 0 )
   {
-     mPar   = new float_sw4[mNpar];
-     for( int i= 0 ; i < mNpar ; i++ )
-	mPar[i] = pars[i];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
+
+#else // SW4 backend
+mPar   = new float_sw4[mNpar];
+
+#endif // SW4 backend
+for( int i= 0 ; i < mNpar ; i++ )
+        mPar[i] = pars[i];
   }
   else
   {
      mNpar = 2;
-     mPar = new float_sw4[2];
-  }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mPar = SW4_NEW(Space::Managed, float_sw4[2]);
+
+#else // SW4 backend
+mPar = new float_sw4[2];
+
+#endif // SW4 backend
+}
 
   mNipar = nipar;
   if( mNipar > 0 )
@@ -213,8 +315,15 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
      mIpar  = new int[1];
   }
 
-  if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
-     spline_interpolation();
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments)
+
+#else // SW4 backend
+if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
+
+#endif // SW4 backend
+spline_interpolation();
   else
   {
      mPar[0] = find_min_exponent();
@@ -224,7 +333,15 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   //  a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
 // Correct source location for discrepancy between raw and smoothed topography
-  correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+a_ew->computeNearestGridPoint2(m_i0, m_j0, m_k0, m_grid, mX0, mY0, mZ0);
+
+  // Correct source location for discrepancy between raw and smoothed topography
+
+#else // SW4 backend
+#endif // SW4 backend
+correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
   compute_grid_point( a_ew );
 }
 
@@ -238,10 +355,16 @@ Source::Source()
 //-----------------------------------------------------------------------
 Source::~Source()
 {
-   if( mNpar > 0 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mNpar > 0) ::operator delete[](mPar, Space::Managed);
+  if (mNipar > 0) ::operator delete[](mIpar, Space::Managed);
+#else // SW4 backend
+if( mNpar > 0 )
       delete[] mPar;
    if( mNipar > 0 )
       delete[] mIpar;
+#endif // SW4 backend
 }
 
 //-----------------------------------------------------------------------
@@ -297,7 +420,13 @@ bool Source::isMomentSource() const
 //-----------------------------------------------------------------------
 void Source::getForces( float_sw4& fx, float_sw4& fy, float_sw4& fz ) const
 {
-   if( !mIsMomentSource )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SW4_MARK_FUNCTION;
+
+#else // SW4 backend
+#endif // SW4 backend
+if( !mIsMomentSource )
    {
       fx = mForces[0];
       fy = mForces[1];
@@ -310,7 +439,13 @@ void Source::getForces( float_sw4& fx, float_sw4& fy, float_sw4& fz ) const
 //-----------------------------------------------------------------------
 void Source::getMoments( float_sw4& mxx, float_sw4& mxy, float_sw4& mxz, float_sw4& myy, float_sw4& myz, float_sw4& mzz ) const
 {
-   if( mIsMomentSource )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SW4_MARK_FUNCTION;
+
+#else // SW4 backend
+#endif // SW4 backend
+if( mIsMomentSource )
    {
       mxx = mForces[0];
       mxy = mForces[1];
@@ -328,7 +463,7 @@ void Source::setMoments( float_sw4 mxx, float_sw4 mxy, float_sw4 mxz, float_sw4 
 {
    if( mIsMomentSource )
    {
-      
+
       mForces[0] = mxx;
       mForces[1] = mxy;
       mForces[2] = mxz;
@@ -369,18 +504,23 @@ float_sw4 Source::getAmplitude() const
 }
 
 //-----------------------------------------------------------------------
-ostream& operator<<( ostream& output, const Source& s ) 
+ostream& operator<<( ostream& output, const Source& s )
 {
   output << s.mName << (s.isMomentSource()? " moment":" force") << " source term" << endl;
-   output << "   Location (X,Y,Z) = " << s.mX0 << "," << s.mY0 << "," << s.mZ0 << 
-    " at grid point " << s.m_i0 << " " << s.m_j0 << " " << s.m_k0 << " in grid no " << s.m_grid  <<
+   output << "   Location (X,Y,Z) = " << s.mX0 << "," << s.mY0 << "," << s.mZ0
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+<<
+    " at grid point " << s.m_i0 << " " << s.m_j0 << " " << s.m_k0
+#endif // SW4 backend
+<< " in grid no " << s.m_grid  <<
          endl;
    output << "   Strength " << s.getAmplitude();
    output << "   t0 = " << s.mT0 << " freq = " << s.mFreq << endl;
    if( s.mIsMomentSource )
    {
       output << " Mxx Mxy Myy Mxz Myz Mzz = " << s.mForces[0] << " " << s.mForces[1] << " " << s.mForces[3] <<
-	 " " << s.mForces[2] << " " << s.mForces[4] << " " << s.mForces[5] << endl;
+         " " << s.mForces[2] << " " << s.mForces[4] << " " << s.mForces[5] << endl;
    }
    else
    {
@@ -395,18 +535,18 @@ void Source::limit_frequency( int ppw, float_sw4 minvsoh )
    float_sw4 freqlim = minvsoh/(ppw);
 
    if( mTimeDependence == iBrune     || mTimeDependence == iBruneSmoothed || mTimeDependence == iDBrune ||
-       mTimeDependence == iGaussian  || mTimeDependence == iErf || 
-       mTimeDependence == iVerySmoothBump || mTimeDependence == iSmoothWave || 
+       mTimeDependence == iGaussian  || mTimeDependence == iErf ||
+       mTimeDependence == iVerySmoothBump || mTimeDependence == iSmoothWave ||
        mTimeDependence == iLiu || mTimeDependence == iC6SmoothBump )
    {
       if( mFreq > 2*M_PI*freqlim )
-	 mFreq = 2*M_PI*freqlim;
+         mFreq = 2*M_PI*freqlim;
    }
    else
    {
       if( mFreq > freqlim )
-	 mFreq = freqlim;
-   }      
+         mFreq = freqlim;
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -415,7 +555,7 @@ float_sw4 Source::compute_t0_increase(float_sw4 t0_min) const
 // Gaussian, GaussianInt=Erf, Ricker and RickerInt are all centered around mT0
   if( mTimeDependence == iGaussian  || mTimeDependence == iErf )
     return t0_min + 6.0/mFreq-mT0; // translating these by at least 6*sigma = 6/freq
-  else if( mTimeDependence == iRicker  || mTimeDependence == iRickerInt ) 
+  else if( mTimeDependence == iRicker  || mTimeDependence == iRickerInt )
     return t0_min + 1.9/mFreq-mT0; // 1.9 ?
   else
     return t0_min - mT0; // the rest of the time functions are zero for t<mT0
@@ -535,7 +675,7 @@ void Source::setFrequency( float_sw4 freq )
 //-----------------------------------------------------------------------
 void Source::correct_Z_level( EW *a_ew )
 {
-// this routine 
+// this routine
 // 1. calculates the z-coordinate of the topography right above the source and saves it in m_zTopo
 // 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
 // 3. checks if the source is inside the computational domain. If not, set mIgnore=true
@@ -551,19 +691,45 @@ void Source::correct_Z_level( EW *a_ew )
 // We could remove this check if we were certain that interior_point_in_proc() never lies
   int iwrite = m_myPoint ? 1 : 0;
   int size;
-  MPI_Comm_size(a_ew->m_1d_communicator,&size);
-  std::vector<int> whoIsOne(size);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+#else // SW4 backend
+MPI_Comm_size(a_ew->m_1d_communicator,&size);
+
+#endif // SW4 backend
+std::vector<int> whoIsOne(size);
   int counter = 0;
-  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,a_ew->m_1d_communicator);
-  for (unsigned int p = 0; p < whoIsOne.size(); ++p)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT, MPI_COMM_WORLD);
+
+#else // SW4 backend
+MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,a_ew->m_1d_communicator);
+
+#endif // SW4 backend
+for (unsigned int p = 0; p < whoIsOne.size(); ++p)
      if (whoIsOne[p] == 1)
      {
         counter++;
      }
-  REQUIRE2(counter == 1,"Source error: the nearest grid point should only be interior to one proc, but counter = " << counter <<
-	   " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
-  
-  if( !a_ew->topographyExists() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+REQUIRE2(counter == 1,
+           "Source error: the nearest grid point should only be interior to "
+           "one proc, but counter = "
+               << counter << " for source station at (x,y,depth)=" << mX0
+               << ", " << mY0 << ", " << mZ0);
+
+
+#else // SW4 backend
+REQUIRE2(counter == 1,"Source error: the nearest grid point should only be interior to one proc, but counter = " << counter <<
+           " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
+
+
+#endif // SW4 backend
+if( !a_ew->topographyExists() )
   {
     // This is the easy case w/o topography
     m_zTopo = 0.0;
@@ -572,26 +738,51 @@ void Source::correct_Z_level( EW *a_ew )
   {
    // With topography, compute z-coordinate at topography directly above the source
      float_sw4 zTopoLocal;
-     if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt))
-        zTopoLocal =-1e38;
-     MPI_Allreduce(&zTopoLocal,&m_zTopo,1,a_ew->m_mpifloat,MPI_MAX,a_ew->m_1d_communicator);
-     if (m_zRelativeToTopography)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (a_ew->m_gridGenerator->interpolate_topography(
+            a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
+
+#else // SW4 backend
+if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt))
+
+#endif // SW4 backend
+zTopoLocal =-1e38;
+     MPI_Allreduce(&zTopoLocal,&m_zTopo,1,a_ew->m_mpifloat,MPI_MAX,
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_COMM_WORLD);
+
+#else // SW4 backend
+a_ew->m_1d_communicator);
+
+#endif // SW4 backend
+if (m_zRelativeToTopography)
      {
-// If location was specified with topodepth, correct z-level  
+// If location was specified with topodepth, correct z-level
         mZ0 += m_zTopo;
         m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
      }
   }
-  
+
 // Make sure the station is below or on the topography (z is positive downwards)
   if ( mZ0 < m_zTopo - 1.0e-9)// allow for a little roundoff
   {
     mIgnore = true;
-    printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
-	   mX0,  mY0, mZ0, m_zTopo);
+    printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the "
+        "topography z=%g\n",
+
+#else // SW4 backend
+"Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n",
+
+#endif // SW4 backend
+mX0,  mY0, mZ0, m_zTopo);
   }
 // tmp
 //   printf("Exiting correct_Z_level()\n");
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 }
 
 //-----------------------------------------------------------------------
@@ -617,9 +808,10 @@ void Source::compute_grid_point( EW* a_ew )
    m_j0 = indsg[1];
    m_k0 = indsg[2];
    m_grid=indsg[3];
-   //   std::cout << a_ew->getRank() << " mypoint = " << m_myPoint 
+   //   std::cout << a_ew->getRank() << " mypoint = " << m_myPoint
    //             << " (i,j,k)= " << m_i0 <<" " << m_j0 << " " << m_k0 << " grid= "
    //             << m_grid << std::endl;
+#endif // SW4 backend
 }
 
 //-----------------------------------------------------------------------
@@ -636,7 +828,7 @@ void Source::getsourcewgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], 
 
    // Derivatives of wgh wrt. ai:
    p5 = 5*ai*ai*ai*ai*(5.0/3-7.0/24*ai -17/12.0*ai*ai+1.125*ai*ai*ai-0.25*ai*ai*ai*ai) +
-      ai*ai*ai*ai*ai*(-7.0/24 -17/6.0*ai+3*1.125*ai*ai-ai*ai*ai); 
+      ai*ai*ai*ai*ai*(-7.0/24 -17/6.0*ai+3*1.125*ai*ai-ai*ai*ai);
    dwghda[0] = 1.0/24*(2-2*ai-6*ai*ai-19*4*ai*ai*ai) + p5;
    dwghda[1] = 1.0/6*(-4+8*ai+3*ai*ai)+ 16*ai*ai*ai - 5*p5;
    dwghda[2] = -2.5*ai-97.0/3*ai*ai*ai + 10*p5;
@@ -653,7 +845,7 @@ void Source::getsourcewgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], 
    ddwghda[3] =   4.0/3 - ai      + 98*ai*ai- 10*p5;
    ddwghda[4] =  -1.0/12 + 0.5*ai -49.5*ai*ai + 5*p5;
    ddwghda[5] =                    10*ai*ai - p5;
-      
+
 }
 
 //-----------------------------------------------------------------------
@@ -753,20 +945,20 @@ void Source::getsourcedwghlow( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[
 
 //-----------------------------------------------------------------------
 void Source::getmetwgh( float_sw4 ai, float_sw4 wgh[8], float_sw4 dwgh[8],
-			float_sw4 ddwgh[8], float_sw4 dddwgh[8] ) const
+                        float_sw4 ddwgh[8], float_sw4 dddwgh[8] ) const
 {
    float_sw4 pol = ai*ai*ai*ai*ai*ai*ai*(-251+135*ai+25*ai*ai-
                                       33*ai*ai*ai+6*ai*ai*ai*ai)/720;
 
-   wgh[0] = -1.0/60*ai + 1.0/180*ai*ai + 1.0/48*ai*ai*ai + 23.0/144*ai*ai*ai*ai 
+   wgh[0] = -1.0/60*ai + 1.0/180*ai*ai + 1.0/48*ai*ai*ai + 23.0/144*ai*ai*ai*ai
       - (17.0*ai + 223.0)*ai*ai*ai*ai*ai/720 - pol;
-   wgh[1] = 3.0/20*ai -3.0/40*ai*ai -1.0/6*ai*ai*ai - 13.0/12*ai*ai*ai*ai + 
+   wgh[1] = 3.0/20*ai -3.0/40*ai*ai -1.0/6*ai*ai*ai - 13.0/12*ai*ai*ai*ai +
       97.0/45*ai*ai*ai*ai*ai + 1.0/6*ai*ai*ai*ai*ai*ai + 7*pol;
    wgh[2] = -0.75*ai +0.75*ai*ai+(13.0+155*ai)*ai*ai*ai/48 -103.0/16*ai*ai*ai*ai*ai
       - 121.0/240*ai*ai*ai*ai*ai*ai - 21*pol;
    wgh[3] = 1 - 49.0/36*ai*ai - 49.0/9*ai*ai*ai*ai+385.0/36*ai*ai*ai*ai*ai +
       61.0/72*ai*ai*ai*ai*ai*ai + 35*pol;
-   wgh[4] = 0.75*ai + 0.75*ai*ai - 13.0/48*ai*ai*ai + 89.0/16*ai*ai*ai*ai - 
+   wgh[4] = 0.75*ai + 0.75*ai*ai - 13.0/48*ai*ai*ai + 89.0/16*ai*ai*ai*ai -
          1537.0/144*ai*ai*ai*ai*ai - 41.0/48*ai*ai*ai*ai*ai*ai - 35*pol;
    wgh[5] = -3.0/20*ai - 3.0/40*ai*ai + 1.0/6*ai*ai*ai - 41.0/12*ai*ai*ai*ai
       + 6.4*ai*ai*ai*ai*ai + 31.0/60*ai*ai*ai*ai*ai*ai + 21*pol;
@@ -819,7 +1011,7 @@ void Source::getmetwgh( float_sw4 ai, float_sw4 wgh[8], float_sw4 dwgh[8],
 void Source::getmetdwgh( float_sw4 ai, float_sw4 wgh[8] ) const
 {
    float_sw4 pol = ai*ai*ai*ai*ai*ai*( -827 + 420*ai + 165*ai*ai - 180*ai*ai*ai
-				    + 36*ai*ai*ai*ai)/720;
+                                    + 36*ai*ai*ai*ai)/720;
 
    wgh[0] = -1.0/60 + 1.0/90*ai + 1.0/16*ai*ai + 5.0/36*ai*ai*ai -
       55.0/144*ai*ai*ai*ai - 7.0/20*ai*ai*ai*ai*ai - pol;
@@ -827,7 +1019,7 @@ void Source::getmetdwgh( float_sw4 ai, float_sw4 wgh[8] ) const
       + 59.0/24*ai*ai*ai*ai*ai + 7*pol;
    wgh[2] = -0.75 + 1.5*ai + 13.0/16*ai*ai + 29.0/12*ai*ai*ai - 123.0/16*ai*ai*ai*ai -
       7.4*ai*ai*ai*ai*ai - 21*pol;
-   wgh[3] = (-49.0*ai - 77.0*ai*ai*ai)/18 + 455.0/36*ai*ai*ai*ai + 99.0/8*ai*ai*ai*ai*ai 
+   wgh[3] = (-49.0*ai - 77.0*ai*ai*ai)/18 + 455.0/36*ai*ai*ai*ai + 99.0/8*ai*ai*ai*ai*ai
            + 35*pol;
    wgh[4] = 0.75 + 1.5*ai - 13.0/16*ai*ai + 4.75*ai*ai*ai - 1805.0/144*ai*ai*ai*ai -
       149.0/12*ai*ai*ai*ai*ai - 35*pol;
@@ -841,18 +1033,18 @@ void Source::getmetdwgh( float_sw4 ai, float_sw4 wgh[8] ) const
 void Source::getmetwgh7( float_sw4 ai, float_sw4 wgh[7] ) const
 {
    wgh[0] =ai*ai/180.0-ai*ai*ai*ai/144.0+ai*ai*ai*ai*ai*ai/720.0-ai/60.0+
-	    ai*ai*ai/48.0-ai*ai*ai*ai*ai/240.0;
+            ai*ai*ai/48.0-ai*ai*ai*ai*ai/240.0;
    wgh[1] =-3.0/40.0*ai*ai+ai*ai*ai*ai/12.0-ai*ai*ai*ai*ai*ai/120.0+
-	    3.0/20.0*ai-ai*ai*ai/6.0+ai*ai*ai*ai*ai/60.0;
+            3.0/20.0*ai-ai*ai*ai/6.0+ai*ai*ai*ai*ai/60.0;
    wgh[2] =  3.0/4.0*ai*ai-13.0/48.0*ai*ai*ai*ai+ai*ai*ai*ai*ai*ai/48.0-
-	    3.0/4.0*ai+13.0/48.0*ai*ai*ai-ai*ai*ai*ai*ai/48.0;
+            3.0/4.0*ai+13.0/48.0*ai*ai*ai-ai*ai*ai*ai*ai/48.0;
    wgh[3] =1.0-49.0/36.0*ai*ai+7.0/18.0*ai*ai*ai*ai-ai*ai*ai*ai*ai*ai/36.0;
    wgh[4] =3.0/4.0*ai*ai-13.0/48.0*ai*ai*ai*ai+3.0/4.0*ai-13.0/48.0*ai*ai*ai+
-	    ai*ai*ai*ai*ai/48.0+ai*ai*ai*ai*ai*ai/48.0;
+            ai*ai*ai*ai*ai/48.0+ai*ai*ai*ai*ai*ai/48.0;
    wgh[5] =-3.0/40.0*ai*ai+ai*ai*ai*ai/12.0-3.0/20.0*ai+ai*ai*ai/6.0-
-	    ai*ai*ai*ai*ai/60.0-ai*ai*ai*ai*ai*ai/120.0;
+            ai*ai*ai*ai*ai/60.0-ai*ai*ai*ai*ai*ai/120.0;
    wgh[6] = ai*ai/180.0-ai*ai*ai*ai/144.0+ai*ai*ai*ai*ai*ai/720.0+ai/60.0+
-	    ai*ai*ai*ai*ai/240.0-ai*ai*ai/48.0;
+            ai*ai*ai*ai*ai/240.0-ai*ai*ai/48.0;
 
 }
 
@@ -860,18 +1052,18 @@ void Source::getmetwgh7( float_sw4 ai, float_sw4 wgh[7] ) const
 void Source::getmetdwgh7( float_sw4 ai, float_sw4 wgh[7] ) const
 {
    wgh[0] =  -1.0/60.0+ai*ai/16.0-ai*ai*ai*ai/48.0+ai/90.0-
-		 ai*ai*ai/36.0+ai*ai*ai*ai*ai/120.0;
+                 ai*ai*ai/36.0+ai*ai*ai*ai*ai/120.0;
    wgh[1] =3.0/20.0-ai*ai/2.0+ai*ai*ai*ai/12.0-3.0/20.0*ai+
-		 ai*ai*ai/3.0-ai*ai*ai*ai*ai/20.0;
+                 ai*ai*ai/3.0-ai*ai*ai*ai*ai/20.0;
    wgh[2] =-3.0/4.0+13.0/16.0*ai*ai-5.0/48.0*ai*ai*ai*ai+
-		 3.0/2.0*ai-13.0/12.0*ai*ai*ai+ai*ai*ai*ai*ai/8.0;
+                 3.0/2.0*ai-13.0/12.0*ai*ai*ai+ai*ai*ai*ai*ai/8.0;
    wgh[3] =-49.0/18.0*ai+14.0/9.0*ai*ai*ai-ai*ai*ai*ai*ai/6.0;
    wgh[4] =3.0/4.0-13.0/16.0*ai*ai+3.0/2.0*ai-13.0/12.0*ai*ai*ai+
- 		 5.0/48.0*ai*ai*ai*ai+ai*ai*ai*ai*ai/8.0;
+                 5.0/48.0*ai*ai*ai*ai+ai*ai*ai*ai*ai/8.0;
    wgh[5] =-3.0/20.0+ai*ai/2.0-ai*ai*ai*ai/12.0-3.0/20.0*ai+
-		 ai*ai*ai/3.0-ai*ai*ai*ai*ai/20.0;
+                 ai*ai*ai/3.0-ai*ai*ai*ai*ai/20.0;
    wgh[6] =1.0/60.0-ai*ai/16.0+ai*ai*ai*ai/48.0+ai/90.0-
-		 ai*ai*ai/36.0+ai*ai*ai*ai*ai/120.0;
+                 ai*ai*ai/36.0+ai*ai*ai*ai*ai/120.0;
 }
 
 //-----------------------------------------------------------------------
@@ -1147,10 +1339,18 @@ alph*alph*alph*alph*alph)*(1.0/3.0+pow(alph-2.0,3.0)/24.0+pow(alph-2.0,2.0)/
 void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSamples, Filter* sw4_filter)
 {
 
-   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments) {
+    // new approach for Discrete time functions
+
+#else // SW4 backend
+if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments || mTimeDependence == iDiscrete3forces )
    {
       // new approach for Discrete time functions
-      if (!doFilter)
+
+#endif // SW4 backend
+if (!doFilter)
       {
          spline_interpolation();
          m_timeFuncIsReady = true;
@@ -1174,8 +1374,15 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
          int npts = mIpar[0];
          float_sw4 tstart = mPar[0];
          int ext_npts = npts + 2*nPadding;
-         float_sw4 *ext_par = new float_sw4[ext_npts+1];
-         float_sw4 ext_tstart = tstart - nPadding*dt;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4* ext_par = SW4_NEW(Space::Managed, float_sw4[ext_npts + 1]);
+
+#else // SW4 backend
+float_sw4 *ext_par = new float_sw4[ext_npts+1];
+
+#endif // SW4 backend
+float_sw4 ext_tstart = tstart - nPadding*dt;
 // setup ext_par
          ext_par[0] = ext_tstart;
          int i;
@@ -1195,7 +1402,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
 
 // Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter (copied from below)
          if( my_filter.get_passes() == 2 && my_filter.get_type() == bandPass )
-         {    
+         {
             float_sw4 wghv, xi;
             int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
             if( p0+p <= ext_npts ) // only do this if the time series is long enough
@@ -1208,7 +1415,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
                {
                   wghv = 0;
                   xi = (i-p0)/((float_sw4) p);
-	 // polynomial P(xi), P(0) = 0, P(1)=1
+         // polynomial P(xi), P(0) = 0, P(1)=1
                   wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
                   ext_par[i] *=wghv;
                }
@@ -1219,9 +1426,17 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
          mNipar = 1;
 //      mIpar = new int[mNipar];
          mIpar[0] = ext_npts;
-//      mFreq = 1./dt;   
-         delete[] mPar; // return memory for the previous time series
-         mNpar = ext_npts+1;
+//      mFreq = 1./dt;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+::operator delete[](
+          mPar, Space::Managed);  // return memory for the previous time series
+
+#else // SW4 backend
+delete[] mPar; // return memory for the previous time series
+
+#endif // SW4 backend
+mNpar = ext_npts+1;
          mPar = ext_par;
          mPar[0] = ext_tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
          mT0 = ext_tstart;
@@ -1235,7 +1450,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
 // only do the filtering once
          m_timeFuncIsReady = true;
       } // end doFilter
-      
+
    } // end if iDiscrete or iDiscrete6Moments
    else // all other time functions
    {
@@ -1243,40 +1458,50 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSa
       if (doFilter)
       {
 // the sw4 filter is assumed to already been initialized for the sw4 time step
-	
+
 // 1. Make sure the smallest time offset is at least t0_min + (timeFcn dependent offset for centered fcn's)
-	float_sw4 t0_inc = 0;
-	float_sw4 t0_min;
-	t0_min = sw4_filter->estimatePrecursor();
-	
+        float_sw4 t0_inc = 0;
+        float_sw4 t0_min;
+        t0_min = sw4_filter->estimatePrecursor();
+
 // here we only have one time function
 // // old estimate for 2-pole low-pass Butterworth
 // //	t0_min = 4./sw4_filter->get_corner_freq2();
-	
+
         t0_inc = compute_t0_increase( t0_min );
-	  
-// If t0_inc is positive, the t0 field in the source command should be incremented 
-// by at least this amount. Otherwise, there might be significant artifacts from 
+
+// If t0_inc is positive, the t0 field in the source command should be incremented
+// by at least this amount. Otherwise, there might be significant artifacts from
 // a sudden start of some source.
-	if (t0_inc > 0.)
-	{
+        if (t0_inc > 0.)
+        {
 // Don't mess with t0.
 // Instead, warn the user of potential transients due to unsmooth start
-           printf("\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
-		   "*** To avoid artifacts due to sudden startup, increase t0 in the source named '%s' by at least %e\n\n",
-                  t0_min, getName().c_str(), t0_inc);
-	}
+           printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"\n*** WARNING: the 2 pass prefilter has an estimated precursor of "
+            "length %e s\n"
+            "*** To avoid artifacts due to sudden startup, increase t0 in the "
+            "source named '%s' by at least %e\n\n",
+
+#else // SW4 backend
+"\n*** WARNING: the 2 pass prefilter has an estimated precursor of length %e s\n"
+                   "*** To avoid artifacts due to sudden startup, increase t0 in the source named '%s' by at least %e\n\n",
+
+#endif // SW4 backend
+t0_min, getName().c_str(), t0_inc);
+        }
 
 // Do the actual filtering
 // this function no longer handles discrete time functions
-        filter_timefunc( sw4_filter, 0.0, sw4TimeStep, sw4TimeSamples ); 
+        filter_timefunc( sw4_filter, 0.0, sw4TimeStep, sw4TimeSamples );
       } // end if doFilter
-      
-      
+
+
 // set the flag to indicate that the filtering is complete
       m_timeFuncIsReady = true;
    } // end if timeDep != iDiscrete
-   
+
 }
 
 
@@ -1289,49 +1514,99 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    int gg = -1;
    if( success )
       gg = g;
-   MPI_Allreduce(&gg,&g,1,MPI_INT,MPI_MAX,a_EW->m_1d_communicator);
-   float_sw4 q, r, s;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Allreduce(&gg, &g, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+#else // SW4 backend
+MPI_Allreduce(&gg,&g,1,MPI_INT,MPI_MAX,a_EW->m_1d_communicator);
+
+#endif // SW4 backend
+float_sw4 q, r, s;
    float_sw4 h = a_EW->mGridSize[g];
    bool canBeInverted, curvilinear;
    float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
-   //   cout << "source location " << i << " " << j << " g= " << g  << " " << mX0 << " " 
+   //   cout << "source location " << i << " " << j << " g= " << g  << " " << mX0 << " "
    //        << mY0 << " " << mZ0 << endl;
 
-   if( g > a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
+
+if( g > a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
    {
 // Curvilinear
 // Problem when the curvilinear mapping is not analytic:
 // This routine can only compute the 's' coordinate if (mX0, mY0) is owned by this processor
       canBeInverted = a_EW->m_gridGenerator->inverse_grid_mapping(a_EW, mX0, mY0, mZ0, g, q, r, s );
 
-      // Broadcast the computed s to all processors. 
+      // Broadcast the computed s to all processors.
       // First find out the ID of a processor that defines s ...
-      int s_owner = -1;
-      if( canBeInverted )
+
+int s_owner = -1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (canBeInverted) MPI_Comm_rank(MPI_COMM_WORLD, &s_owner);
+
+#else // SW4 backend
+if( canBeInverted )
          MPI_Comm_rank(a_EW->m_1d_communicator, &s_owner );
-      int s_owner_tmp = s_owner;
-      MPI_Allreduce( &s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, a_EW->m_1d_communicator );
+
+#endif // SW4 backend
+int s_owner_tmp = s_owner;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Allreduce(&s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    // ...then broadcast s
+
+#else // SW4 backend
+MPI_Allreduce( &s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, a_EW->m_1d_communicator );
       // ...then broadcast s
-      if( s_owner > -1 )
-	 MPI_Bcast( &s, 1, a_EW->m_mpifloat, s_owner, a_EW->m_1d_communicator );// s_owner is sender, all others receive
-      else
+
+#endif // SW4 backend
+if( s_owner > -1 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Bcast(&s, 1, a_EW->m_mpifloat, s_owner,
+                MPI_COMM_WORLD);  // s_owner is sender, all others receive
+
+#else // SW4 backend
+MPI_Bcast( &s, 1, a_EW->m_mpifloat, s_owner, a_EW->m_1d_communicator );// s_owner is sender, all others receive
+
+#endif // SW4 backend
+else
       {
-	 printf("ERROR in Source::set_grid_point_sources4, no processor could invert the grid mapping \n");
-	 MPI_Abort(MPI_COMM_WORLD,1);
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"ERROR in Source::set_grid_point_sources4, no processor could invert "
+          "the grid mapping \n");
+
+#else // SW4 backend
+"ERROR in Source::set_grid_point_sources4, no processor could invert the grid mapping \n");
+
+#endif // SW4 backend
+MPI_Abort(MPI_COMM_WORLD,1);
       }
 
 // if s < 0, the source is located above the grid and the call to
 // find_curvilinear_derivatives_at_point will fail
       if (s<0.)
       {
-	 float_sw4 xTop, yTop, zTop;
-	 a_EW->m_gridGenerator->grid_mapping(a_EW, q, r, 0., g, xTop, yTop, zTop); 
-	 double lat, lon;
-	 a_EW->computeGeographicCoord(mX0, mY0, lon, lat);
-	 printf("Found a source above the curvilinear grid! Lat=%e, Lon=%e, source Z-level = %e, grid boundary Z = %e\n",
-		lat, lon, mZ0, zTop);
-	 MPI_Abort(MPI_COMM_WORLD,1);
+         float_sw4 xTop, yTop, zTop;
+
+a_EW->m_gridGenerator->grid_mapping(a_EW, q, r, 0., g, xTop, yTop, zTop);
+
+double lat, lon;
+         a_EW->computeGeographicCoord(mX0, mY0, lon, lat);
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Found a source above the curvilinear grid! Lat=%e, Lon=%e, source "
+          "Z-level = %e, grid boundary Z = %e\n",
+
+#else // SW4 backend
+"Found a source above the curvilinear grid! Lat=%e, Lon=%e, source Z-level = %e, grid boundary Z = %e\n",
+
+#endif // SW4 backend
+lat, lon, mZ0, zTop);
+         MPI_Abort(MPI_COMM_WORLD,1);
       }
       curvilinear   = true;
       canBeInverted = true;
@@ -1347,7 +1622,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    }
    bool curvilineargp1 = g+1 >= a_EW->mNumberOfCartesianGrids;
    bool curvilineargm1 = g-1 >= a_EW->mNumberOfCartesianGrids;
-   
+
    int Ni = a_EW->m_global_nx[g];
    int Nj = a_EW->m_global_ny[g];
    int Nz = a_EW->m_global_nz[g];
@@ -1395,43 +1670,46 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    upperbndry = (kc == 1    || kc == 2    || kc == 3  );
    lowerbndry = (kc == Nz-1 || kc == Nz-2 || kc == Nz-3 );
 
-// ccbndry=true if at the interface between the curvilinear grid and the cartesian grid. 
+// ccbndry=true if at the interface between the curvilinear grid and the cartesian grid.
 // Defined as the six point stencil uses values from both grids.
 
 //   ccbndry = a_EW->topographyExists() &&  ( (upperbndry && g == a_EW->mNumberOfGrids-2) ||
 //                                            (lowerbndry && g == a_EW->mNumberOfGrids-1)    );
 
-   ccbndry = a_EW->topographyExists() && ( (upperbndry && g == a_EW->mNumberOfCartesianGrids-1) ||
+
+ccbndry = a_EW->topographyExists() && ( (upperbndry && g == a_EW->mNumberOfCartesianGrids-1) ||
                                            (lowerbndry && g == a_EW->mNumberOfCartesianGrids  )   );
 
 // gridrefbndry=true if at the interface between two grids of different refinements.
    gridrefbndry = (upperbndry && g < a_EW->mNumberOfGrids-1 && !ccbndry) ||
       (lowerbndry && g>0 && !ccbndry );
 
-   bool curvilinear_refbndry = gridrefbndry && g >= a_EW->mNumberOfCartesianGrids;
+
+bool curvilinear_refbndry = gridrefbndry && g >= a_EW->mNumberOfCartesianGrids;
    int ncurv = a_EW->mNumberOfGrids-a_EW->mNumberOfCartesianGrids;
    bool cc_ic_bndry = ccbndry && !a_EW->m_gridGenerator->curviCartIsSmooth(ncurv);
 //
 // ********* do the filtering of the time function here as needed based on (ic, jc, kc) and gridrefbndry ******
-//      
+//
 
 // AP: Jun 29, 2017: Since interior_point_in_proc only takes the (i,j)
 // indices into account, there is no point looping over
 // k. Furthermore, since this source belongs to this MPI task, it
 // needs to get initialized (filtered), unless it has already been done
 //
-   for( int j=jc-2 ; j <= jc+3 ; j++ )
+
+for( int j=jc-2 ; j <= jc+3 ; j++ )
      for( int i=ic-2 ; i <= ic+3 ; i++ )
      {
 // check if (i,j) belongs to this processor
-       if (a_EW->interior_point_in_proc(i,j,g) && !m_timeFuncIsReady) 
+       if (a_EW->interior_point_in_proc(i,j,g) && !m_timeFuncIsReady)
        {
 // (optionally) filter and spline interpolate the time function in
 // this Source object, unless already done before
-	 prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
-			 a_EW->m_filter_ptr);
+         prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(), a_EW->getNumberOfTimeSteps(),
+                         a_EW->m_filter_ptr);
        }
-     }         
+     }
 
 // AP: Jun 29, 2017: The purpose of the following code is to make sure
 // the time function is properly initialized. This is important for
@@ -1472,7 +1750,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       if( icref >= Niref-2 ) icref = Niref-3;
       if( jcref <= 2 ) jcref = 3;
       if( jcref >= Njref-2 ) jcref = Njref-3;
-// done computing (icref, jcref)         
+// done computing (icref, jcref)
       for( int k=kc-2 ; k <= kc+3 ; k++ )
       {
          if( k <= 1 )
@@ -1484,8 +1762,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   if( a_EW->interior_point_in_proc(i,j,g+1) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
                   {
 // filter the time function in this Source object, unless already done
-		     prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(),
-				     a_EW->getNumberOfTimeSteps(), a_EW->m_filter_ptr);
+                     prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(),
+                                     a_EW->getNumberOfTimeSteps(), a_EW->m_filter_ptr);
                   }
                }
          } // end if k<=1
@@ -1498,17 +1776,17 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   if( a_EW->interior_point_in_proc(i,j,g-1) && !m_timeFuncIsReady) // checks if (i,j) belongs to this processor
                   {
 // filter the time function in this Source object, unless already done
-		     prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(),
-				     a_EW->getNumberOfTimeSteps(), a_EW->m_filter_ptr);
+                     prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(),
+                                     a_EW->getNumberOfTimeSteps(), a_EW->m_filter_ptr);
                   }
                }
          } // end if k >= Nz
-            
+
       } // end for kc
    } // end if near MR interface
-      
 
-// If not at the interface between different grids, bias stencil away 
+
+// If not at the interface between different grids, bias stencil away
 // from the boundary.
    if( !ccbndry && !gridrefbndry )
    {
@@ -1536,10 +1814,16 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 
    // Special source discretization across grid refinement boundary
    //      cout << "grid ref bndr " << gridrefbndry << " kc = " << kc << endl;
-   if( gridrefbndry )
+
+if( gridrefbndry )
    {
-      float_sw4 sw=1.0/3;
-      if( lowerbndry )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 sw=1.0/3;
+
+#endif // SW4 backend
+if( lowerbndry )
       {
          if( kc == Nz-1 )
          {
@@ -1547,19 +1831,35 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             getsourcewghNM1sm6(  ci,  wghk );
             //            wghkref[3]  = wghk[3]*0.5;
             //            wghk[3]     = wghk[3]*0.5;
-            wghkref[3]  = wghk[3]*(1-sw);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wghkref[3] = wghk[3] * 0.5;
+        wghk[3] = wghk[3] * 0.5;
+
+#else // SW4 backend
+wghkref[3]  = wghk[3]*(1-sw);
             wghk[3]     = wghk[3]*sw;
 
-            wghkref[4]  = wghk[4];
+
+#endif // SW4 backend
+wghkref[4]  = wghk[4];
             wghkref[5]  = wghk[5];
 
             //            dwghkref[3] = dwghk[3]*0.5;
             //            dwghk[3]    = dwghk[3]*0.5;
-            dwghkref[3] = dwghk[3]*(1-sw);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+dwghkref[3] = dwghk[3] * 0.5;
+        dwghk[3] = dwghk[3] * 0.5;
+
+#else // SW4 backend
+dwghkref[3] = dwghk[3]*(1-sw);
             dwghk[3]    = dwghk[3]*sw;
 
-            dwghkref[4] = dwghk[4];
-            dwghkref[5] = dwghk[5];	       
+
+#endif // SW4 backend
+dwghkref[4] = dwghk[4];
+            dwghkref[5] = dwghk[5];
 
             wghkref[3] /= normwgh[0];
             wghkref[4] /= normwgh[1];
@@ -1582,16 +1882,32 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             getsourcewghNM2sm6(  ci,  wghk );
             //            wghkref[4]  = wghk[4]*0.5;
             //            wghk[4]     = wghk[4]*0.5;
-            wghkref[4]  = wghk[4]*(1-sw);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wghkref[4] = wghk[4] * 0.5;
+        wghk[4] = wghk[4] * 0.5;
+
+#else // SW4 backend
+wghkref[4]  = wghk[4]*(1-sw);
             wghk[4]     = wghk[4]*sw;
 
-            wghkref[5]  = wghk[5];
+
+#endif // SW4 backend
+wghkref[5]  = wghk[5];
 
             //            dwghkref[4] = dwghk[4]*0.5;
             //            dwghk[4]    = dwghk[4]*0.5;
-            dwghkref[4] = dwghk[4]*(1-sw);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+dwghkref[4] = dwghk[4] * 0.5;
+        dwghk[4] = dwghk[4] * 0.5;
+
+#else // SW4 backend
+dwghkref[4] = dwghk[4]*(1-sw);
             dwghk[4]    = dwghk[4]*sw;
-            dwghkref[5] = dwghk[5];
+
+#endif // SW4 backend
+dwghkref[5] = dwghk[5];
 
             wghkref[4] /= normwgh[0];
             wghkref[5] /= normwgh[1];
@@ -1614,13 +1930,27 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             //            wghk[5]     = wghk[5]*0.5;
             //            dwghkref[5] = dwghk[5]*0.5;
             //            dwghk[5]    = dwghk[5]*0.5;
-            wghkref[5]  = wghk[5]*(1-sw);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wghkref[5] = wghk[5] * 0.5;
+        wghk[5] = wghk[5] * 0.5;
+        dwghkref[5] = dwghk[5] * 0.5;
+        dwghk[5] = dwghk[5] * 0.5;
+        //	       cout << " sumwgh = " <<
+        // dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] <<
+        // endl;
+
+
+#else // SW4 backend
+wghkref[5]  = wghk[5]*(1-sw);
             wghk[5]     = wghk[5]*sw;
             dwghkref[5] = dwghk[5]*(1-sw);
             dwghk[5]    = dwghk[5]*sw;
             //	       cout << " sumwgh = " << dwghk[0]+dwghk[1]+dwghk[2]+dwghk[3]+dwghk[4]+dwghk[5]+dwghkref[5] << endl;
 
-            wghkref[5] /= normwgh[0];
+
+#endif // SW4 backend
+wghkref[5] /= normwgh[0];
             wghk[5]    /= normwgh[0];
             wghk[4]    /= normwgh[1];
             wghk[3]    /= normwgh[2];
@@ -1641,12 +1971,35 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             getsourcewghNsm6(  2*ci,  wghk );
             wghkref[0]  = wghk[0];
             wghkref[1]  = wghk[1];
-            wghkref[2]  = wghk[2]*sw;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wghkref[2] = wghk[2] * 0.5;
+        wghk[2] = wghk[2] * 0.5;
+
+
+#else // SW4 backend
+wghkref[2]  = wghk[2]*sw;
             wghk[2]     = wghk[2]*(1-sw);
 
-            dwghkref[0] = dwghk[0];
+
+#endif // SW4 backend
+dwghkref[0] = dwghk[0];
             dwghkref[1] = dwghk[1];
-            dwghkref[2] = dwghk[2]*sw;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+dwghkref[2] = dwghk[2] * 0.5;
+        dwghk[2] = dwghk[2] * 0.5;
+
+        //	       cout << "kc = 1  ref:  " << wghkref[0] << " " <<
+        // wghkref[1] << " " << wghkref[2] << endl; 	       cout << " this: "
+        // << wghk[2] << " " << wghk[3] << " " << wghk[4] << " " << wghk[5] <<
+        // endl; 	       cout << "  middle sum: " << wghk[2]+wghkref[2] <<
+        // endl; 	       cout <<
+        //" 2*ci = " << 2*ci << endl;
+
+
+#else // SW4 backend
+dwghkref[2] = dwghk[2]*sw;
             dwghk[2]    = dwghk[2]*(1-sw);
 
 //	       cout << "kc = 1  ref:  " << wghkref[0] << " " << wghkref[1] << " " << wghkref[2] << endl;
@@ -1654,7 +2007,9 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 //	       cout << "  middle sum: " << wghk[2]+wghkref[2] << endl;
 //	       cout << " 2*ci = " << 2*ci << endl;
 
-            wghkref[0] /= normwgh[2];
+
+#endif // SW4 backend
+wghkref[0] /= normwgh[2];
             wghkref[1] /= normwgh[1];
             wghkref[2] /= normwgh[0];
             wghk[2]    /= normwgh[0];
@@ -1681,14 +2036,32 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             getsourcewghP1sm6(  2*ci,  wghk );
 
             wghkref[0]  = wghk[0];
-            wghkref[1]  = wghk[1]*sw;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wghkref[1] = wghk[1] * 0.5;
+        wghk[1] = wghk[1] * 0.5;
+
+
+#else // SW4 backend
+wghkref[1]  = wghk[1]*sw;
             wghk[1]     = wghk[1]*(1-sw);
 
-            dwghkref[0] = dwghk[0];
-            dwghkref[1] = dwghk[1]*sw;
+
+#endif // SW4 backend
+dwghkref[0] = dwghk[0];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+dwghkref[1] = dwghk[1] * 0.5;
+        dwghk[1] = dwghk[1] * 0.5;
+
+
+#else // SW4 backend
+dwghkref[1] = dwghk[1]*sw;
             dwghk[1]    = dwghk[1]*(1-sw);
 
-            wghkref[0] /= normwgh[1];
+
+#endif // SW4 backend
+wghkref[0] /= normwgh[1];
             wghkref[1] /= normwgh[0];
             wghk[1]    /= normwgh[0];
             wghk[2]    /= normwgh[1];
@@ -1707,7 +2080,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             dwghk[3] *= 2;
             dwghk[4] *= 2;
             dwghk[5] *= 2;
-	       
+
          }
          else if( kc == 3 )
          {
@@ -1715,12 +2088,23 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             for( int k=0 ; k <= 5 ;k++ )
                dwghk[k] *= 0.5;
             getsourcewgh(  ci,  wghk, wghrefkz, wghrefkzz );
-            wghkref[0]  = wghk[0]*sw;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wghkref[0] = wghk[0] * 0.5;
+        wghk[0] = wghk[0] * 0.5;
+        dwghkref[0] = dwghk[0] * 0.5;
+        dwghk[0] = dwghk[0] * 0.5;
+
+
+#else // SW4 backend
+wghkref[0]  = wghk[0]*sw;
             wghk[0]     = wghk[0]*(1-sw);
             dwghkref[0] = dwghk[0]*sw;
             dwghk[0]    = dwghk[0]*(1-sw);
 
-            wghkref[0] /= normwgh[0];
+
+#endif // SW4 backend
+wghkref[0] /= normwgh[0];
             wghk[0]    /= normwgh[0];
             wghk[1]    /= normwgh[1];
             wghk[2]    /= normwgh[2];
@@ -1774,9 +2158,22 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
          }
       }
    }
-   
+
    int myid;
-   MPI_Comm_rank(a_EW->m_1d_communicator, &myid );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+  //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
+  //   if( canBeInverted )
+  //      cout << " can be inverted";
+  //   else
+  //      cout << " can not be inverted";
+
+  // If source at grid refinement interface, set up variables for
+  // discretization on grid on the other side of the interface
+
+#else // SW4 backend
+MPI_Comm_rank(a_EW->m_1d_communicator, &myid );
 //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
 //   if( canBeInverted )
 //      cout << " can be inverted";
@@ -1784,9 +2181,11 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 //      cout << " can not be inverted";
 
 
-// If source at grid refinement interface, set up variables for 
+// If source at grid refinement interface, set up variables for
 // discretization on grid on the other side of the interface
-   int icref, jcref;
+
+#endif // SW4 backend
+int icref, jcref;
    float_sw4 airef, biref, wghiref[6], wghirefx[6], wghirefxx[6];
    float_sw4 wghjref[6], wghjrefy[6], wghjrefyy[6];
    float_sw4 dwghiref[6], dwghjref[6];
@@ -1831,8 +2230,9 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       if( curvilinear_refbndry )
       {
          //         get_mr_psources(  a_EW, g, ic, jc, kc, icref, jcref, normwgh, point_sources );
-         get_mr_psources(  a_EW, g, q, r, s, false, normwgh, point_sources );
-      }         
+
+get_mr_psources(  a_EW, g, q, r, s, false, normwgh, point_sources );
+      }
       else if( cc_ic_bndry )
       {
          get_cc_psources(  a_EW, g, q, r, s, false, normwgh, point_sources );
@@ -1844,7 +2244,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             for( int i=ic-2 ; i <= ic+3 ; i++ )
             {
                float_sw4 wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
-               if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+               if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0)
                    && a_EW->interior_point_in_proc(i,j,g) ) // checks if (i,j) belongs to this processor
                {
                   if( curvilinear )
@@ -1857,7 +2257,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                      GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
                                                                        i,j,k,g,
                                                                        wF*mForces[0], wF*mForces[1], wF*mForces[2],
-                                                                       mTimeDependence, mNcyc, 
+                                                                       mTimeDependence, mNcyc,
                                                                        mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
@@ -1865,31 +2265,41 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   {
                      int Nzp =a_EW->m_global_nz[g+1];
                      int kk = Nzp - 1 + k;
-                     float_sw4 wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
                      if( curvilineargp1 )
                         wF /= a_EW->mJ[g+1](i,j,kk);
                      else
                         wF /= 0.125*h*h*h;
 
-                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+
+#endif // SW4 backend
+GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
                                                                        i,j,kk,g+1,
                                                                        wF*mForces[0], wF*mForces[1], wF*mForces[2],
-                                                                       mTimeDependence, mNcyc, 
+                                                                       mTimeDependence, mNcyc,
                                                                        mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
                   if( k >= Nz && ccbndry && lowerbndry )
                   {
                      int kk = k-Nz + 1;
-                     float_sw4 wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 wF = wghi[i-ic+2]*wghj[j-jc+2]*wghk[k-kc+2];
                      if( curvilineargm1 )
                         wF /= a_EW->mJ[g-1](i,j,kk);
                      else
                         wF /= 8*h*h*h;
-                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+
+#endif // SW4 backend
+GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
                                                                        i,j,kk,g-1,
                                                                        wF*mForces[0], wF*mForces[1], wF*mForces[2],
-                                                                       mTimeDependence, mNcyc, 
+                                                                       mTimeDependence, mNcyc,
                                                                        mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
@@ -1906,19 +2316,30 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   for( int i=icref-2 ; i <= icref+3 ; i++ )
                   {
                      float_sw4 wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
-                     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+                     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0)
                          && a_EW->interior_point_in_proc(i,j,g+1) ) // checks if (i,j) belongs to this processor
                      {
-                        int Nzp =a_EW->m_global_nz[g+1];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wF /= 0.125 * h * h * h;
+
+#else // SW4 backend
+#endif // SW4 backend
+int Nzp =a_EW->m_global_nz[g+1];
                         int kk = Nzp - 1 + k;
-                        if( curvilineargp1 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( curvilineargp1 )
                            wF /= a_EW->mJ[g+1](i,j,kk);
                         else
                            wF /= 0.125*h*h*h;
-                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+
+#endif // SW4 backend
+GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
                                                                           i,j,kk,g+1,
                                                                           wF*mForces[0], wF*mForces[1], wF*mForces[2],
-                                                                          mTimeDependence, mNcyc, 
+                                                                          mTimeDependence, mNcyc,
                                                                           mPar, mNpar, mIpar, mNipar );
                         point_sources.push_back(sourcePtr);
                      }
@@ -1931,18 +2352,29 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   for( int i=icref-2 ; i <= icref+3 ; i++ )
                   {
                      float_sw4 wF = wghiref[i-icref+2]*wghjref[j-jcref+2]*wghkref[k-kc+2];
-                     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) 
+                     if( (wF != 0) && (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0)
                          && a_EW->interior_point_in_proc(i,j,g-1) ) // checks if (i,j) belongs to this processor
                      {
-                        int kk = k-Nz + 1;
-                        if( curvilineargm1 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wF /= 8 * h * h * h;
+
+#else // SW4 backend
+#endif // SW4 backend
+int kk = k-Nz + 1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( curvilineargm1 )
                            wF /= a_EW->mJ[g-1](i,j,kk);
                         else
                            wF /= 8*h*h*h;
-                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
+
+#endif // SW4 backend
+GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0,
                                                                           i,j,kk,g-1,
                                                                           wF*mForces[0], wF*mForces[1], wF*mForces[2],
-                                                                          mTimeDependence, mNcyc, 
+                                                                          mTimeDependence, mNcyc,
                                                                           mPar, mNpar, mIpar, mNipar );
                         point_sources.push_back(sourcePtr);
                      }
@@ -1952,14 +2384,15 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       }// Grid refinement boundary
       }
    } // if !mIsMomentSource (i.e. pointForce)
-   
+
    else if( mIsMomentSource ) // Moment source.
    {
       if( curvilinear_refbndry )
       {
          //         get_mr_psources(  a_EW, g, ic, jc, kc, icref, jcref, normwgh, point_sources );
-         get_mr_psources(  a_EW, g, q, r, s, true, normwgh, point_sources );
-      }         
+
+get_mr_psources(  a_EW, g, q, r, s, true, normwgh, point_sources );
+      }
       else if( cc_ic_bndry )
       {
          get_cc_psources(  a_EW, g, q, r, s, true, normwgh, point_sources );
@@ -1971,8 +2404,13 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
       float_sw4 dsX0[3], dsY0[3], dsZ0[3];
       // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order qq,qr,qs,rr,rs,ss
-      float_sw4 d2sX0[6], d2sY0[6], d2sZ0[6];
-      if( !curvilinear )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 d2sX0[6], d2sY0[6], d2sZ0[6];
+
+#endif // SW4 backend
+if( !curvilinear )
       {
          // Cartesian case, constant metric
          qX0[0] = 1/h;qX0[1]=0;  qX0[2]=0;
@@ -1981,9 +2419,14 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
          dsX0[0] = dsX0[1] = dsX0[2] = 0;
          dsY0[0] = dsY0[1] = dsY0[2] = 0;
          dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
-         for( int i=0 ; i < 6  ; i++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+for( int i=0 ; i < 6  ; i++ )
             d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
-      }	 
+
+#endif // SW4 backend
+}
       else
       {
          // Compute the curvilinear metric in the processor that owns the source.
@@ -2004,14 +2447,14 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 //            a_EW->m_gridGenerator->grid_mapping_diff( a_EW, q+h, r, s, g, ic, jc, kc,
 //                                                      zqh, zrh, zsh, zqqh, zqrh, zqsh,
 //                                                      zrrh, zrsh, zssh );
-//            cout << " zqqa= " << zqq << " zqqn= " << (zqh-zq)/h << endl;            
-//            cout << " zqra= " << zqr << " zqrn= " << (zrh-zr)/h << endl;            
+//            cout << " zqqa= " << zqq << " zqqn= " << (zqh-zq)/h << endl;
+//            cout << " zqra= " << zqr << " zqrn= " << (zrh-zr)/h << endl;
 //            cout << " zqsa= " << zqs << " zqsn= " << (zsh-zs)/h << endl;
 //            a_EW->m_gridGenerator->grid_mapping_diff( a_EW, q, r+h, s, g, ic, jc, kc,
 //                                                      zqh, zrh, zsh, zqqh, zqrh, zqsh,
 //                                                      zrrh, zrsh, zssh );
-//            cout << " zrra= " << zrr << " zrrn= " << (zrh-zr)/h << endl;            
-//            cout << " zrsa= " << zrs << " zrsn= " << (zsh-zs)/h << endl;            
+//            cout << " zrra= " << zrr << " zrrn= " << (zrh-zr)/h << endl;
+//            cout << " zrsa= " << zrs << " zrsn= " << (zsh-zs)/h << endl;
 //            a_EW->m_gridGenerator->grid_mapping_diff( a_EW, q, r, s+h, g, ic, jc, kc,
 //                                        zqh, zrh, zsh, zqqh, zqrh, zqsh,
 //                                        zrrh, zrsh, zssh );
@@ -2028,7 +2471,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 //            cout << "Old zq,zr,zs " << zq << " " << zr << " " << zs << endl;
 //            cout << endl;
 // END testing
-            a_EW->m_gridGenerator->grid_mapping_diff( a_EW, q, r, s, g, ic, jc, kc,
+
+a_EW->m_gridGenerator->grid_mapping_diff( a_EW, q, r, s, g, ic, jc, kc,
                                                       zq, zr, zs, zqq, zqr, zqs,
                                                       zrr, zrs, zss );
             zdertmp[0] = zq;
@@ -2041,7 +2485,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             zdertmp[7] = zrs;
             zdertmp[8] = zss;
          }
-         //	 // Broadcast the computed metric to all processors. 
+         //	 // Broadcast the computed metric to all processors.
          //	 // First find out the ID of the processor that computed the metric...
          //	 int owner = -1;
          //	 if( a_EW->interior_point_in_proc( ic, jc, g ) && canBeInverted )
@@ -2052,9 +2496,17 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
          //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
 
          // Simpler solution
-         float_sw4 zder[9];
-         MPI_Allreduce( zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM, a_EW->m_1d_communicator );
-         zq  = zder[0];
+
+float_sw4 zder[9];
+         MPI_Allreduce( zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM,
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_COMM_WORLD);
+
+#else // SW4 backend
+a_EW->m_1d_communicator );
+
+#endif // SW4 backend
+zq  = zder[0];
          zr  = zder[1];
          zs  = zder[2];
          zqq = zder[3];
@@ -2096,7 +2548,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       //	    dsX0[1] = 0;
       //	    dsX0[2] = 0;
 
-      //	    dsY0[0] = 0; 
+      //	    dsY0[0] = 0;
       //	    dsY0[1] = 0;
       //	    dsY0[2] = 0;
 
@@ -2125,16 +2577,17 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       //	    d2sZ0[4] =0;
       //	    d2sZ0[5] =0;
 
-      for( int k=kc-2 ; k <= kc+3 ; k++ )
+
+for( int k=kc-2 ; k <= kc+3 ; k++ )
          for( int j=jc-2 ; j <= jc+3 ; j++ )
             for( int i=ic-2 ; i <= ic+3 ; i++ )
             {
                float_sw4 wFx=0, wFy=0, wFz=0, dsdp[27];
-               if( a_EW->interior_point_in_proc(i,j,g) ) 
+               if( a_EW->interior_point_in_proc(i,j,g) )
                {
                   //                     cout << " src at " << i << " " << j << " " << k << endl;
                   wFx += qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
-                  //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2]; 
+                  //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
                   //		  wFz += qX0[2]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
 
                   //		  wFx +=  wghi[i-ic+2]*rX0[0]*dwghj[j-jc+2]* wghk[k-kc+2];
@@ -2199,7 +2652,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                      wFzdz0 += wghi[i-ic+2]*  wghj[j-jc+2]* dwghk[k-kc+2]*(sX0[2]*dsZ0[2]);
 
                   }
-                  // NOTE:  Source second derivatives wrt. (x0,y0,z0) currently not yet implemented 
+                  // NOTE:  Source second derivatives wrt. (x0,y0,z0) currently not yet implemented
                   // for curvilinear grids.
 
                   // Second derivatives
@@ -2228,7 +2681,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   //		  {
 
                   //		  }
-               
+
                   float_sw4 jaci;
                   if( curvilinear )
                      jaci = 1/a_EW->mJ[g](i,j,k);
@@ -2282,7 +2735,8 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 
 
                   // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
-                  dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
+
+dh1[0] = -(mForces[0]*wFxdx0dx0 + mForces[1]*wFydx0dx0+mForces[2]*wFzdx0dx0)*jaci;
                   dh1[1] = -(mForces[0]*wFxdx0dy0 + mForces[1]*wFydx0dy0+mForces[2]*wFzdx0dy0)*jaci;
                   dh1[2] = -(mForces[0]*wFxdx0dz0 + mForces[1]*wFydx0dz0+mForces[2]*wFzdx0dz0)*jaci;
 
@@ -2335,7 +2789,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
                   if( 1 <= k && k <= Nz )
                   {
-                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, g, 
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, k, g,
                                                                        fx, fy, fz, mTimeDependence, mNcyc,
                                                                        mPar, mNpar, mIpar, mNipar,
                                                                        dsdp, dddp, dh1, dh2, dh3 );
@@ -2347,7 +2801,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   {
                      int Nzp =a_EW->m_global_nz[g+1];
                      int kk = Nzp - 1 + k;
-                     
+
                      wFx = qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
                      wFy =  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
                      wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
@@ -2364,7 +2818,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                      float_sw4 fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
                      float_sw4 fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
 
-                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1,
                                                                        fx, fy, fz, mTimeDependence, mNcyc,
                                                                        mPar, mNpar, mIpar, mNipar,
                                                                        dsdp, dddp, dh1, dh2, dh3 );
@@ -2391,7 +2845,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                      float_sw4 fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
                      float_sw4 fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
 
-                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
+                     GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1,
                                                                        fx, fy, fz, mTimeDependence, mNcyc,
                                                                        mPar, mNpar, mIpar, mNipar,
                                                                        dsdp, dddp, dh1, dh2, dh3 );
@@ -2401,7 +2855,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                   }
                }
             } // end for k,j,i
-         
+
       if( gridrefbndry )
       {
          // These arrays are currently undefined across the mesh refinement boundary.
@@ -2413,13 +2867,30 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
             {
 //               float_sw4 hi = 1.0/(0.5*h);
 //               float_sw4 jaci = 1.0/(0.125*h*h*h);
-               for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 hi = 1.0 / (0.5 * h);
+            float_sw4 jaci = 1.0 / (0.125 * h * h * h);
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int j=jcref-2 ; j <= jcref+3 ; j++ )
                   for( int i=icref-2 ; i <= icref+3 ; i++ )
                   {
                      float_sw4 wFx=0, wFy=0, wFz=0;
-                     if( a_EW->interior_point_in_proc(i,j,g+1) ) 
+                     if( a_EW->interior_point_in_proc(i,j,g+1) )
                      {
-                        wFx += qX0[0]*dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*2;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFz = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        dwghkref[k - kc + 2] * hi;
+
+#else // SW4 backend
+wFx += qX0[0]*dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*2;
                         wFy +=  wghiref[i-icref+2]*rX0[1]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*2;
                         wFx +=  wghiref[i-icref+2]* wghjref[j-jcref+2]*sX0[0]*dwghkref[k-kc+2]*2;
                         wFy +=  wghiref[i-icref+2]* wghjref[j-jcref+2]*sX0[1]*dwghkref[k-kc+2]*2;
@@ -2437,10 +2908,19 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                         else
                            jaci = 1/(0.125*h*h*h);
 
-                        float_sw4 fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+
+#endif // SW4 backend
+float_sw4 fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
                         float_sw4 fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
                         float_sw4 fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
-                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1, 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int Nzp = a_EW->m_global_nz[g + 1];
+                  int kk = Nzp - 1 + k;
+
+#else // SW4 backend
+#endif // SW4 backend
+GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g+1,
                                                                           fx, fy, fz, mTimeDependence, mNcyc,
                                                                           mPar, mNpar, mIpar, mNipar,
                                                                           dsdp, dddp, dh1, dh2, dh3 );
@@ -2448,18 +2928,35 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                      }
                   }
             } // end if k <= 1
-               
+
             if( k >= Nz )
             {
 //               float_sw4 jaci = 1.0/(8*h*h*h);
 //               float_sw4 hi = 1.0/(2*h);
-               for( int j=jcref-2 ; j <= jcref+3 ; j++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 jaci = 1.0 / (8 * h * h * h);
+            float_sw4 hi = 1.0 / (2 * h);
+
+#else // SW4 backend
+#endif // SW4 backend
+for( int j=jcref-2 ; j <= jcref+3 ; j++ )
                   for( int i=icref-2 ; i <= icref+3 ; i++ )
                   {
                      float_sw4 wFx=0, wFy=0, wFz=0;
-                     if( a_EW->interior_point_in_proc(i,j,g-1) ) 
+                     if( a_EW->interior_point_in_proc(i,j,g-1) )
                      {
-                        wFx += qX0[0]*dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*0.5;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFz = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        dwghkref[k - kc + 2] * 2 * hi;
+
+#else // SW4 backend
+wFx += qX0[0]*dwghiref[i-icref+2]* wghjref[j-jcref+2]* wghkref[k-kc+2]*0.5;
                         wFy +=  wghiref[i-icref+2]*rX0[1]*dwghjref[j-jcref+2]* wghkref[k-kc+2]*0.5;
                         wFx +=  wghiref[i-icref+2]* wghjref[j-jcref+2]*sX0[0]*dwghkref[k-kc+2];
                         wFy +=  wghiref[i-icref+2]* wghjref[j-jcref+2]*sX0[1]*dwghkref[k-kc+2];
@@ -2474,32 +2971,42 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
                            jaci = 1.0/a_EW->mJ[g-1](i,j,kk);
                         else
                            jaci = 1.0/(8*h*h*h);
-                        float_sw4 fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
+
+#endif // SW4 backend
+float_sw4 fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
                         float_sw4 fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
                         float_sw4 fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
 
-                        GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1, 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int kk = k - Nz + 1;
+
+#else // SW4 backend
+#endif // SW4 backend
+GridPointSource* sourcePtr = new GridPointSource( mFreq, mT0, i, j, kk, g-1,
                                                                           fx, fy, fz, mTimeDependence, mNcyc,
                                                                           mPar, mNpar, mIpar, mNipar,
                                                                           dsdp, dddp, dh1, dh2, dh3 );
                         point_sources.push_back(sourcePtr);
                      }
                   } // end for i
-                  
-		  
+
+
             } // end if kz >= Nz
-               
+
          } // end for kc
-            
+
       } // end if gridrefbndry
-      
-      }
-   } // end if momentTensorSource
-   
+
+
+}
+
+} // end if momentTensorSource
+
 } // end set_grid_point_sources4
 
 
-   
+
 
 
 //-----------------------------------------------------------------------
@@ -2511,19 +3018,19 @@ void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], float_sw4 momex
       float_sw4 x1, y1, z1;
       for( int c = 0; c < 3 ; c++ )
       {
-	 if( kx[c] == 0 )
-	    x1 = 1;
-	 else
-	    x1 = pow(mX0,kx[c]);
+         if( kx[c] == 0 )
+            x1 = 1;
+         else
+            x1 = pow(mX0,kx[c]);
          if( ky[c] == 0 )
-	    y1 = 1;
-	 else
-	    y1 = pow(mY0,ky[c]);
+            y1 = 1;
+         else
+            y1 = pow(mY0,ky[c]);
          if( kz[c] == 0 )
-	    z1 = 1;
-	 else
-	    z1 = pow(mZ0,kz[c]);
-	 momex[c] = mForces[c]*x1*y1*z1;
+            z1 = 1;
+         else
+            z1 = pow(mZ0,kz[c]);
+         momex[c] = mForces[c]*x1*y1*z1;
       }
    }
    else
@@ -2531,44 +3038,44 @@ void Source::exact_testmoments( int kx[3], int ky[3], int kz[3], float_sw4 momex
       float_sw4 x1, y1, z1, xp1, yp1, zp1;
       for( int c = 0; c < 3 ; c++ )
       {
-	 if( kx[c] == 0 )
-	    x1 = 1;
-	 else
-	    x1 = pow(mX0,kx[c]);
-	 if( kx[c] == 0 )
-	    xp1 = 0;
-	 else if( kx[c] == 1 )
+         if( kx[c] == 0 )
+            x1 = 1;
+         else
+            x1 = pow(mX0,kx[c]);
+         if( kx[c] == 0 )
+            xp1 = 0;
+         else if( kx[c] == 1 )
             xp1 = -1;
-	 else
-	    xp1 =-kx[c]*pow(mX0,(kx[c]-1));
+         else
+            xp1 =-kx[c]*pow(mX0,(kx[c]-1));
 
          if( ky[c] == 0 )
-	    y1 = 1;
-	 else
-	    y1 = pow(mY0,ky[c]);
-	 if( ky[c] == 0 )
-	    yp1 = 0;
-	 else if( ky[c] == 1 )
+            y1 = 1;
+         else
+            y1 = pow(mY0,ky[c]);
+         if( ky[c] == 0 )
+            yp1 = 0;
+         else if( ky[c] == 1 )
             yp1 = -1;
-	 else
-	    yp1 =-ky[c]*pow(mY0,(ky[c]-1));
+         else
+            yp1 =-ky[c]*pow(mY0,(ky[c]-1));
 
          if( kz[c] == 0 )
-	    z1 = 1;
-	 else
-	    z1 = pow(mZ0,kz[c]);
-	 if( kz[c] == 0 )
-	    zp1 = 0;
-	 else if( kz[c] == 1 )
-            zp1 = -1;
-	 else
-	    zp1 =-kz[c]*pow(mZ0,(kz[c]-1));
-         if( c == 0 )
-	    momex[c] = -(mForces[0]*xp1*y1*z1+mForces[1]*x1*yp1*z1+mForces[2]*x1*y1*zp1);
-	 else if( c== 1 )
-	    momex[c] = -(mForces[1]*xp1*y1*z1+mForces[3]*x1*yp1*z1+mForces[4]*x1*y1*zp1);
+            z1 = 1;
          else
-	    momex[c] = -(mForces[2]*xp1*y1*z1+mForces[4]*x1*yp1*z1+mForces[5]*x1*y1*zp1);
+            z1 = pow(mZ0,kz[c]);
+         if( kz[c] == 0 )
+            zp1 = 0;
+         else if( kz[c] == 1 )
+            zp1 = -1;
+         else
+            zp1 =-kz[c]*pow(mZ0,(kz[c]-1));
+         if( c == 0 )
+            momex[c] = -(mForces[0]*xp1*y1*z1+mForces[1]*x1*yp1*z1+mForces[2]*x1*y1*zp1);
+         else if( c== 1 )
+            momex[c] = -(mForces[1]*xp1*y1*z1+mForces[3]*x1*yp1*z1+mForces[4]*x1*y1*zp1);
+         else
+            momex[c] = -(mForces[2]*xp1*y1*z1+mForces[4]*x1*yp1*z1+mForces[5]*x1*y1*zp1);
       }
    }
 }
@@ -2602,59 +3109,59 @@ void Source::filter_timefunc( Filter* filter_ptr, float_sw4 tstart, float_sw4 dt
       switch( mTimeDependence )
       {
       case iRicker:
-	 timeFunc = RickerWavelet;
-	 break;
+         timeFunc = RickerWavelet;
+         break;
       case iGaussian :
-	 timeFunc   = Gaussian;
-	 break;
+         timeFunc   = Gaussian;
+         break;
       case iRamp :
-	 timeFunc = Ramp;
-	 break;
+         timeFunc = Ramp;
+         break;
       case iTriangle :
-	 timeFunc = Triangle;
-	 break;
+         timeFunc = Triangle;
+         break;
       case iSawtooth :
-	 timeFunc = Sawtooth;
-	 break;
+         timeFunc = Sawtooth;
+         break;
       case iSmoothWave :
-	 timeFunc = SmoothWave;
-	 break;
+         timeFunc = SmoothWave;
+         break;
       case iErf :
-	 timeFunc = Erf;
-	 break;
+         timeFunc = Erf;
+         break;
       case iVerySmoothBump :
-	 timeFunc = VerySmoothBump;
-	 break;
+         timeFunc = VerySmoothBump;
+         break;
       case iC6SmoothBump :
-	 timeFunc = C6SmoothBump;
-	 break;
+         timeFunc = C6SmoothBump;
+         break;
       case iRickerInt :
-	 timeFunc = RickerInt;
-	 break;
+         timeFunc = RickerInt;
+         break;
       case iBrune :
-	 timeFunc = Brune;
-	 break;
+         timeFunc = Brune;
+         break;
       case iBruneSmoothed :
-	 timeFunc = BruneSmoothed;
-	 break;
+         timeFunc = BruneSmoothed;
+         break;
       case iDBrune :
-	 timeFunc = DBrune;
-	 break;
+         timeFunc = DBrune;
+         break;
       case iGaussianWindow :
-	 timeFunc = GaussianWindow;
-	 break;
+         timeFunc = GaussianWindow;
+         break;
       case iLiu :
-	 timeFunc = Liu;
-	 break;
+         timeFunc = Liu;
+         break;
       case iDirac :
-	 timeFunc = Dirac;
-	 break;
+         timeFunc = Dirac;
+         break;
 // discrete time functions are now handled differently
       // case iDiscrete :
       //    timeFunc = Discrete;
       //    break;
       default:
-	 cout << "ERROR in Source::filter_timefunc, source type not recoginzed" << endl;
+         cout << "ERROR in Source::filter_timefunc, source type not recoginzed" << endl;
       }
 
       // Convert to discrete representation
@@ -2662,43 +3169,64 @@ void Source::filter_timefunc( Filter* filter_ptr, float_sw4 tstart, float_sw4 dt
 
       float_sw4 *discfunc = new float_sw4[nsteps];
       for (int k=0; k < nsteps; k++ )
-	 discfunc[k] = timeFunc( mFreq, tstart+k*dt-mT0, mPar, mNpar, mIpar, mNipar );
+         discfunc[k] = timeFunc( mFreq, tstart+k*dt-mT0, mPar, mNpar, mIpar, mNipar );
 
-// Filter the discretized function 
+// Filter the discretized function
       filter_ptr->evaluate( nsteps, &discfunc[0], &discfunc[0] );
 
 // Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter
       if( filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass )
-      {    
-	 float_sw4 wghv, xi;
-	 int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
-	 if( p0+p <= nsteps )
-	 {
-	    for( int i=1 ; i<=p0-1 ; i++ )
-	    {
-	       discfunc[i-1] = 0;
-	    }
-	    for( int i=p0 ; i<=p0+p ; i++ )
-	    {
-	       wghv = 0;
-	       xi = (i-p0)/((float_sw4) p);
-	 // polynomial P(xi), P(0) = 0, P(1)=1
-	       wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
-	       discfunc[i-1] *=wghv;
-	    }
-	 }
+      {
+         float_sw4 wghv, xi;
+         int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+         if( p0+p <= nsteps )
+         {
+            for( int i=1 ; i<=p0-1 ; i++ )
+            {
+               discfunc[i-1] = 0;
+            }
+            for( int i=p0 ; i<=p0+p ; i++ )
+            {
+               wghv = 0;
+               xi = (i-p0)/((float_sw4) p);
+         // polynomial P(xi), P(0) = 0, P(1)=1
+               wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+               discfunc[i-1] *=wghv;
+            }
+         }
       }
 
    // Save discrete function
       mNipar = 1;
-      mIpar = new int[mNipar];
-      mIpar[0] = nsteps;
 
-      mFreq = 1./dt;   
-      delete[] mPar;
-      mNpar = nsteps+1;
-      mPar = new float_sw4[mNpar];
-      mPar[0] = tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
+#if defined(SW4_USE_RAJA) // SW4 backend
+mIpar = SW4_NEW(Space::Managed, int[mNipar]);
+
+#else // SW4 backend
+mIpar = new int[mNipar];
+
+#endif // SW4 backend
+mIpar[0] = nsteps;
+
+      mFreq = 1./dt;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+::operator delete[](mPar, Space::Managed);
+
+#else // SW4 backend
+delete[] mPar;
+
+#endif // SW4 backend
+mNpar = nsteps+1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
+
+#else // SW4 backend
+mPar = new float_sw4[mNpar];
+
+#endif // SW4 backend
+mPar[0] = tstart; // regular (like Gaussian) time functions are defined from t=tstart=0
       mT0 = tstart;
 //      mPar[0] = tstart-mT0;
       for( int i=0 ; i < nsteps; i++ )
@@ -2732,12 +3260,21 @@ int Source::spline_interpolation( )
       // 	for( int i=0 ; i < npts ; i++ )
       // 	  cout << "fun[" << i << "] = "<< mPar[i+1] << endl;
       // }
-      
-      Qspline quinticspline( npts, &mPar[1], mPar[0], 1/mFreq );
+
+
+Qspline quinticspline( npts, &mPar[1], mPar[0], 1/mFreq );
       float_sw4 tstart = mPar[0];
-      delete[] mPar;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+::operator delete[](mPar, Space::Managed);
+    mPar = SW4_NEW(Space::Managed, float_sw4[6 * (npts - 1) + 1]);
+
+#else // SW4 backend
+delete[] mPar;
       mPar = new float_sw4[6*(npts-1)+1];
-      mNpar = 6*(npts-1)+1;
+
+#endif // SW4 backend
+mNpar = 6*(npts-1)+1;
       mPar[0] = tstart;
       float_sw4* qsppt = quinticspline.get_polycof_ptr();
       for( int i=0 ; i < 6*(npts-1) ; i++ )
@@ -2745,20 +3282,23 @@ int Source::spline_interpolation( )
       //      cout << "after spline interp" << endl;
       //      for( int i=0 ; i < npts ; i++ )
       //	 cout << "fun[" << i << "] = "<< mPar[6*i+1] << endl;
-      
-      return 1;
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+return 1;
    }
    else if( mTimeDependence == iDiscrete3forces )
    {
       int npts = mIpar[0];
       // Three different time function, one for each displacement component.
-      // Store sequentially in mPar, i.e., 
+      // Store sequentially in mPar, i.e.,
       // mPar = [tstart, first time func, tstart, second time func, ...]
       // tstart before each function ---> Can reuse time function iDiscrete.
 
       float_sw4* parin = new float_sw4[(npts+1)*3];
       for( int i=0 ; i < (npts+1)*3; i++ )
-	 parin[i] = mPar[i];
+         parin[i] = mPar[i];
       float_sw4 tstart = mPar[0];
       delete[] mPar;
       mNpar = 3*(6*(npts-1)+1);
@@ -2767,43 +3307,60 @@ int Source::spline_interpolation( )
       size_t pos_in=0, pos_out=0;
       for( int tf=0 ; tf < 3 ; tf++ )
       {
-	 Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
-	 pos_in += npts+1;
-	 mPar[pos_out] = tstart;
-	 float_sw4* qsppt = quinticspline.get_polycof_ptr();
-	 for( int i=0 ; i < 6*(npts-1) ; i++ )
-	    mPar[pos_out+i+1] = qsppt[i];
-	 pos_out += 6*(npts-1)+1;
+         Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
+         pos_in += npts+1;
+         mPar[pos_out] = tstart;
+         float_sw4* qsppt = quinticspline.get_polycof_ptr();
+         for( int i=0 ; i < 6*(npts-1) ; i++ )
+            mPar[pos_out+i+1] = qsppt[i];
+         pos_out += 6*(npts-1)+1;
       }
       delete[] parin;
-      return 1;
+
+#endif // SW4 backend
+return 1;
    }
    else if( mTimeDependence == iDiscrete6moments )
    {
       int npts = mIpar[0];
       // Six different time function, one for each momentum component.
-      // Store sequentially in mPar, i.e., 
+      // Store sequentially in mPar, i.e.,
       // mPar = [tstart, first time func, tstart, second time func, ...]
       // tstart before each function ---> Can reuse time function iDiscrete.
 
       float_sw4* parin = new float_sw4[(npts+1)*6];
       for( int i=0 ; i < (npts+1)*6; i++ )
-	 parin[i] = mPar[i];
+         parin[i] = mPar[i];
       float_sw4 tstart = mPar[0];
-      delete[] mPar;
-      mNpar = 6*(6*(npts-1)+1);
-      mPar = new float_sw4[mNpar];
 
-      size_t pos_in=0, pos_out=0;
+#if defined(SW4_USE_RAJA) // SW4 backend
+::operator delete[](mPar, Space::Managed);
+
+#else // SW4 backend
+delete[] mPar;
+
+#endif // SW4 backend
+mNpar = 6*(6*(npts-1)+1);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
+
+
+#else // SW4 backend
+mPar = new float_sw4[mNpar];
+
+
+#endif // SW4 backend
+size_t pos_in=0, pos_out=0;
       for( int tf=0 ; tf < 6 ; tf++ )
       {
-	 Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
-	 pos_in += npts+1;
-	 mPar[pos_out] = tstart;
-	 float_sw4* qsppt = quinticspline.get_polycof_ptr();
-	 for( int i=0 ; i < 6*(npts-1) ; i++ )
-	    mPar[pos_out+i+1] = qsppt[i];
-	 pos_out += 6*(npts-1)+1;
+         Qspline quinticspline( npts, &parin[pos_in+1], tstart, 1/mFreq );
+         pos_in += npts+1;
+         mPar[pos_out] = tstart;
+         float_sw4* qsppt = quinticspline.get_polycof_ptr();
+         for( int i=0 ; i < 6*(npts-1) ; i++ )
+            mPar[pos_out+i+1] = qsppt[i];
+         pos_out += 6*(npts-1)+1;
       }
       delete[] parin;
       return 1;
@@ -2823,7 +3380,16 @@ Source* Source::copy( std::string a_name )
    //   retval->m_j0 = m_j0;
    //   retval->m_k0 = m_k0;
    //   retval->m_grid = m_grid;
-   retval->mName = a_name;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+retval->m_i0 = m_i0;
+  retval->m_j0 = m_j0;
+  retval->m_k0 = m_k0;
+  retval->m_grid = m_grid;
+
+#else // SW4 backend
+#endif // SW4 backend
+retval->mName = a_name;
    retval->mIsMomentSource = mIsMomentSource;
    retval->mForces.push_back(mForces[0]);
    retval->mForces.push_back(mForces[1]);
@@ -2844,8 +3410,15 @@ Source* Source::copy( std::string a_name )
    retval->mZ0 = mZ0;
 
    retval->mNpar = mNpar;
-   retval->mPar = new float_sw4[mNpar];
-   for( int i=0 ; i < mNpar ; i++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+retval->mPar = SW4_NEW(Space::Managed, float_sw4[mNpar]);
+
+#else // SW4 backend
+retval->mPar = new float_sw4[mNpar];
+
+#endif // SW4 backend
+for( int i=0 ; i < mNpar ; i++ )
       retval->mPar[i] = mPar[i];
 
    retval->mNipar = mNipar;
@@ -2855,7 +3428,7 @@ Source* Source::copy( std::string a_name )
 
    retval->mNcyc = mNcyc;
    retval->m_derivative = m_derivative;
-   retval->mTimeDependence = mTimeDependence;   
+   retval->mTimeDependence = mTimeDependence;
    for( int i=0 ; i < 11 ; i++ )
       retval->m_dir[i] = m_dir[i];
    retval->m_is_filtered = m_is_filtered;
@@ -2877,9 +3450,9 @@ float_sw4 Source::find_min_exponent() const
 
 //-----------------------------------------------------------------------
 void Source::compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic,
-				       int jc, int kc, int g, float_sw4& zq, float_sw4& zr,
-				       float_sw4& zs, float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
-				       float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const
+                                       int jc, int kc, int g, float_sw4& zq, float_sw4& zr,
+                                       float_sw4& zs, float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
+                                       float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const
 {
    int Nz = a_EW->m_global_nz[g];
    float_sw4 h = a_EW->mGridSize[g];
@@ -2895,7 +3468,7 @@ void Source::compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float
       bool analytic_derivative = true;
       // Derivative of metric wrt. source position. Not yet fully implemented.
       //      double zqdx0, zqdy0, zqsz0, zrdx0, zrdy0, zrdz0;
-	       
+
       // 3. Recompute metric to sixth order accuracy. Increased accuracy needed because
       //    of the multiplication with a singular (Dirac) function.
       //    compute only in the processor where the point is interior
@@ -2909,7 +3482,7 @@ void Source::compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float
       //      double dd6cofi[8], dd6cofj[8], dd6cofk[8];
       //      if( eightptstencil )
       //      {
-      //	 // Eight point stencil, smooth wrt. source position, 
+      //	 // Eight point stencil, smooth wrt. source position,
       //	 // needed for source optimization
       //	 getmetdwgh( ai, d6cofi );
       //	 getmetdwgh( bi, d6cofj );
@@ -2938,9 +3511,9 @@ void Source::compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float
       float_sw4 ddd6cofi[8], ddd6cofj[8], ddd6cofk[8];
       //      if( eightptstencil )
       //      {
-	 getmetwgh( ai, a6cofi, d6cofi, dd6cofi, ddd6cofi );
-	 getmetwgh( bi, a6cofj, d6cofj, dd6cofj, ddd6cofj );
-	 getmetwgh( ci, a6cofk, d6cofk, dd6cofk, ddd6cofk );
+         getmetwgh( ai, a6cofi, d6cofi, dd6cofi, ddd6cofi );
+         getmetwgh( bi, a6cofj, d6cofj, dd6cofj, ddd6cofj );
+         getmetwgh( ci, a6cofk, d6cofk, dd6cofk, ddd6cofk );
       //	 if( kc <= 3 && ci < 0 )
       //	 {
       //	    getmetwgh7( ci, a6cofk );
@@ -2963,100 +3536,102 @@ void Source::compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float
       zq = zr = zs = 0;
       int order;
       float_sw4 zetaBreak;
-      a_EW->m_gridGenerator->get_gridgen_info( order, zetaBreak );
+
+a_EW->m_gridGenerator->get_gridgen_info( order, zetaBreak );
       float_sw4 zpar = (s-1)/(zetaBreak*(Nz-1));
       float_sw4 kBreak = 1 + zetaBreak*(Nz-1);
 
       if( zpar >= 1 )
       {
-	 zq = 0;
-	 zr = 0;
+         zq = 0;
+         zr = 0;
          zs = h;
-	 zqq = zqr = zqs = zrr = zrs = zss = 0;
+         zqq = zqr = zqs = zrr = zrs = zss = 0;
       }
-      else 
+      else
       {
-	 float_sw4 pp = pow(1-zpar,order-1);
-	 float_sw4 powo = (1-zpar)*pp;
-	 float_sw4 dpowo = -order*pp/zetaBreak;
-	 float_sw4 tauavg = 0;
-	 float_sw4 tauq=0, taur=0;
-	 float_sw4 tauqq=0, tauqr=0, taurr=0;
-	 for( int j=jc-3; j <= jc+4 ; j++ )
-	    for( int i=ic-3; i <= ic+4 ; i++ )
-	    {
-	       tauavg += a6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-	       tauq  +=  d6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-	       taur  +=  a6cofi[i-(ic-3)]* d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+         float_sw4 pp = pow(1-zpar,order-1);
+         float_sw4 powo = (1-zpar)*pp;
+         float_sw4 dpowo = -order*pp/zetaBreak;
+         float_sw4 tauavg = 0;
+         float_sw4 tauq=0, taur=0;
+         float_sw4 tauqq=0, tauqr=0, taurr=0;
+         for( int j=jc-3; j <= jc+4 ; j++ )
+            for( int i=ic-3; i <= ic+4 ; i++ )
+            {
+               tauavg += a6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+               tauq  +=  d6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+               taur  +=  a6cofi[i-(ic-3)]* d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
                tauqq += dd6cofi[i-(ic-3)]* a6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-	       tauqr +=  d6cofi[i-(ic-3)]* d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
+               tauqr +=  d6cofi[i-(ic-3)]* d6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
                taurr +=  a6cofi[i-(ic-3)]*dd6cofj[j-(jc-3)]*a_EW->mTopoGridExt(i,j,1);
-	    }
-	 //	 double powo = pow(1-zpar,order);
-	 //      double dpowo = -order*pow(1-zpar,order-1);
-	 zq = (-tauq)*powo;
-	 zr = (-taur)*powo;
-	 zqq = (-tauqq)*powo;
-	 zqr = (-tauqr)*powo;
-	 zrr = (-taurr)*powo;
+            }
+         //	 double powo = pow(1-zpar,order);
+         //      double dpowo = -order*pow(1-zpar,order-1);
+         zq = (-tauq)*powo;
+         zr = (-taur)*powo;
+         zqq = (-tauqq)*powo;
+         zqr = (-tauqr)*powo;
+         zrr = (-taurr)*powo;
          zqs = (-tauq)*dpowo/(Nz-1);
          zrs = (-taur)*dpowo/(Nz-1);
 
       // Compute dz/ds directly from the grid mapping, the explicit expression here
       // should be the same as in EW::curvilinear_grid_mapping
-	 float_sw4 zMax = a_EW->m_zmin[a_EW->mNumberOfCartesianGrids-1] - (Nz-kBreak)*h;
-	 float_sw4 c1 = zMax + tauavg - h*(kBreak-1);
+         float_sw4 zMax = a_EW->m_zmin[a_EW->mNumberOfCartesianGrids-1] - (Nz-kBreak)*h;
+         float_sw4 c1 = zMax + tauavg - h*(kBreak-1);
 
       // Divide by Nz-1 to make consistent with undivided differences
          if( analytic_derivative )
-	 {
-	    zs  = h + c1*(-dpowo)/(Nz-1);
-	    zss = -c1*order*(order-1)*pow(1-zpar,order-2)/(zetaBreak*zetaBreak*(Nz-1)*(Nz-1));
-	 //         cout << "AN: zs = " << zs << " zss= " << zss << endl;
-	 }
-	 else
-	 {
-	    zs = 0;
-	    zss= 0;
-	    float_sw4 z1d=0;
-	    for( int k=kc-3 ; k <= kc+4; k++ ) 
-	    {
-	       zpar = (k-1)/(zetaBreak*(Nz-1));
-	       if( zpar >= 1 )
-		  z1d = zMax + (k-kBreak)*h;
-	       else
-	       {
-		  z1d = (1-zpar)*(-tauavg) + zpar*(zMax + c1*(1-zpar));
-		  for( int o=2 ; o < order ; o++ )
-		     z1d += zpar*c1*pow(1-zpar,o);
-	       }
-	       zs  += d6cofk[k-(kc-3)]*z1d;
-	       zss += dd6cofk[k-(kc-3)]*z1d;
-	    } 
-	 //         cout << "NU: zs = " << zs << " zss= " << zss << endl;
-	 }
+         {
+            zs  = h + c1*(-dpowo)/(Nz-1);
+            zss = -c1*order*(order-1)*pow(1-zpar,order-2)/(zetaBreak*zetaBreak*(Nz-1)*(Nz-1));
+         //         cout << "AN: zs = " << zs << " zss= " << zss << endl;
+         }
+         else
+         {
+            zs = 0;
+            zss= 0;
+            float_sw4 z1d=0;
+            for( int k=kc-3 ; k <= kc+4; k++ )
+            {
+               zpar = (k-1)/(zetaBreak*(Nz-1));
+               if( zpar >= 1 )
+                  z1d = zMax + (k-kBreak)*h;
+               else
+               {
+                  z1d = (1-zpar)*(-tauavg) + zpar*(zMax + c1*(1-zpar));
+                  for( int o=2 ; o < order ; o++ )
+                     z1d += zpar*c1*pow(1-zpar,o);
+               }
+               zs  += d6cofk[k-(kc-3)]*z1d;
+               zss += dd6cofk[k-(kc-3)]*z1d;
+            }
+         //         cout << "NU: zs = " << zs << " zss= " << zss << endl;
+         }
       }
    }
 }
 
 extern "C" {
-void F77_FUNC(dgels,DGELS)( char &, int &, int&, int&, double*, int&, double*, int&, 
+void F77_FUNC(dgels,DGELS)( char &, int &, int&, int&, double*, int&, double*, int&,
                             double*, int&, int& );
 }
 
 //-----------------------------------------------------------------------
-void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r, 
+void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                               float_sw4 s, bool gradient, float_sw4 normwgh[4],
                               vector<GridPointSource*>& point_sources )
 {
 #define CUB(x)   (x)*(x)*(x)
-#define BISQR(x) (x)*(x)*(x)*(x)   
+#define BISQR(x) (x)*(x)*(x)*(x)
    //   ic, jc on current grid
    //   icref, jcref on adjacent grid
-   // kc 
+   // kc
    // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
    //   std::cout <<a_EW->getRank() << " in get_mr_psources " << std::endl;
-   int ncond=35; // Number of moment conditions
+
+int ncond=35; // Number of moment conditions
 #define a(i,j) a_[(i-1) + ncond*(j-1)]
 #define b(i,j) b_[(i-1) + 125*(j-1)]
 #define x(i,j) b_[(i-1) + 125*(j-1)]
@@ -3092,7 +3667,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
        a_EW->interior_point_in_proc(ic-2,jc+2,g) ||
        a_EW->interior_point_in_proc(ic+2,jc+2,g) ||
        a_EW->interior_point_in_proc(icref-2,jcref-2,gref) ||
-       a_EW->interior_point_in_proc(icref+2,jcref-2,gref) ||       
+       a_EW->interior_point_in_proc(icref+2,jcref-2,gref) ||
        a_EW->interior_point_in_proc(icref-2,jcref+2,gref) ||
        a_EW->interior_point_in_proc(icref+2,jcref+2,gref) )
    {
@@ -3104,7 +3679,13 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
       {
          zg.insert_intersection( a_EW->mZ[g] );
          Jg.insert_intersection( a_EW->mJ[g] );
-      }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SYNC_STREAM;
+
+#else // SW4 backend
+#endif // SW4 backend
+}
       int kll, kul;
       if( gref == g+1 )
       {
@@ -3125,7 +3706,13 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
       {
          zgref.insert_intersection( a_EW->mZ[gref] );
          Jref.insert_intersection( a_EW->mJ[gref]);
-      }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SYNC_STREAM;
+
+#else // SW4 backend
+#endif // SW4 backend
+}
 
    int nrhs=1;
    if( gradient )
@@ -3134,7 +3721,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    float_sw4* a_ = new float_sw4[ncond*125];
    int ldb = ncond > 125? ncond:125;
    float_sw4* b_ = new float_sw4[ldb*nrhs];
-   //   float_sw4* x_ = new float_sw4[125];   
+   //   float_sw4* x_ = new float_sw4[125];
 
    //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic <<
    //      ", " << jc << ", " << kc << std::endl;
@@ -3180,9 +3767,9 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   a(24,ind)= CUB(x-xc)*(y-yc);
                   a(25,ind)= CUB(y-yc)*(x-xc);
                   a(26,ind)= CUB(z-zc)*(x-xc);
-                  a(27,ind)= CUB(x-xc)*(z-zc);                  
+                  a(27,ind)= CUB(x-xc)*(z-zc);
                   a(28,ind)= CUB(z-zc)*(y-yc);
-                  a(29,ind)= CUB(y-yc)*(z-zc);                  
+                  a(29,ind)= CUB(y-yc)*(z-zc);
                   a(30,ind)= SQR(x-xc)*SQR(y-yc);
                   a(31,ind)= SQR(y-yc)*SQR(z-zc);
                   a(32,ind)= SQR(z-zc)*SQR(x-xc);
@@ -3198,7 +3785,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          int kk;
          if( k<=0 )
          {
-         // Into finer grid above, continue into fine grid from k=0 and 
+         // Into finer grid above, continue into fine grid from k=0 and
          // upward --> from kk=Nz-1
             int Nzp = a_EW->m_global_nz[g+1];
             kk=k+Nzp-1;
@@ -3242,9 +3829,9 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   a(24,ind)= CUB(x-xc)*(y-yc);
                   a(25,ind)= CUB(y-yc)*(x-xc);
                   a(26,ind)= CUB(z-zc)*(x-xc);
-                  a(27,ind)= CUB(x-xc)*(z-zc);                  
+                  a(27,ind)= CUB(x-xc)*(z-zc);
                   a(28,ind)= CUB(z-zc)*(y-yc);
-                  a(29,ind)= CUB(y-yc)*(z-zc);                  
+                  a(29,ind)= CUB(y-yc)*(z-zc);
                   a(30,ind)= SQR(x-xc)*SQR(y-yc);
                   a(31,ind)= SQR(y-yc)*SQR(z-zc);
                   a(32,ind)= SQR(z-zc)*SQR(x-xc);
@@ -3269,7 +3856,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
             //            jcf=jcref;
             icc=ic;
             jcc=jc;
-            icf=2*ic-1;            
+            icf=2*ic-1;
             jcf=2*jc-1;
             Nzf = a_EW->m_global_nz[g+1];
          }
@@ -3302,16 +3889,16 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                mom_f(1,i,j) = 1*Jf;
                mom_f(2,i,j) = dx*Jf;
                mom_f(3,i,j) = dy*Jf;
-               mom_f(4,i,j) = dz*Jf;               
+               mom_f(4,i,j) = dz*Jf;
                mom_f(5,i,j) = dx*dx*Jf;
                mom_f(6,i,j) = dy*dy*Jf;
-               mom_f(7,i,j) = dz*dz*Jf;               
+               mom_f(7,i,j) = dz*dz*Jf;
                mom_f(8,i,j) = dx*dy*Jf;
                mom_f(9,i,j) = dx*dz*Jf;
-               mom_f(10,i,j)= dy*dz*Jf;               
+               mom_f(10,i,j)= dy*dz*Jf;
                mom_f(11,i,j)= dx*dx*dx*Jf;
                mom_f(12,i,j)= dy*dy*dy*Jf;
-               mom_f(13,i,j)= dz*dz*dz*Jf;               
+               mom_f(13,i,j)= dz*dz*dz*Jf;
                mom_f(14,i,j)= dx*dx*dy*Jf;
                mom_f(15,i,j)= dx*dy*dy*Jf;
                mom_f(16,i,j)= dx*dz*dz*Jf;
@@ -3327,9 +3914,9 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   mom_f(24,i,j)= CUB(dx)*(dy)*Jf;
                   mom_f(25,i,j)= CUB(dy)*(dx)*Jf;
                   mom_f(26,i,j)= CUB(dz)*(dx)*Jf;
-                  mom_f(27,i,j)= CUB(dx)*(dz)*Jf;                  
+                  mom_f(27,i,j)= CUB(dx)*(dz)*Jf;
                   mom_f(28,i,j)= CUB(dz)*(dy)*Jf;
-                  mom_f(29,i,j)= CUB(dy)*(dz)*Jf;                  
+                  mom_f(29,i,j)= CUB(dy)*(dz)*Jf;
                   mom_f(30,i,j)= SQR(dx)*SQR(dy)*Jf;
                   mom_f(31,i,j)= SQR(dy)*SQR(dz)*Jf;
                   mom_f(32,i,j)= SQR(dz)*SQR(dx)*Jf;
@@ -3355,9 +3942,9 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   if( g==gf )
                      a(c,ind) += mom_r/Jref(io,jo,1);
                   else
-                     a(c,ind) += mom_r/Jg(io,jo,1);                     
+                     a(c,ind) += mom_r/Jg(io,jo,1);
                      //                  a(c,ind) += mom_r/a_EW->mJ[gf-1](io,jo,1);
-                  //                  a(c,ind) += mom_r/Jref(io,jo,1);                  
+                  //                  a(c,ind) += mom_r/Jref(io,jo,1);
                }
             }
 
@@ -3367,7 +3954,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
 
 #undef mom_f
    // Right hand sides for moment conditions
-   
+
    b(1,1) = 1;
    b(2,1) = mX0-xc;
    b(3,1) = mY0-yc;
@@ -3377,10 +3964,10 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    b(7,1) = SQR(mZ0-zc);
    b(8,1) = (mX0-xc)*(mY0-yc);
    b(9,1) = (mX0-xc)*(mZ0-zc);
-   b(10,1)= (mY0-yc)*(mZ0-zc);               
+   b(10,1)= (mY0-yc)*(mZ0-zc);
    b(11,1)= CUB(mX0-xc);
    b(12,1)= CUB(mY0-yc);
-   b(13,1)= CUB(mZ0-zc);               
+   b(13,1)= CUB(mZ0-zc);
    b(14,1)= SQR(mX0-xc)*(mY0-yc);
    b(15,1)= SQR(mY0-yc)*(mX0-xc);
    b(16,1)= SQR(mZ0-zc)*(mX0-xc);
@@ -3396,9 +3983,9 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
       b(24,1)= CUB(mX0-xc)*(mY0-yc);
       b(25,1)= CUB(mY0-yc)*(mX0-xc);
       b(26,1)= CUB(mZ0-zc)*(mX0-xc);
-      b(27,1)= CUB(mX0-xc)*(mZ0-zc);                  
+      b(27,1)= CUB(mX0-xc)*(mZ0-zc);
       b(28,1)= CUB(mZ0-zc)*(mY0-yc);
-      b(29,1)= CUB(mY0-yc)*(mZ0-zc);                  
+      b(29,1)= CUB(mY0-yc)*(mZ0-zc);
       b(30,1)= SQR(mX0-xc)*SQR(mY0-yc);
       b(31,1)= SQR(mY0-yc)*SQR(mZ0-zc);
       b(32,1)= SQR(mZ0-zc)*SQR(mX0-xc);
@@ -3440,7 +4027,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          b(24,2)= -3*SQR(mX0-xc)*(mY0-yc);
          b(25,2)= -CUB(mY0-yc);
          b(26,2)= -CUB(mZ0-zc);
-         b(27,2)= -3*SQR(mX0-xc)*(mZ0-zc);                  
+         b(27,2)= -3*SQR(mX0-xc)*(mZ0-zc);
          b(28,2)= 0;
          b(29,2)= 0;
          b(30,2)= -2*(mX0-xc)*SQR(mY0-yc);
@@ -3540,10 +4127,17 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    // Solve A*x=b for x
 
    char tr='N';
-   int ssize=125, one=1, info=0, nb=20;
-   int lwork=ncond+ncond*nb;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int ssize = 125, info = 0, nb = 20;
+
+#else // SW4 backend
+int ssize=125, one=1, info=0, nb=20;
+
+#endif // SW4 backend
+int lwork=ncond+ncond*nb;
    float_sw4* work = new float_sw4[lwork];
-   F77_FUNC(dgels,DGELS)( tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, 
+   F77_FUNC(dgels,DGELS)( tr, ncond, ssize, nrhs, a_, ncond, b_, ldb,
                           work, lwork, info );
    delete[] work;
    REQUIRE2( info==0, "ERROR, info = " << info << " returned from DGELS ")
@@ -3562,7 +4156,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          // Discretization on this grid
          for( int j=jc-2 ; j<= jc+2 ; j++ )
             for( int i=ic-2 ; i<= ic+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g) ) 
+               if( a_EW->interior_point_in_proc(i,j,g) )
                {
                   int ind = i-ic+2 + 5*(j-jc+2) + 25*(k-kc+2)+1;
                   float_sw4 fx, fy, fz;
@@ -3576,21 +4170,21 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   {
                      fx = mForces[0]*x(ind,1);
                      fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
+                     fz = mForces[2]*x(ind,1);
                   }
                   if( fx != 0 || fy != 0 || fz != 0 )
                   {
                      //                     float_sw4 ijac=1.0/(nwgh*(a_EW->mJ[g](i,j,k)));
                      float_sw4 ijac=1.0/(nwgh*(Jg(i,j,k)));
-                     GridPointSource* sourcePtr = 
+                     GridPointSource* sourcePtr =
                         new GridPointSource( mFreq, mT0, i, j, k, g,
                                              fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
+                                             mTimeDependence, mNcyc,
                                              mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
                }
-      }   
+      }
       if( k <= 0 )
       {
          // Into finer grid above, keep k=1 on this (coarse) grid
@@ -3601,7 +4195,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
             nwgh = normwgh[Nzp-kk];
          for( int j=jcref-2 ; j<= jcref+2 ; j++ )
             for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g+1) ) 
+               if( a_EW->interior_point_in_proc(i,j,g+1) )
                {
                   int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
                   float_sw4 fx, fy, fz;
@@ -3615,7 +4209,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   {
                      fx = mForces[0]*x(ind,1);
                      fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
+                     fz = mForces[2]*x(ind,1);
                   }
                   if( fx != 0 || fy != 0 || fz != 0 )
                   {
@@ -3626,10 +4220,10 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                      float_sw4 ijac = 1.0/(nwgh*Jref(i,j,kk));
                      //                     float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
                      //                     std::cout << g+1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     GridPointSource* sourcePtr = 
+                     GridPointSource* sourcePtr =
                         new GridPointSource( mFreq, mT0, i, j, kk, g+1,
                                              fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
+                                             mTimeDependence, mNcyc,
                                              mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
@@ -3644,7 +4238,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
             nwgh = normwgh[kk-1];
          for( int j=jcref-2 ; j<= jcref+2 ; j++ )
             for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g-1) ) 
+               if( a_EW->interior_point_in_proc(i,j,g-1) )
                {
                   int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
                   float_sw4 fx, fy, fz;
@@ -3658,7 +4252,7 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   {
                      fx = mForces[0]*x(ind,1);
                      fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
+                     fz = mForces[2]*x(ind,1);
                   }
                   if( fx != 0 || fy != 0 || fz != 0 )
                   {
@@ -3668,12 +4262,12 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                      //                  {
                      //                     wF = wF/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
                      float_sw4 ijac = 1.0/(nwgh*Jref(i,j,kk));
-                     //                     float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g-1](i,j,kk)));                     
+                     //                     float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
                      //                     std::cout << g-1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     GridPointSource* sourcePtr = 
+                     GridPointSource* sourcePtr =
                         new GridPointSource( mFreq, mT0, i, j, kk, g-1,
                                              fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
+                                             mTimeDependence, mNcyc,
                                              mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
@@ -3683,25 +4277,25 @@ void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    delete[] a_;
    delete[] b_;
    }
-   //   delete[] x_;   
+   //   delete[] x_;
 #undef a
-#undef b   
+#undef b
 #undef x
 #undef CUB
 #undef BISQR
 }
 
 //-----------------------------------------------------------------------
-void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r, 
+void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                               float_sw4 s, bool gradient, float_sw4 normwgh[4],
                               vector<GridPointSource*>& point_sources )
 {
    // Curvilinear/Cartesian interface with interface conditions imposed.
 #define CUB(x)   (x)*(x)*(x)
-#define BISQR(x) (x)*(x)*(x)*(x)   
+#define BISQR(x) (x)*(x)*(x)*(x)
    //   ic, jc on current grid
    //   icref, jcref on adjacent grid
-   // kc 
+   // kc
    // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
    //   std::cout <<"in get_cc_psources " << std::endl;
    int ncond=35; // Number of moment conditions
@@ -3736,7 +4330,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
        a_EW->interior_point_in_proc(ic-2,jc+2,g) ||
        a_EW->interior_point_in_proc(ic+2,jc+2,g) ||
        a_EW->interior_point_in_proc(icref-2,jcref-2,gref) ||
-       a_EW->interior_point_in_proc(icref+2,jcref-2,gref) ||       
+       a_EW->interior_point_in_proc(icref+2,jcref-2,gref) ||
        a_EW->interior_point_in_proc(icref-2,jcref+2,gref) ||
        a_EW->interior_point_in_proc(icref+2,jcref+2,gref) )
    {
@@ -3753,7 +4347,13 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          {
             zg.insert_intersection( a_EW->mZ[g] );
             Jg.insert_intersection( a_EW->mJ[g] );
-         }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SYNC_STREAM;
+
+#else // SW4 backend
+#endif // SW4 backend
+}
          int kll=1;
          int kul=5;
          zgref.define(icref-2,icref+2,jcref-2,jcref+2,kll,kul);
@@ -3793,7 +4393,13 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          {
             zgref.insert_intersection( a_EW->mZ[gref] );
             Jgref.insert_intersection( a_EW->mJ[gref]);
-         }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SYNC_STREAM;
+
+#else // SW4 backend
+#endif // SW4 backend
+}
       }
 
       int nrhs=1;
@@ -3803,7 +4409,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
       float_sw4* a_ = new float_sw4[ncond*125];
       int ldb = ncond > 125? ncond:125;
       float_sw4* b_ = new float_sw4[ldb*nrhs];
-   //   float_sw4* x_ = new float_sw4[125];   
+   //   float_sw4* x_ = new float_sw4[125];
 
    //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic <<
    //      ", " << jc << ", " << kc << std::endl;
@@ -3849,9 +4455,9 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                      a(24,ind)= CUB(x-xc)*(y-yc);
                      a(25,ind)= CUB(y-yc)*(x-xc);
                      a(26,ind)= CUB(z-zc)*(x-xc);
-                     a(27,ind)= CUB(x-xc)*(z-zc);                  
+                     a(27,ind)= CUB(x-xc)*(z-zc);
                      a(28,ind)= CUB(z-zc)*(y-yc);
-                     a(29,ind)= CUB(y-yc)*(z-zc);                  
+                     a(29,ind)= CUB(y-yc)*(z-zc);
                      a(30,ind)= SQR(x-xc)*SQR(y-yc);
                      a(31,ind)= SQR(y-yc)*SQR(z-zc);
                      a(32,ind)= SQR(z-zc)*SQR(x-xc);
@@ -3867,7 +4473,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
             int kk;
             if( k<=0 )
             {
-         // Into finer grid above, continue into fine grid from k=0 and 
+         // Into finer grid above, continue into fine grid from k=0 and
          // upward --> from kk=Nz-1
                int Nzp = a_EW->m_global_nz[g+1];
                kk=k+Nzp-1;
@@ -3911,9 +4517,9 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                      a(24,ind)= CUB(x-xc)*(y-yc);
                      a(25,ind)= CUB(y-yc)*(x-xc);
                      a(26,ind)= CUB(z-zc)*(x-xc);
-                     a(27,ind)= CUB(x-xc)*(z-zc);                  
+                     a(27,ind)= CUB(x-xc)*(z-zc);
                      a(28,ind)= CUB(z-zc)*(y-yc);
-                     a(29,ind)= CUB(y-yc)*(z-zc);                  
+                     a(29,ind)= CUB(y-yc)*(z-zc);
                      a(30,ind)= SQR(x-xc)*SQR(y-yc);
                      a(31,ind)= SQR(y-yc)*SQR(z-zc);
                      a(32,ind)= SQR(z-zc)*SQR(x-xc);
@@ -3927,7 +4533,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
 
 #undef mom_f
    // Right hand sides for moment conditions
-   
+
    b(1,1) = 1;
    b(2,1) = mX0-xc;
    b(3,1) = mY0-yc;
@@ -3937,10 +4543,10 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    b(7,1) = SQR(mZ0-zc);
    b(8,1) = (mX0-xc)*(mY0-yc);
    b(9,1) = (mX0-xc)*(mZ0-zc);
-   b(10,1)= (mY0-yc)*(mZ0-zc);               
+   b(10,1)= (mY0-yc)*(mZ0-zc);
    b(11,1)= CUB(mX0-xc);
    b(12,1)= CUB(mY0-yc);
-   b(13,1)= CUB(mZ0-zc);               
+   b(13,1)= CUB(mZ0-zc);
    b(14,1)= SQR(mX0-xc)*(mY0-yc);
    b(15,1)= SQR(mY0-yc)*(mX0-xc);
    b(16,1)= SQR(mZ0-zc)*(mX0-xc);
@@ -3956,9 +4562,9 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
       b(24,1)= CUB(mX0-xc)*(mY0-yc);
       b(25,1)= CUB(mY0-yc)*(mX0-xc);
       b(26,1)= CUB(mZ0-zc)*(mX0-xc);
-      b(27,1)= CUB(mX0-xc)*(mZ0-zc);                  
+      b(27,1)= CUB(mX0-xc)*(mZ0-zc);
       b(28,1)= CUB(mZ0-zc)*(mY0-yc);
-      b(29,1)= CUB(mY0-yc)*(mZ0-zc);                  
+      b(29,1)= CUB(mY0-yc)*(mZ0-zc);
       b(30,1)= SQR(mX0-xc)*SQR(mY0-yc);
       b(31,1)= SQR(mY0-yc)*SQR(mZ0-zc);
       b(32,1)= SQR(mZ0-zc)*SQR(mX0-xc);
@@ -4000,7 +4606,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          b(24,2)= -3*SQR(mX0-xc)*(mY0-yc);
          b(25,2)= -CUB(mY0-yc);
          b(26,2)= -CUB(mZ0-zc);
-         b(27,2)= -3*SQR(mX0-xc)*(mZ0-zc);                  
+         b(27,2)= -3*SQR(mX0-xc)*(mZ0-zc);
          b(28,2)= 0;
          b(29,2)= 0;
          b(30,2)= -2*(mX0-xc)*SQR(mY0-yc);
@@ -4100,10 +4706,17 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    // Solve A*x=b for x
 
    char tr='N';
-   int ssize=125, one=1, info=0, nb=20;
-   int lwork=ncond+ncond*nb;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int ssize = 125, info = 0, nb = 20;
+
+#else // SW4 backend
+int ssize=125, one=1, info=0, nb=20;
+
+#endif // SW4 backend
+int lwork=ncond+ncond*nb;
    float_sw4* work = new float_sw4[lwork];
-   F77_FUNC(dgels,DGELS)( tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, 
+   F77_FUNC(dgels,DGELS)( tr, ncond, ssize, nrhs, a_, ncond, b_, ldb,
                           work, lwork, info );
    delete[] work;
    REQUIRE2( info==0, "ERROR, info = " << info << " returned from DGELS ")
@@ -4122,7 +4735,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
          // Discretization on this grid
          for( int j=jc-2 ; j<= jc+2 ; j++ )
             for( int i=ic-2 ; i<= ic+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g) ) 
+               if( a_EW->interior_point_in_proc(i,j,g) )
                {
                   int ind = i-ic+2 + 5*(j-jc+2) + 25*(k-kc+2)+1;
                   float_sw4 fx, fy, fz;
@@ -4136,22 +4749,22 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   {
                      fx = mForces[0]*x(ind,1);
                      fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
+                     fz = mForces[2]*x(ind,1);
                   }
                   if( fx != 0 || fy != 0 || fz != 0 )
                   {
                      float_sw4 ijac=1.0/(nwgh*(Jg(i,j,k)));
                      if( k == 1 ) // On interface, special
                         ijac = 1.0/(nwgh*(Jg(i,j,k)+Jgref(i,j,a_EW->m_global_nz[gref]+k-1)));
-                     GridPointSource* sourcePtr = 
+                     GridPointSource* sourcePtr =
                         new GridPointSource( mFreq, mT0, i, j, k, g,
                                              fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
+                                             mTimeDependence, mNcyc,
                                              mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
                }
-      }   
+      }
       if( k <= 0 )
       {
          // Into finer grid above, keep k=1 on this (coarse) grid
@@ -4162,7 +4775,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
             nwgh = normwgh[Nzp-kk];
          for( int j=jcref-2 ; j<= jcref+2 ; j++ )
             for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g+1) ) 
+               if( a_EW->interior_point_in_proc(i,j,g+1) )
                {
                   int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
                   float_sw4 fx, fy, fz;
@@ -4176,7 +4789,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   {
                      fx = mForces[0]*x(ind,1);
                      fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
+                     fz = mForces[2]*x(ind,1);
                   }
                   if( fx != 0 || fy != 0 || fz != 0 )
                   {
@@ -4186,10 +4799,10 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                      //                     wF = wF/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
                      float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
                      //                     std::cout << g+1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     GridPointSource* sourcePtr = 
+                     GridPointSource* sourcePtr =
                         new GridPointSource( mFreq, mT0, i, j, kk, g+1,
                                              fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
+                                             mTimeDependence, mNcyc,
                                              mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
@@ -4204,7 +4817,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
             nwgh = normwgh[kk-1];
          for( int j=jcref-2 ; j<= jcref+2 ; j++ )
             for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g-1) ) 
+               if( a_EW->interior_point_in_proc(i,j,g-1) )
                {
                   int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
                   float_sw4 fx, fy, fz;
@@ -4218,7 +4831,7 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                   {
                      fx = mForces[0]*x(ind,1);
                      fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
+                     fz = mForces[2]*x(ind,1);
                   }
                   if( fx != 0 || fy != 0 || fz != 0 )
                   {
@@ -4231,10 +4844,10 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
                      //                     std::cout << g-1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
                      if( k==Nz )//on interface, special
                         ijac = 1.0/(nwgh*(Jg(i,j,k)+Jgref(i,j,kk)));
-                     GridPointSource* sourcePtr = 
+                     GridPointSource* sourcePtr =
                         new GridPointSource( mFreq, mT0, i, j, kk, g-1,
                                              fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
+                                             mTimeDependence, mNcyc,
                                              mPar, mNpar, mIpar, mNipar );
                      point_sources.push_back(sourcePtr);
                   }
@@ -4244,10 +4857,33 @@ void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r,
    delete[] a_;
    delete[] b_;
    }
-   //   delete[] x_;   
+   //   delete[] x_;
 #undef a
-#undef b   
+#undef b
 #undef x
 #undef CUB
 #undef BISQR
 }
+#if defined(SW4_USE_RAJA) // SW4 backend
+void Source::compute_grid_point(EW* a_ew) {
+  // Sets values (m_i0,m_j0,m_k0) and m_grid.
+  // Should be called after the topographic correction of mZ0
+  int i, j, k, g;
+  int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
+  m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
+  int inds[4] = {-9999, -9999, -9999, -9999};
+  if (m_myPoint) {
+    inds[0] = i;
+    inds[1] = j;
+    inds[2] = k;
+    inds[3] = g;
+  }
+  int indsg[4] = {0, 0, 0, 0};
+  MPI_Allreduce(inds, indsg, 4, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  m_i0 = indsg[0];
+  m_j0 = indsg[1];
+  m_k0 = indsg[2];
+  m_grid = indsg[3];
+}
+#else // SW4 backend
+#endif // SW4 backend

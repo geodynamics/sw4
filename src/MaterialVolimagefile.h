@@ -3,33 +3,63 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifndef MATERIALVOLIMAGEFILE_H
+#define MATERIALVOLIMAGEFILE_H
+
+#include <string>
+
+#include "MaterialData.h"
+
+class EW;
+
+class MaterialVolimagefile : public MaterialData {
+ public:
+  MaterialVolimagefile(EW* a_ew, bool rhomula, std::string path,
+                       std::string rhofile, std::string mufile,
+                       std::string lambdafile, std::string qpfile,
+                       std::string qsfile);
+
+  void set_material_properties(std::vector<Sarray>& rho,
+                               std::vector<Sarray>& cs, std::vector<Sarray>& cp,
+                               std::vector<Sarray>& xis,
+                               std::vector<Sarray>& xip);
+
+ private:
+  std::string m_path, m_rho, m_mu, m_lambda, m_qp, m_qs;
+  bool m_rhomula;
+  EW* mEW;
+};
+
+#endif
+#else // SW4 backend
 #ifndef MATERIALVOLIMAGEFILE_H
 #define MATERIALVOLIMAGEFILE_H
 
@@ -41,16 +71,17 @@ class EW;
 class MaterialVolimagefile : public MaterialData
 {
  public:
-   MaterialVolimagefile( EW* a_ew, bool rhomula, std::string path, std::string rhofile, 
-	 std::string mufile, std::string lambdafile, std::string qpfile, std::string qsfile );
+   MaterialVolimagefile( EW* a_ew, bool rhomula, std::string path, std::string rhofile,
+         std::string mufile, std::string lambdafile, std::string qpfile, std::string qsfile );
 
    void set_material_properties(std::vector<Sarray> & rho, std::vector<Sarray> & cs,
-				std::vector<Sarray> & cp,
-				std::vector<Sarray>& xis, std::vector<Sarray>& xip);
+                                std::vector<Sarray> & cp,
+                                std::vector<Sarray>& xis, std::vector<Sarray>& xip);
  private:
    std::string m_path, m_rho, m_mu, m_lambda, m_qp, m_qs;
    bool m_rhomula;
-   EW *mEW; 
+   EW *mEW;
 };
 
 #endif
+#endif // SW4 backend

@@ -3,33 +3,33 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 
 #include "Require.h"
 
@@ -73,10 +73,10 @@ MaterialSfile::~MaterialSfile()
 }
 
 //-----------------------------------------------------------------------
-void MaterialSfile::set_material_properties(std::vector<Sarray> & rho, 
+void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
                                              std::vector<Sarray> & cs,
-                                             std::vector<Sarray> & cp, 
-                                             std::vector<Sarray> & xis, 
+                                             std::vector<Sarray> & cp,
+                                             std::vector<Sarray> & xis,
                                              std::vector<Sarray> & xip )
 {
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
@@ -97,46 +97,46 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
       size_t nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
 #pragma omp parallel for reduction(+:material,outside)
       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
-	 for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
-	    for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
+         for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
+            for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
                 float_sw4 z0, hv;
-		float_sw4 x = (i-1)*mEW->mGridSize[g];
-		float_sw4 y = (j-1)*mEW->mGridSize[g];
-		float_sw4 z;
-		if( curvilinear )
-		   z = mEW->mZ[g](i,j,k);
-		else
-		   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
+                float_sw4 x = (i-1)*mEW->mGridSize[g];
+                float_sw4 y = (j-1)*mEW->mGridSize[g];
+                float_sw4 z;
+                if( curvilinear )
+                   z = mEW->mZ[g](i,j,k);
+                else
+                   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
                 // Deal with some values on top grid that exceeds the topogrophy interface
-                if (g == mEW->mNumberOfGrids - 1 && z < z_min) 
+                if (g == mEW->mNumberOfGrids - 1 && z < z_min)
                   z = z_min;
 
                 // (x, y, z) is the coordinate of current grid point
-		/* if( inside( x, y, z ) ) { */
-		if( m_zminloc <= z && z <= m_zmaxloc ) {
+                /* if( inside( x, y, z ) ) { */
+                if( m_zminloc <= z && z <= m_zmaxloc ) {
                    // Extend the material value if simulation grid is larger than material grid
                    if (x > m_xmaxloc)
                        x = m_xmaxloc;
                    if (y > m_ymaxloc)
                        y = m_ymaxloc;
-                       
-		   material++;
+
+                   material++;
                    int i0, j0, i1, j1, k0, gr = m_npatches-1;
                    float_sw4 tmph, down_z;
                    // gr is the patch id that has the current sw4 grid point's data
                    // need to use the interface value to determine which patch the current point is in
-		   while( gr >= 0 ) {
+                   while( gr >= 0 ) {
                      i0 = i1 = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr] ) );
                      j0 = j1 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr] ) );
-		     if( i0 <= m_ifirst[gr] )  i0 = m_ifirst[gr];
-		     if( i0 >= m_ilast[gr]-1 ) i0 = m_ilast[gr]-1;
-		     if( j0 <= m_jfirst[gr] )  j0 = m_jfirst[gr];
-		     if( j0 >= m_jlast[gr]-1 ) j0 = m_jlast[gr]-1;
-		     if( i1 <= m_ifirst[gr] )  i1 = m_ifirst[gr];
-		     if( i1 >= m_ilast[gr]-1 ) i1 = m_ilast[gr]-1;
-		     if( j1 <= m_jfirst[gr] )  j1 = m_jfirst[gr];
-		     if( j1 >= m_jlast[gr]-1 ) j1 = m_jlast[gr]-1;
+                     if( i0 <= m_ifirst[gr] )  i0 = m_ifirst[gr];
+                     if( i0 >= m_ilast[gr]-1 ) i0 = m_ilast[gr]-1;
+                     if( j0 <= m_jfirst[gr] )  j0 = m_jfirst[gr];
+                     if( j0 >= m_jlast[gr]-1 ) j0 = m_jlast[gr]-1;
+                     if( i1 <= m_ifirst[gr] )  i1 = m_ifirst[gr];
+                     if( i1 >= m_ilast[gr]-1 ) i1 = m_ilast[gr]-1;
+                     if( j1 <= m_jfirst[gr] )  j1 = m_jfirst[gr];
+                     if( j1 >= m_jlast[gr]-1 ) j1 = m_jlast[gr]-1;
 
                      down_z = mInterface[gr+1](1, i0, j0, 1);
 
@@ -146,124 +146,124 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
                      z0 = mInterface[gr](1, i1, j1, 1);
 
                      if (gr == 0 || z > z0) break;
-		     gr--;
+                     gr--;
                    }
 
                    tmph = down_z - z0;
                    if (z > down_z)
                        z = down_z;
-                   if (z < z0)     
+                   if (z < z0)
                        z = z0;
 
                    // Update the current vertical grid height and z-base with the sfile curvilinear grid
                    hv = tmph / (m_nk[gr]-1);
 
-                   // we are using curvilinear grid in sfile 
+                   // we are using curvilinear grid in sfile
                    k0 = static_cast<int>( trunc( 1 + (z-z0)/hv) );
 
-		   // Use bilinear interpolation always:
-        	   // Bias stencil near the boundary, need to communicate arrays afterwards.
-		   if( i0 <= m_ifirst[gr] ) 
-		      i0 = m_ifirst[gr];
+                   // Use bilinear interpolation always:
+                   // Bias stencil near the boundary, need to communicate arrays afterwards.
+                   if( i0 <= m_ifirst[gr] )
+                      i0 = m_ifirst[gr];
 
-		   if( i0 >= m_ilast[gr]-1 ) 
-		      i0 = m_ilast[gr]-1;
-		    
-		   if( j0 <= m_jfirst[gr] ) 
-		      j0 = m_jfirst[gr];
-		    
-		   if( j0 >= m_jlast[gr]-1 ) 
-		      j0 = m_jlast[gr]-1;
-		    
-		   if( k0 <= m_kfirst[gr] ) 
-		      k0 = m_kfirst[gr];
-		    
-		   if( k0 >= m_klast[gr]-1 ) 
-		      k0 = m_klast[gr]-1;
+                   if( i0 >= m_ilast[gr]-1 )
+                      i0 = m_ilast[gr]-1;
 
-   		   // bilinear intp.
+                   if( j0 <= m_jfirst[gr] )
+                      j0 = m_jfirst[gr];
+
+                   if( j0 >= m_jlast[gr]-1 )
+                      j0 = m_jlast[gr]-1;
+
+                   if( k0 <= m_kfirst[gr] )
+                      k0 = m_kfirst[gr];
+
+                   if( k0 >= m_klast[gr]-1 )
+                      k0 = m_klast[gr]-1;
+
+                   // bilinear intp.
                    float_sw4 wghx = (x-( (i0-1)*m_hh[gr]+m_x0) )/m_hh[gr];
                    float_sw4 wghy = (y-( (j0-1)*m_hh[gr]+m_y0) )/m_hh[gr];
                    float_sw4 wghz = (z-( (k0-1)*hv+z0) )/hv;
 
                    // Debug
                    // weights should be within [0, 1]
-                   if (wghx > 1 || wghx < 0) { 
-		      //                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghx = %.2f\n", gr, i, j, k, i0, j0, k0, wghx);
+                   if (wghx > 1 || wghx < 0) {
+                      //                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghx = %.2f\n", gr, i, j, k, i0, j0, k0, wghx);
                        if (wghx > 1) wghx = 1;
                        if (wghx < 0) wghx = 0;
                    }
 
-                   if (wghy > 1 || wghy < 0) { 
-		      //                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghy = %.2f\n", gr, i, j, k, i0, j0, k0, wghy);
+                   if (wghy > 1 || wghy < 0) {
+                      //                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghy = %.2f\n", gr, i, j, k, i0, j0, k0, wghy);
                        if (wghy > 1) wghy = 1;
                        if (wghy < 0) wghy = 0;
                    }
 
-                   if (wghz > 1 || wghz < 0) { 
-                       if (wghz > 1.001 || wghz < -0.001) 
-			  //                         printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghz = %.2f, z=%.2f, z0=%.2f\n", 
-			  //                                 gr, i, j, k, i0, j0, k0, wghz, z, z0);
+                   if (wghz > 1 || wghz < 0) {
+                       if (wghz > 1.001 || wghz < -0.001)
+                          //                         printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghz = %.2f, z=%.2f, z0=%.2f\n",
+                          //                                 gr, i, j, k, i0, j0, k0, wghz, z, z0);
                        if (wghz > 1) wghz = 1;
                        if (wghz < 0) wghz = 0;
                    }
 
-                   rho[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_rho[gr](1,i0,j0,k0) + 
+                   rho[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_rho[gr](1,i0,j0,k0) +
                                      wghx*mMaterial_rho[gr](1,i0+1,j0,k0) ) +
-   		                        wghy*(     (1-wghx)*mMaterial_rho[gr](1,i0,j0+1,k0) +
-                                     wghx*mMaterial_rho[gr](1,i0+1,j0+1,k0) ) ) + 
-   		                     wghz*( (1-wghy)*( (1-wghx)*mMaterial_rho[gr](1,i0,j0,k0+1) +
+                                        wghy*(     (1-wghx)*mMaterial_rho[gr](1,i0,j0+1,k0) +
+                                     wghx*mMaterial_rho[gr](1,i0+1,j0+1,k0) ) ) +
+                                     wghz*( (1-wghy)*( (1-wghx)*mMaterial_rho[gr](1,i0,j0,k0+1) +
                                      wghx*mMaterial_rho[gr](1,i0+1,j0,k0+1) ) +
-   		     	             wghy*(    (1-wghx)*mMaterial_rho[gr](1,i0,j0+1,k0+1) + 
+                                     wghy*(    (1-wghx)*mMaterial_rho[gr](1,i0,j0+1,k0+1) +
                                      wghx*mMaterial_rho[gr](1,i0+1,j0+1,k0+1) ) );
 
-                   cp[g](i, j, k)  = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_cp[gr](1,i0,j0,k0) + 
+                   cp[g](i, j, k)  = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_cp[gr](1,i0,j0,k0) +
                                      wghx*mMaterial_cp[gr](1,i0+1,j0,k0) ) +
-                                     wghy*(     (1-wghx)*mMaterial_cp[gr](1,i0,j0+1,k0) + 
-                                     wghx*mMaterial_cp[gr](1,i0+1,j0+1,k0) ) ) + 
-                                     wghz*(  (1-wghy)*( (1-wghx)*mMaterial_cp[gr](1,i0,j0,k0+1) + 
+                                     wghy*(     (1-wghx)*mMaterial_cp[gr](1,i0,j0+1,k0) +
+                                     wghx*mMaterial_cp[gr](1,i0+1,j0+1,k0) ) ) +
+                                     wghz*(  (1-wghy)*( (1-wghx)*mMaterial_cp[gr](1,i0,j0,k0+1) +
                                      wghx*mMaterial_cp[gr](1,i0+1,j0,k0+1) ) +
-                                     wghy*(     (1-wghx)*mMaterial_cp[gr](1,i0,j0+1,k0+1)+ 
+                                     wghy*(     (1-wghx)*mMaterial_cp[gr](1,i0,j0+1,k0+1)+
                                      wghx*mMaterial_cp[gr](1,i0+1,j0+1,k0+1) ) );
-       
-                   cs[g](i, j, k)  = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_cs[gr](1,i0,j0,k0) + 
+
+                   cs[g](i, j, k)  = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_cs[gr](1,i0,j0,k0) +
                                      wghx*mMaterial_cs[gr](1,i0+1,j0,k0) ) +
-                                     wghy*(    (1-wghx)*mMaterial_cs[gr](1,i0,j0+1,k0) + 
-                                     wghx*mMaterial_cs[gr](1,i0+1,j0+1,k0) ) ) + 
-                                     wghz*(   (1-wghy)*( (1-wghx)*mMaterial_cs[gr](1,i0,j0,k0+1) + 
+                                     wghy*(    (1-wghx)*mMaterial_cs[gr](1,i0,j0+1,k0) +
+                                     wghx*mMaterial_cs[gr](1,i0+1,j0+1,k0) ) ) +
+                                     wghz*(   (1-wghy)*( (1-wghx)*mMaterial_cs[gr](1,i0,j0,k0+1) +
                                      wghx*mMaterial_cs[gr](1,i0+1,j0,k0+1) ) +
-                                     wghy*(   (1-wghx)*mMaterial_cs[gr](1,i0,j0+1,k0+1)+ 
+                                     wghy*(   (1-wghx)*mMaterial_cs[gr](1,i0,j0+1,k0+1)+
                                      wghx*mMaterial_cs[gr](1,i0+1,j0+1,k0+1) ) );
 
                    if( use_q ) {
-                      xip[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_qp[gr](1,i0,j0,k0) + 
+                      xip[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_qp[gr](1,i0,j0,k0) +
                                         wghx*mMaterial_qp[gr](1,i0+1,j0,k0) ) +
-                                        wghy*( (1-wghx)*mMaterial_qp[gr](1,i0,j0+1,k0) + 
-                                        wghx*mMaterial_qp[gr](1,i0+1,j0+1,k0) ) ) + 
-                                        wghz*( (1-wghy)*(   (1-wghx)*mMaterial_qp[gr](1,i0,j0,k0+1) + 
+                                        wghy*( (1-wghx)*mMaterial_qp[gr](1,i0,j0+1,k0) +
+                                        wghx*mMaterial_qp[gr](1,i0+1,j0+1,k0) ) ) +
+                                        wghz*( (1-wghy)*(   (1-wghx)*mMaterial_qp[gr](1,i0,j0,k0+1) +
                                         wghx*mMaterial_qp[gr](1,i0+1,j0,k0+1) ) +
-                                        wghy*( (1-wghx)*mMaterial_qp[gr](1,i0,j0+1,k0+1)+ 
+                                        wghy*( (1-wghx)*mMaterial_qp[gr](1,i0,j0+1,k0+1)+
                                         wghx*mMaterial_qp[gr](1,i0+1,j0+1,k0+1) ) );
 
-                      xis[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_qs[gr](1,i0,j0,k0) + 
+                      xis[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_qs[gr](1,i0,j0,k0) +
                                         wghx*mMaterial_qs[gr](1,i0+1,j0,k0) ) +
-                                        wghy*(      (1-wghx)*mMaterial_qs[gr](1,i0,j0+1,k0) + 
-                                        wghx*mMaterial_qs[gr](1,i0+1,j0+1,k0) ) ) + 
-                                        wghz*(   (1-wghy)*(   (1-wghx)*mMaterial_qs[gr](1,i0,j0,k0+1) + 
+                                        wghy*(      (1-wghx)*mMaterial_qs[gr](1,i0,j0+1,k0) +
+                                        wghx*mMaterial_qs[gr](1,i0+1,j0+1,k0) ) ) +
+                                        wghz*(   (1-wghy)*(   (1-wghx)*mMaterial_qs[gr](1,i0,j0,k0+1) +
                                         wghx*mMaterial_qs[gr](1,i0+1,j0,k0+1) ) +
-                                        wghy*(     (1-wghx)*mMaterial_qs[gr](1,i0,j0+1,k0+1)+ 
+                                        wghy*(     (1-wghx)*mMaterial_qs[gr](1,i0,j0+1,k0+1)+
                                         wghx*mMaterial_qs[gr](1,i0+1,j0+1,k0+1) ) );
                    }
 
-		} // End if inside
-		else
-		   outside++;
-	    } // End for i
-	  } // End for j
+                } // End if inside
+                else
+                   outside++;
+            } // End for i
+          } // End for j
         } // End for k
 
-    /* debug */ 
-    /* if (mEW->getRank() == 0) */ 
+    /* debug */
+    /* if (mEW->getRank() == 0) */
     /*   printf("After interpolation from sfile\n"); */
 
     /* printf("Rank %d grid %d: rho min = %.2f, max = %.2f\n", mEW->getRank(), g, rho[g].minimum(), rho[g].maximum()); */
@@ -318,17 +318,17 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
       outsideSum=outsidesumi;
    }
    if (mEW->getRank() == 0)
-      //      cout << endl 
+      //      cout << endl
       //           << "--------------------------------------------------------------\n"
       //           << "Sfile Initialized Node Types: " << endl
       //           << "   Material:        " << materialSum << endl
       //           << endl
       //           << "*Outside Domain:    " << outsideSum << endl
-      //           << endl 
+      //           << endl
       //           << "--------------------------------------------------------------\n"
       //           << endl;
       cout << endl
-	   << "sfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
+           << "sfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
 
 }
 
@@ -368,7 +368,7 @@ void MaterialSfile::read_sfile()
         }
      }
      else {
-        if( zmin > (mEW->m_kStart[g]-1)*h + mEW->m_zmin[g] ) 
+        if( zmin > (mEW->m_kStart[g]-1)*h + mEW->m_zmin[g] )
            zmin = (mEW->m_kStart[g]-1)*h + mEW->m_zmin[g];
         if( zmax < (mEW->m_kEnd[g]-1)*h + mEW->m_zmin[g] )
            zmax = (mEW->m_kEnd[g]-1)*h + mEW->m_zmin[g];
@@ -422,7 +422,7 @@ void MaterialSfile::read_sfile()
   // ---------- azimuth on file
   double alpha = lonlataz[2], lon0 = lonlataz[0], lat0 = lonlataz[1];
   CHECK_INPUT( fabs(alpha-mEW->getGridAzimuth()) < 1e-6, "ERROR: sfile azimuth must be equal "
-               "to coordinate system azimuth" << " azimuth on sfile = " << alpha << 
+               "to coordinate system azimuth" << " azimuth on sfile = " << alpha <<
                " azimuth of coordinate sytem = " << mEW->getGridAzimuth() );
 
   // ---------- origin on file
@@ -440,7 +440,7 @@ void MaterialSfile::read_sfile()
     printf("              azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
     printf("              nblocks=%i\n", m_npatches);
   }
-     
+
   m_hh.resize(m_npatches);
   m_ni.resize(m_npatches);
   m_nj.resize(m_npatches);
@@ -501,7 +501,7 @@ void MaterialSfile::read_sfile()
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 
-  // Intersect local grid with grid on sfile, assume all patches have same x- and y- extent. 
+  // Intersect local grid with grid on sfile, assume all patches have same x- and y- extent.
   float_sw4 xminrf = m_x0,    xmaxrf = m_x0+(m_ni[0]-1)*m_hh[0];
   float_sw4 yminrf = m_y0,    ymaxrf = m_y0+(m_nj[0]-1)*m_hh[0];
   float_sw4 zminrf = (float_sw4)min_max_z[0], zmaxrf = (float_sw4)min_max_z[1];
@@ -518,8 +518,8 @@ void MaterialSfile::read_sfile()
      m_zminloc = zminrf;
   if( zmaxrf < m_zmaxloc )
      m_zmaxloc = zmaxrf;
-  
-  
+
+
   mMaterial_rho.resize(m_npatches);
   mMaterial_cp.resize(m_npatches);
   mMaterial_cs.resize(m_npatches);
@@ -576,8 +576,8 @@ void MaterialSfile::read_sfile()
         if (mEW->getVerbosity() >= 3) {
            cout << "myRank = " << mEW->getRank() << endl;
            cout << "patch nr " << p << " i " << m_ifirst[p] << " " << m_ilast[p] <<
-    	  " j " << m_jfirst[p] << " " << m_jlast[p] << 
-    	  " k " << m_kfirst[p] << " " << m_klast[p] << endl;
+          " j " << m_jfirst[p] << " " << m_jlast[p] <<
+          " k " << m_kfirst[p] << " " << m_klast[p] << endl;
            cout << "nr components " << ncblock[p] << endl;
            cout << "patch nr global size " << m_ni[p] << " x " << m_nj[p] << " x " << m_nk[p] << endl;
         }
@@ -618,7 +618,7 @@ void MaterialSfile::read_sfile()
         cout << "Processor " << mEW->getRank() << " allocation of mMaterial failed." << endl;
         cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
            " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
-           " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << 
+           " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] <<
            " Exception= " << ba.what() << endl;
         MPI_Abort(MPI_COMM_WORLD,0);
      }
@@ -655,17 +655,17 @@ void MaterialSfile::read_sfile()
         datatype_id = H5Dget_type(dataset_id);
         prec = (int)H5Tget_size(datatype_id);
         H5Tclose(datatype_id);
-  
-        if (prec == 4) 
+
+        if (prec == 4)
             h5_dtype = H5T_NATIVE_FLOAT;
-        else if (prec == 8) 
+        else if (prec == 8)
             h5_dtype = H5T_NATIVE_DOUBLE;
     }
-    if (prec == 4) 
+    if (prec == 4)
         in_data = (void*)f_data;
-    else if (prec == 8) 
+    else if (prec == 8)
         in_data = (void*)d_data;
-  
+
     if (mEW->getRank() == 0) {
       ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
       ASSERT(ierr >= 0);
@@ -676,7 +676,7 @@ void MaterialSfile::read_sfile()
     if (prec == 4) { mInterface[p].assign(f_data); }
     else {           mInterface[p].assign(d_data); }
 
-    /* printf("Rank %d: interface %d min = %.2f, max = %.2f\n", */ 
+    /* printf("Rank %d: interface %d min = %.2f, max = %.2f\n", */
     /*         mEW->getRank(), p,  mInterface[p].minimum(), mInterface[p].maximum()); */
 
     if (roworder)
@@ -697,16 +697,16 @@ void MaterialSfile::read_sfile()
 
       /* // debug */
       /* printf("\nRank %d: start (%d, %d, %d), count (%d, %d, %d), global (%d, %d, %d), %d points\n\n", */
-      /*         mEW->getRank(), start[0], start[1], start[2], local[0], local[1], local[2], */ 
+      /*         mEW->getRank(), start[0], start[1], start[2], local[0], local[1], local[2], */
       /*         global[0], global[1], global[2], mMaterial_rho[p].m_npts); */
       /* fflush(stdout); */
 
       float  *f_data = new float[mMaterial_rho[p].m_npts];
       double *d_data = new double[mMaterial_rho[p].m_npts];
 
-      if (prec == 4) 
+      if (prec == 4)
           in_data = (void*)f_data;
-      else if (prec == 8) 
+      else if (prec == 8)
           in_data = (void*)d_data;
 
 
@@ -742,7 +742,7 @@ void MaterialSfile::read_sfile()
       ierr = H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, h5_start, NULL, h5_count, NULL);
       ASSERT(ierr >= 0);
 
-      // Read each var individually 
+      // Read each var individually
       ierr = H5Dread(rho_id, h5_dtype, memspace_id, filespace_id, dxpl, in_data);
       ASSERT(ierr >= 0);
       if( prec == 4 ) { mMaterial_rho[p].assign(f_data); }
@@ -822,7 +822,7 @@ void MaterialSfile::fill_in_fluids()
   if( !m_outside ) {
     for( int p=m_npatches-1 ; p >= 0; p-- ) {
       if( !m_isempty[p] ) {
-#pragma omp parallel for	 
+#pragma omp parallel for
         for( int j=mMaterial_cs[p].m_jb ; j <= mMaterial_cs[p].m_je ; j++ ) {
            for( int i=mMaterial_cs[p].m_ib ; i <= mMaterial_cs[p].m_ie ; i++ ) {
              int k0 = mMaterial_cs[p].m_kb;
@@ -840,15 +840,15 @@ void MaterialSfile::fill_in_fluids()
                    id = static_cast<int>( 1 + trunc(xm/m_hh[pd]) );
                    jd = static_cast<int>( 1 + trunc(ym/m_hh[pd]) );
                    kd = mMaterial_cs[pd].m_kb; // get value from top of block pd
-              
-                   if (! (id >= mMaterial_cs[pd].m_ib && id <= mMaterial_cs[pd].m_ie && 
+
+                   if (! (id >= mMaterial_cs[pd].m_ib && id <= mMaterial_cs[pd].m_ie &&
                           jd >= mMaterial_cs[pd].m_jb && jd <= mMaterial_cs[pd].m_je )) {
                       // out of bounds: find nearest interior point
                       if (id < mMaterial_cs[pd].m_ib) id=mMaterial_cs[pd].m_ib;
                       if (id > mMaterial_cs[pd].m_ie) id=mMaterial_cs[pd].m_ie;
                       if (jd < mMaterial_cs[pd].m_jb) jd=mMaterial_cs[pd].m_jb;
                       if (jd > mMaterial_cs[pd].m_je) jd=mMaterial_cs[pd].m_je;
-                      
+
                       printf("WARNING: nearest grid point to (%e,%e) was outside local part of block pd=%i\n"
                        " using id=%i, jd=%i, at (%e, %e)\n", xm, ym, pd, id, jd, (id-1)*m_hh[pd], (jd-1)*m_hh[pd]);
 
@@ -881,7 +881,7 @@ void MaterialSfile::fill_in_fluids()
            } // End for i
          } // End for j
        } // End if !m_isempty
-     } // End for p 
+     } // End for p
   } // End if !outside
 }
 
@@ -894,36 +894,36 @@ void MaterialSfile::material_check( bool water )
       double csmin=1e38,cpmin=1e38,cratmin=1e38,csmax=-1e38,cpmax=-1e38,cratmax=-1e38;
       double rhomin=1e38, rhomax=-1e38;
       for( int k=mMaterial_cs[p].m_kb ; k<= mMaterial_cs[p].m_ke ; k++ )
-	 for( int j=mMaterial_cs[p].m_jb ; j<= mMaterial_cs[p].m_je ; j++ )
-	    for( int i=mMaterial_cs[p].m_ib ; i<= mMaterial_cs[p].m_ie ; i++ )
-	    {
-	       if( water || mMaterial_cs[p](1,i,j,k) != -999 )
-	       {
-		  if( mMaterial_rho[p](1,i,j,k) < rhomin )
-		     rhomin = mMaterial_rho[p](1,i,j,k);
-		  if( mMaterial_rho[p](1,i,j,k) > rhomax )
-		     rhomax = mMaterial_rho[p](1,i,j,k);
-		  if( mMaterial_cs[p](1,i,j,k) < csmin )
-		     csmin = mMaterial_cs[p](1,i,j,k);
-		  if( mMaterial_cs[p](1,i,j,k) > csmax )
-		     csmax = mMaterial_cs[p](1,i,j,k);
-		  if( mMaterial_cp[p](1,i,j,k) < cpmin )
-		     cpmin = mMaterial_cp[p](1,i,j,k);
-		  if( mMaterial_cp[p](1,i,j,k) > cpmax )
-		     cpmax = mMaterial_cp[p](1,i,j,k);
-		  double crat = mMaterial_cp[p](1,i,j,k)/mMaterial_cs[p](1,i,j,k);
-		  if( crat < cratmin ) {
-		     cratmin = crat;
-		     if( printsmallcpcs && crat < 1.41 ) {
-			cout << "crat= " << crat << " at " << i << " " <<  j << " " << k << endl;
-			cout << " material is " << mMaterial_rho[p](1,i,j,k) << " " << mMaterial_cp[p](1,i,j,k) << " " 
-			     << mMaterial_cs[p](1,i,j,k) << " " << mMaterial_qp[p](1,i,j,k) << " " << mMaterial_qs[p](1,i,j,k) << endl;
-		     }
-		  }
-		  if( crat > cratmax )
-		     cratmax = crat;
-	       }
-	    }
+         for( int j=mMaterial_cs[p].m_jb ; j<= mMaterial_cs[p].m_je ; j++ )
+            for( int i=mMaterial_cs[p].m_ib ; i<= mMaterial_cs[p].m_ie ; i++ )
+            {
+               if( water || mMaterial_cs[p](1,i,j,k) != -999 )
+               {
+                  if( mMaterial_rho[p](1,i,j,k) < rhomin )
+                     rhomin = mMaterial_rho[p](1,i,j,k);
+                  if( mMaterial_rho[p](1,i,j,k) > rhomax )
+                     rhomax = mMaterial_rho[p](1,i,j,k);
+                  if( mMaterial_cs[p](1,i,j,k) < csmin )
+                     csmin = mMaterial_cs[p](1,i,j,k);
+                  if( mMaterial_cs[p](1,i,j,k) > csmax )
+                     csmax = mMaterial_cs[p](1,i,j,k);
+                  if( mMaterial_cp[p](1,i,j,k) < cpmin )
+                     cpmin = mMaterial_cp[p](1,i,j,k);
+                  if( mMaterial_cp[p](1,i,j,k) > cpmax )
+                     cpmax = mMaterial_cp[p](1,i,j,k);
+                  double crat = mMaterial_cp[p](1,i,j,k)/mMaterial_cs[p](1,i,j,k);
+                  if( crat < cratmin ) {
+                     cratmin = crat;
+                     if( printsmallcpcs && crat < 1.41 ) {
+                        cout << "crat= " << crat << " at " << i << " " <<  j << " " << k << endl;
+                        cout << " material is " << mMaterial_rho[p](1,i,j,k) << " " << mMaterial_cp[p](1,i,j,k) << " "
+                             << mMaterial_cs[p](1,i,j,k) << " " << mMaterial_qp[p](1,i,j,k) << " " << mMaterial_qs[p](1,i,j,k) << endl;
+                     }
+                  }
+                  if( crat > cratmax )
+                     cratmax = crat;
+               }
+            }
       double cmins[4]={csmin,cpmin,cratmin,rhomin}, cmaxs[4]={csmax,cpmax,cratmax,rhomax};
       double cminstot[4], cmaxstot[4];
       MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, mEW->m_1d_communicator );
@@ -931,17 +931,17 @@ void MaterialSfile::material_check( bool water )
       int myid;
       MPI_Comm_rank(mEW->m_1d_communicator,&myid);
       if( myid == 0 )
-	 //	 if( mEW->getRank()==0 )
+         //	 if( mEW->getRank()==0 )
       {
-	 if( p== 1 && !water )
-	    cout << "S-file limits, away from water: " << endl;
-	 else if( p== 1 )
-	    cout << "S-file limits : " << endl;
-	 cout << "  Patch no " << p << " : " << endl;
-	 cout << "    cp    min and max " << cminstot[1] << " " << cmaxstot[1] << endl;
-	 cout << "    cs    min and max " << cminstot[0] << " " << cmaxstot[0] << endl;
-	 cout << "    cp/cs min and max " << cminstot[2] << " " << cmaxstot[2] << endl;
-	 cout << "    rho   min and max " << cminstot[3] << " " << cmaxstot[3] << endl;
+         if( p== 1 && !water )
+            cout << "S-file limits, away from water: " << endl;
+         else if( p== 1 )
+            cout << "S-file limits : " << endl;
+         cout << "  Patch no " << p << " : " << endl;
+         cout << "    cp    min and max " << cminstot[1] << " " << cmaxstot[1] << endl;
+         cout << "    cs    min and max " << cminstot[0] << " " << cmaxstot[0] << endl;
+         cout << "    cp/cs min and max " << cminstot[2] << " " << cmaxstot[2] << endl;
+         cout << "    rho   min and max " << cminstot[3] << " " << cmaxstot[3] << endl;
       }
    }
 }

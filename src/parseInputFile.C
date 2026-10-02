@@ -3,57 +3,92 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "AnisotropicMaterialBlock.h"
+#include "ESSI3D.h"
+#else // SW4 backend
 #include "mpi.h"
 
+#endif // SW4 backend
 #include "EW.h"
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "Filter.h"
+#include "Image3D.h"
+#else // SW4 backend
 #include "version.h"
 #include "Require.h"
 #include "nearlyEqual.h"
 #include "boundaryConditionTypes.h"
 #include "AnisotropicMaterialBlock.h"
+#endif // SW4 backend
 #include "MaterialBlock.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "MaterialGMG.h"
+#include "MaterialIfile.h"
+#include "MaterialInvtest.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "MaterialPfile.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "MaterialIfile.h"
 #include "MaterialVolimagefile.h"
+#endif // SW4 backend
 #include "MaterialRfile.h"
 #include "MaterialSfile.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "MaterialVolimagefile.h"
+#include "Require.h"
+#else // SW4 backend
 #include "MaterialGMG.h"
 #include "MaterialInvtest.h"
+#endif // SW4 backend
 #include "TimeSeries.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "boundaryConditionTypes.h"
+#include "mpi.h"
+#include "nearlyEqual.h"
+#else // SW4 backend
 #include "Filter.h"
 #include "Image3D.h"
 #include "ESSI3D.h"
 #include "SfileOutput.h"
+#endif // SW4 backend
 #include "sacutils.h"
 //#include "TestGrid.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "version.h"
+//#include "TestGrid.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "GridGeneratorGaussianHill.h"
 #include "GridGeneratorGeneral.h"
 
@@ -61,15 +96,33 @@
 #include "readhdf5.h"
 #endif
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <algorithm>
+#else // SW4 backend
+#endif // SW4 backend
 #include <cstring>
-#include <iostream>
+#if defined(SW4_USE_RAJA) // SW4 backend
 #include <fstream>
+#else // SW4 backend
+#endif // SW4 backend
+#include <iostream>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+#include <fstream>
+#endif // SW4 backend
 #include <sstream>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>
 #include <time.h>
 
+#endif // SW4 backend
 using namespace std;
 
 #define SQR(x) ((x)*(x))
@@ -112,7 +165,7 @@ int computeEndGridPoint( float_sw4 maxval, float_sw4 dh )
       x += dh;
       pts++;
     }
-  
+
   // 1 based indexing
   pts++;
 
@@ -144,7 +197,7 @@ int gcd( int a, int b )
 
 //   if (mystr.substr(lenStr-lenEnd, lenEnd) == end)
 //      return true;
-//   else 
+//   else
 //      return false;
 //}
 
@@ -156,22 +209,22 @@ bool EW::startswith(const char begin[], char *line)
   // We ignore any preceeding whitespace
   while (strncmp(line, " ", 1) == 0 || strncmp(line, "\t", 1) == 0)
     line++;
-    
+
   if (strncmp(begin, line, lenb) == 0)
      return true;
-  else 
+  else
      return false;
 }
 
 //-----------------------------------------------------------------------
-void EW::deprecatedOption(const string& command, 
-		      const string& oldone, 
-		      const string& newone)
+void EW::deprecatedOption(const string& command,
+                      const string& oldone,
+                      const string& newone)
 {
   if (m_myRank == 0)
-    cout << "DeprecationWarning: " 
-	 << command << " option " << oldone << " is no longer supported.  Use "
-	 << newone << " instead." << endl;
+    cout << "DeprecationWarning: "
+         << command << " option " << oldone << " is no longer supported.  Use "
+         << newone << " instead." << endl;
 }
 
 //void unchecked(const char* cmd)
@@ -185,13 +238,13 @@ void EW::deprecatedOption(const string& command,
 //}
 
 //-----------------------------------
-// 
+//
 // Note that parseInputFile() calls a lot of member functions of the EW class that
-// should not be called after the initialization of the EW object is completed. 
+// should not be called after the initialization of the EW object is completed.
 // Make all these functions private!
 //
 bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
-			 vector< vector<TimeSeries*> > & a_GlobalTimeSeries )
+                         vector< vector<TimeSeries*> > & a_GlobalTimeSeries )
 {
   char buffer[512];
   ifstream inputFile;
@@ -208,7 +261,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
       cerr << endl << "ERROR OPENING INPUT FILE: " << mName << endl << endl;
     return false;
   }
-  bool foundGrid = false;
+
+bool foundGrid = false;
 
 // tmp (the fileio command has not yet been parsed, so we don't know mVerbose
 //  cout << "********Reading the input file, proc=" << m_myRank << endl;
@@ -226,7 +280,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // process the testrayleigh command to enable a periodic domain in the (x,y)-directions
 // these commands can enter data directly the object (this->)
   while (!inputFile.eof())
-  {    
+  {
      inputFile.getline(buffer,512);
      if (startswith("testrayleigh", buffer) )
      {
@@ -234,22 +288,22 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
      }
      else if( startswith("testenergy",buffer) )
      {
-	m_doubly_periodic = checkTestEnergyPeriodic(buffer);
+        m_doubly_periodic = checkTestEnergyPeriodic(buffer);
      }
      else if (startswith("refinement",buffer) )
      {
-	// mesh refinements require 3 ghost points, must know 
-	// before processing grid command.
-	m_mesh_refinements = true;
+        // mesh refinements require 3 ghost points, must know
+        // before processing grid command.
+        m_mesh_refinements = true;
      }
      else if( startswith("supergrid",buffer) )
      {
-	// If supergrid damping is 6th order, 3 ghost points are needed, must know 
-	// before processing grid command.
-	processSupergrid(buffer);
+        // If supergrid damping is 6th order, 3 ghost points are needed, must know
+        // before processing grid command.
+        processSupergrid(buffer);
      }
      else if( startswith("developer",buffer) )
-	processDeveloper(buffer); // Need this early to determine array index order before any arrays are used.
+        processDeveloper(buffer); // Need this early to determine array index order before any arrays are used.
   }
 
   inputFile.clear();
@@ -265,7 +319,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 
 // these commands can enter data directly into the object (this->)
   while (!inputFile.eof())
-  {    
+  {
      inputFile.getline(buffer,512);
      if( startswith("grid", buffer) )
      {
@@ -279,7 +333,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
      }
      else if (startswith("refinement", buffer))
      {
-	processRefinement(buffer);
+        processRefinement(buffer);
      }
      else if (startswith("topography", buffer))
      {
@@ -299,13 +353,14 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
      }
      else if (startswith("prefilter", buffer))
      {
-       // before reading any rupture command, we need to know 
-       // if they need to be prefiltered  
+       // before reading any rupture command, we need to know
+       // if they need to be prefiltered
        processPrefilter(buffer);
      }
   }
 // make sure there was a grid command
-  if (!foundGrid)
+
+if (!foundGrid)
   {
     if (m_myRank == 0)
     {
@@ -321,7 +376,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
       cerr << "Error: Attenuation not implemented with anisotropy " << endl;
       return false; // unsuccessful
     }
-  }  
+  }
 
 //  if( m_mesh_refinements && (m_anisotropic || (m_use_attenuation && m_number_mechanisms>0) ) )
   if( m_mesh_refinements && m_anisotropic )
@@ -336,72 +391,113 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 
 // sort and correct vector 'm_refinementBoundaries'. Initialize if not already available
   cleanUpRefinementLevels();
-  
+
   inputFile.clear();
   inputFile.seekg(0, ios::beg); // reset file pointer to the beginning of the input file
 
-// At this point we only allocate solution arrays for the Cartesian grids 
+// At this point we only allocate solution arrays for the Cartesian grids
 // Need to read the topography information before we can decide on sizes for the
 // curvilinear grid.
-  allocateCartesianSolverArrays(m_global_zmax); 
+  allocateCartesianSolverArrays(m_global_zmax);
 
 // setup 2D communicators on the finest grid so that we can smooth the topography
   setup2D_MPICommunications();
 
 // deal with topography
-  if (m_topography_exists)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
+  // deal with topography
+
+#else // SW4 backend
+#endif // SW4 backend
+if (m_topography_exists)
   {
      if (m_topoInputStyle == EW::GridFile)
      {
- 	extractTopographyFromGridFile(m_topoFileName);
+        extractTopographyFromGridFile(m_topoFileName);
      }
      else if (m_topoInputStyle == EW::CartesianGrid)
      {
- 	extractTopographyFromCartesianFile(m_topoFileName);
+        extractTopographyFromCartesianFile(m_topoFileName);
      }
      else if (m_topoInputStyle == EW::TopoImage)
      {
- 	extractTopographyFromImageFile(m_topoFileName);
+        extractTopographyFromImageFile(m_topoFileName);
      }
      else if (m_topoInputStyle == EW::GaussianHill) // assumed to populate all grid points
      {
         m_gridGenerator->fill_topo( mTopo, mGridSize[mNumberOfGrids-1] );
         m_gridGenerator->fill_topo( mTopoGridExt, mGridSize[mNumberOfGrids-1] );
         // 	buildGaussianHillTopography(m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc);
-     }      
+     }
      else if( m_topoInputStyle == EW::Rfile )
-	extractTopographyFromRfile( m_topoFileName );
+        extractTopographyFromRfile( m_topoFileName );
      else if( m_topoInputStyle == EW::Sfile )
-	extractTopographyFromSfile( m_topoFileName );
+        extractTopographyFromSfile( m_topoFileName );
      else if( m_topoInputStyle == EW::GMG )
-	extractTopographyFromGMG( m_topoFileName );
+        extractTopographyFromGMG( m_topoFileName );
 
 // preprocess the mTopo array
      if (m_topoInputStyle != EW::GaussianHill) // no smoothing or extrapolation for a gaussian hill
      {
 // 1. fill in any undefined ghost point values by extrapolation
-	extrapolateTopo(mTopo);
+        extrapolateTopo(mTopo);
 // 2. check that all values are defined...
-	checkTopo(mTopo);
+        checkTopo(mTopo);
 // 3. smooth the topo
- 	smoothTopography(m_maxIter);
+        smoothTopography(m_maxIter);
 
 // Assign interface surfaces (needed when there is MR in the curvilinear portion of the grid)
         m_gridGenerator->assignInterfaceSurfaces( this, mTopoGridExt );
      }
-     
+
 // // 3. Figure out the number of grid points in the vertical direction and allocate solution arrays on the curvilinear grid
-     allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_STREAM;
+#endif
+    // // 3. Figure out the number of grid points in the vertical direction and
+    // allocate solution arrays on the curvilinear grid
+
+#else // SW4 backend
+#endif // SW4 backend
+allocateCurvilinearArrays(); // need to assign  m_global_nz[g] = klast - m_ghost_points; + allocate mUacc
   }
   else
   {
-     if (proc_zero_evzero())
-	cout << endl << 
-	   "*** No topography command found in input file. Using z=0 as free surface boundary ***" << endl << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0)
+      cout << endl
+           << "*** No topography command found in input file. Using z=0 as "
+              "free surface boundary ***"
+
+#else // SW4 backend
+if (proc_zero_evzero())
+        cout << endl <<
+           "*** No topography command found in input file. Using z=0 as free surface boundary ***"
+#endif // SW4 backend
+<< endl << endl;
   }
 
 // setup communicators for 3D solutions on all grids
-  setupMPICommunications();
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
+  // setup communicators for 3D solutions on all grids
+
+#else // SW4 backend
+#endif // SW4 backend
+setupMPICommunications();
 
 
 // Make curvilinear grid and compute metric
@@ -426,14 +522,29 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   //  }
 
 // output grid size info
-  if (proc_zero_evzero())
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0) {
+
+#else // SW4 backend
+if (proc_zero_evzero())
   {
-    int nx, ny, nz;
+
+#endif // SW4 backend
+int nx, ny, nz;
     double nTot=0.;
     printf("\nGlobal grid sizes (without ghost points)\n");
 //             1234  12345679  12345679  12345679  12345679
-    printf("Grid         h        Nx        Ny        Nz       Points      Type\n");
-    for (int g = 0; g < mNumberOfGrids; g++)
+    printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Grid         h        Nx        Ny        Nz       Points      "
+        "Type\n");
+
+#else // SW4 backend
+"Grid         h        Nx        Ny        Nz       Points      Type\n");
+
+#endif // SW4 backend
+for (int g = 0; g < mNumberOfGrids; g++)
     {
       nx = m_global_nx[g];
       ny = m_global_ny[g];
@@ -443,7 +554,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
              (g < mNumberOfCartesianGrids) ? "Cartesian": "Curvilinear");
     }
     printf("Total number of grid points (without ghost points): %g\n\n", nTot);
-      
+
   }
   //----------------------------------------------------------
   // Now onto the rest of the input file...
@@ -454,31 +565,31 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 
      if (strlen(buffer) > 0) // empty lines produce this
      {
-       if (startswith("#", buffer) || 
-	   startswith("grid", buffer) ||
-	   startswith("refinement", buffer) || 
-	   startswith("topography", buffer) || 
-	   startswith("attenuation", buffer) || 
-	   startswith("anisotropy", buffer) || 
-	   startswith("fileio", buffer) ||
-	   startswith("supergrid", buffer) ||
-	   startswith("prefilter", buffer) ||
-	   startswith("developer", buffer) ||
-	   startswith("time", buffer) ||
+       if (startswith("#", buffer) ||
+           startswith("grid", buffer) ||
+           startswith("refinement", buffer) ||
+           startswith("topography", buffer) ||
+           startswith("attenuation", buffer) ||
+           startswith("anisotropy", buffer) ||
+           startswith("fileio", buffer) ||
+           startswith("supergrid", buffer) ||
+           startswith("prefilter", buffer) ||
+           startswith("developer", buffer) ||
+           startswith("time", buffer) ||
 // ignore material optimizer commands
- 	   startswith("event", buffer) ||
- 	   startswith("mparcart", buffer) ||
-	   startswith("mpallpts", buffer) ||
- 	   startswith("mrun", buffer) ||
- 	   startswith("mscalefactors", buffer) ||
- 	   startswith("lbfgs", buffer) ||
- 	   startswith("nlcg", buffer) ||
- 	   startswith("mfsurf", buffer) ||
- 	   startswith("mimage", buffer) ||	   	   
- 	   startswith("m3dimage", buffer) ||	   	   
- 	   startswith("regularize", buffer) ||	   	   
- 	   startswith("mtypx", buffer) ||
-	   startswith("\n", buffer) || startswith("\r", buffer) )
+           startswith("event", buffer) ||
+           startswith("mparcart", buffer) ||
+           startswith("mpallpts", buffer) ||
+           startswith("mrun", buffer) ||
+           startswith("mscalefactors", buffer) ||
+           startswith("lbfgs", buffer) ||
+           startswith("nlcg", buffer) ||
+           startswith("mfsurf", buffer) ||
+           startswith("mimage", buffer) ||
+           startswith("m3dimage", buffer) ||
+           startswith("regularize", buffer) ||
+           startswith("mtypx", buffer) ||
+           startswith("\n", buffer) || startswith("\r", buffer) )
 // || startswith("\r", buffer) || startswith("\0", buffer))
        {
 // Ignore commented lines, newlines,
@@ -487,27 +598,27 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
        else if (startswith("gmt", buffer))
          processGMT(buffer);
        else if (startswith("checkpoint",buffer))
-	  processCheckPoint(buffer);
+          processCheckPoint(buffer);
        else if (startswith("globalmaterial", buffer))
          processGlobalMaterial(buffer);
        else if (!m_inverse_problem && (startswith("rechdf5", buffer) || startswith("sachdf5", buffer)) ) // was called "sac" in WPP
-	 processReceiverHDF5(buffer, a_GlobalTimeSeries);
+         processReceiverHDF5(buffer, a_GlobalTimeSeries);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
-	 processReceiver(buffer, a_GlobalTimeSeries);
-       else if (m_inverse_problem && (startswith("obshdf5", buffer) || startswith("observationhdf5", buffer))) // 
-	  processObservationHDF5(buffer, a_GlobalTimeSeries);
-       else if (m_inverse_problem && startswith("obs", buffer)) // 
-	  processObservation(buffer, a_GlobalTimeSeries);
-       else if (m_inverse_problem && startswith("scalefactors", buffer)) // 
-	  processScaleFactors(buffer);
-       else if (m_inverse_problem && startswith("cg", buffer)) // 
-	  processCG(buffer);
+         processReceiver(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && (startswith("obshdf5", buffer) || startswith("observationhdf5", buffer))) //
+          processObservationHDF5(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && startswith("obs", buffer)) //
+          processObservation(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && startswith("scalefactors", buffer)) //
+          processScaleFactors(buffer);
+       else if (m_inverse_problem && startswith("cg", buffer)) //
+          processCG(buffer);
        // else if (startswith("energy", buffer))
        //   processEnergy(buffer);
        else if (startswith("twilight", buffer))
-	 processTwilight(buffer);
+         processTwilight(buffer);
        else if (startswith("testpointsource", buffer))
-	 processTestPointSource(buffer);
+         processTestPointSource(buffer);
        else if (startswith("testlamb", buffer))
          processTestLamb(buffer);
        else if (startswith("testrayleigh", buffer))
@@ -515,29 +626,29 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
        else if (startswith("testenergy", buffer))
          processTestEnergy(buffer);
        else if (startswith("source", buffer))
-	 processSource(buffer, a_GlobalUniqueSources);
+         processSource(buffer, a_GlobalUniqueSources);
        else if (startswith("rupturehdf5", buffer))
-	 processRuptureHDF5(buffer, a_GlobalUniqueSources);
+         processRuptureHDF5(buffer, a_GlobalUniqueSources);
        else if (startswith("rupture", buffer))
-	 processRupture(buffer, a_GlobalUniqueSources);
+         processRupture(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
-	 processMaterialBlock(buffer, blockCount);
+         processMaterialBlock(buffer, blockCount);
        else if (startswith("ablock", buffer) && m_anisotropic )
-	 processAnisotropicMaterialBlock(buffer, ablockCount);
+         processAnisotropicMaterialBlock(buffer, ablockCount);
        else if (startswith("pfile", buffer))
-	 processMaterialPfile( buffer );
+         processMaterialPfile( buffer );
        else if (startswith("rfile", buffer))
-	 processMaterialRfile( buffer );
+         processMaterialRfile( buffer );
        else if (startswith("sfileoutput", buffer))
           processSfileOutput(buffer);
        else if (startswith("sfile", buffer))
-	 processMaterialSfile( buffer );
+         processMaterialSfile( buffer );
        else if (startswith("gmg", buffer))
-	 processMaterialGMG( buffer );
+         processMaterialGMG( buffer );
        else if (startswith("vimaterial", buffer))
-	 processMaterialVimaterial( buffer );
+         processMaterialVimaterial( buffer );
        else if (startswith("invtestmaterial", buffer))
-	  processMaterialInvtest(buffer);
+          processMaterialInvtest(buffer);
        else if (startswith("ifile", buffer))
           processMaterialIfile(buffer);
        else if (startswith("material", buffer))
@@ -564,22 +675,30 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
           processGeodynbc(buffer);
        else if( startswith("randomize", buffer ) )
        {
-	  //          processRandomize(buffer);
-	  if( m_myRank == 0 )
-	     cout << "randomize command is no longer supported. Use `randomblock' instead" <<endl;
+          //          processRandomize(buffer);
+          if( m_myRank == 0 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "randomize command is no longer supported. Use `randomblock' "
+                  "instead"
+
+#else // SW4 backend
+cout << "randomize command is no longer supported. Use `randomblock' instead"
+#endif // SW4 backend
+<<endl;
        }
        else if( startswith("randomblock", buffer ) )
           processRandomBlock(buffer);
        else if (!inputFile.eof() && m_myRank == 0)
        {
-	 // Maybe just reached eof, don't want to echo
-	 // the ignoring command line for nothing
-	 cout << "*** Ignoring command: '" << buffer << "'" << endl;
+         // Maybe just reached eof, don't want to echo
+         // the ignoring command line for nothing
+         cout << "*** Ignoring command: '" << buffer << "'" << endl;
        }
      } // end if strlen(buffer) > 0
-     
-  } // end while !inputFile.eof() 
-  
+
+  } // end while !inputFile.eof()
+
   if (m_myRank == 0)
      cout << endl;
 
@@ -590,7 +709,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   // {
   //   cout << "INFO: m_mesh_refinements=" << m_mesh_refinements << " m_use_attenuation=" << m_use_attenuation << " mOrder=" << mOrder << endl;
   // }
-  
+
   if (mVerbose >=3 && proc_zero())
     cout << "********Done reading the input file*********" << endl;
 
@@ -598,7 +717,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   MPI_Barrier(MPI_COMM_WORLD);
 
   if (proc_zero())
-    if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+    if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0)
       cout << "Read station input, took " << a_GlobalTimeSeries[0][0]->getReadTime() << "seconds." << endl;
 
   print_execution_time( time_start, MPI_Wtime(), "reading input file" );
@@ -609,7 +728,15 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   if( mTopoImageFound && !m_topography_exists)
   {
     if (m_myRank == 0)
-      cerr << "Error:  The input file is requesting a topo image but there is no topography command" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cerr << "Error:  The input file is requesting a topo image but there is "
+              "no topography command"
+
+#else // SW4 backend
+cerr << "Error:  The input file is requesting a topo image but there is no topography command"
+#endif // SW4 backend
+<< endl;
     return false;
   }
 // if we made it this far, the object should be ready for time stepping
@@ -627,19 +754,19 @@ void EW::processGrid(char* buffer)
   float_sw4 h = 0.0;
 
   //-----------------------------------------------------------------
-  // default geographical coordinates will be the 
+  // default geographical coordinates will be the
   // nevada test site (see:  en.wikipedia.org/wiki/Nevada_Test_Site
   //-----------------------------------------------------------------
   double lat, lon;
   bool latSet = false, lonSet = false, lon_p_set=false, lat_p_set=false, datum_set=false;
   bool ellps_set=false, proj_set=false;
   bool use_geoprojection=false;
-  
+
   stringstream proj0;
 
 // default azimuth
   mGeoAz=0;
-  
+
   char* token = strtok(buffer, " \t");
 
   REQUIRE2(strcmp("grid", token) == 0, "ERROR: not a grid...: " << token);
@@ -650,24 +777,34 @@ void EW::processGrid(char* buffer)
 
   stringstream gridSetupErrStream;
   gridSetupErrStream << endl
-		     << "----------------------------------------" << endl
-		     << " Only five ways to setup grid: " << endl
-		     << "  1. provide h and nx, ny, nz " << endl
-		     << "  2. provide h and x, y, z " << endl
-		     << "  3. provide x,y,z and nx " << endl
-		     << "  4. provide x,y,z and ny " << endl
-		     << "  5. provide x,y,z and nz " << endl
-		     << "----------------------------------------" << endl
-		     << endl;
+                     << "----------------------------------------" << endl
+                     << " Only five ways to setup grid: " << endl
+                     << "  1. provide h and nx, ny, nz " << endl
+                     << "  2. provide h and x, y, z " << endl
+                     << "  3. provide x,y,z and nx " << endl
+                     << "  4. provide x,y,z and ny " << endl
+                     << "  5. provide x,y,z and nz " << endl
+                     << "----------------------------------------" << endl
+                     << endl;
 
   string gridSetupErr = gridSetupErrStream.str();
 
-  if (proc_zero_evzero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0) cout << endl << "* Processing the grid command..." << endl;
+
+  // Assume presence of mesh refinements has already been checked.
+  // Assume supergrid command has already been processed.
+
+#else // SW4 backend
+if (proc_zero_evzero() )
     cout << endl << "* Processing the grid command..." << endl;
 
   // Assume presence of mesh refinements has already been checked.
   // Assume supergrid command has already been processed.
-  if( m_mesh_refinements || m_sg_damping_order == 6 )
+
+#endif // SW4 backend
+if( m_mesh_refinements || m_sg_damping_order == 6 )
   {
      m_ghost_points = 3;
      m_ppadding = 3;
@@ -684,32 +821,32 @@ void EW::processGrid(char* buffer)
         break;
      if (startswith("ny=", token))
      {
-	token += 3; // skip ny=
+        token += 3; // skip ny=
 
-	CHECK_INPUT(atoi(token) > 0, 
-		err << "ny is not a positive integer: " << token);
+        CHECK_INPUT(atoi(token) > 0,
+                err << "ny is not a positive integer: " << token);
         ny = atoi(token);
      }
      else if (startswith("nx=", token))
      {
         token += 3; // skip nx=
-           
-	CHECK_INPUT(atoi(token) > 0, 
-		err << "nx is not a positive integer: " << token);
+
+        CHECK_INPUT(atoi(token) > 0,
+                err << "nx is not a positive integer: " << token);
         nx = atoi(token);
      }
      else if (startswith("nz=", token))
      {
         token += 3; // skip nz=
-        
-	CHECK_INPUT(atoi(token) >= 0, 
-		err << "nz is not a positive integer: " << token);
+
+        CHECK_INPUT(atoi(token) >= 0,
+                err << "nz is not a positive integer: " << token);
         nz = atoi(token);
      }
      else if (startswith("x=", token))
      {
         token += 2; // skip x=
-	CHECK_INPUT(atof(token) > 0.0, err << "x is not a positive float: " << token);
+        CHECK_INPUT(atof(token) > 0.0, err << "x is not a positive float: " << token);
         x = atof(token);
      }
      else if (startswith("y=", token))
@@ -721,14 +858,14 @@ void EW::processGrid(char* buffer)
      else if (startswith("z=", token))
      {
         token += 2; // skip z=
-	CHECK_INPUT(atof(token) > 0.0, err << "z is not a positive float: " << token);
+        CHECK_INPUT(atof(token) > 0.0, err << "z is not a positive float: " << token);
         z = atof(token);
      }
      else if (startswith("h=", token))
      {
        token += 2; // skip h=
-       CHECK_INPUT(atof(token) > 0.0, 
- 	       err << "h is not a positive float: " << token);
+       CHECK_INPUT(atof(token) > 0.0,
+               err << "h is not a positive float: " << token);
         h = atof(token);
      }
      else if (startswith("az=", token))
@@ -745,7 +882,7 @@ void EW::processGrid(char* buffer)
         token += 4;
         lat = atof(token);
         CHECK_INPUT(lat >= -90.0,
-                err << "lat must be greater than or equal to -90 degrees, not " 
+                err << "lat must be greater than or equal to -90 degrees, not "
                 << lat);
         CHECK_INPUT(lat <= 90.0,
                 err << "lat must be less than or equal to 90 degrees, not "
@@ -757,7 +894,7 @@ void EW::processGrid(char* buffer)
         token += 4;
         lon = atof(token);
         CHECK_INPUT(lon >= -180.0,
-                err << "lon must be greater or equal to -180 degrees, not " 
+                err << "lon must be greater or equal to -180 degrees, not "
                 << lon);
         CHECK_INPUT(lon <= 180.0,
                 err << "lon must be less than or equal to 180 degrees, not "
@@ -770,7 +907,7 @@ void EW::processGrid(char* buffer)
         token += 5;
         mMetersPerLongitude = atof(token);
         CHECK_INPUT(mMetersPerLongitude > 0.0,
-                err << "mMetersPerLongitude must be greater than 0, not " 
+                err << "mMetersPerLongitude must be greater than 0, not "
                 << mMetersPerLongitude);
         mConstMetersPerLongitude = true;
      }
@@ -780,18 +917,18 @@ void EW::processGrid(char* buffer)
         token += 5;
         mMetersPerDegree = atof(token);
         CHECK_INPUT(mMetersPerDegree > 0.0,
-                err << "mMetersPerDegree must be greater than 0, not " 
+                err << "mMetersPerDegree must be greater than 0, not "
                 << mMetersPerDegree);
      }
-//                        1234567890123456  
+//                        1234567890123456
      else if (startswith("extrapolate=", token))
      {
         token += 12;
         int extrapolate = atoi(token);
         CHECK_INPUT(extrapolate >= 0 && extrapolate <= 5,
-                err << "extrapolate must be an integer between 0 and 5, not " 
+                err << "extrapolate must be an integer between 0 and 5, not "
                 << extrapolate);
-	mMaterialExtrapolate = extrapolate;
+        mMaterialExtrapolate = extrapolate;
      }
      //     else if( startswith("ghostpts=",token))
      //     {
@@ -810,7 +947,7 @@ void EW::processGrid(char* buffer)
         token +=5;
 // accumulate new style string
         proj0 << "+proj=" << token;
-	use_geoprojection = true;
+        use_geoprojection = true;
         proj_set=true;
      }
 //                        123456789
@@ -819,7 +956,7 @@ void EW::processGrid(char* buffer)
         token +=6;
 // accumulate new style string
         proj0 << " +ellps=" << token;
-	use_geoprojection = true;
+        use_geoprojection = true;
         ellps_set=true;
      }
 //                        123456789
@@ -828,14 +965,14 @@ void EW::processGrid(char* buffer)
         token +=6;
         proj0 << " +datum=" << token;
         datum_set=true;
-	use_geoprojection = true;
+        use_geoprojection = true;
      }
 //                        123456789
      else if( startswith("lon_p=",token))
      {
         token +=6;
         proj0 << " +lon_0=" << atof(token);
-	use_geoprojection = true;
+        use_geoprojection = true;
         lon_p_set=true;
      }
 //                        123456789
@@ -843,7 +980,7 @@ void EW::processGrid(char* buffer)
      {
         token +=6;
         proj0 << " +lat_0=" << atof(token);
-	use_geoprojection = true;
+        use_geoprojection = true;
         lat_p_set=true;
      }
 //                        123456789
@@ -851,7 +988,7 @@ void EW::processGrid(char* buffer)
      {
         token +=6;
         proj0 << " +scale=" << atof(token);
-	use_geoprojection = true;
+        use_geoprojection = true;
      }
      else
      {
@@ -859,11 +996,12 @@ void EW::processGrid(char* buffer)
      }
      token = strtok(NULL, " \t");
   }
-  
+
   //--------------------------------------------------------------------
   // There are only three ways to specify a grid.
   //--------------------------------------------------------------------
-  if (h != 0.0)
+
+if (h != 0.0)
   {
     if (nx > 0 || nz > 0 || ny > 0)
     {
@@ -890,18 +1028,18 @@ void EW::processGrid(char* buffer)
     CHECK_INPUT(x > 0.0 && z > 0.0, gridSetupErr);
     CHECK_INPUT((nx > 0) + (ny > 0) + (nz > 0) == 1, gridSetupErr);
   }
-  
+
   int nxprime, nyprime, nzprime;
   float_sw4 xprime, yprime, zprime;
   // -------------------------------------------------------------
   // Make sure all the bounds are consistent.
   //
-  // In order to divide up the space properly, we must take the 
+  // In order to divide up the space properly, we must take the
   // coordinate dimension, say x, and divide by the number of grid
-  // points requested minus one.  This is because we'd like to 
+  // points requested minus one.  This is because we'd like to
   // include the end points in the spatial data arrays.  For example,
   // if x = 1000. and nx = 10, you'd think h would be 100.  However,
-  // if we'd like the bounds to go from -500 to 500, we actually 
+  // if we'd like the bounds to go from -500 to 500, we actually
   // need x divided up into 9 cells so that both x = -500 and x = 500
   // will be included in the data array.  In this case, h would be
   // 111.11, giving:
@@ -916,12 +1054,20 @@ void EW::processGrid(char* buffer)
     stringstream msg;
     if (m_myRank == 0)
     {
-      msg << " \n* Improper grid location specification, must specify both lat and lon variables " << endl
-	  << " * Missing... ";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+msg << " \n* Improper grid location specification, must specify both lat "
+             "and lon variables "
+
+#else // SW4 backend
+msg << " \n* Improper grid location specification, must specify both lat and lon variables "
+#endif // SW4 backend
+<< endl
+          << " * Missing... ";
       if (!latSet)
-	msg << " lat=value ";
+        msg << " lat=value ";
       if (!lonSet)
-	msg << " lon=value ";
+        msg << " lon=value ";
     }
     CHECK_INPUT(0, msg.str());
   }
@@ -952,7 +1098,7 @@ void EW::processGrid(char* buffer)
 // default ellipse
         proj0 << " +ellps=WGS84";
      }
-     
+
 // if lon_p not given, use lon
      if (!lon_p_set)
      {
@@ -971,286 +1117,408 @@ void EW::processGrid(char* buffer)
   {
 // Set SW4 grid spacing based on Geodyn cube data
 
-     float_sw4 origin[3]={0,0,0};
+
+float_sw4 origin[3]={0,0,0};
      double ibclat, ibclon, ibcaz;
 
       bool found_latlon;
       int adjust;
       geodynbcGetSizes( m_geodynbc_filename, origin, cubelen, zcubelen, hcube, found_latlon,
- 		       ibclat, ibclon, ibcaz, adjust );
+                       ibclat, ibclon, ibcaz, adjust );
 // Use approximate h
 /*
       if( h == 0.0 )
       {
- 	if( nx > 0 )
- 	   h = x/(nx-1);
- 	else if( nz > 0 )
- 	   h = z/(nz-1);
- 	else
- 	   h = y/(ny-1);
+        if( nx > 0 )
+           h = x/(nx-1);
+        else if( nz > 0 )
+           h = z/(nz-1);
+        else
+           h = y/(ny-1);
       }
 */
 
       // rounding of cube position to two decimals (prec=100), three (prec=1000) etc..
-      float_sw4 prec = 100;
 
-      if( found_latlon )
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 prec = 100;
+
+
+#endif // SW4 backend
+if( found_latlon )
       {
          CHECK_INPUT( fabs(ibcaz - mGeoAz) < 1e-5, "Error: Az in Geodyn file, "
- 		 << ibcaz << " is different from Az in WPP, " << mGeoAz );
-	   
- 	// lat-lon corner of cube given
- 	if( adjust == 1 || origin[2] == 0 )
- 	{
- 	   // h based on cube length only, adjust z-position of cube
- 	   /*
- 	   int nc = static_cast<int>(round(cubelen)/h);
- 	   h = cubelen/nc;
+                 << ibcaz << " is different from Az in WPP, " << mGeoAz );
+
+        // lat-lon corner of cube given
+        if( adjust == 1 || origin[2] == 0 )
+        {
+           // h based on cube length only, adjust z-position of cube
+           /*
+           int nc = static_cast<int>(round(cubelen)/h);
+           h = cubelen/nc;
            */
- 	   origin[2] -= hcube*( origin[2]/hcube-round(origin[2]/hcube) );
- 	}
+           origin[2] -= hcube*( origin[2]/hcube-round(origin[2]/hcube) );
+        }
         else
- 	{
- 	   // h based on cube length and z-position of cube
- 	   /*
-	   int a = static_cast<int>(round(origin[2]*prec));
- 	   int b = static_cast<int>(round((origin[2]+zcubelen)*prec));
- 	   // 
+        {
+           // h based on cube length and z-position of cube
+           /*
+           int a = static_cast<int>(round(origin[2]*prec));
+           int b = static_cast<int>(round((origin[2]+zcubelen)*prec));
+           //
            int d  = gcd(a,b);
- 	   int n1 = a/d;
- 	   int k  = static_cast<int>(round(origin[2]/(n1*h)));
-	   h = origin[2]/(k*n1);
+           int n1 = a/d;
+           int k  = static_cast<int>(round(origin[2]/(n1*h)));
+           h = origin[2]/(k*n1);
            */
- 	}
- 	// Geographic origin adjustment:
-	double gridLat = mLatOrigin;
-	double gridLon = mLonOrigin;
-	double metersPerDegree = mMetersPerDegree;
-	double deg2rad = M_PI/180;
-	double phi = mGeoAz*deg2rad;
- 	float_sw4 x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
- 	float_sw4 y = metersPerDegree*(-sin(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*cos(phi));
-	x -= hcube*(x/hcube-round(x/hcube));
-	y -= hcube*(y/hcube-round(y/hcube));
-	gridLat = ibclat - (x*cos(phi) - y*sin(phi))/metersPerDegree;
- 	gridLon = ibclon - (x*sin(phi) + y*cos(phi))/(metersPerDegree*cos(ibclat*deg2rad));
-	mLatOrigin = gridLat;
-	mLonOrigin = gridLon;
+        }
+        // Geographic origin adjustment:
+        double gridLat = mLatOrigin;
+        double gridLon = mLonOrigin;
+        double metersPerDegree = mMetersPerDegree;
+        double deg2rad = M_PI/180;
+        double phi = mGeoAz*deg2rad;
+        float_sw4 x = metersPerDegree*( cos(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*sin(phi));
+        float_sw4 y = metersPerDegree*(-sin(phi)*(ibclat-gridLat) + cos(ibclat*deg2rad)*(ibclon-gridLon)*cos(phi));
+        x -= hcube*(x/hcube-round(x/hcube));
+        y -= hcube*(y/hcube-round(y/hcube));
+        gridLat = ibclat - (x*cos(phi) - y*sin(phi))/metersPerDegree;
+        gridLon = ibclon - (x*sin(phi) + y*cos(phi))/(metersPerDegree*cos(ibclat*deg2rad));
+        mLatOrigin = gridLat;
+        mLonOrigin = gridLon;
         origin[0] = x;
- 	origin[1] = y;
+        origin[1] = y;
       } // end if latlon given
       else
       {
- 	// lat-lon corner of cube not given, interpret origin realtive (0,0,0)
+        // lat-lon corner of cube not given, interpret origin realtive (0,0,0)
          if( m_geodynbc_center )
-	 {
- 	   // Center cube in the middle of the domain (in x,y), discarding input origin.
-	    float_sw4 xlen = x;
-	    float_sw4 ylen = y;
-	    if( xlen == 0 )
-	       xlen = hcube*(nx-1);
-	    if( ylen == 0 )
-	       ylen = hcube*(ny-1);
-	    origin[0] = 0.5*(xlen-cubelen);
-	    origin[1] = 0.5*(ylen-cubelen);
-	 }
-	 if( adjust == 1 )
-	 {
-	   // h based on cube length only, adjust cube position
-	   /*
- 	   int nc = static_cast<int>(round(cubelen/h));
- 	   h = cubelen/nc;
+         {
+           // Center cube in the middle of the domain (in x,y), discarding input origin.
+            float_sw4 xlen = x;
+            float_sw4 ylen = y;
+            if( xlen == 0 )
+               xlen = hcube*(nx-1);
+            if( ylen == 0 )
+               ylen = hcube*(ny-1);
+            origin[0] = 0.5*(xlen-cubelen);
+            origin[1] = 0.5*(ylen-cubelen);
+         }
+         if( adjust == 1 )
+         {
+           // h based on cube length only, adjust cube position
+           /*
+           int nc = static_cast<int>(round(cubelen/h));
+           h = cubelen/nc;
            */
-	   //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin before " <<
-	   //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
- 	   origin[0] -= hcube*( origin[0]/hcube-round(origin[0]/hcube) );
- 	   origin[1] -= hcube*( origin[1]/hcube-round(origin[1]/hcube) );
- 	   origin[2] -= hcube*( origin[2]/hcube-round(origin[2]/hcube) );
-	   //	   cout << " origin after " <<
-	   //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
+           //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin before " <<
+           //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
 
-	 }
-	 else
-	 {
- 	   // h based on cube length and cube position, might be very restrictive
-	    CHECK_INPUT( false, "Error: cube position without lat/long position must be adjustable");
-	 }
+origin[0] -= hcube*( origin[0]/hcube-round(origin[0]/hcube) );
+           origin[1] -= hcube*( origin[1]/hcube-round(origin[1]/hcube) );
+           origin[2] -= hcube*( origin[2]/hcube-round(origin[2]/hcube) );
+           //	   cout << " origin after " <<
+           //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
+
+         }
+         else
+         {
+           // h based on cube length and cube position, might be very restrictive
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(false,
+                    "Error: cube position without lat/long position must be "
+                    "adjustable");
+
+#else // SW4 backend
+CHECK_INPUT( false, "Error: cube position without lat/long position must be adjustable");
+
+#endif // SW4 backend
+}
       } // end if latlon not given
-      
+
       if (nx == 0 && x != 0.0)
-	 nxprime = computeEndGridPoint(x, h);
+         nxprime = computeEndGridPoint(x, h);
       else if (nx != 0)
-	 nxprime = nx;
+         nxprime = nx;
       else
-	 CHECK_INPUT(0, gridSetupErr);
+         CHECK_INPUT(0, gridSetupErr);
 
       if (nz == 0 && z != 0.0)
-	 nzprime = computeEndGridPoint(z, h);
+         nzprime = computeEndGridPoint(z, h);
       else if (nz != 0)
-	 nzprime = nz;
+         nzprime = nz;
       else
-	 CHECK_INPUT(0, gridSetupErr);
+         CHECK_INPUT(0, gridSetupErr);
 
       if (ny == 0 && y != 0.0)
-	 nyprime = computeEndGridPoint(y, h);
+         nyprime = computeEndGridPoint(y, h);
       else if (ny != 0)
-	 nyprime = ny;
+         nyprime = ny;
       else
-	 CHECK_INPUT(0, gridSetupErr);
+         CHECK_INPUT(0, gridSetupErr);
       m_ibc_origin[0] = origin[0];
       m_ibc_origin[1] = origin[1];
       m_ibc_origin[2] = origin[2];
       //     cout << "Cube origin " << origin[0] << " " << origin[1] << " " << origin[2] << endl;
       //     cout << "Cube length " << cubelen << endl;
-      //     cout << "nx,ny,nz " << nxprime << " " << nyprime << " " << nzprime << endl;     
+      //     cout << "nx,ny,nz " << nxprime << " " << nyprime << " " << nzprime << endl;
   } // end if m_geodynbc_found
   else
   {
 
      if (!m_doubly_periodic)
      {
-	if (nx > 0 && h == 0.0)
-	{
+        if (nx > 0 && h == 0.0)
+        {
     // we set the number grid points in the x direction
     // so we'll compute the grid spacing from that.
-	   h = x / (nx-1);
-	   if (proc_zero_evzero())
-	      cout << "* Setting h to " << h << " from  x/(nx-1) (x=" << x << ", nx=" << nx << ")" << endl;
-      
-	   nxprime = nx;
-	   nzprime = computeEndGridPoint(z, h);
-	   nyprime = computeEndGridPoint(y, h);
-	}
-	else if (ny > 0 && h == 0.0)
-	{
+           h = x / (nx-1);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0)
+
+#else // SW4 backend
+if (proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting h to " << h << " from  x/(nx-1) (x=" << x << ", nx=" << nx << ")" << endl;
+
+           nxprime = nx;
+           nzprime = computeEndGridPoint(z, h);
+           nyprime = computeEndGridPoint(y, h);
+        }
+        else if (ny > 0 && h == 0.0)
+        {
     // set hte number of grid points from y direction and ny
-	   h = y/(ny-1);
-	   if (proc_zero_evzero())
-	      cout << "* Setting h to " << h << " from  y/(ny-1) (y=" << y << ", ny=" << ny << ")" << endl;
-	   nyprime = ny;
-	   nxprime = computeEndGridPoint(x, h);
-	   nzprime = computeEndGridPoint(z, h);
-	}
-	else if (nz > 0 && h == 0.0)
-	{
+           h = y/(ny-1);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0)
+
+#else // SW4 backend
+if (proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting h to " << h << " from  y/(ny-1) (y=" << y << ", ny=" << ny << ")" << endl;
+           nyprime = ny;
+           nxprime = computeEndGridPoint(x, h);
+           nzprime = computeEndGridPoint(z, h);
+        }
+        else if (nz > 0 && h == 0.0)
+        {
     // set the number of grid points from z direction and nz
-	   h = z/(nz-1);
-	   if (proc_zero_evzero())
-	      cout << "* Setting h to " << h << " from  z/(nz-1) (z=" << z << ", nz=" << nz << ")" << endl;
-	   nzprime = nz;
-	   nxprime = computeEndGridPoint(x, h);
-	   nyprime = computeEndGridPoint(y, h);
-	}
-	else
-	{
-	//----------------------------------------------------
-	// h was set by the user, so compute the appropriate
-	// nx, ny, and nz or x, y, z.
-	//----------------------------------------------------
-	   if (nx == 0 && x != 0.0)
-	      nxprime = computeEndGridPoint(x, h);
-	   else if (nx != 0)
-	      nxprime = nx;
-	   else
-	      CHECK_INPUT(0, gridSetupErr);
+           h = z/(nz-1);
 
-	   if (nz == 0 && z != 0.0)
-	      nzprime = computeEndGridPoint(z, h);
-	   else if (nz != 0)
-	      nzprime = nz;
-	   else
-	      CHECK_INPUT(0, gridSetupErr);
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0)
 
-	   if (ny == 0 && y != 0.0)
-	      nyprime = computeEndGridPoint(y, h);
-	   else if (ny != 0)
-	      nyprime = ny;
-	   else
-	      CHECK_INPUT(0, gridSetupErr);
-	}
+#else // SW4 backend
+if (proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting h to " << h << " from  z/(nz-1) (z=" << z << ", nz=" << nz << ")" << endl;
+           nzprime = nz;
+           nxprime = computeEndGridPoint(x, h);
+           nyprime = computeEndGridPoint(y, h);
+        }
+        else
+        {
+        //----------------------------------------------------
+        // h was set by the user, so compute the appropriate
+        // nx, ny, and nz or x, y, z.
+        //----------------------------------------------------
+           if (nx == 0 && x != 0.0)
+              nxprime = computeEndGridPoint(x, h);
+           else if (nx != 0)
+              nxprime = nx;
+           else
+              CHECK_INPUT(0, gridSetupErr);
+
+           if (nz == 0 && z != 0.0)
+              nzprime = computeEndGridPoint(z, h);
+           else if (nz != 0)
+              nzprime = nz;
+           else
+              CHECK_INPUT(0, gridSetupErr);
+
+           if (ny == 0 && y != 0.0)
+              nyprime = computeEndGridPoint(y, h);
+           else if (ny != 0)
+              nyprime = ny;
+           else
+              CHECK_INPUT(0, gridSetupErr);
+        }
      }
   }
-  if (!m_doubly_periodic)
+
+if (!m_doubly_periodic)
   {
-    if (proc_zero_evzero() && mVerbose >=3)
-      printf("**** Setting up the grid for a non-periodic problem\n");
-    
-    if (nxprime != nx && proc_zero_evzero())
-      cout << "* Setting nx to " << nxprime << " to be consistent with h=" << h << endl;
-    if (nyprime != ny && proc_zero_evzero())
-      cout << "* Setting ny to " << nyprime << " to be consistent with h=" << h << endl;
-    if (nzprime != nz && proc_zero_evzero())
-      cout << "* Setting nz to " << nzprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (proc_zero() && mVerbose >= 3)
+
+#else // SW4 backend
+if (proc_zero_evzero() && mVerbose >=3)
+
+#endif // SW4 backend
+printf("**** Setting up the grid for a non-periodic problem\n");
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (nxprime != nx && m_myRank == 0)
+
+#else // SW4 backend
+if (nxprime != nx && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting nx to " << nxprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (nyprime != ny && m_myRank == 0)
+
+#else // SW4 backend
+if (nyprime != ny && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting ny to " << nyprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (nzprime != nz && m_myRank == 0)
+
+#else // SW4 backend
+if (nzprime != nz && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting nz to " << nzprime << " to be consistent with h=" << h << endl;
 
     // -------------------------------------------------------------
-    // Now we adjust the geometry bounds based on the actual 
+    // Now we adjust the geometry bounds based on the actual
     // number of grid points used in each dimension.
     // -------------------------------------------------------------
     xprime = (nxprime-1)*h;
     zprime = (nzprime-1)*h;
     yprime = (nyprime-1)*h;
-  
+
     float_sw4 eps = 1.e-9*sqrt(SQR(xprime)+SQR(yprime)+SQR(zprime));
     if( sizeof(float_sw4)==4)
        eps=eps*1e4;
-  
-    if (fabs(xprime-x) > eps && proc_zero_evzero())
-      cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
-    if (fabs(zprime-z) > eps && proc_zero_evzero())
-      cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
-    if (fabs(yprime-y) > eps && proc_zero_evzero())
-      cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fabs(xprime - x) > eps && m_myRank == 0)
+
+#else // SW4 backend
+if (fabs(xprime-x) > eps && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fabs(zprime - z) > eps && m_myRank == 0)
+
+#else // SW4 backend
+if (fabs(zprime-z) > eps && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fabs(yprime - y) > eps && m_myRank == 0)
+
+#else // SW4 backend
+if (fabs(yprime-y) > eps && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
   }
   else // special treatment of the doubly periodic case
   {
-    if (proc_zero_evzero() && mVerbose >=3)
-      printf("**** Setting up the grid for a PERIODIC problem\n");
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (proc_zero() && mVerbose >= 3)
+
+#else // SW4 backend
+if (proc_zero_evzero() && mVerbose >=3)
+
+#endif // SW4 backend
+printf("**** Setting up the grid for a PERIODIC problem\n");
 
 // for the doubly periodic case, we only support the following style:
-// grid x=... y=... z=... nx=...    
-    CHECK_INPUT(nx > 0 && x>0. && y>0. && z>0., 
-		"Period case: Must specify grid using x, y, z, nx");
+// grid x=... y=... z=... nx=...
+    CHECK_INPUT(nx > 0 && x>0. && y>0. && z>0.,
+                "Period case: Must specify grid using x, y, z, nx");
 
     // we set the number grid points in the x direction
     // so we'll compute the grid spacing from that.
     h = x / nx;
-    if (proc_zero_evzero())
-      cout << "* Setting h to " << h << " from  x/nx (x=" << x << ", nx=" << nx << ")" << endl;
-      
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_myRank == 0)
+
+#else // SW4 backend
+if (proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Setting h to " << h << " from  x/nx (x=" << x << ", nx=" << nx << ")" << endl;
+
     nxprime = nx;
     nyprime = (int) (y/h + 0.5);
     nzprime = computeEndGridPoint(z, h); // non-periodic in z
 
     // -------------------------------------------------------------
-    // Now we adjust the geometry bounds based on the actual 
+    // Now we adjust the geometry bounds based on the actual
     // number of grid points used in each dimension.
     // -------------------------------------------------------------
     xprime = nxprime*h;
     yprime = nyprime*h;
     zprime = (nzprime-1)*h; // non-periodic in z
-  
+
     float_sw4 eps = 1.e-9*sqrt(SQR(xprime)+SQR(yprime)+SQR(zprime));
     if( sizeof(float_sw4)==4)
        eps=eps*1e4;
-  
-    if (fabs(xprime-x) > eps && proc_zero_evzero())
-      cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
-    if (fabs(yprime-y) > eps && proc_zero_evzero())
-      cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
-    if (fabs(zprime-z) > eps && proc_zero_evzero())
-      cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fabs(xprime - x) > eps && m_myRank == 0)
+
+#else // SW4 backend
+if (fabs(xprime-x) > eps && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Changing x from " << x << " to " << xprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fabs(yprime - y) > eps && m_myRank == 0)
+
+#else // SW4 backend
+if (fabs(yprime-y) > eps && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Changing y from " << y << " to " << yprime << " to be consistent with h=" << h << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fabs(zprime - z) > eps && m_myRank == 0)
+
+#else // SW4 backend
+if (fabs(zprime-z) > eps && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "* Changing z from " << z << " to " << zprime << " to be consistent with h=" << h << endl;
   }
-  
+
   // if( m_geodynbc_found )
   // {
-  //    CHECK_INPUT( m_ibc_origin[0]>0 && m_ibc_origin[0]+cubelen<xprime , "Error: Cube x-dimension [" 
-  // 	      << m_ibc_origin[0] << "," << m_ibc_origin[0]+cubelen << 
+  //    CHECK_INPUT( m_ibc_origin[0]>0 && m_ibc_origin[0]+cubelen<xprime , "Error: Cube x-dimension ["
+  // 	      << m_ibc_origin[0] << "," << m_ibc_origin[0]+cubelen <<
   // 	      "] not inside domain of length "<< xprime );
   //    CHECK_INPUT( m_ibc_origin[1]>0 && m_ibc_origin[1]+cubelen<yprime , "Error: Cube y-dimension ["
-  // 	      << m_ibc_origin[1] << "," << m_ibc_origin[1]+cubelen << 
+  // 	      << m_ibc_origin[1] << "," << m_ibc_origin[1]+cubelen <<
   // 	      "] not inside domain of length "<< yprime );
   //    CHECK_INPUT( m_ibc_origin[2]>=0 && m_ibc_origin[2]+zcubelen<zprime , "Error: Cube z-dimension ["
-  // 	      << m_ibc_origin[2] << "," << m_ibc_origin[2]+zcubelen << 
+  // 	      << m_ibc_origin[2] << "," << m_ibc_origin[2]+zcubelen <<
   // 	      "] not inside domain of length "<< zprime );
   // }
 
@@ -1265,11 +1533,21 @@ void EW::processGrid(char* buffer)
   // hard code units to be in meters
   proj0 << " +units=m";
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_6)
+  CHECK_INPUT(!use_geoprojection,
+              "ERROR: need to configure SW4 with proj=yes to use projections "
+              "from the Proj library");
+#endif
+
+#else // SW4 backend
 #if !defined(ENABLE_PROJ)
   CHECK_INPUT( !use_geoprojection, "ERROR: need to configure SW4 with proj=yes to use projections "
                "from the PROJ library (version 6 or later)");
 #endif
-  if( use_geoprojection )
+
+#endif // SW4 backend
+if( use_geoprojection )
   {
 // tmp
 //     cout << "New proj4 string: '" << proj0.str() << "'" << endl;
@@ -1289,16 +1567,26 @@ void EW::cleanUpRefinementLevels()
 // Add a top zMin level
 // Here zMin = m_topo_zmax if m_topography_exists, otherwise zMin = 0;
    float_sw4 zMin, topo_zmax=0;
-  
+
 // NOW: allowing refinements in the curvilinear portion of the grid
    if (m_topography_exists)
    {
       topo_zmax = m_gridGenerator->get_topo_zmax();
-      CHECK_INPUT(topo_zmax < m_global_zmax-m_h_base,"The topography is extending too deep into the ground and there is no space for the Cartesian grid.");
 
-      m_curviRefLev.push_back(0.0); // for the curvilinear refinements
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(topo_zmax < m_global_zmax - m_h_base,
+                "The topography is extending too deep into the ground and "
+                "there is no space for the Cartesian grid.");
+
+
+#else // SW4 backend
+CHECK_INPUT(topo_zmax < m_global_zmax-m_h_base,"The topography is extending too deep into the ground and there is no space for the Cartesian grid.");
+
+
+#endif // SW4 backend
+m_curviRefLev.push_back(0.0); // for the curvilinear refinements
       m_refinementBoundaries.push_back(topo_zmax); // for the Cartesian refinements
-      zMin = topo_zmax; 
+      zMin = topo_zmax;
    }
    else
    {
@@ -1345,7 +1633,7 @@ void EW::cleanUpRefinementLevels()
   // sort m_curviRefLev in decreasing order
   nRef = m_curviRefLev.size();
   zValues = new float_sw4[nRef];
-  
+
   for (q=0; q<nRef; q++)
      zValues[q] = m_curviRefLev[q];
   sort(zValues, zValues+nRef);
@@ -1353,7 +1641,7 @@ void EW::cleanUpRefinementLevels()
    for (q=0; q<nRef; q++)
       m_curviRefLev[q] = zValues[nRef-q-1];
 
-   delete[] zValues;  
+   delete[] zValues;
 // need to remove any duplicate entries in the m_refinementBoundaries array
 // tmp
 //  cout << "Removing duplicate items..."<< endl;
@@ -1372,9 +1660,16 @@ void EW::cleanUpRefinementLevels()
   }
 
 // tmp
-  if (mVerbose >= 1 && proc_zero_evzero())
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mVerbose >= 1 && m_myRank == 0) {
+
+#else // SW4 backend
+if (mVerbose >= 1 && proc_zero_evzero())
   {
-     cout << "cleanupRefinementLevels: topo_zmax = " << topo_zmax << endl;
+
+#endif // SW4 backend
+cout << "cleanupRefinementLevels: topo_zmax = " << topo_zmax << endl;
 
     cout << " Cartesian refinement levels (z=):" << endl;
     for (it=m_refinementBoundaries.begin(); it!=m_refinementBoundaries.end(); it++)
@@ -1386,7 +1681,7 @@ void EW::cleanUpRefinementLevels()
        for (it=m_curviRefLev.begin(); it!=m_curviRefLev.end(); it++)
           cout<< *it << endl;
     }
-    
+
   }
 }
 
@@ -1395,8 +1690,8 @@ void EW::cleanUpRefinementLevels()
 void EW::processRefinement(char* buffer)
 {
    char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("refinement", token) == 0, 
-	      "ERROR: not a refinement line...: " << token);
+   CHECK_INPUT(strcmp("refinement", token) == 0,
+              "ERROR: not a refinement line...: " << token);
    token = strtok(NULL, " \t");
    string err = "Refinement error ";
 
@@ -1426,8 +1721,8 @@ void EW::processRefinement(char* buffer)
 void EW::processAttenuation(char* buffer)
 {
   char* token = strtok(buffer, " \t");
-  CHECK_INPUT(strcmp("attenuation", token) == 0, 
-	      "ERROR: not a attenuation line...: " << token);
+  CHECK_INPUT(strcmp("attenuation", token) == 0,
+              "ERROR: not a attenuation line...: " << token);
   token = strtok(NULL, " \t");
 
    string err = "Attenuation error ";
@@ -1436,10 +1731,10 @@ void EW::processAttenuation(char* buffer)
    float_sw4 velofreq=1;
    bool foundppw = false, foundfreq=false;
 
-// Default is max frequency 2 Hz, 
+// Default is max frequency 2 Hz,
    m_att_ppw = -1;
    m_att_max_frequency = 2.0;
-  
+
    while (token != NULL)
    {
     // while there are tokens in the string still
@@ -1489,7 +1784,7 @@ void EW::processAttenuation(char* buffer)
      {
         token += 12;
         m_qmultiplier = atof( token ); //
-        CHECK_INPUT(m_qmultiplier > 0, "ERROR: qmultiplier must be positive, not " << m_qmultiplier);	
+        CHECK_INPUT(m_qmultiplier > 0, "ERROR: qmultiplier must be positive, not " << m_qmultiplier);
      }
      else
      {
@@ -1500,7 +1795,7 @@ void EW::processAttenuation(char* buffer)
    if( foundppw && foundfreq )
    {
       if (m_myRank == 0)
- 	cout << "ERROR: Can not give both minppw and maxfreq for attenuation " << endl;
+        cout << "ERROR: Can not give both minppw and maxfreq for attenuation " << endl;
       MPI_Abort(MPI_COMM_WORLD, 1);
    }
 
@@ -1508,7 +1803,7 @@ void EW::processAttenuation(char* buffer)
    m_velo_omega = velofreq*2*M_PI;
    m_use_attenuation=true;
    m_att_use_max_frequency = (m_att_ppw <= 0);
-  
+
  // tmp
    //   if (m_myRank==0)
    //     printf("* Processing the attenuation command: m_nmech=%i, m_velo_omega=%e\n", m_nmech, m_velo_omega);
@@ -1523,181 +1818,201 @@ void EW::processTopography(char* buffer)
    // procedure parameters to smoothTopography and getEfileInfo
    //
     char* token = strtok(buffer, " \t");
-    CHECK_INPUT(strcmp("topography", token) == 0, 
- 	    "ERROR: not a topography line...: " << token);
+    CHECK_INPUT(strcmp("topography", token) == 0,
+            "ERROR: not a topography line...: " << token);
     string topoFile="surf.tp", style, fileName;
     bool needFileName=false, gotFileName=false;
-    
+
     float_sw4 zetaBreak=0.95, topo_zmax=0;
     float_sw4 GaussianAmp=0.05, GaussianLx=0.15, GaussianLy=0.15, GaussianXc=0.5, GaussianYc=0.5;
     int grid_interpolation_order = 3;
-    bool use_analytical_metric = false, topo_zmax_given=false;
-    bool always_new = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+bool use_analytical_metric = false;  // topo_zmax_given = false;
+
+#else // SW4 backend
+bool use_analytical_metric = false, topo_zmax_given=false;
+
+#endif // SW4 backend
+bool always_new = false;
 
 
     token = strtok(NULL, " \t");
 
     while (token != NULL)
     {
-      // while there are still tokens in the string 
+      // while there are still tokens in the string
        if (startswith("#", token) || startswith(" ", buffer))
         // Ignore commented lines and lines with just a space.
-	  break;
+          break;
        if (startswith("zmax=", token))
        {
-	  token += 5; // skip logfile=
-	  topo_zmax = atof(token);
+          token += 5; // skip logfile=
+          topo_zmax = atof(token);
        }
        else if (startswith("order=", token))
        {
-	  token += 6; // skip logfile=
-	  grid_interpolation_order = atoi(token);
-	  if (grid_interpolation_order < 2 || grid_interpolation_order > 7)
-	  {
-	     if (m_myRank == 0)
-		cout << "order needs to be 2,3,4,5,6,or 7 not: " << grid_interpolation_order << endl;
-	     MPI_Abort(MPI_COMM_WORLD, 1);
-	  }
+          token += 6; // skip logfile=
+          grid_interpolation_order = atoi(token);
+          if (grid_interpolation_order < 2 || grid_interpolation_order > 7)
+          {
+             if (m_myRank == 0)
+                cout << "order needs to be 2,3,4,5,6,or 7 not: " << grid_interpolation_order << endl;
+             MPI_Abort(MPI_COMM_WORLD, 1);
+          }
        }
        else if( startswith("zetabreak=", token) ) // developer option: not documented in user's guide
        {
-	  token += 10;
-	  zetaBreak = atof(token);
-	  CHECK_INPUT( zetaBreak > 0 && zetaBreak <= 1, "Error: zetabreak must be in [0,1], not " << zetaBreak);
+          token += 10;
+          zetaBreak = atof(token);
+          CHECK_INPUT( zetaBreak > 0 && zetaBreak <= 1, "Error: zetabreak must be in [0,1], not " << zetaBreak);
        }
        else if (startswith("smooth=", token))
        {
-	  token += 7; // skip smooth=
-	  m_maxIter = atoi(token);
-	  if (m_maxIter < 0 || m_maxIter > 1000)
-	  {
-	     if (m_myRank == 0)
-		cout << "Number of smoothing iterations needs to be >=0 and <=1000, not: "<< m_maxIter << endl;
-	     MPI_Abort(MPI_COMM_WORLD, 1);
-	  }
+          token += 7; // skip smooth=
+          m_maxIter = atoi(token);
+          if (m_maxIter < 0 || m_maxIter > 1000)
+          {
+             if (m_myRank == 0)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "Number of smoothing iterations needs to be >=0 and <=1000, "
+                  "not: "
+
+#else // SW4 backend
+cout << "Number of smoothing iterations needs to be >=0 and <=1000, not: "
+#endif // SW4 backend
+<< m_maxIter << endl;
+             MPI_Abort(MPI_COMM_WORLD, 1);
+          }
        }
        else if( startswith("input=", token ) )
        {
-	  token += 6;
-	  style = token;
+          token += 6;
+          style = token;
 // new keyword: geographic, but keeping grid for backwards compatibility with WPP
-	  if (strcmp("grid", token) == 0 || strcmp("geographic", token) == 0)
-	  {
-	     m_topoInputStyle=GridFile;
-	     m_topography_exists=true;
-	     needFileName=true;
-	  }
-	  else if (strcmp("cartesian", token) == 0)
-	  {
-	     m_topoInputStyle=CartesianGrid;
-	     m_topography_exists=true;
-	     needFileName=true;
-	  }
-	  else if (strcmp("rfile", token) == 0)
-	  {
-	     m_topoInputStyle=Rfile;
-	     m_topography_exists=true;
-	     needFileName=true; // we require the file name to be given on the topography command line
-	  }
-	  else if (strcmp("sfile", token) == 0)
-	  {
-	     m_topoInputStyle=Sfile;
-	     m_topography_exists=true;
-	     needFileName=true; // we require the file name to be given on the topography command line
-	  }
-	  else if (strcmp("gmg", token) == 0)
-	  {
-	     m_topoInputStyle=GMG;
-	     m_topography_exists=true;
-	     needFileName=true; // we require the file name to be given on the topography command line
-	  }
-	  else if (strcmp("image", token) == 0)
-	  {
-	     m_topoInputStyle=TopoImage;
-	     m_topography_exists=true;
-	     needFileName=true; // we require the file name to be given on the topography command line
-	  }
-	  else if (strcmp("gaussian", token) == 0)
-	  {
-	     m_topoInputStyle=GaussianHill;
-	     m_topography_exists=true;
-	  }
-	  else
-	  {
-	     badOption("topography> input", token);
-	  }
+          if (strcmp("grid", token) == 0 || strcmp("geographic", token) == 0)
+          {
+             m_topoInputStyle=GridFile;
+             m_topography_exists=true;
+             needFileName=true;
+          }
+          else if (strcmp("cartesian", token) == 0)
+          {
+             m_topoInputStyle=CartesianGrid;
+             m_topography_exists=true;
+             needFileName=true;
+          }
+          else if (strcmp("rfile", token) == 0)
+          {
+             m_topoInputStyle=Rfile;
+             m_topography_exists=true;
+             needFileName=true; // we require the file name to be given on the topography command line
+          }
+          else if (strcmp("sfile", token) == 0)
+          {
+             m_topoInputStyle=Sfile;
+             m_topography_exists=true;
+             needFileName=true; // we require the file name to be given on the topography command line
+          }
+          else if (strcmp("gmg", token) == 0)
+          {
+             m_topoInputStyle=GMG;
+             m_topography_exists=true;
+             needFileName=true; // we require the file name to be given on the topography command line
+          }
+          else if (strcmp("image", token) == 0)
+          {
+             m_topoInputStyle=TopoImage;
+             m_topography_exists=true;
+             needFileName=true; // we require the file name to be given on the topography command line
+          }
+          else if (strcmp("gaussian", token) == 0)
+          {
+             m_topoInputStyle=GaussianHill;
+             m_topography_exists=true;
+          }
+          else
+          {
+             badOption("topography> input", token);
+          }
        }
        else if( startswith("file=", token ) )
        {
-	  token += 5;
-	  m_topoFileName = token;
-	  gotFileName=true;
-	//        if (m_myRank==0)
-	// 	 cout << "read topo file name=" << m_topoFileName <<endl;
-       }
+          token += 5;
+          m_topoFileName = token;
+          gotFileName=true;
+        //        if (m_myRank==0)
+        // 	 cout << "read topo file name=" << m_topoFileName <<endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+}
 //                        12345678901
        else if( startswith("resolution=", token ) )
        {
-	  token += 11;
-	  m_EFileResolution = atof(token);
-	  CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
-       }
+          token += 11;
+          m_EFileResolution = atof(token);
+          CHECK_INPUT(m_EFileResolution>0.,"Resolution must be positive, not " << m_EFileResolution);
+
+#endif // SW4 backend
+}
 //                        123456789012
        else if( startswith("gaussianAmp=", token ) )
        {
-	  token += 12;
-	  GaussianAmp = atof(token);
+          token += 12;
+          GaussianAmp = atof(token);
        }
 //                        123456789012
        else if( startswith("gaussianXc=", token ) )
        {
-	  token += 11;
-	  GaussianXc = atof(token);
+          token += 11;
+          GaussianXc = atof(token);
        }
 //                        123456789012
        else if( startswith("gaussianYc=", token ) )
        {
-	  token += 11;
-	  GaussianYc = atof(token);
+          token += 11;
+          GaussianYc = atof(token);
        }
 // //                        123456789012
        else if( startswith("gaussianLx=", token ) )
        {
-	  token += 11;
-	  GaussianLx = atof(token);
+          token += 11;
+          GaussianLx = atof(token);
        }
        else if( startswith("gaussianLy=", token ) )
        {
-	  token += 11;
-	  GaussianLy = atof(token);
+          token += 11;
+          GaussianLy = atof(token);
        }
        else if( startswith("analyticalMetric=", token ) )
        {
-	  token += 17;
-	  use_analytical_metric = strcmp(token,"1")==0 ||
-	     strcmp(token,"true")==0 || strcmp(token,"yes")==0;
+          token += 17;
+          use_analytical_metric = strcmp(token,"1")==0 ||
+             strcmp(token,"true")==0 || strcmp(token,"yes")==0;
        }
        else if (startswith("gridgenerator=", token) )
        {
           token += 14;
-	  always_new =  strcmp(token,"new")==0 || strcmp(token,"NEW")==0;
+          always_new =  strcmp(token,"new")==0 || strcmp(token,"NEW")==0;
        }
        else
        {
-	  badOption("topography", token);
+          badOption("topography", token);
        }
        token = strtok(NULL, " \t");
     }
     if (needFileName)
-       CHECK_INPUT(gotFileName, 
-		   "ERROR: no topography file name specified...: " << token);
+       CHECK_INPUT(gotFileName,
+                   "ERROR: no topography file name specified...: " << token);
 
     if( m_topoInputStyle != GaussianHill && use_analytical_metric )
     {
        use_analytical_metric = false;
        if( m_myRank == 0 )
-	  cout << "Analytical metric only defined for Gaussian Hill topography" <<
-	     " topography analyticalMetric option will be ignored " << endl;
+          cout << "Analytical metric only defined for Gaussian Hill topography" <<
+             " topography analyticalMetric option will be ignored " << endl;
     }
 
     if( m_topoInputStyle == GaussianHill )
@@ -1713,7 +2028,7 @@ void EW::processTopography(char* buffer)
 // void FileInput::processEnergy(char* buffer)
 // {
 //     char* token = strtok(buffer, " \t");
-//     CHECK_INPUT(strcmp("energy", token) == 0, 
+//     CHECK_INPUT(strcmp("energy", token) == 0,
 //  	    "ERROR: not a energy test line...: " << token);
 //     int seed;
 //     string logfile="energy.dat";
@@ -1800,88 +2115,88 @@ void EW::processTwilight(char* buffer)
        if( startswith("errorlog=",token) )
        {
           token += 9;
-	  bool errorlog = (atoi(token)==1);
-	  if( errorlog )
-	     switch_on_error_log();
+          bool errorlog = (atoi(token)==1);
+          if( errorlog )
+             switch_on_error_log();
        }
        else if( startswith("sgstretching=",token) )
        {
           token += 13;
           if( strcmp(token,"1") == 0 || strcmp(token,"yes") == 0 || strcmp(token,"true") == 0 )
-	     sgstretch = 1;
-	  else
-	     sgstretch = 0;
+             sgstretch = 1;
+          else
+             sgstretch = 0;
        }
        else if( startswith("freeupper=",token) )
        {
           token += 10;
           if( strcmp(token,"1") == 0 || strcmp(token,"yes") == 0 || strcmp(token,"true") == 0 )
-	     frsurfu = 1;
-	  else
-	     frsurfu = 0;
+             frsurfu = 1;
+          else
+             frsurfu = 0;
        }
        else if( startswith("freelower=",token) )
        {
           token += 10;
           if( strcmp(token,"1") == 0 || strcmp(token,"yes") == 0 || strcmp(token,"true") == 0 )
-	     frsurfl = 1;
-	  else
-	     frsurfl = 0;
+             frsurfl = 1;
+          else
+             frsurfl = 0;
        }
        else if( startswith("omega=",token) )
        {
           token += 6;
-	  omega = atof(token);
+          omega = atof(token);
        }
        else if( startswith("c=",token) )
        {
           token += 2;
-	  c = atof(token);
+          c = atof(token);
        }
        else if( startswith("phase=",token) )
        {
           token += 6;
-	  phase = atof(token);
+          phase = atof(token);
        }
        else if( startswith("momega=",token) )
        {
           token += 7;
-	  momega = atof(token);
+          momega = atof(token);
        }
        else if( startswith("mphase=",token) )
        {
           token += 7;
-	  mphase = atof(token);
+          mphase = atof(token);
        }
        else if( startswith("amprho=",token) )
        {
           token += 7;
-	  amprho = atof(token);
+          amprho = atof(token);
        }
        else if( startswith("ampmu=",token) )
        {
           token += 6;
-	  ampmu = atof(token);
+          ampmu = atof(token);
        }
        else if( startswith("amplambda=",token) )
        {
           token += 10;
-	  amplambda = atof(token);
+          amplambda = atof(token);
        }
        else if( startswith("omstrx=",token) )
        {
           token += 7;
-	  omstrx = atof(token);
+          omstrx = atof(token);
        }
        else if( startswith("omstry=",token) )
        {
           token += 7;
-	  omstry = atof(token);
+          omstry = atof(token);
        }
        else if( startswith("omstrz=",token) )
        {
           token += 7;
-	  omstrz = atof(token);
+          omstrz = atof(token);
        }
        else
        {
@@ -1910,40 +2225,58 @@ void EW::processTwilight(char* buffer)
   if( sgstretch == 1 )
   {
      for( int side=0 ; side < 4 ; side++ )
-	if( bct[side] == bDirichlet )
-	   bct[side] = bSuperGrid;
+        if( bct[side] == bDirichlet )
+           bct[side] = bSuperGrid;
 
      for( int side=4 ; side < 5 ; side++ )
-	if( bct[side] == bDirichlet && !topographyExists() )
-	   bct[side] = bSuperGrid;
-     
+        if( bct[side] == bDirichlet && !topographyExists() )
+           bct[side] = bSuperGrid;
+
      if( bct[0] == bSuperGrid || bct[1] == bSuperGrid )
      {
-	for( int g=0 ; g < mNumberOfGrids ; g++ )
-	   m_supergrid_taper_x[g].set_twilight(omstrx);
+        for( int g=0 ; g < mNumberOfGrids ; g++ )
+           m_supergrid_taper_x[g].set_twilight(omstrx);
      }
      if( bct[2] == bSuperGrid || bct[3] == bSuperGrid )
      {
-	for( int g=0 ; g < mNumberOfGrids ; g++ )
-	   m_supergrid_taper_y[g].set_twilight(omstry);
+        for( int g=0 ; g < mNumberOfGrids ; g++ )
+           m_supergrid_taper_y[g].set_twilight(omstry);
      }
      CHECK_INPUT( (bct[4] == bSuperGrid && bct[5] == bSuperGrid) || (bct[4] == bStressFree && bct[5] == bStressFree) || (bct[4]==bDirichlet || bct[5] == bDirichlet),
-	   "Error: Twilight testing with supergrid stretching must have the same b.c. (stress free or supergrid) on the z=low and z=high boundaries" );
-     if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
-	CHECK_INPUT( !topographyExists(), "Error: Twilight testing, supergrid stretching can not be used in the z-direction when topography is present");
-	
-     for( int g=0 ; g < mNumberOfGrids ; g++ )
-	m_supergrid_taper_z[g].set_twilight(0.0);
-     
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Error: Twilight testing with supergrid stretching must have the same "
+        "b.c. (stress free or supergrid) on the z=low and z=high boundaries");
+
+#else // SW4 backend
+"Error: Twilight testing with supergrid stretching must have the same b.c. (stress free or supergrid) on the z=low and z=high boundaries" );
+
+#endif // SW4 backend
+if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!topographyExists(),
+                  "Error: Twilight testing, supergrid stretching can not be "
+                  "used in the z-direction when topography is present");
+
+
+#else // SW4 backend
+CHECK_INPUT( !topographyExists(), "Error: Twilight testing, supergrid stretching can not be used in the z-direction when topography is present");
+
+
+#endif // SW4 backend
+for( int g=0 ; g < mNumberOfGrids ; g++ )
+        m_supergrid_taper_z[g].set_twilight(0.0);
+
      if( bct[4] == bSuperGrid && bct[5] == bSuperGrid )
      {
-	m_supergrid_taper_z[mNumberOfGrids-1].set_twilight(omstrz);
-	m_supergrid_taper_z[0].set_twilight(omstrz);
+        m_supergrid_taper_z[mNumberOfGrids-1].set_twilight(omstrz);
+        m_supergrid_taper_z[0].set_twilight(omstrz);
      }
 // set the damping coefficient to zero
      set_sg_damping(0.0);
      set_sg_thickness(1); // just to keep the routine assign_supergrid_damping_arrays() happy
-     
+
   } // end if sgstretch == 1
   set_global_bcs(bct);
 }
@@ -1983,70 +2316,79 @@ void EW::processDeveloper(char* buffer)
      {
         token += 8; // skip opttest=
         if( strcmp(token,"source")==0 )
-	   m_opttest = 1;
+           m_opttest = 1;
         else if( strcmp(token,"gradient")== 0 )
-	   m_opttest = 2;
-	else if( strcmp(token,"hessian") == 0 )
-	   m_opttest = 3;
-	else if( strcmp(token,"func1d") == 0 )
-	   m_opttest = 4;
-	else if( strcmp(token,"funcsurf") == 0 )
-	   m_opttest = 5;
+           m_opttest = 2;
+        else if( strcmp(token,"hessian") == 0 )
+           m_opttest = 3;
+        else if( strcmp(token,"func1d") == 0 )
+           m_opttest = 4;
+        else if( strcmp(token,"funcsurf") == 0 )
+           m_opttest = 5;
         else
-	   CHECK_INPUT( false, "ERROR: opttest=" << token << " not understood");
+           CHECK_INPUT( false, "ERROR: opttest=" << token << " not understood");
         if( !m_inverse_problem )
-	   CHECK_INPUT( false, "WARNING: developer opttest option does not apply to forward solver");
-     }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(false,
+                    "WARNING: developer opttest option does not apply to "
+                    "forward solver");
+
+#else // SW4 backend
+CHECK_INPUT( false, "WARNING: developer opttest option does not apply to forward solver");
+
+#endif // SW4 backend
+}
      else if( startswith("cfl=",token) )
      {
-	token += 4;
-	float_sw4 cfl = atof(token);
-	CHECK_INPUT( cfl > 0, "Error negative CFL number");
-	set_cflnumber( cfl );
+        token += 4;
+        float_sw4 cfl = atof(token);
+        CHECK_INPUT( cfl > 0, "Error negative CFL number");
+        set_cflnumber( cfl );
      }
      else if( startswith("time_order=",token) )
      {
-	token += 11;
-	int newOrder = atoi(token);
-	CHECK_INPUT( newOrder == 2 || newOrder == 4, "Error unknown time-order");
-	mOrder = newOrder;
+        token += 11;
+        int newOrder = atoi(token);
+        CHECK_INPUT( newOrder == 2 || newOrder == 4, "Error unknown time-order");
+        mOrder = newOrder;
      }
      else if( startswith("perturb=",token) )
      {
         token += 8;
-	m_perturb = atof(token);
+        m_perturb = atof(token);
      }
      else if( startswith("peri=",token) )
      {
         token += 5;
-	m_iperturb = atoi(token);
+        m_iperturb = atoi(token);
      }
      else if( startswith("perj=",token) )
      {
         token += 5;
-	m_jperturb = atoi(token);
+        m_jperturb = atoi(token);
      }
      else if( startswith("perk=",token) )
      {
         token += 5;
-	m_kperturb = atof(token);
+        m_kperturb = atof(token);
      }
      else if( startswith("pervar=",token) )
      {
         token += 7;
         if( strcmp(token,"mu")==0 )
-	   m_pervar = 1;
-	else if( strcmp(token,"lambda")==0 )
-	   m_pervar = 2;
-	else if( strcmp(token,"rho")==0 )
-	   m_pervar = 0;
-	else
-	   CHECK_INPUT(false," pervar must be , mu, lambda, or rho, not " << token << endl);
+           m_pervar = 1;
+        else if( strcmp(token,"lambda")==0 )
+           m_pervar = 2;
+        else if( strcmp(token,"rho")==0 )
+           m_pervar = 0;
+        else
+           CHECK_INPUT(false," pervar must be , mu, lambda, or rho, not " << token << endl);
      }
      else if( startswith("checkfornan=",token) )
      {
-	token += 12;
-	m_checkfornan = strcmp(token,"1")==0 || strcmp(token,"on")==0 || strcmp(token,"yes")==0;
+        token += 12;
+        m_checkfornan = strcmp(token,"1")==0 || strcmp(token,"on")==0 || strcmp(token,"yes")==0;
      }
 
 // //     if (startswith("update_processor_boundary=", token))
@@ -2068,9 +2410,9 @@ void EW::processDeveloper(char* buffer)
 //     }
      else if( startswith("reporttiming=",token) )
      {
-	token += 13;
-	m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0
-	   || strcmp(token,"yes")==0;
+        token += 13;
+        m_output_detailed_timing = strcmp(token,"1")==0 || strcmp(token,"on")==0
+           || strcmp(token,"yes")==0;
      }
 //     else if (startswith("interpolation=", token))
 //     {
@@ -2159,24 +2501,24 @@ void EW::processTestPointSource(char* buffer)
 
     if (startswith("cp=", token))
     {
-      token += 3; 
+      token += 3;
       cp = atof(token);
     }
     else if (startswith("cs=", token))
     {
-      token += 3; 
+      token += 3;
       cs = atof(token);
     }
     else if (startswith("rho=", token))
     {
-      token += 4; 
+      token += 4;
       rho = atof(token);
     }
     else if (startswith("diractest=", token))
     {
-      token += 10; 
+      token += 10;
       if( strcmp(token,"1")==0 || strcmp(token,"true")==0 )
-	m_moment_test = true;
+        m_moment_test = true;
     }
     else
     {
@@ -2198,7 +2540,7 @@ void EW::processTestRayleigh(char* buffer)
   token = strtok(NULL, " \t");
   float_sw4 cs = 1.0, rho=1.0, cp=sqrt(3.0);
   int nwl = 1;
-  
+
   while (token != NULL)
   {
     if (startswith("#", token) || startswith(" ", buffer))
@@ -2206,26 +2548,26 @@ void EW::processTestRayleigh(char* buffer)
 
     if (startswith("cp=", token))
     {
-      token += 3; 
+      token += 3;
       cp = atof(token);
     }
     else if (startswith("cs=", token))
     {
-      token += 3; 
+      token += 3;
       cs = atof(token);
     }
     else if (startswith("rho=", token))
     {
-      token += 4; 
+      token += 4;
       rho = atof(token);
     }
 //                       1234567
     else if (startswith("nwl=", token))
     {
-      token += 4; 
+      token += 4;
       nwl = atoi(token);
-      CHECK_INPUT(nwl >= 1, 
-		  "Parameter nwl must be >= 1, not: " << nwl);
+      CHECK_INPUT(nwl >= 1,
+                  "Parameter nwl must be >= 1, not: " << nwl);
     }
     else
     {
@@ -2238,17 +2580,25 @@ void EW::processTestRayleigh(char* buffer)
 
   boundaryConditionType bct[6]={bPeriodic, bPeriodic, bPeriodic, bPeriodic, bStressFree, bDirichlet};
   set_global_bcs(bct);
-  
+
   if (proc_zero())
   {
     float_sw4 Lwave = 2*M_PI/m_rayleigh_wave_test->m_omega;
     float_sw4 Period = Lwave/m_rayleigh_wave_test->m_cr;
-    
-    printf("TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, Wave length=%e, Period=%e\n", 
-	   m_rayleigh_wave_test->m_rho, m_rayleigh_wave_test->m_cp, m_rayleigh_wave_test->m_cs, 
-	   m_rayleigh_wave_test->m_cr, Lwave, Period );
+
+    printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, Wave length=%e, "
+        "Period=%e\n",
+
+#else // SW4 backend
+"TestRayleigh: rho=%e, cp=%e, cs=%e, cr=%e, Wave length=%e, Period=%e\n",
+
+#endif // SW4 backend
+m_rayleigh_wave_test->m_rho, m_rayleigh_wave_test->m_cp, m_rayleigh_wave_test->m_cs,
+           m_rayleigh_wave_test->m_cr, Lwave, Period );
   }
-  
+
 }
 
 //-----------------------------------------------------------------------
@@ -2259,10 +2609,18 @@ void EW::processTestLamb(char* buffer)
    token = strtok(NULL, " \t");
 
    string err = "Testlamb Error: ";
-   float_sw4 x0=0.0, y0=0.0, z0=0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 rho = 1.0, cp = sqrt(3.0);
+
+
+#else // SW4 backend
+float_sw4 x0=0.0, y0=0.0, z0=0.0;
    float_sw4 cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
 
-   while (token != NULL)
+
+#endif // SW4 backend
+while (token != NULL)
    {
       if (startswith("#", token) || startswith(" ", buffer))
          break;
@@ -2279,28 +2637,28 @@ void EW::processTestLamb(char* buffer)
       // }
       if (startswith("cp=", token))
       {
-         token += 3; 
+         token += 3;
          cp = atof(token);
       }
 // exact solution assumes cs=cp/sqrt(3), so we will hard-wire this ratio below
 //       else if (startswith("cs=", token))
 //       {
-//          token += 3; 
+//          token += 3;
 //          cs = atof(token);
 //       }
       else if (startswith("rho=", token))
       {
-         token += 4; 
+         token += 4;
          rho = atof(token);
       }
       // else if (startswith("fz=", token))
       // {
-      //    token += 3; 
+      //    token += 3;
       //    fz = atof(token);
       // }
       else
       {
-	 badOption("testlamb", token);
+         badOption("testlamb", token);
       }
       token = strtok(NULL, " \t");
    }
@@ -2326,12 +2684,12 @@ void EW::processTestEnergy(char* buffer)
   bool use_supergrid=false;
   float_sw4 stochastic_amp = 1;
   float_sw4 sg_eps = 1e-4;
-  
+
   int seed=2934839, write_every=1000;
   string filename("energy.log");
 
   float_sw4 cpcsratio = sqrt(3.0);
-  
+
   while (token != NULL)
   {
     if (startswith("#", token) || startswith(" ", buffer))
@@ -2339,22 +2697,22 @@ void EW::processTestEnergy(char* buffer)
 
     if (startswith("cpcsratio=", token))
     {
-      token += 10; 
+      token += 10;
       cpcsratio = atof(token);
     }
     else if (startswith("seed=", token))
     {
-      token += 5; 
+      token += 5;
       seed = atoi(token);
     }
     else if (startswith("amplitude=", token))
     {
-      token += 10; 
+      token += 10;
       stochastic_amp = atof(token);
     }
     else if (startswith("sg_eps=", token))
     {
-      token += 7; 
+      token += 7;
       sg_eps = atof(token);
       CHECK_INPUT(sg_eps > 0,
                   err << "testenergy command: sg_eps must be positive, not: " << token);
@@ -2363,12 +2721,21 @@ void EW::processTestEnergy(char* buffer)
      {
        token += strlen("writeEvery=");
        write_every = atoi(token);
-       CHECK_INPUT(write_every >= 0,
-	       err << "testenergy command: writeEvery must be set to a non-negative integer, not: " << token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(write_every >= 0,
+                  err << "testenergy command: writeEvery must be set to a "
+                         "non-negative integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT(write_every >= 0,
+               err << "testenergy command: writeEvery must be set to a non-negative integer, not: "
+#endif // SW4 backend
+<< token);
      }
     else if (startswith("filename=", token))
     {
-      token += 9; 
+      token += 9;
       filename = token;
     }
     else if( startswith("bchorizontal=",token))
@@ -2390,16 +2757,16 @@ void EW::processTestEnergy(char* buffer)
   if (use_dirichlet)
   {
      for( int side=0 ; side < 4 ; side++ )
-	bct[side] = bDirichlet;
+        bct[side] = bDirichlet;
   }
-  else if (use_supergrid) // supergrid on all sides, except low-z, where we use a free surface bc 
+  else if (use_supergrid) // supergrid on all sides, except low-z, where we use a free surface bc
   {
      for( int side=0 ; side < 6 ; side++ )
-	bct[side] = bSuperGrid;
+        bct[side] = bSuperGrid;
 
      bct[4] = bStressFree;
   }
-  
+
   set_global_bcs(bct);
 }
 
@@ -2424,21 +2791,36 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
   }
   return use_periodic;
 }
-  
+
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer)
 {
    int printcycle = 100;
-   char* scenario = 0;
-   int nwriters=8;
-   bool pfs=false;
-   bool haspath = false;
-   
-   int verbose = 0;
-   bool debug = false;
 
-   char* token = strtok(buffer, " \t");
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+char* scenario = 0;
+
+#endif // SW4 backend
+int nwriters=8;
+   bool pfs=false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool haspath = false;
+
+
+#endif // SW4 backend
+int verbose = 0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool debug = false;
+
+
+#endif // SW4 backend
+char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("fileio", token) == 0, "ERROR: not a fileio line...: " << token);
    token = strtok(NULL, " \t");
 
@@ -2450,29 +2832,39 @@ void EW::processFileIO(char* buffer)
           break;
        if(startswith("path=", token)) {
           token += 5; // skip path=
-	  // If path already specified from event lines, skip this path specification.
-	  if( m_nevents_specified == 0 )
-	  {
-             string path=token;
+          // If path already specified from event lines, skip this path specification.
+          if( m_nevents_specified == 0 )
+          {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+string path=token;
              path += '/';
              //             mPath.push_back(path);
-             mPath[0] = token;
+
+#endif // SW4 backend
+mPath[0] = token;
              mPath[0] += '/';
-	  }
-	  //          path = token;
+          }
+          //          path = token;
        }
        else if (startswith("obspath=", token))
        {
           token += 8; // skip obspath=
-	  // If obspath already specified from event lines, skip this path specification.
-	  if( m_nevents_specified == 0 )
-	  {
-             string path=token;
+          // If obspath already specified from event lines, skip this path specification.
+          if( m_nevents_specified == 0 )
+          {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+string path=token;
              path += '/';
              //             mObsPath.push_back(path);
-             mObsPath[0] = token;
+
+#endif // SW4 backend
+mObsPath[0] = token;
              mObsPath[0] += '/';
-	  }
+          }
        }
 //                          123456789
        else if (startswith("verbose=", token))
@@ -2485,7 +2877,7 @@ void EW::processFileIO(char* buffer)
        {
           token += 11; // skip printcycle=
           CHECK_INPUT(atoi(token) > -1,
-	         err << "printcycle must be zero or greater, not: " << token);
+                 err << "printcycle must be zero or greater, not: " << token);
           printcycle = atoi(token);
        }
        else if (startswith("pfs=", token))
@@ -2498,14 +2890,14 @@ void EW::processFileIO(char* buffer)
        {
           token += 9; // skip nwriters=
           CHECK_INPUT(atoi(token) > 0,
-	         err << "nwriters must be positive, not: " << token);
+                 err << "nwriters must be positive, not: " << token);
           nwriters = atoi(token);
        }
        else if (startswith("temppath=", token))
        {
           token += 9; // skip temppath=
           mTempPath = token;
-	  mTempPath += '/';
+          mTempPath += '/';
        }
        else
        {
@@ -2514,7 +2906,8 @@ void EW::processFileIO(char* buffer)
        token = strtok(NULL, " \t");
     }
 //  if (path != 0) setOutputPath(path);
-  setPrintCycle(printcycle);
+
+setPrintCycle(printcycle);
   setVerbosity(verbose);
   setParallel_IO(pfs, nwriters);
 }
@@ -2533,15 +2926,15 @@ void EW::processGMT(char* buffer)
     {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	break;
+        // Ignore commented lines and lines with just a space.
+        break;
       if (startswith("file=", token))
-	{
+        {
           token += 5; // skip file=
           filename = token;
        }
       else
-	{
+        {
           badOption("gmt", token);
        }
       token = strtok(NULL, " \t");
@@ -2551,9 +2944,9 @@ void EW::processGMT(char* buffer)
 
 //-----------------------------------------------------------------------
 void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
-		    int& second, int& msecond, int& fail )
+                    int& second, int& msecond, int& fail )
 {
-	  // Format: 01/04/2012:17:34:45.2343 (Month/Day/Year:Hour:Min:Sec.fraction)
+          // Format: 01/04/2012:17:34:45.2343 (Month/Day/Year:Hour:Min:Sec.fraction)
    fail = 0;
    int n = strlen(datestr);
    //      cout << "x" << datestr << "x" << endl;
@@ -2563,7 +2956,7 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
    while( i<n )
    {
       if( datestr[i]=='/' || datestr[i]==':' || datestr[i] == '.' )
-	 buf += datestr[i];
+         buf += datestr[i];
       i++;
    }
    //   if( buf == "//:::." && isdigit(datestr[ifirst]) && isdigit(datestr[n-1]) )
@@ -2579,24 +2972,32 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
       //      cout << " mon " << month << " day " << day << " year " << year << endl;
       //      cout << " hour " << hour<< " minute " << minute << " fsec = " << fsec << endl;
       if( year < 1000 || year > 3000 )
-	 fail = 2;
+         fail = 2;
       if( month < 1 || month > 12 )
-	 fail = 3;
+         fail = 3;
       if( day < 1 || day > 31 )
-	 fail = 4;
+         fail = 4;
       if( hour < 0 || hour > 24 )
-	 fail = 5;
+         fail = 5;
       if( minute < 0 || minute > 60 )
-	 fail = 6;
+         fail = 6;
       if( fsec < 0 )
-	 fail = 8;
-      second = static_cast<int>(trunc(fsec));
+         fail = 8;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+second = static_cast<int>(std::trunc(fsec));
+    msecond = static_cast<int>(std::round((fsec - second) * 1000));
+
+#else // SW4 backend
+second = static_cast<int>(trunc(fsec));
       msecond = static_cast<int>( round((fsec-second)*1000000));
-      if( second < 0 || second > 60 )
-	 fail = 7;
+
+#endif // SW4 backend
+if( second < 0 || second > 60 )
+         fail = 7;
       //      cout << " second = " << second << " msecond = " << msecond <<endl;
    }
-   else 
+   else
       fail = 1;
 }
 
@@ -2606,8 +3007,15 @@ void EW::processTime(char* buffer)
   float_sw4 t=0.0;
   int steps = -1;
   int year, month, day, hour, minute, second, msecond, fail;
-  bool refdateset=false, refeventdateset=false;
-  char* token = strtok(buffer, " \t");
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+bool refdateset = false;  // refeventdateset = false;
+
+#else // SW4 backend
+bool refdateset=false, refeventdateset=false;
+
+#endif // SW4 backend
+char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0, "ERROR: not a time line...: " << token);
   token = strtok(NULL, " \t");
   int event=0;
@@ -2635,28 +3043,50 @@ void EW::processTime(char* buffer)
      // Only care about 'event' if event lines are present in input file
        else if(startswith("event=",token))
        {
-	  token += 6;
-	// Ignore if no events given
-	  if( m_nevents_specified > 0 )
-	  {
-	     map<string,int>::iterator it = m_event_names.find(token);
-             //	     CHECK_INPUT( it != m_event_names.end(), 
+          token += 6;
+        // Ignore if no events given
+          if( m_nevents_specified > 0 )
+          {
+             map<string,int>::iterator it = m_event_names.find(token);
+             //	     CHECK_INPUT( it != m_event_names.end(),
              //		       err << "event with name "<< token << " not found" );
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Time warning: event with name " << token << " not found" << std::endl;
-	  }
+
+#endif // SW4 backend
+}
        }
        else if( startswith("utcstart=",token) )
        {
           token += 9;
-	  // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
+          // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
           parsedate( token, year, month, day, hour, minute, second, msecond, fail );
           if( fail == 0 )
-	     refdateset = true;
-	  else
-	     CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms, not  " << token );
+             refdateset = true;
+          else
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(fail == 0,
+                    "processTime: Error in utcstart format. Give as "
+                    "mm/dd/yyyy:hh:mm:ss.ms, not  "
+
+#else // SW4 backend
+CHECK_INPUT(fail == 0 , "processTime: Error in utcstart format. Give as mm/dd/yyyy:hh:mm:ss.ms, not  "
+#endif // SW4 backend
+<< token );
        }
        else
        {
@@ -2666,15 +3096,20 @@ void EW::processTime(char* buffer)
     }
   CHECK_INPUT(!( (t > 0.0) && (steps >= 0) ),
           "Time Error: Cannot set both t and steps for time");
-  event = global_to_local_event(event);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+event = global_to_local_event(event);
   if( event >= 0 )
   {
  // event is handled by this processor group
-     if (t > 0.0)
+
+#endif // SW4 backend
+if (t > 0.0)
         setGoalTime(t,event);
      else if (steps >= 0)
         setNumberSteps(steps,event);
- 
+
      if( refdateset )
      {
         m_utc0[event][0] = year;
@@ -2697,9 +3132,16 @@ void EW::processTime(char* buffer)
         m_utc0[event][3] = utctime->tm_hour;
         m_utc0[event][4] = utctime->tm_min;
         m_utc0[event][5] = utctime->tm_sec;
-        m_utc0[event][6] = 0; //milliseconds not given by 'time', not needed here.
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_utc0[event][6] = 0;  // milliseconds not given by 'time', not needed here.
+
+#else // SW4 backend
+m_utc0[event][6] = 0; //milliseconds not given by 'time', not needed here.
      }
-  }
+
+#endif // SW4 backend
+}
 }
 
 //-----------------------------------------------------------------------
@@ -2708,9 +3150,9 @@ void EW::processBoundaryConditions(char *buffer)
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("boundary_conditions", token) == 0, "ERROR: not a boundary condition line...: " << token);
   token = strtok(NULL, " \t");
-  
+
   boundaryConditionType bct[6]={bSuperGrid, bSuperGrid, bSuperGrid, bSuperGrid, bStressFree, bSuperGrid};
-  
+
   int type;
   int side;
   while (token != NULL)
@@ -2760,7 +3202,7 @@ void EW::processBoundaryConditions(char *buffer)
     {
       badOption("boundary_conditions", token);
     }
-     
+
     switch (type) {
     case 0:
       bct[side] = bStressFree;
@@ -2777,11 +3219,19 @@ void EW::processBoundaryConditions(char *buffer)
     default:
       if (m_myRank==0)
       {
-	printf("processBoundaryConditions:: Ignoring unknown boundary condition type = %i\n", type);
+        printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"processBoundaryConditions:: Ignoring unknown boundary condition "
+              "type = %i\n",
+
+#else // SW4 backend
+"processBoundaryConditions:: Ignoring unknown boundary condition type = %i\n",
+#endif // SW4 backend
+type);
       }
     }
     token = strtok(NULL, " \t");
-  } 
+  }
   set_global_bcs(bct);
 }
 
@@ -2794,7 +3244,7 @@ void EW::processSupergrid(char *buffer)
   int sg_n_gp; // sg_transition;
   float_sw4 sg_coeff, sg_width;
   bool gpSet=false, dampingCoeffSet=false, widthSet=false; // , transitionSet=false
-  
+
   while (token != NULL)
   {
     if (startswith("#", token) || startswith(" ", buffer))
@@ -2806,7 +3256,16 @@ void EW::processSupergrid(char *buffer)
     {
       token += 3;
       sg_n_gp = atoi(token);
-      CHECK_INPUT(sg_n_gp>0, "The number of grid points in the supergrid damping layer must be positive, not: "<< sg_n_gp);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(sg_n_gp > 0,
+                  "The number of grid points in the supergrid damping layer "
+                  "must be positive, not: "
+
+#else // SW4 backend
+CHECK_INPUT(sg_n_gp>0, "The number of grid points in the supergrid damping layer must be positive, not: "
+#endif // SW4 backend
+<< sg_n_gp);
       gpSet = true;
     }
 //                  12345678901
@@ -2844,9 +3303,9 @@ void EW::processSupergrid(char *buffer)
     }
     token = strtok(NULL, " \t");
   } // end while token
-  
+
   CHECK_INPUT( !(gpSet && widthSet), "EW::Processsupergrid, ERROR, both gp and width of supergrid set\n");
-     
+
   if (gpSet)// gp specified
      set_sg_thickness(sg_n_gp);
 
@@ -2876,24 +3335,29 @@ void EW::processGlobalMaterial(char* buffer)
    token = strtok(NULL, " \t");
 
    string err = "globalmaterial error: ";
-   int modelnr = 0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int modelnr = 0;
    float_sw4 frequency = 1;
-   float_sw4 vpmin=0, vsmin=0;
-  
+
+#endif // SW4 backend
+float_sw4 vpmin=0, vsmin=0;
+
    while (token != NULL)
    {
       if ( startswith("vpmin=", token) )
       {
- 	token += 6;
- 	vpmin = atof(token);
+        token += 6;
+        vpmin = atof(token);
       }
       else if ( startswith("vsmin=", token) )
       {
- 	token += 6;
- 	vsmin = atof(token);
+        token += 6;
+        vsmin = atof(token);
       }
       else
- 	badOption("globalmaterial", token);
+        badOption("globalmaterial", token);
       token = strtok(NULL, " \t");
    }
 
@@ -2940,10 +3404,10 @@ void EW::processPrefilter(char* buffer)
    string err = "prefilter Error: ";
    string commandName = token;
    float_sw4 fc1=0.1, fc2 = 1.0; // only fc2 is used for low-pass
-   FilterType passband = bandPass; // 
+   FilterType passband = bandPass; //
    int passes=2; // forwards and backwards gives a zero-phase filter
    int order=2;
-   
+
    while (token != NULL)
    {
       if (startswith("#", token) || startswith(" ", buffer))
@@ -2967,29 +3431,29 @@ void EW::processPrefilter(char* buffer)
       else if (startswith("type=", token))
       {
         token += 5;
-	if( strcmp(token,"lowpass") == 0 )
-	  passband = lowPass;
-	else if( strcmp(token,"bandpass") == 0 )
-	  passband = bandPass;
-	else
-	  CHECK_INPUT( false, "processPrefilter: Error: type= " << token << 
-		       " Only lowpass or bandpass are recognized\n" );
+        if( strcmp(token,"lowpass") == 0 )
+          passband = lowPass;
+        else if( strcmp(token,"bandpass") == 0 )
+          passband = bandPass;
+        else
+          CHECK_INPUT( false, "processPrefilter: Error: type= " << token <<
+                       " Only lowpass or bandpass are recognized\n" );
       }
 //                         1234567890
       else if (startswith("passes=", token))
       {
         token += 7;
         passes = atoi(token);
-	CHECK_INPUT( passes == 1 || passes == 2, "processPrefilter: Error: passes must be 1 or 2, not = " 
-		     << token );
+        CHECK_INPUT( passes == 1 || passes == 2, "processPrefilter: Error: passes must be 1 or 2, not = "
+                     << token );
       }
 //                         1234567890
       else if (startswith("order=", token))
       {
         token += 6;
         order = atoi(token);
-	CHECK_INPUT( order > 0 && order <= 10, "processPrefilter: Error: order = " 
-		     << token << " out of bounds\n" );
+        CHECK_INPUT( order > 0 && order <= 10, "processPrefilter: Error: order = "
+                     << token << " out of bounds\n" );
       }
       else
       {
@@ -3015,209 +3479,321 @@ void EW::processGeodynbc(char* buf)
    string err = "geodynbc Error: ";
    string commandName = "geodynbc";
 
-   int faces=6, nx=0, ny=0, nz=0, nsteps=0, filter=0, adjust=1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int faces = 6, nx = 0, ny = 0, nz = 0, nsteps = 0;  // filter = 0, adjust = 1;
+  // float_sw4 x0, y0, z0, lat, lon, elev, az, timestep, rho = 0, vs = 0, vp =
+  // 0,
+  //  freq;
+  // float_sw4 srcx0, srcy0, srcz0, h, toff;
+
+#else // SW4 backend
+int faces=6, nx=0, ny=0, nz=0, nsteps=0, filter=0, adjust=1;
    float_sw4 x0, y0, z0, lat, lon, elev, az, timestep, rho=0, vs=0, vp=0, freq;
    float_sw4 srcx0, srcy0, srcz0, h, toff;
 
-   bool timestepset = false, nstepsset=false, toffset=false;
-   char buffer[512];
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 h, timestep;
+
+  bool timestepset = false, nstepsset = false;  // toffset = false;
+
+#else // SW4 backend
+bool timestepset = false, nstepsset=false, toffset=false;
+
+#endif // SW4 backend
+char buffer[512];
    bool done = false;
    while (!geodynfile.eof() && !done )
    {
       geodynfile.getline(buffer,512);
-      if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
-         break;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (startswith("#", buffer) || startswith("\n", buffer) ||
+        !strncmp(buffer, "\0", 1))  // strncmp not tested PBUGS
+
+#else // SW4 backend
+if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
+
+#endif // SW4 backend
+break;
       if( startswith("begindata",buffer) )
       {
-	 done = true;
+         done = true;
          break;
       }
 
       if( startswith("grid", buffer) )
       {
-	 char* token = strtok(buffer, " \t");
-	 token = strtok(NULL, " \t");
-	 while (token != NULL)
-	 {
-	    if (startswith("#", token) || startswith(" ", buffer))
-	       break;
-	    if (startswith("faces=", token))
-	    {
-	       token += 6;
-	       faces = atoi(token);
-	    }
-	    else if( startswith("nx=",token))
-	    {
-	       token += 3;
-	       nx = atoi(token);
-	    }
-	    else if( startswith("ny=",token))
-	    {
-	       token += 3;
-	       ny = atoi(token);
-	    }
-	    else if( startswith("nz=",token))
-	    {
-	       token += 3;
-	       nz = atoi(token);
-	    }
-	    else if( startswith("stepsize=",token))
-	    {
-	       token += 9;
-	       h = atof(token);
-	    }
-	    else if( startswith("x0=",token))
-	    {
-	       token += 3;
-	       x0 = atof(token);
-	    }
-	    else if( startswith("y0=",token))
-	    {
-	       token += 3;
-	       y0 = atof(token);
-	    }
-	    else if( startswith("z0=",token))
-	    {
-	       token += 3;
-	       z0 = atof(token);
-	    }
-	    else if( startswith("lat=",token))
-	    {
-	       token += 4;
-	       lat = atof(token);
-	    }
-	    else if( startswith("lon=",token))
-	    {
-	       token += 4;
-	       lon = atof(token);
-	    }
-	    else if( startswith("elev=",token))
-	    {
-	       token += 5;
-	       elev = atof(token);
-	    }
-	    else if( startswith("az=",token))
-	    {
-	       token += 3;
-	       az = atof(token);
-	    }
-	    else if( startswith("adjust=",token))
-	    {
-	       token += 7;
-	       adjust = strcmp(token,"yes")==0;
-	    }
-	    else
-	    {
-	       badOption("geodyn-grid", token);
-	    }
-	    token = strtok(NULL, " \t");
-	 }
+         char* token = strtok(buffer, " \t");
+         token = strtok(NULL, " \t");
+         while (token != NULL)
+         {
+            if (startswith("#", token) || startswith(" ", buffer))
+               break;
+            if (startswith("faces=", token))
+            {
+               token += 6;
+               faces = atoi(token);
+            }
+            else if( startswith("nx=",token))
+            {
+               token += 3;
+               nx = atoi(token);
+            }
+            else if( startswith("ny=",token))
+            {
+               token += 3;
+               ny = atoi(token);
+            }
+            else if( startswith("nz=",token))
+            {
+               token += 3;
+               nz = atoi(token);
+            }
+            else if( startswith("stepsize=",token))
+            {
+               token += 9;
+               h = atof(token);
+            }
+            else if( startswith("x0=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+x0 = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("y0=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+y0 = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("z0=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+z0 = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("lat=",token))
+            {
+               token += 4;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+lat = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("lon=",token))
+            {
+               token += 4;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+lon = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("elev=",token))
+            {
+               token += 5;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+elev = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("az=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+az = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("adjust=",token))
+            {
+               token += 7;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+adjust = strcmp(token,"yes")==0;
+
+#endif // SW4 backend
+}
+            else
+            {
+               badOption("geodyn-grid", token);
+            }
+            token = strtok(NULL, " \t");
+         }
       }
       else if( startswith("time", buffer) )
       {
-	 char* token = strtok(buffer, " \t");
-	 token = strtok(NULL, " \t");
-	 while (token != NULL)
-	 {
-	    if (startswith("#", token) || startswith(" ", buffer))
-	       break;
-	    if (startswith("timestep=", token))
-	    {
-	       token += 9;
-	       timestep = atof(token);
-	       timestepset=true;
-	    }
-	    else if( startswith("nsteps=",token))
-	    {
-	       token += 7;
-	       nsteps = atoi(token);
-	       nstepsset=true;
-	    }
-	    else if( startswith("toff=",token))
-	    {
-	       token += 5;
-	       toff = atof(token);
-	       toffset=true;
-	    }
-	    else
-	    {
-	       badOption("geodyn-time", token);
-	    }
-	    token = strtok(NULL, " \t");
-	 }
+         char* token = strtok(buffer, " \t");
+         token = strtok(NULL, " \t");
+         while (token != NULL)
+         {
+            if (startswith("#", token) || startswith(" ", buffer))
+               break;
+            if (startswith("timestep=", token))
+            {
+               token += 9;
+               timestep = atof(token);
+               timestepset=true;
+            }
+            else if( startswith("nsteps=",token))
+            {
+               token += 7;
+               nsteps = atoi(token);
+               nstepsset=true;
+            }
+            else if( startswith("toff=",token))
+            {
+               token += 5;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+toff = atof(token);
+               toffset=true;
+
+#endif // SW4 backend
+}
+            else
+            {
+               badOption("geodyn-time", token);
+            }
+            token = strtok(NULL, " \t");
+         }
       }
       else if( startswith("material",buffer) )
       {
-	 char* token = strtok(buffer, " \t");
-	 token = strtok(NULL, " \t");
-	 while (token != NULL)
-	 {
-	    if (startswith("#", token) || startswith(" ", buffer))
-	       break;
-	    if (startswith("rho=", token))
-	    {
-	       token += 4;
-	       rho = atof(token);
-	    }
-	    else if( startswith("vs=",token))
-	    {
-	       token += 3;
-	       vs = atof(token);
-	    }
-	    else if( startswith("vp=",token))
-	    {
-	       token += 3;
-	       vp = atof(token);
-	    }
-	    else
-	    {
-	       badOption("geodyn-material", token);
-	    }
-	    token = strtok(NULL, " \t");
-	 }
+         char* token = strtok(buffer, " \t");
+         token = strtok(NULL, " \t");
+         while (token != NULL)
+         {
+            if (startswith("#", token) || startswith(" ", buffer))
+               break;
+            if (startswith("rho=", token))
+            {
+               token += 4;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+rho = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("vs=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+vs = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("vp=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+vp = atof(token);
+
+#endif // SW4 backend
+}
+            else
+            {
+               badOption("geodyn-material", token);
+            }
+            token = strtok(NULL, " \t");
+         }
       }
       else if( startswith("source",buffer) )
       {
-	 char* token = strtok(buffer, " \t");
-	 token = strtok(NULL, " \t");
-	 while (token != NULL)
-	 {
-	    if (startswith("#", token) || startswith(" ", buffer))
-	       break;
-	    if (startswith("filter=", token))
-	    {
-	       token += 7;
-	       if( strcmp(token,"butterworth")== 0 )
-		  filter = 1;
-	       else
-		  filter = 0;
-	    }
-	    else if( startswith("frequency=",token))
-	    {
-	       token += 10;
-	       freq = atof(token);
-	    }
-	    else if( startswith("x0=",token))
-	    {
-	       token += 3;
-	       srcx0 = atof(token);
-	    }
-	    else if( startswith("y0=",token))
-	    {
-	       token += 3;
-	       srcy0 = atof(token);
-	    }
-	    else if( startswith("z0=",token))
-	    {
-	       token += 3;
-	       srcz0 = atof(token);
-	    }
-	    else
-	    {
-	       badOption("geodyn-source", token);
-	    }
-	    token = strtok(NULL, " \t");
-	 }
+         char* token = strtok(buffer, " \t");
+         token = strtok(NULL, " \t");
+         while (token != NULL)
+         {
+            if (startswith("#", token) || startswith(" ", buffer))
+               break;
+            if (startswith("filter=", token))
+            {
+               token += 7;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( strcmp(token,"butterworth")== 0 )
+                  filter = 1;
+               else
+                  filter = 0;
+
+#endif // SW4 backend
+}
+            else if( startswith("frequency=",token))
+            {
+               token += 10;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+freq = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("x0=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+srcx0 = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("y0=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+srcy0 = atof(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("z0=",token))
+            {
+               token += 3;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+srcz0 = atof(token);
+
+#endif // SW4 backend
+}
+            else
+            {
+               badOption("geodyn-source", token);
+            }
+            token = strtok(NULL, " \t");
+         }
       }
    }
    geodynfile.close();
@@ -3227,7 +3803,7 @@ void EW::processGeodynbc(char* buf)
    CHECK_INPUT( timestepset, "Geodyn file error: No time step given");
    CHECK_INPUT( nstepsset, "Geodyn file error: Number of steps not given");
    set_geodyn_data( m_geodynbc_filename, nx, nz, h, m_ibc_origin, timestep,
-		    nsteps, faces );
+                    nsteps, faces );
 }
 
 //-----------------------------------------------------------------------
@@ -3236,7 +3812,10 @@ void EW::geodynFindFile(char* buffer)
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("geodynbc", token) == 0, "ERROR: not a geodynbc line...: " << token);
    token = strtok(NULL, " \t");
-   if( m_events_parallel )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_events_parallel )
    {
       if( proc_zero() )
       {
@@ -3246,7 +3825,9 @@ void EW::geodynFindFile(char* buffer)
       return;
    }
 
-   string err = "geodynbc Error: ";
+
+#endif // SW4 backend
+string err = "geodynbc Error: ";
    string commandName = token;
 
    while (token != NULL)
@@ -3264,7 +3845,7 @@ void EW::geodynFindFile(char* buffer)
       {
          token += 7;
          if (atoi(token) == 1 || strcmp(token,"yes")==0 )
-	    m_geodynbc_center = true;
+            m_geodynbc_center = true;
       }
       else
       {
@@ -3276,8 +3857,8 @@ void EW::geodynFindFile(char* buffer)
 
 //-----------------------------------------------------------------------
 void EW::geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cubelen,
-			   float_sw4& zcubelen, float_sw4& hcube, bool& found_latlon,
-			   double& lat, double& lon, double& az, int& adjust )
+                           float_sw4& zcubelen, float_sw4& hcube, bool& found_latlon,
+                           double& lat, double& lon, double& az, int& adjust )
 {
    ifstream geodynfile(m_geodynbc_filename.c_str());
    CHECK_INPUT( geodynfile.is_open(), "Error: opening geodyn file " << m_geodynbc_filename );
@@ -3285,116 +3866,159 @@ void EW::geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cube
    string err = "geodynbc Error: ";
    string commandName = "geodynbc";
 
-   int nx=0, ny=0, nz=0, faces=6;
-   double x0, y0, z0, elev, h;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int nx = 0, ny = 0, nz = 0;  // faces = 6;
+
+#else // SW4 backend
+int nx=0, ny=0, nz=0, faces=6;
+
+#endif // SW4 backend
+double x0, y0, z0, elev, h;
    adjust=1;
 
    char buffer[512];
    bool done = false;
-   bool nxfound=false, nyfound=false, nzfound=false, x0found=false, y0found=false, z0found=false;
-   bool latfound=false, lonfound=false, azfound=false, hfound=false, elevfound=false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+bool nxfound = false, nyfound = false, nzfound = false;  // x0found = false,
+  //       y0found = false, z0found = false;
+
+#else // SW4 backend
+bool nxfound=false, nyfound=false, nzfound=false, x0found=false, y0found=false, z0found=false;
+
+#endif // SW4 backend
+bool latfound=false, lonfound=false, azfound=false, hfound=false, elevfound=false;
    while (!geodynfile.eof() && !done )
    {
       geodynfile.getline(buffer,512);
-      if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
-         break;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (startswith("#", buffer) || startswith("\n", buffer) ||
+        !strncmp(buffer, "\0", 1))  // strncomp not tested PBUGS
+
+#else // SW4 backend
+if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
+
+#endif // SW4 backend
+break;
       if( startswith("begindata",buffer) )
       {
-	 done = true;
+         done = true;
          break;
       }
 
       if( startswith("grid", buffer) )
       {
-	 char* token = strtok(buffer, " \t");
-	 token = strtok(NULL, " \t");
-	 while (token != NULL)
-	 {
-	    if (startswith("#", token) || startswith(" ", buffer))
-	       break;
-	    if (startswith("faces=", token))
-	    {
-	       token += 6;
-	       faces = atoi(token);
-	    }
-	    else if( startswith("nx=",token))
-	    {
-	       token += 3;
-	       nx = atoi(token);
+         char* token = strtok(buffer, " \t");
+         token = strtok(NULL, " \t");
+         while (token != NULL)
+         {
+            if (startswith("#", token) || startswith(" ", buffer))
+               break;
+            if (startswith("faces=", token))
+            {
+               token += 6;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+faces = atoi(token);
+
+#endif // SW4 backend
+}
+            else if( startswith("nx=",token))
+            {
+               token += 3;
+               nx = atoi(token);
                nxfound = true;
-	    }
-	    else if( startswith("ny=",token))
-	    {
-	       token += 3;
-	       ny = atoi(token);
+            }
+            else if( startswith("ny=",token))
+            {
+               token += 3;
+               ny = atoi(token);
                nyfound = true;
-	    }
-	    else if( startswith("nz=",token))
-	    {
-	       token += 3;
-	       nz = atoi(token);
+            }
+            else if( startswith("nz=",token))
+            {
+               token += 3;
+               nz = atoi(token);
                nzfound = true;
-	    }
-	    else if( startswith("stepsize=",token))
-	    {
-	       token += 9;
-	       h = atof(token);
+            }
+            else if( startswith("stepsize=",token))
+            {
+               token += 9;
+               h = atof(token);
                hfound = true;
-	    }
-	    else if( startswith("x0=",token))
-	    {
-	       token += 3;
-	       x0 = atof(token);
-               x0found = true;
-	    }
-	    else if( startswith("y0=",token))
-	    {
-	       token += 3;
-	       y0 = atof(token);
-               y0found = true;
-	    }
-	    else if( startswith("z0=",token))
-	    {
-	       token += 3;
-	       z0 = atof(token);
-               z0found = true;
-	    }
-	    else if( startswith("lat=",token))
-	    {
-	       token += 4;
-	       lat = atof(token);
+            }
+            else if( startswith("x0=",token))
+            {
+               token += 3;
+               x0 = atof(token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+x0found = true;
+
+#endif // SW4 backend
+}
+            else if( startswith("y0=",token))
+            {
+               token += 3;
+               y0 = atof(token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+y0found = true;
+
+#endif // SW4 backend
+}
+            else if( startswith("z0=",token))
+            {
+               token += 3;
+               z0 = atof(token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+z0found = true;
+
+#endif // SW4 backend
+}
+            else if( startswith("lat=",token))
+            {
+               token += 4;
+               lat = atof(token);
                latfound = true;
-	    }
-	    else if( startswith("lon=",token))
-	    {
-	       token += 4;
-	       lon = atof(token);
+            }
+            else if( startswith("lon=",token))
+            {
+               token += 4;
+               lon = atof(token);
                lonfound = true;
-	    }
-	    else if( startswith("elev=",token))
-	    {
-	       token += 5;
-	       elev = atof(token);
+            }
+            else if( startswith("elev=",token))
+            {
+               token += 5;
+               elev = atof(token);
                elevfound = true;
-	    }
-	    else if( startswith("az=",token))
-	    {
-	       token += 3;
-	       az = atof(token);
+            }
+            else if( startswith("az=",token))
+            {
+               token += 3;
+               az = atof(token);
                azfound = true;
-	    }
-	    else if( startswith("adjust=",token))
-	    {
-	       token += 7;
-	       //	       adjust = strcmp(token,"yes")==0;
+            }
+            else if( startswith("adjust=",token))
+            {
+               token += 7;
+               //	       adjust = strcmp(token,"yes")==0;
                adjust = atoi(token);
-	    }
-	    else
-	    {
-	       badOption("geodyn-grid", token);
-	    }
-	    token = strtok(NULL, " \t");
-	 }
+            }
+            else
+            {
+               badOption("geodyn-grid", token);
+            }
+            token = strtok(NULL, " \t");
+         }
       }
    }
    geodynfile.close();
@@ -3442,7 +4066,7 @@ void EW::processMaterial( char* buffer )
 
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("material", token) == 0,
- 	      "ERROR: material properties can be set by a material line, not: " << token);
+              "ERROR: material properties can be set by a material line, not: " << token);
 
    string err = token;
    err += " Error: ";
@@ -3456,72 +4080,72 @@ void EW::processMaterial( char* buffer )
    float_sw4 vp1o2=0, vs1o2=0, rho1o2=0;
 
    bool gotID = false;
-  
+
    while (token != NULL)
    {
      // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
        // Ignore commented lines and lines with just a space.
-	 break;
+         break;
  //                  1234567890
       if (startswith("id=", token) )
       {
-	 token += 3; // skip id=
-	 materialID = atoi(token);
-	 gotID=true;
+         token += 3; // skip id=
+         materialID = atoi(token);
+         gotID=true;
       }
 // linear variation
       else if (startswith("rhograd=", token))
       {
-	 token += 8; // skip rhograd=
-	 rho1 = atof(token);
+         token += 8; // skip rhograd=
+         rho1 = atof(token);
       }
       else if (startswith("vpgrad=", token))
       {
-	 token += 7; // skip vpgrad=
-	 vp1 = atof(token);
+         token += 7; // skip vpgrad=
+         vp1 = atof(token);
       }
       else if (startswith("vsgrad=", token))
       {
-	 token += 7; // skip vsgrad=
-	 vs1 = atof(token);
+         token += 7; // skip vsgrad=
+         vs1 = atof(token);
       }
 // quadratic variation
       else if (startswith("rho2=", token))
       {
-	 token += 5; // skip rho2=
-	 rho2 = atof(token);
+         token += 5; // skip rho2=
+         rho2 = atof(token);
       }
       else if (startswith("vp2=", token))
       {
-	 token += 4; // skip vp2=
-	 vp2 = atof(token);
+         token += 4; // skip vp2=
+         vp2 = atof(token);
       }
       else if (startswith("vs2=", token))
       {
-	 token += 4; // skip vs2=
-	 vs2 = atof(token);
+         token += 4; // skip vs2=
+         vs2 = atof(token);
       }
 // sqrt variation
       else if (startswith("rhosqrt=", token))
       {
-	 token += 8; // skip rhosqrt=
-	 rho1o2 = atof(token);
+         token += 8; // skip rhosqrt=
+         rho1o2 = atof(token);
       }
       else if (startswith("vpsqrt=", token))
       {
-	 token += 7; // skip vpsqrt=
-	 vp1o2 = atof(token);
+         token += 7; // skip vpsqrt=
+         vp1o2 = atof(token);
       }
       else if (startswith("vssqrt=", token))
       {
-	 token += 7; // skip vssqrt=
-	 vs1o2 = atof(token);
+         token += 7; // skip vssqrt=
+         vs1o2 = atof(token);
       }
 // plain vp, vs, rho come last because they start with the same letters as those above...
       else if (startswith("vp=", token) )
       {
-	 token += 3; // skip vp=
+         token += 3; // skip vp=
          vp0 = atof(token);
       }
       else if (startswith("vs=", token) )
@@ -3537,33 +4161,33 @@ void EW::processMaterial( char* buffer )
 // attenuation variables
       else if (startswith("Qp=", token) || startswith("qp=", token))
       {
-	 token += 3; // skip qp=
-	 qp = atof(token);
+         token += 3; // skip qp=
+         qp = atof(token);
       }
       else if (startswith("Qs=", token) || startswith("qs=", token))
       {
-	 token += 3; // skip qs=
-	 qs = atof(token);
+         token += 3; // skip qs=
+         qs = atof(token);
       }
       else
       {
-	 badOption("material", token);
+         badOption("material", token);
       }
       token = strtok(NULL, " \t");
    }
  // End parsing...
-  
+
    CHECK_INPUT( gotID, "No id specified in material command");
-  
 
-   CHECK_INPUT( (vs0 > 0 || vs1 != 0 || vs2 != 0) , 
- 	       "Error in material command: vs0, vs1, vs2 are " << vs0 << " " << vs1 << " " << vs2 );
 
-   CHECK_INPUT( (vp0 > 0 || vp1 != 0 || vp2 != 0) , 
- 	       "Error in material command: vp0, vp1, vp2 are " << vp0 << " " << vp1 << " " << vp2 );
+   CHECK_INPUT( (vs0 > 0 || vs1 != 0 || vs2 != 0) ,
+               "Error in material command: vs0, vs1, vs2 are " << vs0 << " " << vs1 << " " << vs2 );
 
-   CHECK_INPUT( (rho0 > 0 || rho1 != 0 || rho2 != 0) , 
- 	       "Error in material command: rho0, rho1, rho2 are " << rho0 << " " << rho1 << " " << rho2 );
+   CHECK_INPUT( (vp0 > 0 || vp1 != 0 || vp2 != 0) ,
+               "Error in material command: vp0, vp1, vp2 are " << vp0 << " " << vp1 << " " << vp2 );
+
+   CHECK_INPUT( (rho0 > 0 || rho1 != 0 || rho2 != 0) ,
+               "Error in material command: rho0, rho1, rho2 are " << rho0 << " " << rho1 << " " << rho2 );
 
    if( mVerbose >= 2 &&  m_myRank == 0 )
    {
@@ -3588,11 +4212,16 @@ void EW::processSfileOutput( char* buffer )
    int sampleFactorH = 1;
    int sampleFactorV = 1;
    float_sw4 time=0.0, timeInterval=0.0;
-   bool timingSet = false;
-   float_sw4 tStart = -999.99;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool timingSet = false;
+
+#endif // SW4 backend
+float_sw4 tStart = -999.99;
    string filePrefix="sfileoutput";
    bool use_double = false;
-  
+
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("sfileoutput", token) == 0, "ERROR: Not a sfileoutput line...: " << token );
 
@@ -3602,84 +4231,120 @@ void EW::processSfileOutput( char* buffer )
    {
      // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	 // Ignore commented lines and lines with just a space.
-	 break;
+         // Ignore commented lines and lines with just a space.
+         break;
       /* if (startswith("time=", token) ) */
       /* { */
-	 /* token += 5; // skip time= */
-	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token); */
-	 /* time = atof(token); */
-	 /* timingSet = true; */
+         /* token += 5; // skip time= */
+         /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token); */
+         /* time = atof(token); */
+         /* timingSet = true; */
       /* } */
       /* else if (startswith("timeInterval=", token) ) */
       /* { */
-	 /* token += 13; // skip timeInterval= */
-	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token); */
-	 /* timeInterval = atof(token); */
-	 /* timingSet = true; */
+         /* token += 13; // skip timeInterval= */
+         /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token); */
+         /* timeInterval = atof(token); */
+         /* timingSet = true; */
       /* } */
       /* else if (startswith("startTime=", token) ) */
       /* { */
-	 /* token += 10; // skip startTime= */
-	 /* tStart = atof(token); */
+         /* token += 10; // skip startTime= */
+         /* tStart = atof(token); */
       /* } */
       else if (startswith("sampleFactorH=", token) )
       {
-	 token += 14; 
-	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorH must be a positive integer, not: " << token);
-	 sampleFactorH = atoi(token);
+         token += 14;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atoi(token) >= 1,
+                  "Processing sfileoutput command: sampleFactorH must be a "
+                  "positive integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorH must be a positive integer, not: "
+#endif // SW4 backend
+<< token);
+         sampleFactorH = atoi(token);
       }
       else if (startswith("sampleFactorV=", token) )
       {
-	 token += 14; 
-	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorV must be a positive integer, not: " << token);
-	 sampleFactorV= atoi(token);
+         token += 14;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atoi(token) >= 1,
+                  "Processing sfileoutput command: sampleFactorV must be a "
+                  "positive integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorV must be a positive integer, not: "
+#endif // SW4 backend
+<< token);
+         sampleFactorV= atoi(token);
       }
       else if (startswith("sampleFactor=", token) )
       {
-	 token += 13; 
-	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactor must be a positive integer, not: " << token);
-	 sampleFactorH = sampleFactorV = atoi(token);
+         token += 13;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atoi(token) >= 1,
+                  "Processing sfileoutput command: sampleFactor must be a "
+                  "positive integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactor must be a positive integer, not: "
+#endif // SW4 backend
+<< token);
+         sampleFactorH = sampleFactorV = atoi(token);
       }
       /* else if (startswith("cycle=", token) ) */
       /* { */
-	 /* token += 6; // skip cycle= */
-	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token); */
-	 /* cycle = atoi(token); */
-	 /* timingSet = true; */
+         /* token += 6; // skip cycle= */
+         /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token); */
+         /* cycle = atoi(token); */
+         /* timingSet = true; */
       /* } */
       /* else if (startswith("cycleInterval=", token) ) */
       /* { */
-	 /* token += 14; // skip cycleInterval= */
-	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token); */
-	 /* cycleInterval = atoi(token); */
-	 /* timingSet = true; */
+         /* token += 14; // skip cycleInterval= */
+         /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token); */
+         /* cycleInterval = atoi(token); */
+         /* timingSet = true; */
       /* } */
       else if (startswith("file=", token))
       {
-	 token += 5; // skip file=
-	 filePrefix = token;
+         token += 5; // skip file=
+         filePrefix = token;
       }
       else if( startswith("precision=",token) )
       {
-	 token += 10;
-	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
-		      "Processing sfileoutput command: precision must be float or double, not '" << token );
-	 use_double =  startswith("double",token);
+         token += 10;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(startswith("double", token) || startswith("float", token),
+                  "Processing sfileoutput command: precision must be float or "
+                  "double, not '"
+
+#else // SW4 backend
+CHECK_INPUT( startswith("double",token) || startswith("float",token),
+                      "Processing sfileoutput command: precision must be float or double, not '"
+#endif // SW4 backend
+<< token );
+         use_double =  startswith("double",token);
       }
       else
       {
-	 badOption("sfileoutput", token);
+         badOption("sfileoutput", token);
       }
       token = strtok(NULL, " \t");
    }
 
    if( !m_inverse_problem)
    {
-      /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */ 
-		   /* "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl ); */
-      SfileOutput* sfile = new SfileOutput( this, time, timeInterval, cycle, cycleInterval, 
- 			       tStart, filePrefix, sampleFactorH, sampleFactorV, use_double);
+      /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */
+                   /* "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl ); */
+      SfileOutput* sfile = new SfileOutput( this, time, timeInterval, cycle, cycleInterval,
+                               tStart, filePrefix, sampleFactorH, sampleFactorV, use_double);
       addSfileOutput( sfile );
    }
 }
@@ -3695,7 +4360,7 @@ void EW::processImage3D( char* buffer )
    float_sw4 tStart = -999.99;
    string filePrefix="volimage";
    bool use_double = false;
-  
+
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("volimage", token) == 0, "ERROR: Not a volimage line...: " << token );
 
@@ -3705,107 +4370,187 @@ void EW::processImage3D( char* buffer )
    {
      // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	 // Ignore commented lines and lines with just a space.
-	 break;
+         // Ignore commented lines and lines with just a space.
+         break;
       if (startswith("time=", token) )
       {
-	 token += 5; // skip time=
-	 CHECK_INPUT( atof(token) >= 0.,"Processing volimage command: time must be a non-negative number, not: " << token);
-	 time = atof(token);
-	 timingSet = true;
+         token += 5; // skip time=
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atof(token) >= 0.,
+                  "Processing volimage command: time must be a non-negative "
+                  "number, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atof(token) >= 0.,"Processing volimage command: time must be a non-negative number, not: "
+#endif // SW4 backend
+<< token);
+         time = atof(token);
+         timingSet = true;
       }
       else if (startswith("timeInterval=", token) )
       {
-	 token += 13; // skip timeInterval=
-	 CHECK_INPUT( atof(token) >= 0.,"Processing volimage command: timeInterval must be a non-negative number, not: " << token);
-	 timeInterval = atof(token);
-	 timingSet = true;
+         token += 13; // skip timeInterval=
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atof(token) >= 0.,
+                  "Processing volimage command: timeInterval must be a "
+                  "non-negative number, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atof(token) >= 0.,"Processing volimage command: timeInterval must be a non-negative number, not: "
+#endif // SW4 backend
+<< token);
+         timeInterval = atof(token);
+         timingSet = true;
       }
       else if (startswith("startTime=", token) )
       {
-	 token += 10; // skip startTime=
-	 tStart = atof(token);
+         token += 10; // skip startTime=
+         tStart = atof(token);
       }
       else if (startswith("cycle=", token) )
       {
-	 token += 6; // skip cycle=
-	 CHECK_INPUT( atoi(token) >= 0.,"Processing volimage command: cycle must be a non-negative integer, not: " << token);
-	 cycle = atoi(token);
-	 timingSet = true;
+         token += 6; // skip cycle=
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atoi(token) >= 0.,
+                  "Processing volimage command: cycle must be a non-negative "
+                  "integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atoi(token) >= 0.,"Processing volimage command: cycle must be a non-negative integer, not: "
+#endif // SW4 backend
+<< token);
+         cycle = atoi(token);
+         timingSet = true;
       }
       else if (startswith("cycleInterval=", token) )
       {
-	 token += 14; // skip cycleInterval=
-	 CHECK_INPUT( atoi(token) >= 0.,"Processing volimage command: cycleInterval must be a non-negative integer, not: " << token);
-	 cycleInterval = atoi(token);
-	 timingSet = true;
+         token += 14; // skip cycleInterval=
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(atoi(token) >= 0.,
+                  "Processing volimage command: cycleInterval must be a "
+                  "non-negative integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT( atoi(token) >= 0.,"Processing volimage command: cycleInterval must be a non-negative integer, not: "
+#endif // SW4 backend
+<< token);
+         cycleInterval = atoi(token);
+         timingSet = true;
       }
       else if (startswith("file=", token))
       {
-	 token += 5; // skip file=
-	 filePrefix = token;
+         token += 5; // skip file=
+         filePrefix = token;
       }
       else if (startswith("mode=", token))
       {
-	 token += 5; // skip mode=
-	 if (strcmp(token, "ux") == 0)        mode = Image3D::UX;
-	 else if (strcmp(token, "uy") == 0)   mode = Image3D::UY;
-	 else if (strcmp(token, "uz") == 0)   mode = Image3D::UZ;
-	 else if (strcmp(token, "rho") == 0)   mode = Image3D::RHO;
-	 else if (strcmp(token, "p") == 0)   mode = Image3D::P;
-	 else if (strcmp(token, "s") == 0)   mode = Image3D::S;
-	 else if (strcmp(token, "mu") == 0)   mode = Image3D::MU;
-	 else if (strcmp(token, "lambda") == 0)   mode = Image3D::LAMBDA;
-	 else if (strcmp(token, "gradrho") == 0)   mode = Image3D::GRADRHO;
-	 else if (strcmp(token, "gradp") == 0)   mode = Image3D::GRADP;
-	 else if (strcmp(token, "grads") == 0)   mode = Image3D::GRADS;
-	 else if (strcmp(token, "gradmu") == 0)   mode = Image3D::GRADMU;
-	 else if (strcmp(token, "gradlambda") == 0)   mode = Image3D::GRADLAMBDA;
-	 else if (strcmp(token, "qs") == 0)   mode = Image3D::QS;
-	 else if (strcmp(token, "qp") == 0)   mode = Image3D::QP;
-	 else
-	 {
-	    //	    mode = static_cast<Image3D::Image3DMode>(atoi(token));
-	    CHECK_INPUT(0,"Processing image3D command: " << "mode must be one of the following: " << endl <<
-			"\t ux|uy|uz|rho|p|s|mu|lambda|gradrho|gradp|grads|gradmu|gradlambda|qs|qp *not: "<< token );
-	 }
+         token += 5; // skip mode=
+         if (strcmp(token, "ux") == 0)        mode = Image3D::UX;
+         else if (strcmp(token, "uy") == 0)   mode = Image3D::UY;
+         else if (strcmp(token, "uz") == 0)   mode = Image3D::UZ;
+         else if (strcmp(token, "rho") == 0)   mode = Image3D::RHO;
+         else if (strcmp(token, "p") == 0)   mode = Image3D::P;
+         else if (strcmp(token, "s") == 0)   mode = Image3D::S;
+         else if (strcmp(token, "mu") == 0)   mode = Image3D::MU;
+         else if (strcmp(token, "lambda") == 0)   mode = Image3D::LAMBDA;
+         else if (strcmp(token, "gradrho") == 0)   mode = Image3D::GRADRHO;
+         else if (strcmp(token, "gradp") == 0)   mode = Image3D::GRADP;
+         else if (strcmp(token, "grads") == 0)   mode = Image3D::GRADS;
+         else if (strcmp(token, "gradmu") == 0)   mode = Image3D::GRADMU;
+         else if (strcmp(token, "gradlambda") == 0)   mode = Image3D::GRADLAMBDA;
+         else if (strcmp(token, "qs") == 0)   mode = Image3D::QS;
+         else if (strcmp(token, "qp") == 0)   mode = Image3D::QP;
+         else
+         {
+            //	    mode = static_cast<Image3D::Image3DMode>(atoi(token));
+
+CHECK_INPUT(0,"Processing image3D command: "
+<< "mode must be one of the following: " << endl
+#if defined(SW4_USE_RAJA) // SW4 backend
+<< "\t "
+                              "ux|uy|uz|rho|p|s|mu|lambda|gradrho|gradp|grads|"
+                              "gradmu|gradlambda|qs|qp *not: "
+
+#else // SW4 backend
+<<
+                        "\t ux|uy|uz|rho|p|s|mu|lambda|gradrho|gradp|grads|gradmu|gradlambda|qs|qp *not: "
+#endif // SW4 backend
+<< token );
+         }
       }
       else if( startswith("precision=",token) )
       {
-	 token += 10;
-	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
-		      "Processing volimage command: precision must be float or double, not '" << token );
-	 use_double =  startswith("double",token);
+         token += 10;
+         CHECK_INPUT( startswith("double",token) || startswith("float",token),
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Processing volimage command: precision must be float or double, not "
+          "'" << token);
+
+#else // SW4 backend
+"Processing volimage command: precision must be float or double, not '" << token );
+
+#endif // SW4 backend
+use_double =  startswith("double",token);
       }
       else
       {
-	 badOption("volimage", token);
+         badOption("volimage", token);
       }
       token = strtok(NULL, " \t");
    }
    bool forwardgrad = !m_inverse_problem && (mode == Image3D::GRADRHO ||mode == Image3D::GRADMU ||mode == Image3D::GRADLAMBDA ||
-					     mode == Image3D::GRADP   ||mode == Image3D::GRADS);
+                                             mode == Image3D::GRADP   ||mode == Image3D::GRADS);
    if( forwardgrad && proc_zero() )
    {
-      cout << "WARNING: volume images of material gradients can not be computed by the forward solver" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "WARNING: volume images of material gradients can not be computed "
+            "by the forward solver"
+
+#else // SW4 backend
+cout << "WARNING: volume images of material gradients can not be computed by the forward solver"
+#endif // SW4 backend
+<< endl;
       cout << "   volimage will not be created " << endl;
    }
 
    bool attenuation = (mode == Image3D::QS || mode == Image3D::QP );
-  
+
    if (attenuation && !m_use_attenuation && proc_zero() )
    {
-     cout << "ERROR: volume images of Qs or Qp can only be generated when attenuation is enabled" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "ERROR: volume images of Qs or Qp can only be generated when "
+            "attenuation is enabled"
+
+#else // SW4 backend
+cout << "ERROR: volume images of Qs or Qp can only be generated when attenuation is enabled"
+#endif // SW4 backend
+<< endl;
      MPI_Abort( MPI_COMM_WORLD, 1 );
    }
-   
+
 
    if( !forwardgrad )
    {
-      CHECK_INPUT( timingSet, "Processing volimage command: " << 
-		   "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl );
-      Image3D* im3 = new Image3D( this, time, timeInterval, cycle, cycleInterval, 
- 			       tStart, filePrefix, mode, use_double );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(timingSet, "Processing volimage command: "
+                               << "at least one timing mechanism must be set: "
+                                  "cycle, time, cycleInterval or timeInterval"
+
+#else // SW4 backend
+CHECK_INPUT( timingSet, "Processing volimage command: " <<
+                   "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"
+#endif // SW4 backend
+<< endl );
+      Image3D* im3 = new Image3D( this, time, timeInterval, cycle, cycleInterval,
+                               tStart, filePrefix, mode, use_double );
       addImage3D( im3 );
    }
 }
@@ -3821,7 +4566,7 @@ void EW::processESSI3D( char* buffer )
    int precision = 8;
    int compressionMode = 0;
    double compressionPar;
-   
+
    // Default is whole domain
    coordBox[0] = zero;
    coordBox[1] = m_global_xmax;
@@ -3895,7 +4640,7 @@ void EW::processESSI3D( char* buffer )
       {
           token += 10; // skip precision=
           precision = atoi(token);
-          if (precision != 4 && precision != 8) 
+          if (precision != 4 && precision != 8)
               badOption("ssioutput precision", token);
           if (proc_zero())
             cout << "SSI ouput will use " << precision*8 << "-bit floating point values." << endl;
@@ -3970,7 +4715,7 @@ void EW::processESSI3D( char* buffer )
       cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
 #endif
 
-   if (compressionMode != 0 && bufferInterval == 1) 
+   if (compressionMode != 0 && bufferInterval == 1)
      bufferInterval = 100;
 
    // Check the specified min/max values make sense
@@ -3990,7 +4735,15 @@ void EW::processESSI3D( char* buffer )
    // Use depth if zmin/zmax values are specified
    if ((depth < 0) && proc_zero())
    {
-      cout << "WARNING: ssioutput depth not specified or less than zero, setting to zero" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "WARNING: ssioutput depth not specified or less than zero, setting "
+            "to zero"
+
+#else // SW4 backend
+cout << "WARNING: ssioutput depth not specified or less than zero, setting to zero"
+#endif // SW4 backend
+<< endl;
       depth=0;
    }
 
@@ -4006,13 +4759,25 @@ void EW::processCheckPoint(char* buffer)
    token = strtok(NULL, " \t");
    string err = "CheckPoint Error: ";
    int cycle=-1, cycleInterval=0;
-   float_sw4 time=0.0, timeInterval=0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet=false;
-   string filePrefix = "checkpoint";
+
+#endif // SW4 backend
+string filePrefix = "checkpoint";
 
    string restartFileName, restartPath;
-   bool   restartFileGiven = false, restartPathGiven=false, useHDF5 = false;
-   int compressionMode = 0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+bool restartLatestGiven = false, restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
+
+#else // SW4 backend
+bool   restartFileGiven = false, restartPathGiven=false, useHDF5 = false;
+
+#endif // SW4 backend
+int compressionMode = 0;
    double compressionPar;
 
    size_t bufsize=10000000;
@@ -4028,34 +4793,48 @@ void EW::processCheckPoint(char* buffer)
        //	 cycle = atoi(token);
        //	 timingSet = true;
        //      }
-      if (startswith("cycleInterval=", token) )
+
+if (startswith("cycleInterval=", token) )
       {
-	 token += 14; // skip cycleInterval=
-	 CHECK_INPUT( atoi(token) >= 0., err << "cycleInterval must be a non-negative integer, not: " << token);
-	 cycleInterval = atoi(token);
-	 timingSet = true;
-      }
+         token += 14; // skip cycleInterval=
+         CHECK_INPUT( atoi(token) >= 0., err << "cycleInterval must be a non-negative integer, not: " << token);
+         cycleInterval = atoi(token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+timingSet = true;
+
+#endif // SW4 backend
+}
       else if (startswith("file=", token))
       {
-	 token += 5; // skip file=
-	 filePrefix = token;
-      }
+         token += 5; // skip file=
+         filePrefix = token;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+} else if (startswith("restartlatest", token)) {
+      token += 13;
+      restartLatestGiven = true;
+
+#else // SW4 backend
+#endif // SW4 backend
+}
       else if (startswith("restartfile=", token))
       {
-	 token += 12; // skip file=
-	 restartFileName = token;
-	 restartFileGiven = true;
+         token += 12; // skip file=
+         restartFileName = token;
+         restartFileGiven = true;
       }
       else if (startswith("restartpath=", token))
       {
-	 token += 12;
-	 restartPath = token;
-	 restartPathGiven = true;
+         token += 12;
+         restartPath = token;
+         restartPathGiven = true;
       }
       else if (startswith("hdf5=", token))
       {
-	 token += 5; // skip hdf5=
-	 useHDF5 = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0||strcmp("on",token)==0;
+         token += 5; // skip hdf5=
+         useHDF5 = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0||strcmp("on",token)==0;
       }
       else if (startswith("zfp-rate=", token))
       {
@@ -4120,12 +4899,12 @@ void EW::processCheckPoint(char* buffer)
 
       else if (startswith("bufsize=", token))
       {
-	 token += 8; // skip bufsize=
-	 bufsize = atoi(token);
+         token += 8; // skip bufsize=
+         bufsize = atoi(token);
       }
       else
       {
-	 badOption("checkpoint", token);
+         badOption("checkpoint", token);
       }
       token = strtok(NULL, " \t");
    }
@@ -4144,7 +4923,17 @@ void EW::processCheckPoint(char* buffer)
       m_check_point = new CheckPoint(this);
    if( cycleInterval > 0 )
       m_check_point->set_checkpoint_file( filePrefix, cycle, cycleInterval, bufsize, useHDF5, compressionMode, compressionPar );
-   if( restartFileGiven )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!(restartLatestGiven && restartFileGiven),
+              err << "invalid to specify both restartlatest and restartfile");
+  if (restartLatestGiven) {
+    m_check_point->set_restart_latest(bufsize);
+  }
+
+#else // SW4 backend
+#endif // SW4 backend
+if( restartFileGiven )
    {
       m_check_point->set_restart_file( restartFileName, bufsize );
    }
@@ -4155,31 +4944,31 @@ void EW::processCheckPoint(char* buffer)
 }
 
 //-----------------------------------------------------------------------
-void EW::setOutputPath(const string& path) 
-{ 
+void EW::setOutputPath(const string& path)
+{
   stringstream s;
   s << path << "/";
   mPath[0] = s.str();
 }
 
 //-----------------------------------------------------------------------
-void EW::setIO_timing(bool iotiming) 
-{ 
+void EW::setIO_timing(bool iotiming)
+{
   m_iotiming = iotiming;
 }
 
 //-----------------------------------------------------------------------
-void EW::setParallel_IO(bool pfs, int nwriters) 
-{ 
+void EW::setParallel_IO(bool pfs, int nwriters)
+{
   m_pfs = pfs;
   m_nwriters = nwriters;
 }
 
 //-----------------------------------------------------------------------
-void EW::setGoalTime(float_sw4 t, int event ) 
-{ 
-  mTmax[event] = t; 
-  mTstart = 0.0; 
+void EW::setGoalTime(float_sw4 t, int event )
+{
+  mTmax[event] = t;
+  mTstart = 0.0;
   mTimeIsSet[event] = true;
 }
 
@@ -4203,12 +4992,15 @@ int EW::getNumberOfEvents() const
 }
 
 //-----------------------------------------------------------------------
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 int EW::getNumberOfLocalEvents() const
 {
   return m_eEnd-m_eStart+1;
 }
 
 //-----------------------------------------------------------------------
+#endif // SW4 backend
 void EW::switch_on_error_log()
 {
    m_error_log = true;
@@ -4234,7 +5026,7 @@ void EW::set_twilight_forcing( ForcingTwilight* a_forcing )
 {
    m_twilight_forcing = a_forcing;
    set_testing_mode(true);
-   
+
 }
 
 //-----------------------------------------------------------------------
@@ -4244,24 +5036,32 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // note that this routine might modify the value of m_global_zmax
 //
    if (mVerbose>=2 && proc_zero())
-     printf("allocateCartesianSolverArrays: #ghost points=%d, #parallel padding points=%d, topoExists=%s\n", m_ghost_points,
+     printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"allocateCartesianSolverArrays: #ghost points=%d, #parallel padding "
+        "points=%d, topoExists=%s\n",
+
+#else // SW4 backend
+"allocateCartesianSolverArrays: #ghost points=%d, #parallel padding points=%d, topoExists=%s\n",
+#endif // SW4 backend
+m_ghost_points,
             m_ppadding, m_topography_exists? "true":"false");
 
 // z=0 is the last element in m_refinementBoundaries[]
    int nCurvilinearGrids = 0;
    int nCartGrids = 0;
-   
-//    m_topography_exists indicates if there was a topography command in the input file   
+
+//    m_topography_exists indicates if there was a topography command in the input file
    if (m_topography_exists)
    {
       nCurvilinearGrids= m_curviRefLev.size();
    }
 
    nCartGrids = m_refinementBoundaries.size(); // There is always one ref boundary (at z=0)
-   
+
    if (mVerbose>=2 && proc_zero())
       printf("refBndrSize= %lu, nCartGrids=%d, nCurviGrids=%d \n", m_refinementBoundaries.size(), nCartGrids, nCurvilinearGrids);
-      
+
    int refFact = 1;
 // Cartesian refinements
    for( int r = 0 ; r < nCartGrids-1 ; r++ )
@@ -4276,7 +5076,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       refFact *= 2;
       //      cout << "refinement boundary " << r << " is " << m_curviRefLev[r] << endl;
    }
-   
+
 // is there an attenuation command in the file?
    if (!m_use_attenuation)
       m_number_mechanisms = 0;
@@ -4299,31 +5099,59 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       ny_finest_w_ghost = refFact*m_ny_base + 2*m_ghost_points;
 
    int proc_max[2];
-   bool old_decomp=true;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool old_decomp=true;
 // this info is obtained by the contructor
 //   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
-   if( old_decomp )
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( old_decomp )
    {
-      proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
-      MPI_Cart_create( m_1d_communicator, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
-   }
+
+#endif // SW4 backend
+proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Cart_create(MPI_COMM_WORLD, 2, proc_max, is_periodic, true,
+
+#else // SW4 backend
+MPI_Cart_create( m_1d_communicator, 2, proc_max, is_periodic, true,
+#endif // SW4 backend
+&m_cartesian_communicator );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+}
    else
    {
-      int mynewid=my_node_core_id( nx_finest_w_ghost, ny_finest_w_ghost, proc_max );  
+      int mynewid=my_node_core_id( nx_finest_w_ghost, ny_finest_w_ghost, proc_max );
       MPI_Comm renumbered_world;
-      MPI_Comm_split( MPI_COMM_WORLD, 0, mynewid, &renumbered_world );   
+      MPI_Comm_split( MPI_COMM_WORLD, 0, mynewid, &renumbered_world );
       MPI_Cart_create( renumbered_world, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
       std::cout << "old/new ranks " << getRank() << "/" << mynewid << std::endl;
    }
 
 
-   int my_proc_coords[2];
+
+#endif // SW4 backend
+int my_proc_coords[2];
    MPI_Cart_get( m_cartesian_communicator, 2, proc_max, is_periodic, my_proc_coords );
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
    MPI_Cart_shift( m_cartesian_communicator, 1, 1, m_neighbor+2, m_neighbor+3 );
 
-   if( proc_zero_evzero() && mVerbose >= 1 /*3*/) // tmp
-   {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (proc_zero() && mVerbose >= 1 /*3*/)  // tmp
+
+#else // SW4 backend
+if( proc_zero_evzero() && mVerbose >= 1 /*3*/) // tmp
+
+#endif // SW4 backend
+{
      cout << " Grid distributed on " << m_nProcs << " processors " << endl;
      cout << " Finest grid size    " << nx_finest_w_ghost << " x " << ny_finest_w_ghost << endl;
      cout << " Processor array     " << proc_max[0] << " x " << proc_max[1] << endl;
@@ -4354,12 +5182,22 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 //      mNumberOfGrids++;
 
 // tmp
-   if (proc_zero_evzero())
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (proc_zero()) {
+    cout << "Number of curvilinear grids = " << nCurvilinearGrids << endl;
+    cout << "Number of Cartesian grids = " << mNumberOfCartesianGrids << endl;
+    cout << "Total number of grids = " << mNumberOfGrids << endl;
+
+#else // SW4 backend
+if (proc_zero_evzero())
    {
       cout << " Number of curvilinear grids = " << nCurvilinearGrids << endl;
       cout << " Number of Cartesian grids = " << mNumberOfCartesianGrids << endl;
       cout << " Total number of grids = " << mNumberOfGrids << endl;
-   }   
+
+#endif // SW4 backend
+}
 
    m_iscurvilinear.resize(mNumberOfGrids);
    for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
@@ -4408,7 +5246,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    if (m_use_attenuation && m_number_mechanisms > 0) // the simplest model only uses Q, not MuVe, LambdaVE, or OmegaVE
    {
      mOmegaVE.resize(m_number_mechanisms); // global relaxation frequencies (1 per mechanism)
-     
+
 // muVE and lambdaVE are vectors of vectors
      for (int g=0; g<mNumberOfGrids; g++)
      {
@@ -4416,8 +5254,14 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
        mLambdaVE[g] = new Sarray[m_number_mechanisms];
      }
    }
-   
-   m_iStart.resize(mNumberOfGrids);
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+viewArrayActual = SW4_NEW(Space::Managed, SView[m_number_mechanisms * 3]);
+
+#else // SW4 backend
+#endif // SW4 backend
+m_iStart.resize(mNumberOfGrids);
    m_iEnd.resize(mNumberOfGrids);
    m_jStart.resize(mNumberOfGrids);
    m_jEnd.resize(mNumberOfGrids);
@@ -4460,9 +5304,14 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    m_NumberOfBCPoints.resize(mNumberOfGrids);
    m_BndryWindow.resize(mNumberOfGrids);
 
-   int *wind;
-   
-   for( int g=0; g < mNumberOfGrids ; g++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int *wind;
+
+
+#endif // SW4 backend
+for( int g=0; g < mNumberOfGrids ; g++ )
    {
      m_NumberOfBCPoints[g] = new int[6];
      m_BndryWindow[g] = new int [36]; // 6 by 6 array in Fortran
@@ -4470,12 +5319,12 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      {
        m_NumberOfBCPoints[g][side]=0;
        for (int qq=0; qq<6; qq+=2) // 0, 2, 4
-	 m_BndryWindow[g][qq + side*6]= 999;
+         m_BndryWindow[g][qq + side*6]= 999;
        for (int qq=1; qq<6; qq+=2) // 1, 3, 5
-	 m_BndryWindow[g][qq + side*6]= -999;
+         m_BndryWindow[g][qq + side*6]= -999;
      }
    }
-   
+
    float_sw4 h = m_h_base;
 
 // save the grid spacing for all Cartesian grids
@@ -4493,21 +5342,21 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      mGridSize[g] = h;
      h = h/2.;
    }
-   
+
    m_global_nx[mNumberOfGrids-1] = nx_finest_w_ghost-2*m_ghost_points;
    m_global_ny[mNumberOfGrids-1] = ny_finest_w_ghost-2*m_ghost_points;
-   
+
 // Grid size in the curvilinear portion
    for (int g=mNumberOfGrids-2; g >=nCartGrids; g--) // the coarsest curvilinear grid has grid number 'nCartGrids'
    {
       if( is_periodic[0] )
-	 m_global_nx[g] = m_global_nx[g+1]/2;
+         m_global_nx[g] = m_global_nx[g+1]/2;
       else
-	 m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
+         m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
       if( is_periodic[1] )
-	 m_global_ny[g] = m_global_ny[g+1]/2;
+         m_global_ny[g] = m_global_ny[g+1]/2;
       else
-	 m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
+         m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
    }
 
    if (!m_topography_exists)
@@ -4520,18 +5369,18 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       m_global_nx[nCartGrids-1] = m_global_nx[nCartGrids];
       m_global_ny[nCartGrids-1] = m_global_ny[nCartGrids];
    }
-   
+
 // previous code for Cartesian MR
    for (int g=nCartGrids-2; g >=0; g--)
    {
       if( is_periodic[0] )
-	 m_global_nx[g] = m_global_nx[g+1]/2;
+         m_global_nx[g] = m_global_nx[g+1]/2;
       else
-	 m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
+         m_global_nx[g] = 1 + (m_global_nx[g+1]-1)/2;
       if( is_periodic[1] )
-	 m_global_ny[g] = m_global_ny[g+1]/2;
+         m_global_ny[g] = m_global_ny[g+1]/2;
       else
-	 m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
+         m_global_ny[g] = 1 + (m_global_ny[g+1]-1)/2;
    }
 
 // the curvilinear grid has a variable grid size, but matches the finest Cartesian grid where they meet
@@ -4541,7 +5390,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    //   m_global_nx[mNumberOfGrids-1] = m_global_nx[mNumberOfGrids-2];
    //   m_global_ny[mNumberOfGrids-1] = m_global_ny[mNumberOfGrids-2];
    // }
-   
+
 // Define grid in z-direction, by formula z_k = (k-1)*h + zmin
    vector<int> nz;
    nz.resize(nCartGrids);
@@ -4554,7 +5403,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      nz[g]     = 1 + static_cast<int> ( (zmax - m_zmin[g])/mGridSize[g] + 0.5 );
 
      zmax = m_zmin[g] + (nz[g]-1)*mGridSize[g];
-      
+
      m_global_nz[g] = nz[g]; // save the number of grid points in the z-direction
 
      if( g>0 )
@@ -4574,15 +5423,29 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      m_global_xmax = mGridSize[nCartGrids-1]*(m_global_nx[nCartGrids-1]);
      m_global_ymax = mGridSize[nCartGrids-1]*(m_global_ny[nCartGrids-1]);
    }
-   
+
    m_global_zmax = m_zmin[0] + (nz[0]-1)*mGridSize[0];
-   if (mVerbose >= 1 && proc_zero_evzero())
-     cout << "Extent of the computational domain xmax=" << m_global_xmax << " ymax=" << m_global_ymax << " zmax=" << 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mVerbose >= 1 && proc_zero())
+
+#else // SW4 backend
+if (mVerbose >= 1 && proc_zero_evzero())
+
+#endif // SW4 backend
+cout << "Extent of the computational domain xmax=" << m_global_xmax << " ymax=" << m_global_ymax << " zmax=" <<
        m_global_zmax << endl;
 
 // detailed grid refinement info
-   if( proc_zero_evzero() && mVerbose >= 1 /*2*/) // tmp
-   {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (proc_zero() && mVerbose >= 1 /*2*/)  // tmp
+
+#else // SW4 backend
+if( proc_zero_evzero() && mVerbose >= 1 /*2*/) // tmp
+
+#endif // SW4 backend
+{
       cout << "Cartesian refinement levels after correction: " << endl;
 
       for( int g=0; g<nCartGrids; g++ )
@@ -4591,7 +5454,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       }
       cout << "Corrected global_zmax = " << m_global_zmax << endl << endl;
    }
-   
+
 // Allocate the topography arrays and coarsen out the grid in the curvilinear portion of the grid
    if( m_topography_exists ) // UPDATED  for more than 1 curvilinear grid
    {
@@ -4599,7 +5462,15 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 //      m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
 
 // NEW
-      for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--) // g=mNumberOfGrids-1 is the finest curvilinear grid
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
+
+    // NEW
+
+#else // SW4 backend
+#endif // SW4 backend
+for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--) // g=mNumberOfGrids-1 is the finest curvilinear grid
       {
 // save the local index bounds
          m_iStart[g] = ifirst;
@@ -4635,19 +5506,50 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // check that there are more interior points than padding points
          if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
          {
-            printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
-                   "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+            printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, "
+            "m_iStartInt=%d, "
+
+#else // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
+
+#endif // SW4 backend
+"m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
          }
          if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
          {
-            printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
-                   "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+            printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, "
+            "m_jStartInt=%d, "
+
+#else // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
+
+#endif // SW4 backend
+"m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
          }
-      
+
 // output bounds
-         if (proc_zero_evzero() && mVerbose >=1 /*3*/) // tmp
-         {
-            printf("Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], jInterior=[%d,%d]\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g],
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (proc_zero() && mVerbose >= 1 /*3*/)  // tmp
+
+#else // SW4 backend
+if (proc_zero_evzero() && mVerbose >=1 /*3*/) // tmp
+
+#endif // SW4 backend
+{
+            printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], "
+            "jInterior=[%d,%d]\n",
+
+#else // SW4 backend
+"Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], jInterior=[%d,%d]\n",
+#endif // SW4 backend
+m_myRank, g, m_iStartInt[g], m_iEndInt[g],
                    m_jStartInt[g], m_jEndInt[g]);
          }
 
@@ -4659,7 +5561,18 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 //                                                            m_jStart[g]-m_ext_ghost_points, m_jEnd[g]+m_ext_ghost_points,1,1);
 
 // Allocate topo arrays for the top (finest) curvilinear grid
-         if (g==mNumberOfGrids-1)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_curviInterface[g - mNumberOfCartesianGrids].define(
+          m_iStart[g] - m_ext_ghost_points, m_iEnd[g] + m_ext_ghost_points,
+          m_jStart[g] - m_ext_ghost_points, m_jEnd[g] + m_ext_ghost_points, 1,
+          1);
+
+      // Allocate topo arrays for the top (finest) curvilinear grid
+
+#else // SW4 backend
+#endif // SW4 backend
+if (g==mNumberOfGrids-1)
          {
 // 2 versions of the topography:
             mTopo.define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],1,1); // true topography/bathymetry, read directly from rfile
@@ -4683,13 +5596,13 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
             coarsen1d( ny, jfirst, jlast, is_periodic[1] );
          }
       } // end for all curvilinear grids
-       
+
    } // end if m_topography_exists
 
 // Define Cartesian grid arrays, loop from finest to coarsest
 
 // On entry to this loop: (nx, ifirst, ilast) and (ny, jfirst, jlast) are the local number of grid points, starting, and ending indices
-// of the finest Cartesian grid 
+// of the finest Cartesian grid
    for( int g = nCartGrids-1 ; g >= 0 ; g-- )
    {
 // NOTE: same number of ghost points in all directions
@@ -4706,24 +5619,24 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 
 // local index bounds for interior points (= no ghost or parallel padding points)
       if (ifirst == 1-m_ghost_points)
-	m_iStartInt[g] = 1;
+        m_iStartInt[g] = 1;
       else
-	m_iStartInt[g] = ifirst+m_ppadding;
+        m_iStartInt[g] = ifirst+m_ppadding;
 
       if (ilast == nx + m_ghost_points)
-	m_iEndInt[g]   = nx;
+        m_iEndInt[g]   = nx;
       else
-	m_iEndInt[g]   = ilast - m_ppadding;
+        m_iEndInt[g]   = ilast - m_ppadding;
 
       if (jfirst == 1-m_ghost_points)
-	m_jStartInt[g] = 1;
+        m_jStartInt[g] = 1;
       else
-	m_jStartInt[g] = jfirst+m_ppadding;
+        m_jStartInt[g] = jfirst+m_ppadding;
 
       if (jlast == ny + m_ghost_points)
-	m_jEndInt[g]   = ny;
+        m_jEndInt[g]   = ny;
       else
-	m_jEndInt[g]   = jlast - m_ppadding;
+        m_jEndInt[g]   = jlast - m_ppadding;
 
       m_kStartInt[g] = 1;
       m_kEndInt[g]   = nz[g];
@@ -4731,22 +5644,46 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // check that there are more interior points than padding points
       if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding)
       {
-         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
-                "m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, "
+          "m_iStartInt=%d, "
+
+#else // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, m_iStartInt=%d, "
+
+#endif // SW4 backend
+"m_iEndInt=%d, padding=%d\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
       }
       if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding)
       {
-         printf("WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
-                "m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, "
+          "m_jStartInt=%d, "
+
+#else // SW4 backend
+"WARNING: less interior points than padding in proc=%d, grid=%d, m_jStartInt=%d, "
+
+#endif // SW4 backend
+"m_jEndInt=%d, padding=%d\n", m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
       }
-      
+
 // output bounds
       if (proc_zero() && mVerbose >=1 /*3*/) // tmp
       {
-         printf("Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n", m_myRank, g, m_iStartInt[g], m_iEndInt[g],
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], "
+          "jInterior=[%d,%d], kInterior=[%d,%d]\n",
+
+#else // SW4 backend
+"Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], jInterior=[%d,%d], kInterior=[%d,%d]\n",
+#endif // SW4 backend
+m_myRank, g, m_iStartInt[g], m_iEndInt[g],
                 m_jStartInt[g], m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
       }
-      
+
 //
 // Allocate arrays as needed by the use case
 //
@@ -4754,48 +5691,100 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       mRho[g].set_to_minusOne();
       if( m_anisotropic )
       {
-	 mC[g].define(21,ifirst,ilast,jfirst,jlast,kfirst,klast);
-	 mC[g].set_to_minusOne();
+         mC[g].define(21,ifirst,ilast,jfirst,jlast,kfirst,klast);
+         mC[g].set_to_minusOne();
       }
       else
       {
 // elastic material
-	 mMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	 mLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-// initialize the material coefficients to -1
-	 mMu[g].set_to_minusOne();
-	 mLambda[g].set_to_minusOne();
-// allocate space for material coefficient arrays needed by MR
-	 m_Morc[g].define(ifirst,ilast,jfirst,jlast,1,1);
-	 m_Mlrc[g].define(ifirst,ilast,jfirst,jlast,1,1);
-	 m_Mucs[g].define(ifirst,ilast,jfirst,jlast,1,1);
-	 m_Mlcs[g].define(ifirst,ilast,jfirst,jlast,1,1);
 
-	 int nkf = m_global_nz[g];
-	 m_Morf[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
-	 m_Mlrf[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
-	 m_Mufs[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
-	 m_Mlfs[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+#if defined(SW4_USE_RAJA) // SW4 backend
+mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                        Space::Host);
+      // initialize the material coefficients to -1
+
+#else // SW4 backend
+mMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+         mLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+// initialize the material coefficients to -1
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+mMu[g].set_to_minusOneHost();
+      mLambda[g].set_to_minusOneHost();
+      // allocate space for material coefficient arrays needed by MR
+
+#else // SW4 backend
+mMu[g].set_to_minusOne();
+         mLambda[g].set_to_minusOne();
+// allocate space for material coefficient arrays needed by MR
+
+#endif // SW4 backend
+m_Morc[g].define(ifirst,ilast,jfirst,jlast,1,1);
+         m_Mlrc[g].define(ifirst,ilast,jfirst,jlast,1,1);
+         m_Mucs[g].define(ifirst,ilast,jfirst,jlast,1,1);
+         m_Mlcs[g].define(ifirst,ilast,jfirst,jlast,1,1);
+
+         int nkf = m_global_nz[g];
+         m_Morf[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+         m_Mlrf[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+         m_Mufs[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
+         m_Mlfs[g].define(ifirst,ilast,jfirst,jlast,nkf,nkf);
       }
 // viscoelastic material coefficients & memory variables
       if (m_use_attenuation)
       {
-	mQs[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	mQp[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model only uses Q, not MuVE or LambdaVE
-	{
-	  mMuVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
-	  mLambdaVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+
+#else // SW4 backend
+mQs[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+        mQp[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+
+#endif // SW4 backend
+for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model only uses Q, not MuVE or LambdaVE
+        {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                           Space::Host);
+        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                               Space::Host);
+        // initialize the viscoelastic material coefficients to -1
+
+#else // SW4 backend
+mMuVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+          mLambdaVE[g][a].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 // initialize the viscoelastic material coefficients to -1
-	  mMuVE[g][a].set_to_minusOne();
-	  mLambdaVE[g][a].set_to_minusOne();
-	}
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+mMuVE[g][a].set_to_minusOneHost();
+        mLambdaVE[g][a].set_to_minusOneHost();
+
+#else // SW4 backend
+mMuVE[g][a].set_to_minusOne();
+          mLambdaVE[g][a].set_to_minusOne();
+
+#endif // SW4 backend
+}
 // initialize Qp and Qs to -1
-	mQs[g].set_to_minusOne();
-	mQp[g].set_to_minusOne();
-      }
-	
-      // go to the next coarser grid 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mQs[g].set_to_minusOneHost();
+      mQp[g].set_to_minusOneHost();
+
+#else // SW4 backend
+mQs[g].set_to_minusOne();
+        mQp[g].set_to_minusOne();
+
+#endif // SW4 backend
+}
+
+      // go to the next coarser grid
       coarsen1d( nx, ifirst, ilast, is_periodic[0] );
       coarsen1d( ny, jfirst, jlast, is_periodic[1] );
       //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst << " , " << ilast << endl;
@@ -4809,9 +5798,9 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 //   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 //   for (int q=0; q<mNumberOfCartesianGrids; q++)
 //   {
-//     printf("Proc #%i, m_iEnd[%i]=%i, m_global_nx[%i]=%i, m_jEnd[%i]=%i, m_global_ny[%i]=%i\n", 
+//     printf("Proc #%i, m_iEnd[%i]=%i, m_global_nx[%i]=%i, m_jEnd[%i]=%i, m_global_ny[%i]=%i\n",
 // 	   myRank, q, m_iEnd[q], q, m_global_nx[q], q, m_jEnd[q], q, m_global_ny[q]);
-   
+
 //   }
 
 } // end allocateCartesianSolverArrays()
@@ -4848,7 +5837,7 @@ void EW::allocateCurvilinearArrays()
 //   int i_min_loc=i, i_max_loc=i;
 //   int j_min_loc=j, j_max_loc=j;
 // end tmp
-// the mTopoGridExt array was allocated in allocateCartesianSolverArrays()   
+// the mTopoGridExt array was allocated in allocateCartesianSolverArrays()
    zMinLocal = -mTopoGridExt.maximum();
    zMaxLocal = -mTopoGridExt.minimum();
    MPI_Allreduce( &zMinLocal, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
@@ -4864,7 +5853,7 @@ void EW::allocateCurvilinearArrays()
    //            i_max_loc = i;
    //            j_max_loc = j;
    //	 }
-      
+
    //	 if (-mTopoGridExt(i,j,1) < zMinLocal)
    //	 {
    //	    zMinLocal = -mTopoGridExt(i,j,1);
@@ -4882,13 +5871,21 @@ void EW::allocateCurvilinearArrays()
    int imax = mTopoGridExt.m_ie;
    int jmin = mTopoGridExt.m_jb;
    int jmax = mTopoGridExt.m_je;
-   float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h, d3h, h3=h*h*h;
+   float_sw4 maxd2zh=0, maxd2z2h=0, maxd3zh=1.e-20, maxd3z2h=1.e-20, d2h,
+#if defined(SW4_USE_RAJA) // SW4 backend
+d3h;  // h3 = h * h * h;
+  // grid size h
+
+#else // SW4 backend
+d3h, h3=h*h*h;
 // grid size h
-   for (int i=imin+1; i<=imax-1; i++)
+
+#endif // SW4 backend
+for (int i=imin+1; i<=imax-1; i++)
       for (int j=jmin+1; j<=jmax-1; j++)
       {
-         d2h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+1,j,1))/1.) + 
-                     SQR((mTopoGridExt(i,j-1,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+1,1))/1.) + 
+         d2h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+1,j,1))/1.) +
+                     SQR((mTopoGridExt(i,j-1,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+1,1))/1.) +
                      SQR((mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j+1,1) + mTopoGridExt(i,j,1))/1.) );
          if (d2h > maxd2zh) maxd2zh = d2h;
       }
@@ -4896,11 +5893,11 @@ void EW::allocateCurvilinearArrays()
    for (int i=imin+1; i<=imax-2; i++)
       for (int j=jmin+1; j<=jmax-2; j++)
       {
-         d3h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+1,j,1) - mTopoGridExt(i+2,j,1))/1.) + 
-                     SQR((mTopoGridExt(i,j-1,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j+2,1))/1.) + 
-                     SQR((mTopoGridExt(i+2,j+1,1) - mTopoGridExt(i+2,j,1) - 2*mTopoGridExt(i+1,j+1,1) + 2*mTopoGridExt(i+1,j,1) + 
+         d3h = sqrt( SQR((mTopoGridExt(i-1,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+1,j,1) - mTopoGridExt(i+2,j,1))/1.) +
+                     SQR((mTopoGridExt(i,j-1,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j+2,1))/1.) +
+                     SQR((mTopoGridExt(i+2,j+1,1) - mTopoGridExt(i+2,j,1) - 2*mTopoGridExt(i+1,j+1,1) + 2*mTopoGridExt(i+1,j,1) +
                           mTopoGridExt(i,j+1,1) - mTopoGridExt(i,j,1))/1.) +
-                     SQR((mTopoGridExt(i+1,j+2,1) - 2*mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i,j+2,1) + 2*mTopoGridExt(i,j+1,1) + 
+                     SQR((mTopoGridExt(i+1,j+2,1) - 2*mTopoGridExt(i+1,j+1,1) - mTopoGridExt(i,j+2,1) + 2*mTopoGridExt(i,j+1,1) +
                           mTopoGridExt(i+1,j,1) - mTopoGridExt(i,j,1))/1.) );
 
          if (d3h > maxd3zh) maxd3zh = d3h;
@@ -4909,8 +5906,8 @@ void EW::allocateCurvilinearArrays()
    for (int i=imin+2; i<=imax-2; i+=2)
       for (int j=jmin+2; j<=jmax-2; j+=2)
       {
-         d2h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+2,j,1))/1.) + 
-                     SQR((mTopoGridExt(i,j-2,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+2,1))/1.) + 
+         d2h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i+2,j,1))/1.) +
+                     SQR((mTopoGridExt(i,j-2,1) - 2*mTopoGridExt(i,j,1) + mTopoGridExt(i,j+2,1))/1.) +
                      SQR((mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j+2,1) + mTopoGridExt(i,j,1))/1.) );
          if (d2h > maxd2z2h) maxd2z2h = d2h;
       }
@@ -4918,11 +5915,11 @@ void EW::allocateCurvilinearArrays()
    for (int i=imin+2; i<=imax-4; i+=2)
       for (int j=jmin+2; j<=jmax-4; j+=2)
       {
-         d3h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+2,j,1) - mTopoGridExt(i+4,j,1))/1.) + 
-                     SQR((mTopoGridExt(i,j-2,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j+4,1))/1.) + 
-                     SQR((mTopoGridExt(i+4,j+2,1) - mTopoGridExt(i+4,j,1) - 2*mTopoGridExt(i+2,j+2,1) + 2*mTopoGridExt(i+2,j,1) + 
+         d3h = sqrt( SQR((mTopoGridExt(i-2,j,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i+2,j,1) - mTopoGridExt(i+4,j,1))/1.) +
+                     SQR((mTopoGridExt(i,j-2,1) - 3*mTopoGridExt(i,j,1) + 3*mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j+4,1))/1.) +
+                     SQR((mTopoGridExt(i+4,j+2,1) - mTopoGridExt(i+4,j,1) - 2*mTopoGridExt(i+2,j+2,1) + 2*mTopoGridExt(i+2,j,1) +
                           mTopoGridExt(i,j+2,1) - mTopoGridExt(i,j,1))/1.) +
-                     SQR((mTopoGridExt(i+2,j+4,1) - 2*mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i,j+4,1) + 2*mTopoGridExt(i,j+2,1) + 
+                     SQR((mTopoGridExt(i+2,j+4,1) - 2*mTopoGridExt(i+2,j+2,1) - mTopoGridExt(i,j+4,1) + 2*mTopoGridExt(i,j+2,1) +
                           mTopoGridExt(i+2,j,1) - mTopoGridExt(i,j,1))/1.) );
          if (d3h > maxd3z2h) maxd3z2h = d3h;
       }
@@ -4939,10 +5936,22 @@ void EW::allocateCurvilinearArrays()
       printf("***Topography grid: min z = %e, max z = %e, top Cartesian z = %e\n", zMinGlobal, zMaxGlobal, topo_zmax );
       if (mVerbose >= 3)
       {
-         printf("***Un-divided differences of grid surface (ratio h*D2/D3 should be close to the same for h and 2h):\n"
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"***Un-divided differences of grid surface (ratio h*D2/D3 should be "
+          "close to the same for h and 2h):\n"
+          "h*max D2z(h)   = %e, max D3z(h)  = %e, Ratio: h*max D2z(h) / max "
+          "D3z(h)    = %e\n"
+          "2h*max D2z(2h) = %e, max D3z(2h) = %e, Ratio: 2h*max D2z(2h) / max "
+          "D3z(2h) = %e\n",
+
+#else // SW4 backend
+"***Un-divided differences of grid surface (ratio h*D2/D3 should be close to the same for h and 2h):\n"
                 "h*max D2z(h)   = %e, max D3z(h)  = %e, Ratio: h*max D2z(h) / max D3z(h)    = %e\n"
-                "2h*max D2z(2h) = %e, max D3z(2h) = %e, Ratio: 2h*max D2z(2h) / max D3z(2h) = %e\n", 
-                h*d2zh_global, d3zh_global, h*d2zh_global/d3zh_global, 2*h*d2z2h_global, d3z2h_global,
+                "2h*max D2z(2h) = %e, max D3z(2h) = %e, Ratio: 2h*max D2z(2h) / max D3z(2h) = %e\n",
+
+#endif // SW4 backend
+h*d2zh_global, d3zh_global, h*d2zh_global/d3zh_global, 2*h*d2z2h_global, d3z2h_global,
                 2*h*d2z2h_global/d3z2h_global);
          printf("\n");
       }
@@ -4965,20 +5974,20 @@ void EW::allocateCurvilinearArrays()
    // }
 
 // Use the m_zmin array to help keep track of the top (min z) coordinate for each grid
-// assigned for the Cartesian portion of the grid in allocateCartesianSolverArrays()   
-   
+// assigned for the Cartesian portion of the grid in allocateCartesianSolverArrays()
+
    if (mVerbose >= 3 && proc_zero())
    {
       for (size_t q=0; q<m_curviRefLev.size(); q++)
          printf("m_curviRefLev[%lu]=%e\n", q, m_curviRefLev[q]);
    }
-   
+
 // scale the refinement levels to take the average topographic elevation into account
    for (int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
    {
       m_zmin[g] = avg_minZ + m_curviRefLev[g - mNumberOfCartesianGrids] * (topo_zmax - avg_minZ)/topo_zmax;
    }
-   
+
    if (mVerbose >= 3 && proc_zero())
    {
       for (int g=0; g<mNumberOfGrids; g++)
@@ -4986,20 +5995,28 @@ void EW::allocateCurvilinearArrays()
    }
 
 //
-// loop over all curvilinear grids and allocate space + estimate the number of grid points in z   
+// loop over all curvilinear grids and allocate space + estimate the number of grid points in z
 //
    for (int g = mNumberOfCartesianGrids; g <mNumberOfGrids; g++)
    {
 // on average the same gridsize in z
-      int Nz = 1+ (int) ((m_zmin[g-1] - m_zmin[g])/mGridSize[g]); 
+      int Nz = 1+ (int) ((m_zmin[g-1] - m_zmin[g])/mGridSize[g]);
       m_kStart[g] = 1 - m_ghost_points;
       m_kEnd[g]  = Nz + m_ghost_points;
       m_global_nz[g] = Nz;
       m_kStartInt[g] = 1;
       m_kEndInt[g]   = Nz;
       if(mVerbose >= 3 && proc_zero() )
-         printf("allocateCurvilinearArrays: Number of grid points in curvilinear grid[%d] = %i, kStart = %i, kEnd = %i\n", 
-                g, Nz, m_kStart[g], m_kEnd[g]);
+         printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"allocateCurvilinearArrays: Number of grid points in curvilinear "
+          "grid[%d] = %i, kStart = %i, kEnd = %i\n",
+
+#else // SW4 backend
+"allocateCurvilinearArrays: Number of grid points in curvilinear grid[%d] = %i, kStart = %i, kEnd = %i\n",
+
+#endif // SW4 backend
+g, Nz, m_kStart[g], m_kEnd[g]);
 //
 // NOTE: mX, mY, mZ, etc are of type vector<Sarray>
 // allocate mX, mY, and mZ arrays
@@ -5012,7 +6029,7 @@ void EW::allocateCurvilinearArrays()
       mJ[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
       mX[g].set_to_zero();
       mY[g].set_to_zero();
-      mZ[g].set_to_zero();      
+      mZ[g].set_to_zero();
       mMetric[g].set_to_zero();
       mJ[g].set_to_zero();
 
@@ -5029,26 +6046,74 @@ void EW::allocateCurvilinearArrays()
       }
       else
       {
-         mMu[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mMu[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_kEnd[g], Space::Host);
+      mMu[g].set_to_minusOneHost();
+
+#else // SW4 backend
+m_kEnd[g]);
          mMu[g].set_to_minusOne();
-         mLambda[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+
+#endif // SW4 backend
+mLambda[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_kStart[g], m_kEnd[g], Space::Host);
+      mLambda[g].set_to_minusOneHost();
+
+#else // SW4 backend
+m_kStart[g],m_kEnd[g]);
          mLambda[g].set_to_minusOne();
-      }
+
+#endif // SW4 backend
+}
 // viscoelastic material coefficients
       if (m_use_attenuation)
       {
 // initialize the viscoelastic material coefficients to -1
-         mQs[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+         mQs[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_kEnd[g], Space::Host);
+      mQs[g].set_to_minusOneHost();
+
+#else // SW4 backend
+m_kEnd[g]);
          mQs[g].set_to_minusOne();
-         mQp[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+
+#endif // SW4 backend
+mQp[g].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_kEnd[g], Space::Host);
+      mQp[g].set_to_minusOneHost();
+
+#else // SW4 backend
+m_kEnd[g]);
          mQp[g].set_to_minusOne();
-         for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model has m_number_mechanisms = 0
+
+#endif // SW4 backend
+for (int a=0; a<m_number_mechanisms; a++) // the simplest attenuation model has m_number_mechanisms = 0
          {
-            mMuVE[g][a].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+            mMuVE[g][a].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_kStart[g], m_kEnd[g], Space::Host);
+        mMuVE[g][a].set_to_minusOneHost();
+
+#else // SW4 backend
+m_kStart[g],m_kEnd[g]);
             mMuVE[g][a].set_to_minusOne();
-            mLambdaVE[g][a].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],m_kStart[g],m_kEnd[g]);
+
+#endif // SW4 backend
+mLambdaVE[g][a].define(m_iStart[g],m_iEnd[g],m_jStart[g],m_jEnd[g],
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_kStart[g], m_kEnd[g], Space::Host);
+        mLambdaVE[g][a].set_to_minusOneHost();
+
+#else // SW4 backend
+m_kStart[g],m_kEnd[g]);
             mLambdaVE[g][a].set_to_minusOne();
-         } // end for a...
+
+#endif // SW4 backend
+} // end for a...
       }// end if attenuation
    } // end for g...
 }// end allocateCurvilinearArrays()
@@ -5058,7 +6123,7 @@ void EW::deprecatedImageMode(int value, const char* name) const
 {
   if (m_myRank == 0)
     cout << "***Warning specifying the mode using integers is deprecated, mode="
-	 << value << " should be mode=" << name << " instead." << endl;
+         << value << " should be mode=" << name << " instead." << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -5074,24 +6139,29 @@ void EW::processImage(char* buffer, bool use_hdf5)
    // -----------------------------------------------------
    // It is only valid to set one of the following:
    //   x, or y, or z
-   // 
+   //
    // The selection of one coordinate specifies plane which will be output to disk.
    // It is an error to select more than one.
    // -----------------------------------------------------
   Image::ImageOrientation locationType=Image::UNDEFINED;
   float_sw4 coordValue;
-  int gridPointValue;
-  bool coordWasSet = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int gridPointValue;
+
+#endif // SW4 backend
+bool coordWasSet = false;
   bool use_double = false;
   bool mode_is_grid = false;
-  
+
   char* token = strtok(buffer, " \t");
   if ( strcmp("image", token) != 0 && strcmp("imagehdf5", token) != 0 )
   {
     cerr << "Processing image command: " << "ERROR: not an image line...: " << token;
     MPI_Abort( MPI_COMM_WORLD, 1 );
   }
-  
+
   token = strtok(NULL, " \t");
 
   string err = "Image Error: ";
@@ -5107,10 +6177,10 @@ void EW::processImage(char* buffer, bool use_hdf5)
     if (startswith("time=", token) )
     {
       token += 5; // skip time=
-      if (atof(token) < 0.)	      
+      if (atof(token) < 0.)
       {
-	cerr << "Processing image command: " << "time must be a non-negative number, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "time must be a non-negative number, not: " << token;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       time = atof(token);
       timingSet = true;
@@ -5118,10 +6188,10 @@ void EW::processImage(char* buffer, bool use_hdf5)
     else if (startswith("timeInterval=", token) )
     {
       token += 13; // skip timeInterval=
-      if (atof(token) <= 0.)	      
+      if (atof(token) <= 0.)
       {
-	cerr << "Processing image command: " << "timeInterval must be a positive number, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "timeInterval must be a positive number, not: " << token;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       timeInterval = atof(token);
       timingSet = true;
@@ -5129,10 +6199,10 @@ void EW::processImage(char* buffer, bool use_hdf5)
     else if (startswith("cycle=", token) )
     {
       token += 6; // skip cycle=
-      if (atoi(token) < 0)	      
+      if (atoi(token) < 0)
       {
-	cerr << "Processing image command: " << "cycle must be a non-negative integer, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "cycle must be a non-negative integer, not: " << token;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       cycle = atoi(token);
       timingSet = true;
@@ -5140,10 +6210,10 @@ void EW::processImage(char* buffer, bool use_hdf5)
     else if (startswith("cycleInterval=", token) )
     {
       token += 14; // skip cycleInterval=
-      if (atoi(token) <= 0)	      
+      if (atoi(token) <= 0)
       {
-	cerr << "Processing image command: " << "cycleInterval must be a positive integer, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "cycleInterval must be a positive integer, not: " << token;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       cycleInterval = atoi(token);
       timingSet = true;
@@ -5209,14 +6279,32 @@ void EW::processImage(char* buffer, bool use_hdf5)
       //      else if (strcmp(token, "hvel") == 0) mode = Image::HVEL;
       else
       {
-	  cerr << "Processing image command: " << "mode must be one of the following: " << endl
-	       << "ux|uy|uz|rho|lambda|mu" << endl 
+
+cerr << "Processing image command: "
+<< "mode must be one of the following: " << endl
+               << "ux|uy|uz|rho|lambda|mu" << endl
                << "|p|s|div|curl|veldiv|divdudt|velcurl|curldudt " << endl
-	       << "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|grid|gridx|gridy|gridz " << endl
-	       << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
-	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|gradlambda|gradp|grads|qp|qs|" << endl
-	       << "*not: " << token << endl;
-	  MPI_Abort( MPI_COMM_WORLD, 1 );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+<< "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|"
+                "grid|gridx|gridy|gridz "
+
+#else // SW4 backend
+<< "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|grid|gridx|gridy|gridz "
+#endif // SW4 backend
+<< endl
+               << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+<< "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|"
+                "gradlambda|gradp|grads|qp|qs|"
+
+#else // SW4 backend
+<< "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|gradlambda|gradp|grads|qp|qs|"
+#endif // SW4 backend
+<< endl
+               << "*not: " << token << endl;
+          MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
     else if( startswith("precision=",token) )
@@ -5224,8 +6312,8 @@ void EW::processImage(char* buffer, bool use_hdf5)
       token += 10;
       if ( !(strcmp(token,"double")==0 || strcmp(token,"float")==0) )
       {
-	cerr << "Processing image command: " << " precision must be float or double, not " << token << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << " precision must be float or double, not " << token << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       use_double =  strcmp(token,"double")==0;
     }
@@ -5234,38 +6322,38 @@ void EW::processImage(char* buffer, bool use_hdf5)
       token += 2; // skip x=
       if ( coordWasSet )
       {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, x and " << 
-	  locationType << " were both set." << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "cannot set a coordinate location twice, x and " <<
+          locationType << " were both set." << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       coordWasSet=true;
       locationType=Image::X;
       coordValue = atof(token);
       if ( coordValue < 0.0 || coordValue > m_global_xmax )
       {
-	cerr << "Processing image command: " << "x value must be within the computational domain 0<=x<=" 
-	     << m_global_xmax << ", not x=: " << coordValue << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "x value must be within the computational domain 0<=x<="
+             << m_global_xmax << ", not x=: " << coordValue << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
-     
+
     else if (startswith("y=", token))
     {
       token += 2; // skip y=
       if ( coordWasSet )
       {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, y and " 
-	     << locationType << " were both set." << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "cannot set a coordinate location twice, y and "
+             << locationType << " were both set." << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       coordWasSet=true;
       locationType=Image::Y;
       coordValue = atof(token);
       if ( coordValue < 0.0 || coordValue > m_global_ymax )
       {
-	cerr << "Processing image command: " << "y value must be within the computational domain 0<=y<=" 
-	     << m_global_ymax << ", not y= " << coordValue << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "y value must be within the computational domain 0<=y<="
+             << m_global_ymax << ", not y= " << coordValue << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
     else if (startswith("z=", token))
@@ -5273,18 +6361,18 @@ void EW::processImage(char* buffer, bool use_hdf5)
       token += 2; // skip z=
       if ( coordWasSet )
       {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, z and " 
-	     << locationType << " were both set." << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "cannot set a coordinate location twice, z and "
+             << locationType << " were both set." << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
       coordWasSet=true;
       locationType=Image::Z;
       coordValue = atof(token);
       if ( coordValue < 0.0 || coordValue > m_global_zmax )
       {
-	cerr << "Processing image command: " << "z value must be within the computational domain 0<=z<=" 
-	     << m_global_zmax << ", not z= " << coordValue << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+        cerr << "Processing image command: " << "z value must be within the computational domain 0<=z<="
+             << m_global_zmax << ", not z= " << coordValue << endl;
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
     else
@@ -5293,13 +6381,22 @@ void EW::processImage(char* buffer, bool use_hdf5)
     }
     token = strtok(NULL, " \t");
   }
-  
+
   if ( !timingSet )
   {
-    cerr << "Processing image command: " << "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cerr << "Processing image command: "
+         << "at least one timing mechanism must be set: cycle, time, "
+            "cycleInterval or timeInterval"
+
+#else // SW4 backend
+cerr << "Processing image command: " << "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"
+#endif // SW4 backend
+<< endl;
     MPI_Abort( MPI_COMM_WORLD, 1 );
   }
-  
+
   // if topographic image, set flag
   // if (mode == Image::TOPO)
   // {
@@ -5309,10 +6406,18 @@ void EW::processImage(char* buffer, bool use_hdf5)
 
 
    bool forwardgrad = !m_inverse_problem && (mode == Image::GRADRHO ||mode == Image::GRADMU ||mode == Image::GRADLAMBDA ||
-					     mode == Image::GRADP   ||mode == Image::GRADS);
+                                             mode == Image::GRADP   ||mode == Image::GRADS);
    if( forwardgrad && proc_zero() )
    {
-      cout << "WARNING: images of material gradients can not be computed by the forward solver" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "WARNING: images of material gradients can not be computed by the "
+            "forward solver"
+
+#else // SW4 backend
+cout << "WARNING: images of material gradients can not be computed by the forward solver"
+#endif // SW4 backend
+<< endl;
       cout << "   image will not be created " << endl;
    }
    if( !forwardgrad )
@@ -5321,47 +6426,56 @@ void EW::processImage(char* buffer, bool use_hdf5)
       Image* i;
       if (coordWasSet)
       {
-	 if( mode_is_grid )
-	 {
-	    if( locationType == Image::X )
-	    {
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	    }
-	    else if( locationType == Image::Y )
-	    {
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	    }
-	    else if( locationType == Image::Z )
-	    {
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			     filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	    }
-	 }
-	 else
-	 {
-	    i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			  filePrefix, mode, locationType, coordValue, use_double, use_hdf5);
-	    addImage(i);
-	 }
+         if( mode_is_grid )
+         {
+            if( locationType == Image::X )
+            {
+               i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                         filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
+               addImage(i);
+               i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                         filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
+               addImage(i);
+            }
+            else if( locationType == Image::Y )
+            {
+               i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                         filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
+               addImage(i);
+               i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                         filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
+               addImage(i);
+            }
+            else if( locationType == Image::Z )
+            {
+               i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                         filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
+               addImage(i);
+               i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                             filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
+               addImage(i);
+            }
+         }
+         else
+         {
+            i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                          filePrefix, mode, locationType, coordValue, use_double, use_hdf5);
+            addImage(i);
+         }
       }
-      else 
+      else
       {
-	 cerr << "Processing image command: " << "one of the coordinate (x,y,z) option must be set to determine the image's 2D plane" << endl;
-	 MPI_Abort( MPI_COMM_WORLD, 1 );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cerr << "Processing image command: "
+           << "one of the coordinate (x,y,z) option must be set to determine "
+              "the image's 2D plane"
+
+#else // SW4 backend
+cerr << "Processing image command: " << "one of the coordinate (x,y,z) option must be set to determine the image's 2D plane"
+#endif // SW4 backend
+<< endl;
+         MPI_Abort( MPI_COMM_WORLD, 1 );
       }
    }
 
@@ -5373,7 +6487,7 @@ void EW::processImage(char* buffer, bool use_hdf5)
 // {
 //   if (arg < 0)
 //     return -1;
-//   else 
+//   else
 //     return 1;
 // }
 
@@ -5382,20 +6496,33 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
 {
 
   Source* sourcePtr;
-  
+
   float_sw4 m0 = 1.0;
   float_sw4 t0=0.0, f0=1.0, freq=1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  int i = 0, j = 0, k = 0;
-  float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int i = 0, j = 0, k = 0;
+
+#endif // SW4 backend
+float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
   float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
-  int isMomentType = -1, ret;
-  
-  double lat = 0.0, lon = 0.0, depth = 0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int isMomentType = -1;
+
+
+#else // SW4 backend
+int isMomentType = -1, ret;
+
+
+#endif // SW4 backend
+double lat = 0.0, lon = 0.0, depth = 0.0;
   bool topodepth = false, depthSet=false, zSet=false;
-  
+
   bool cartCoordSet = false;
   bool geoCoordSet = false;
   bool strikeDipRake = false;
@@ -5418,10 +6545,27 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
 
   string err = "Source Error: ";
 
-  string cartAndGeoErr = "source command: Cannot set both a geographical (lat,lon) and cartesian coordinate (x,y)";
-  string pointAndMomentErr = "source command: Cannot set both a point source and moment tensor formulation";
+  string cartAndGeoErr =
+#if defined(SW4_USE_RAJA) // SW4 backend
+"source command: Cannot set both a geographical (lat,lon) and cartesian "
+      "coordinate (x,y)";
 
-  if (mVerbose >=4 && proc_zero())
+#else // SW4 backend
+"source command: Cannot set both a geographical (lat,lon) and cartesian coordinate (x,y)";
+
+#endif // SW4 backend
+string pointAndMomentErr =
+#if defined(SW4_USE_RAJA) // SW4 backend
+"source command: Cannot set both a point source and moment tensor "
+      "formulation";
+
+
+#else // SW4 backend
+"source command: Cannot set both a point source and moment tensor formulation";
+
+
+#endif // SW4 backend
+if (mVerbose >=4 && proc_zero())
     cout << "********Parsing source command*********" << endl;
   while (token != NULL)
     {
@@ -5432,7 +6576,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
        if (startswith("m0=", token) )
        {
           token += 3; // skip m0=
-          CHECK_INPUT(atof(token) >= 0.0, 
+          CHECK_INPUT(atof(token) >= 0.0,
                   err << "source command: scalar moment term must be positive, not: " << token);
           m0 = atof(token);
        }
@@ -5441,7 +6585,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(!geoCoordSet, err << cartAndGeoErr);
          token += 2; // skip x=
          x = atof(token);
-         cartCoordSet = true; 
+         cartCoordSet = true;
       }
       else if (startswith("y=", token))
       {
@@ -5455,8 +6599,8 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          token += 2; // skip z=
 // with topography, the z-coordinate can have both signs!
          z = atof(token);
-	 topodepth=false; // this is absolute depth
-	 
+         topodepth=false; // this is absolute depth
+
          zSet = true;
       }
       else if (startswith("lat=", token))
@@ -5464,9 +6608,18 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(!cartCoordSet, err << cartAndGeoErr);
          token += 4; // skip lat=
          lat = atof(token);
-         CHECK_INPUT(lat >= -90.0,
-                 "source command: lat must be greater than or equal to -90 degrees, not " 
-                 << lat);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lat >= -90.0,
+                  "source command: lat must be greater than or equal to -90 "
+                  "degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lat >= -90.0,
+                 "source command: lat must be greater than or equal to -90 degrees, not "
+
+#endif // SW4 backend
+<< lat);
          CHECK_INPUT(lat <= 90.0,
                  "source command: lat must be less than or equal to 90 degrees, not "
                  << lat);
@@ -5478,7 +6631,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          token += 4; // skip lon=
          lon = atof(token);
          CHECK_INPUT(lon >= -180.0,
-                 "source command: lon must be greater or equal to -180 degrees, not " 
+                 "source command: lon must be greater or equal to -180 degrees, not "
                  << lon);
          CHECK_INPUT(lon <= 180.0,
                  "source command: lon must be less than or equal to 180 degrees, not "
@@ -5489,21 +6642,38 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       {
          token += 6; // skip depth=
          depth = atof(token);
-	 topodepth = true;
-         CHECK_INPUT(depth >= 0.0,
-		     err << "source command: Depth below topography must be greater than or equal to zero");
-	 depthSet=true;
+         topodepth = true;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(depth >= 0.0, err << "source command: Depth below topography "
+                                       "must be greater than or equal to zero");
+
+#else // SW4 backend
+CHECK_INPUT(depth >= 0.0,
+                     err << "source command: Depth below topography must be greater than or equal to zero");
+
+#endif // SW4 backend
+depthSet=true;
       }
 //                         1234567890
       else if (startswith("topodepth=", token))
       {
          token += 10; // skip depth=
          depth = atof(token);
-	 topodepth = true;
-         CHECK_INPUT(depth >= 0.0,
+         topodepth = true;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(depth >= 0.0, err << "source command: Depth below topography "
+                                       "must be greater than or equal to zero");
+      // by depth we here mean depth below topography
+
+#else // SW4 backend
+CHECK_INPUT(depth >= 0.0,
                  err << "source command: Depth below topography must be greater than or equal to zero");
 // by depth we here mean depth below topography
-	 depthSet=true;
+
+#endif // SW4 backend
+depthSet=true;
       }
       else if (startswith("Mxx=", token) || startswith("mxx=", token))
       {
@@ -5517,7 +6687,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
          token += 4; // skip Mxy=
          mxy = atof(token);
-	  isMomentType = 1;
+          isMomentType = 1;
       }
       else if (startswith("Mxz=", token) || startswith("mxz=", token))
       {
@@ -5573,7 +6743,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
          token += 5; // skip Rake=
          rake = atof(token);
-	 strikeDipRake = true;
+         strikeDipRake = true;
          isMomentType = 1;
       }
       else if (startswith("Strike=", token) || startswith("strike=", token))
@@ -5581,7 +6751,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
          token += 7; // skip Strike=
          strike = atof(token);
-	 strikeDipRake = true;
+         strikeDipRake = true;
          isMomentType = 1;
       }
       else if (startswith("Dip=", token) || startswith("dip=", token))
@@ -5589,7 +6759,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(isMomentType != 0, err << pointAndMomentErr);
          token += 4; // skip Dip=
          dip = atof(token);
-	 strikeDipRake = true;
+         strikeDipRake = true;
          isMomentType = 1;
       }
       else if (startswith("t0=", token))
@@ -5606,33 +6776,55 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       }
       else if(startswith("event=",token))
       {
-	 token += 6;
-	 //	 event = atoi(token);
-	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	 if( m_nevents_specified > 0 )
-	 {
-	    map<string,int>::iterator it = m_event_names.find(token);
-            //	    CHECK_INPUT( it != m_event_names.end(), 
+         token += 6;
+         //	 event = atoi(token);
+         //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+        // Ignore if no events given
+         if( m_nevents_specified > 0 )
+         {
+            map<string,int>::iterator it = m_event_names.find(token);
+            //	    CHECK_INPUT( it != m_event_names.end(),
             //		     err << "event with name "<< token << " not found" );
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Source warning: event with name " << token << " not found" << std::endl;
 
-	 }
+
+#endif // SW4 backend
+}
       }
       else if (startswith("amp=", token) || startswith("f0=", token))
       {
-         CHECK_INPUT(isMomentType != 1,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(isMomentType != 1,
+                  err << "source command: Cannot set force amplitude for "
+                         "moment tensor terms");
+
+#else // SW4 backend
+CHECK_INPUT(isMomentType != 1,
                  err << "source command: Cannot set force amplitude for moment tensor terms");
-	 if (startswith("amp=", token))
-	   {
-	     deprecatedOption("source","amp","f0");
-	     token += strlen("amp=");
-	   }
-	 else
-	   token += strlen("f0=");
+
+#endif // SW4 backend
+if (startswith("amp=", token))
+           {
+             deprecatedOption("source","amp","f0");
+             token += strlen("amp=");
+           }
+         else
+           token += strlen("f0=");
          f0 = atof(token);
       }
       else if (startswith("type=",token))
@@ -5658,22 +6850,22 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          else if (!strcmp("RickerInt",formstring) )
             tDep = iRickerInt;
          else if (!strcmp("Brune",formstring) )
-	    tDep = iBrune;
+            tDep = iBrune;
          else if (!strcmp("BruneSmoothed",formstring) )
-	    tDep = iBruneSmoothed;
+            tDep = iBruneSmoothed;
          else if (!strcmp("DBrune",formstring) )
-	    tDep = iDBrune;
+            tDep = iDBrune;
          else if (!strcmp("GaussianWindow",formstring) )
-	    tDep = iGaussianWindow;
+            tDep = iGaussianWindow;
          else if (!strcmp("Liu",formstring) )
-	    tDep = iLiu;
+            tDep = iLiu;
          else if (!strcmp("Dirac",formstring) )
-	    tDep = iDirac;
+            tDep = iDirac;
          else if (!strcmp("C6SmoothBump",formstring) )
-	    tDep = iC6SmoothBump;
-	 else
+            tDep = iC6SmoothBump;
+         else
             if (m_myRank == 0)
-	      cout << "unknown time function: " << formstring << endl << " using default RickerInt function." << endl;
+              cout << "unknown time function: " << formstring << endl << " using default RickerInt function." << endl;
       }
       else if (startswith("ncyc=", token))
       {
@@ -5687,21 +6879,21 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       {
          token += 6;
          strncpy(dfile, token,1000);
-	 dfileset = true;
+         dfileset = true;
       }
       else if (startswith("sacbase=",token))
       {
          token += 8;
          strncpy(dfile, token,1000);
-	 sacbaseset = true;
-	 isMomentType = 1;
+         sacbaseset = true;
+         isMomentType = 1;
       }
       else if (startswith("sacbasedisp=",token))
       {
          token += 12;
          strncpy(dfile, token,1000);
-	 sacbaseset = true;
-	 isMomentType = 0;
+         sacbaseset = true;
+         isMomentType = 0;
       }
       else
       {
@@ -5709,17 +6901,38 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       }
       token = strtok(NULL, " \t");
     }
-  if( event_is_in_proc(event) )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( event_is_in_proc(event) )
   {
     int elocal=global_to_local_event(event);
   // Set up source on wpp object.
-  CHECK_INPUT(cartCoordSet || geoCoordSet,
-	  err << "source command: cartesian or geographic coordinate must be specified");
 
-  CHECK_INPUT(depthSet || zSet,
-	  err << "source command: depth, topodepth or z-coordinate must be specified");
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+CHECK_INPUT(cartCoordSet || geoCoordSet,
+          err << "source command: cartesian or geographic coordinate must be specified");
 
-  if( tDep == iGaussianWindow )
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(cartCoordSet || geoCoordSet,
+              err << "source command: cartesian or geographic coordinate must "
+                     "be specified");
+
+  CHECK_INPUT(depthSet || zSet, err << "source command: depth, topodepth or "
+                                       "z-coordinate must be specified");
+
+
+#else // SW4 backend
+CHECK_INPUT(depthSet || zSet,
+          err << "source command: depth, topodepth or z-coordinate must be specified");
+
+
+#endif // SW4 backend
+if( tDep == iGaussianWindow )
       CHECK_INPUT( ncyc_set, err << "source command: ncyc must be set for Gaussian Window function");
 
   // Discrete source time function
@@ -5738,15 +6951,29 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      CHECK_INPUT( fd !=NULL , err << "Source time function file " << dfile << " not found" );
      float_sw4 t0, dt;
      int npts;
-     ret = fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
-     par = new float_sw4[npts+1];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fscanf(fd, " %lg %lg %i", &t0, &dt, &npts);
+
+#else // SW4 backend
+ret = fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
+
+#endif // SW4 backend
+par = new float_sw4[npts+1];
      par[0]  = t0;
      freq    = 1/dt;
      ipar    = new int[1];
      ipar[0] = npts;
-     for( int i=0 ; i < npts ; i++ )
-	ret = fscanf(fd,"%lg", &par[i+1] );
-     npar = npts+1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+for (int i = 0; i < npts; i++) fscanf(fd, "%lg", &par[i + 1]);
+
+#else // SW4 backend
+for( int i=0 ; i < npts ; i++ )
+        ret = fscanf(fd,"%lg", &par[i+1] );
+
+#endif // SW4 backend
+npar = npts+1;
      nipar = 1;
      //     cout << "Read disc source: t0=" << t0 << " dt="  << dt << " npts= " << npts << endl;
      fclose(fd);
@@ -5762,7 +6989,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      // Set first force components to identity. f0 can give some scaling.
      fx = 1;
      fy = fz = 0;
-     
+
      bool timereverse = false; // Reverse the SAC data. Set true for testing purpose only, the users want to do this themselves outside SW4.
      bool useB = false; // Use sac header begin time parameter B.
 
@@ -5771,33 +6998,69 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      int utcsac[7], npts;
      string basename = dfile;
      string fname;
-     if( isMomentType )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+npts = 1;  // THis is potential bug source.
+    std::cerr << " npts set randomly in parseinfput file line 5216."
+              << std::flush;
+    abort();
+    // END CHANGES
+
+
+#else // SW4 backend
+#endif // SW4 backend
+if( isMomentType )
      {
-	tDep = iDiscrete6moments;
-	fname = basename + ".xx";
-     }
+        tDep = iDiscrete6moments;
+        fname = basename + ".xx";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+npar = 6 * (npts + 1);
+
+#else // SW4 backend
+#endif // SW4 backend
+}
      else
      {
-	tDep = iDiscrete3forces;
-	fname = basename + ".x";
-     }
+        tDep = iDiscrete3forces;
+        fname = basename + ".x";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+npar = 3 * (npts + 1);
+
+#else // SW4 backend
+#endif // SW4 backend
+}
      bool byteswap;
      readSACheader( fname.c_str(), dt, t0, latsac, lonsac, cmpazsac, cmpincsac, utcsac, npts, byteswap );
-     npar = 3*(npts+1);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+npar = 3*(npts+1);
      if( isMomentType ) npar  = 6*(npts+1);
 
-     if( !useB )
-	t0 = 0;
-     
+
+#endif // SW4 backend
+if( !useB )
+        t0 = 0;
+
      if( geoCoordSet )
      {
-	double laterr = fabs((latsac-lat)/lat);
-	double lonerr = fabs((lonsac-lon)/lon);
-	if( laterr > 1e-6 || lonerr > 1e-6 )
-	{
-	   if( proc_zero() )
-	      cout << "WARNING in processSource: reading sac files: (lat,lon) location on sac file different from (lat,lon) on command line" << endl;
-	}
+        double laterr = fabs((latsac-lat)/lat);
+        double lonerr = fabs((lonsac-lon)/lon);
+        if( laterr > 1e-6 || lonerr > 1e-6 )
+        {
+           if( proc_zero() )
+              cout
+#if defined(SW4_USE_RAJA) // SW4 backend
+<< "WARNING in processSource: reading sac files: (lat,lon) "
+                 "location on sac file different from (lat,lon) on command line"
+
+#else // SW4 backend
+<< "WARNING in processSource: reading sac files: (lat,lon) location on sac file different from (lat,lon) on command line"
+#endif // SW4 backend
+<< endl;
+        }
      }
      freq = 1/dt;
      nipar = 1;
@@ -5808,75 +7071,83 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      par[offset] = t0;
      if( tDep == iDiscrete6moments )
      {
-	fname = basename + ".xx";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".xy";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".xz";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".yy";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".yz";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".zz";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
+        fname = basename + ".xx";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".xy";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".xz";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".yy";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".yz";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".zz";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
      }
      else
      {
-	fname = basename + ".x";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".y";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
-	offset += npts+1;
-	par[offset] = t0;
-	fname = basename + ".z";
-	readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );     
-	if( timereverse )
-	   revvector( npts, &par[offset+1]);
+        fname = basename + ".x";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".y";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
+        offset += npts+1;
+        par[offset] = t0;
+        fname = basename + ".z";
+        readSACdata( fname.c_str(), npts, &par[offset+1], byteswap );
+        if( timereverse )
+           revvector( npts, &par[offset+1]);
      }
   }
 
-  // --------------------------------------------------------------------------- 
+  // ---------------------------------------------------------------------------
   // Regardless of how the location for the source was specified, we are going to
   // find the grid points associated with the location. (i.e., assign
   // i, j, k to valid values)
-  // --------------------------------------------------------------------------- 
+  // ---------------------------------------------------------------------------
   if (geoCoordSet)
   {
     computeCartesianCoord(x, y, lon, lat);
     cartCoordSet = true;
     if( mVerbose >= 1 && proc_zero() )
     {
-      printf("Cartesian coordinates of source at (lon, lat)=(%e, %e) is (x,y)=(%g, %g)\n", 
-	     lon, lat, x, y);
+      printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Cartesian coordinates of source at (lon, lat)=(%e, %e) is "
+          "(x,y)=(%g, %g)\n",
+
+#else // SW4 backend
+"Cartesian coordinates of source at (lon, lat)=(%e, %e) is (x,y)=(%g, %g)\n",
+
+#endif // SW4 backend
+lon, lat, x, y);
     }
   }
 
@@ -5884,14 +7155,14 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   {
     z = depth;
   }
-  
+
   if (cartCoordSet)
   {
     float_sw4 xmin = 0.;
     float_sw4 ymin = 0.;
     float_sw4 zmin;
 
-// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too
 // close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
     if (topographyExists()) // topography command must be read before the source command
       zmin = m_global_zmin;
@@ -5899,57 +7170,64 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       zmin = 0;
 
     if ( (topographyExists() && (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax )) ||
-	 (!topographyExists() && (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || 
-				  z < zmin || z > m_global_zmax)) )
+         (!topographyExists() && (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax ||
+                                  z < zmin || z > m_global_zmax)) )
     {
       stringstream sourceposerr;
       sourceposerr << endl
-		   << "***************************************************" << endl
-		   << " FATAL ERROR:  Source positioned outside grid!  " << endl
-		   << endl
-		   << " Source Type: " << formstring << endl
-		   << "              @ x=" << x 
-		   << " y=" << y << " z=" << z << endl 
-		   << endl;
-	    
+                   << "***************************************************" << endl
+
+<< " FATAL ERROR:  Source positioned outside grid!  " << endl
+
+<< endl
+                   << " Source Type: " << formstring << endl
+                   << "              @ x=" << x
+                   << " y=" << y << " z=" << z << endl
+                   << endl;
+
       if ( x < xmin )
-	sourceposerr << " x is " << xmin - x << 
-	  " meters away from min x (" << xmin << ")" << endl;
+        sourceposerr << " x is " << xmin - x <<
+          " meters away from min x (" << xmin << ")" << endl;
       else if ( x > m_global_xmax)
-	sourceposerr << " x is " << x - m_global_xmax << 
-	  " meters away from max x (" << m_global_xmax << ")" << endl;
+        sourceposerr << " x is " << x - m_global_xmax <<
+          " meters away from max x (" << m_global_xmax << ")" << endl;
       if ( y < ymin )
-	sourceposerr << " y is " << ymin - y << 
-	  " meters away from min y (" << ymin << ")" << endl;
+        sourceposerr << " y is " << ymin - y <<
+          " meters away from min y (" << ymin << ")" << endl;
       else if ( y > m_global_ymax)
-	sourceposerr << " y is " << y - m_global_ymax << 
-	  " meters away from max y (" << m_global_ymax << ")" << endl;
+        sourceposerr << " y is " << y - m_global_ymax <<
+          " meters away from max y (" << m_global_ymax << ")" << endl;
       if ( z < zmin )
-	sourceposerr << " z is " << zmin - z << 
-	  " meters away from min z (" << zmin << ")" << endl;
+        sourceposerr << " z is " << zmin - z <<
+          " meters away from min z (" << zmin << ")" << endl;
       else if ( z > m_global_zmax)
-	sourceposerr << " z is " << z - m_global_zmax << 
-	  " meters away from max z (" << m_global_zmax << ")" << endl;
+        sourceposerr << " z is " << z - m_global_zmax <<
+          " meters away from max z (" << m_global_zmax << ")" << endl;
       sourceposerr << "***************************************************" << endl;
       if (m_myRank == 0)
-	cout << sourceposerr.str();
+        cout << sourceposerr.str();
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
   }
 
   // if strike, dip and rake have been given we need to convert into M_{ij} form
-  if ( strikeDipRake )
+
+if ( strikeDipRake )
     {
       float_sw4 radconv = M_PI / 180.;
       float_sw4 S, D, R;
       strike -= mGeoAz; // subtract off the grid azimuth
       S = strike*radconv; D = dip*radconv; R = rake*radconv;
-      
+
       mxx = -1.0 * ( sin(D) * cos(R) * sin (2*S) + sin(2*D) * sin(R) * sin(S)*sin(S) );
-      myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
-      mzz = -1.0 * ( mxx + myy );	
-      mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
-      mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
+
+myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
+
+mzz = -1.0 * ( mxx + myy );
+
+mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
+
+mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
       myz = -1.0 * ( cos(D) * cos(R) * sin (S)   - cos(2*D) * sin(R) * cos(S) );
       //      if( m_myRank == 0 )
       //      {
@@ -5961,7 +7239,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       //	 cout << "Myz = " << myz << endl;
       //      }
     }
-  
+
   if (isMomentType)
   {
     // Remove amplitude variable
@@ -5988,17 +7266,27 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //      	  cout << "Myz = " << myz << endl;
     //       }
     // these have global location since they will be used by all processors
-    sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false ); // false is correctStrengthForMu
-    if (sourcePtr->ignore())
+    sourcePtr =
+new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
+                           tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar,
+false ); // false is correctStrengthForMu
+
+if (sourcePtr->ignore())
     {
       delete sourcePtr;
     }
     else
     {
-      a_GlobalUniqueSources[elocal].push_back(sourcePtr);
-    }
-      
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+a_GlobalUniqueSources[event].push_back(sourcePtr);
+
+#else // SW4 backend
+a_GlobalUniqueSources[elocal].push_back(sourcePtr);
+
+#endif // SW4 backend
+}
+
   }
   else // point forcing
   {
@@ -6008,19 +7296,28 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     fz *= f0;
     //       f0 = 1;
     // global version (gets real coordinates)
-    sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, topodepth, ncyc,
-			   par, npar, ipar, nipar, false ); // false is correctStrengthForMu
+    sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep,
+formstring, topodepth, ncyc,
+                           par, npar, ipar, nipar, false ); // false is correctStrengthForMu
     //...and add it to the list of forcing terms
-    if (sourcePtr->ignore())
+
+if (sourcePtr->ignore())
     {
       delete sourcePtr;
     }
     else
     {
-      a_GlobalUniqueSources[elocal].push_back(sourcePtr);
-    }
 
-  }	  
+#if defined(SW4_USE_RAJA) // SW4 backend
+a_GlobalUniqueSources[event].push_back(sourcePtr);
+
+#else // SW4 backend
+a_GlobalUniqueSources[elocal].push_back(sourcePtr);
+
+#endif // SW4 backend
+}
+
+  }
   if( npar > 0 )
      delete[] par;
   if( nipar > 0 )
@@ -6028,12 +7325,87 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   if (mVerbose >=4 && proc_zero())
     cout << "********Done parsing source command*********" << endl;
   }
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 }
 
 
 //----------------------------------------------------------------------------
+#endif // SW4 backend
 void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources )
 {
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5
+  int event = 0;
+  bool rfileset = false;
+  char rfile[1000];
+  double stime, etime;
+  stime = MPI_Wtime();
+
+  // bounding box
+  // only check the z>zmin when we have topography. For a flat free surface, we
+  // will remove sources too close or above the surface in the call to
+  // mGlobalUniqueSources[i]->correct_Z_level()
+  float_sw4 xmin = 0.;
+  float_sw4 ymin = 0.;
+  float_sw4 zmin;
+  if (topographyExists())  // topography command must be read before the source
+                           // command
+    zmin = m_global_zmin;
+  else
+    zmin = -m_global_zmax;
+
+  string err = "Rupture Error: ";
+
+  char* token = strtok(buffer, " \t");
+  REQUIRE2(strcmp("rupturehdf5", token) == 0,
+           "ERROR: not a rupturehdf5 line...: " << token);
+  token = strtok(NULL, " \t");
+
+  while (token != NULL) {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    if (startswith("file=", token)) {
+      token += 5;  // read past 'file='
+      strncpy(rfile, token, 1000);
+      rfileset = true;
+    } else if (startswith("event=", token)) {
+      token += 6;
+      //	 event = atoi(token);
+      //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no.
+      //"<< event << " out of range" );
+      // Ignore if no events given
+      if (m_nevents_specified > 0) {
+        map<string, int>::iterator it = m_event_names.find(token);
+        CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+        event = it->second;
+      }
+    } else {
+      badOption("rupturehdf5", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+
+  if (rfileset)
+    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax,
+                    m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin,
+                    mVerbose, m_nwriters);
+
+  etime = MPI_Wtime();
+
+  if (proc_zero())
+    cout << "Process rupture data, took " << etime - stime << "seconds."
+         << endl;
+#else
+  if (proc_zero())
+    cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"
+         << endl;
+#endif
+
+#else // SW4 backend
 #ifdef USE_HDF5
   int event = 0;
   bool rfileset=false;
@@ -6042,7 +7414,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
   stime = MPI_Wtime();
 
 // bounding box
-// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too
 // close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
   float_sw4 xmin = 0.;
   float_sw4 ymin = 0.;
@@ -6066,23 +7438,23 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
           break;
       if (startswith("file=",token))
       {
-	token += 5; // read past 'file='
+        token += 5; // read past 'file='
          strncpy(rfile, token,1000);
-	 rfileset = true;
+         rfileset = true;
       }
       else if(startswith("event=",token))
       {
-	 token += 6;
-	 //	 event = atoi(token);
-	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	 if( m_nevents_specified > 0 )
-	 {
-	    map<string,int>::iterator it = m_event_names.find(token);
-	    CHECK_INPUT( it != m_event_names.end(), 
-		     err << "event with name "<< token << " not found" );
-	    event = it->second;
-	 }
+         token += 6;
+         //	 event = atoi(token);
+         //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+        // Ignore if no events given
+         if( m_nevents_specified > 0 )
+         {
+            map<string,int>::iterator it = m_event_names.find(token);
+            CHECK_INPUT( it != m_event_names.end(),
+                     err << "event with name "<< token << " not found" );
+            event = it->second;
+         }
       }
       else
       {
@@ -6100,7 +7472,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
   }
 
   etime = MPI_Wtime();
-  
+
   if (proc_zero())
       cout << "Process rupture data, took " << etime-stime << "seconds." << endl;
 #else
@@ -6108,6 +7480,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
     cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"<< endl;
 #endif
 
+#endif // SW4 backend
 } // end processRupture()
 
 
@@ -6120,20 +7493,44 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
   Source* sourcePtr;
   double stime, etime;
   stime = MPI_Wtime();
-  
+
   float_sw4 m0 = 1.0;
-  float_sw4 t0=0.0, f0=1.0, freq=1.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 t0 = 0.0, freq = 1.0;
+  // float_sw4 f0 = 1.0;
   // Should be center of the grid
-  double x = 0.0, y = 0.0, z = 0.0;
-  int i = 0, j = 0, k = 0;
-  float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
-  float_sw4 strike=0.0, dip=0.0, rake=0.0;
+
+#else // SW4 backend
+float_sw4 t0=0.0, f0=1.0, freq=1.0;
+  // Should be center of the grid
+
+#endif // SW4 backend
+double x = 0.0, y = 0.0, z = 0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int i = 0, j = 0, k = 0;
+
+#endif // SW4 backend
+float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
-  int event = 0;
-  
-  double lat = 0.0, lon = 0.0;
-  bool topodepth = true;
-  
+
+#endif // SW4 backend
+int event = 0;
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+double lat = 0.0, lon = 0.0;
+
+#endif // SW4 backend
+bool topodepth = true;
+
   bool rfileset=false;
 
   timeDep tDep = iDiscrete;
@@ -6142,7 +7539,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
   char rfile[1000];
 
 // bounding box
-// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too
 // close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
   float_sw4 xmin = 0.;
   float_sw4 ymin = 0.;
@@ -6166,27 +7563,40 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
           break;
       if (startswith("file=",token))
       {
-	token += 5; // read past 'file='
+        token += 5; // read past 'file='
          strncpy(rfile, token,1000);
-	 rfileset = true;
+         rfileset = true;
       }
       else if(startswith("event=",token))
       {
-	 token += 6;
-	 //	 event = atoi(token);
-	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	 if( m_nevents_specified > 0 )
-	 {
-	    map<string,int>::iterator it = m_event_names.find(token);
-            //	    CHECK_INPUT( it != m_event_names.end(), 
+         token += 6;
+         //	 event = atoi(token);
+         //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+        // Ignore if no events given
+         if( m_nevents_specified > 0 )
+         {
+            map<string,int>::iterator it = m_event_names.find(token);
+            //	    CHECK_INPUT( it != m_event_names.end(),
             //		     err << "event with name "<< token << " not found" );
             //	    event = it->second;
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Rupture warning: event with name " << token << " not found" << std::endl;
-	 }
+
+#endif // SW4 backend
+}
       }
       else
       {
@@ -6199,10 +7609,15 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 
   const int bufsize=1024;
   char buf[bufsize];
-  char *ret;
-  
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+char *ret;
+
 // Discrete source time function
-  float_sw4* par=NULL;
+
+#endif // SW4 backend
+float_sw4* par=NULL;
   int* ipar=NULL;
   int npar=0, nipar=0, ncyc=0;
   if( rfileset )
@@ -6218,13 +7633,29 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     if (proc_zero())
       printf("Opened rupture file '%s'\n", rfile);
 // read 1st line
-    ret = fgets(buf,bufsize,fd);
-    sscanf(buf," %lg", &rVersion );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+sscanf(buf," %lg", &rVersion );
     if (proc_zero())
       printf("Version = %.1f\n", rVersion);
 // read 2nd line, starting header block
-    ret = fgets(buf,bufsize,fd);
-    char* token = strtok(buf, " \t");
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+do {
+        fgets(buf, bufsize, fd);
+    } while (buf[0] == '#');
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+char* token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("PLANE", token) == 0, "ERROR: not a HEADER BLOCK line...: " << token);
 // read the number of planes
@@ -6238,21 +7669,42 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double elon, elat, len, wid, stk, dip, dtop, shyp, dhyp;
       int nstk, ndip;
-      ret = fgets(buf,bufsize,fd);
-      sscanf(buf,"%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len, &wid);
-      ret = fgets(buf,bufsize,fd);
-      sscanf(buf,"%lg %lg %lg %lg %lg", &stk, &dip, &dtop, &shyp, &dhyp);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+sscanf(buf,"%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len, &wid);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+sscanf(buf,"%lg %lg %lg %lg %lg", &stk, &dip, &dtop, &shyp, &dhyp);
       if (proc_zero())
       {
-	printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n", 
-	       seg+1, elon, elat, nstk, ndip, len, wid);
-	printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n", stk, dip, dtop, shyp, dhyp);
+        printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n",
+               seg+1, elon, elat, nstk, ndip, len, wid);
+        printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n", stk, dip, dtop, shyp, dhyp);
       }
-      
+
     }
 // read header for data block
-    ret = fgets(buf,bufsize,fd);
-    token = strtok(buf, " \t");
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("POINTS", token) == 0, "ERROR: not a DATA BLOCK line...: " << token);
 // read the number of points
@@ -6264,83 +7716,135 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 
 // read all point sources
     int nSources=0, nu1=0, nu2=0, nu3=0, nskip_zero_slip=0;
-    for (int pts=0; pts<npts; pts++) 
+    for (int pts=0; pts<npts; pts++)
     {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
       int nt1=0, nt2=0, nt3=0;
-      ret = fgets(buf,bufsize,fd);
-      sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area, 
-	     &tinit, &dt);
-      ret = fgets(buf,bufsize,fd);
-      sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area,
+             &tinit, &dt);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
 // nothing to do if nt1=nt2=nt3=0
       if (nt1<=0 && nt2<=0 && nt3<=0) continue;
       if (proc_zero() && mVerbose >= 2)
       {
-	printf("point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n", 
-	       pts+1, lon, lat, dep, stk, dip, area, tinit, dt);
-	printf("          rake=%g, slip1=%g, nt1=%i, slip2=%g, nt2=%i, slip3=%g, nt3=%i\n", 
-	       rake, slip1, nt1, slip2, nt2, slip3, nt3);
+        printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, "
+            "tinit=%g, dt=%g\n",
+
+#else // SW4 backend
+"point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n",
+
+#endif // SW4 backend
+pts+1, lon, lat, dep, stk, dip, area, tinit, dt);
+        printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"          rake=%g, slip1=%g, nt1=%i, slip2=%g, nt2=%i, slip3=%g, "
+            "nt3=%i\n",
+
+#else // SW4 backend
+"          rake=%g, slip1=%g, nt1=%i, slip2=%g, nt2=%i, slip3=%g, nt3=%i\n",
+
+#endif // SW4 backend
+rake, slip1, nt1, slip2, nt2, slip3, nt3);
       }
-      
+
 // read discrete time series for u1
       if (nt1>0)
       {
-	nu1++;
+        nu1++;
 // note that the first data point is always zero, but the last is not
-// for this reason we always pad the time zeries with a '0' 
+// for this reason we always pad the time zeries with a '0'
 // also note that we need at least 7 data points, i.e. nt1>=6
-	int nt1dim = max(6,nt1);
-	par = new float_sw4[nt1dim+2];
-	par[0]  = tinit;
-	t0      = tinit;
-	freq    = 1/dt;
-	ipar    = new int[1];
-	ipar[0] = nt1dim+1; // add an extra point 
-	ret = fgets(buf,bufsize,fd);
-	token = strtok(buf, " \t");
+        int nt1dim = max(6,nt1);
+        par = new float_sw4[nt1dim+2];
+        par[0]  = tinit;
+        t0      = tinit;
+        freq    = 1/dt;
+        ipar    = new int[1];
+        ipar[0] = nt1dim+1; // add an extra point
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
-	for( int i=0 ; i < nt1 ; i++ )
-	{
+        for( int i=0 ; i < nt1 ; i++ )
+        {
 // read another line if there are no more tokens
-	  if (token == NULL)
-	  {
-	    ret = fgets(buf,bufsize,fd);
-	    token = strtok(buf, " \t");
-	  }
+          if (token == NULL)
+          {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
+          }
 //	  printf("token='%s'\n", token);
-	  sscanf(token,"%lg", &par[i+1] );
+          sscanf(token,"%lg", &par[i+1] );
 // read next token
-	  token = strtok(NULL, " \t");
-	}
+          token = strtok(NULL, " \t");
+        }
 // pad with 0
-	if (nt1 < 6)
-	{
-	  for (int j=nt1; j<6; j++)
-	    par[j+1]=0.;
-	}
-	
+        if (nt1 < 6)
+        {
+          for (int j=nt1; j<6; j++)
+            par[j+1]=0.;
+        }
+
 // last 0
-	par[nt1dim+1]= 0.0;
+        par[nt1dim+1]= 0.0;
 
 // scale cm/s to m/s
-	for (int i=1; i<=nt1dim+1; i++)
-	{
-	  par[i] *= 1e-2;
-	}
+        for (int i=1; i<=nt1dim+1; i++)
+        {
+          par[i] *= 1e-2;
+        }
 
 // AP: Mar. 1, 2016: Additional scaling is needed to make the integral of the time function = 1
         float_sw4 slip_m=slip1*1e-2;
         float_sw4 slip_sum=0;
-	for (int i=1; i<=nt1dim+1; i++)
-	{
-	  slip_sum += par[i];
-	}
+        for (int i=1; i<=nt1dim+1; i++)
+        {
+          slip_sum += par[i];
+        }
         slip_sum *=dt;
 
         if (proc_zero() && mVerbose >= 2)
         {
-           printf("INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n", slip_sum, slip_m);
+           printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from "
+              "header)=%e [m]\n",
+
+#else // SW4 backend
+"INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n",
+#endif // SW4 backend
+slip_sum, slip_m);
         }
         float_sw4 slip_sum_tol = 1e-12;
         bool skip_zero_slip_point = false;
@@ -6348,19 +7852,34 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
         {
            nskip_zero_slip++;
            skip_zero_slip_point = true;
-           if( proc_zero() && nskip_zero_slip <= 10 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if( proc_zero() && nskip_zero_slip <= 10 )
+
+#else // SW4 backend
+if( proc_zero() && nskip_zero_slip <= 10 )
            {
-              printf("WARNING: skipping rupture point #%i because dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n",
+
+#endif // SW4 backend
+printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"WARNING: rupture point %i has near-zero slip integral (dt*sum(slip_vel)=%e), skipping source creation.\n",
+                     pts+1, slip_sum);
+
+#else // SW4 backend
+"WARNING: skipping rupture point #%i because dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n",
                      pts+1, slip_sum, slip_m);
            }
-        }
-// scale time series to sum to integrate to one        
-	if( !skip_zero_slip_point )
-	{
-	  for (int i=1; i<=nt1dim+1; i++)
-	  {
+
+#endif // SW4 backend
+}
+// scale time series to sum to integrate to one
+        if( !skip_zero_slip_point )
+        {
+          for (int i=1; i<=nt1dim+1; i++)
+          {
              par[i] /= slip_sum;
-	  }
+          }
           if (proc_zero() && mVerbose >= 2)
           {
              slip_sum=0;
@@ -6372,163 +7891,206 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
              printf("INFO: SRF file: After scaling time series: dt*sum(par)=%e [m]\n", slip_sum);
           }
         }
-//done scaling        
-        
-	npar = nt1dim+2;
-	nipar = 1;
+//done scaling
+
+        npar = nt1dim+2;
+        nipar = 1;
 
         // printf("Read discrete time series: tinit=%g, dt=%g, nt1=%i\n", tinit, dt, nt1);
-	// for (int i=0; i<nt1+1; i++)
-	//   printf("Sv1[%i]=%g\n", i+1, par[i+1]);
+        // for (int i=0; i<nt1+1; i++)
+        //   printf("Sv1[%i]=%g\n", i+1, par[i+1]);
 
 // convert lat, lon, depth to (x,y,z)
-	computeCartesianCoord(x, y, lon, lat);
+        computeCartesianCoord(x, y, lon, lat);
 // convert depth in [km] to [m]
-	z = dep * 1e3;
+        z = dep * 1e3;
 
 // convert strike, dip, rake to Mij
-	float_sw4 radconv = M_PI / 180.;
-	float_sw4 S, D, R;
-	stk -= mGeoAz; // subtract off the grid azimuth
-	S = stk*radconv; D = dip*radconv; R = rake*radconv;
-      
-	mxx = -1.0 * ( sin(D) * cos(R) * sin (2*S) + sin(2*D) * sin(R) * sin(S)*sin(S) );
-	myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
-	mzz = -1.0 * ( mxx + myy );	
-	mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
-	mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
-	myz = -1.0 * ( cos(D) * cos(R) * sin (S)   - cos(2*D) * sin(R) * cos(S) );
+        float_sw4 radconv = M_PI / 180.;
+        float_sw4 S, D, R;
+        stk -= mGeoAz; // subtract off the grid azimuth
+        S = stk*radconv; D = dip*radconv; R = rake*radconv;
+
+        mxx = -1.0 * ( sin(D) * cos(R) * sin (2*S) + sin(2*D) * sin(R) * sin(S)*sin(S) );
+        myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
+        mzz = -1.0 * ( mxx + myy );
+        mxy =        ( sin(D) * cos(R) * cos (2*S) + 0.5 * sin(2*D) * sin(R) * sin(2*S) );
+        mxz = -1.0 * ( cos(D) * cos(R) * cos (S)   + cos(2*D) * sin(R) * sin(S) );
+        myz = -1.0 * ( cos(D) * cos(R) * sin (S)   - cos(2*D) * sin(R) * cos(S) );
 
 // scale (note that the shear modulus is not yet available. Also note that we convert [cm] to [m])
-	m0 = area*1e-4 * slip1*1e-2;
-      
-	mxx *= m0;
-	mxy *= m0;
-	mxz *= m0;
-	myy *= m0;
-	myz *= m0;
-	mzz *= m0;
+        m0 = area*1e-4 * slip1*1e-2;
+
+        mxx *= m0;
+        mxy *= m0;
+        mxz *= m0;
+        myy *= m0;
+        myz *= m0;
+        mzz *= m0;
 
 // before creating the source, make sure (x,y,z) is inside the computational domain
 
-// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too
 // close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
 
-	if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
-	{
-	  stringstream sourceposerr;
-	  sourceposerr << endl
-		       << "***************************************************" << endl
-		       << " ERROR:  Source positioned outside grid!  " << endl
-		       << endl
-		       << " Source from rupture file @" << endl
-		       << "  x=" << x << " y=" << y << " z=" << z << endl 
-		       << "  lat=" << lat << " lon=" << lon << " dep=" << dep << endl 
-		       << endl;
-	    
-	  if ( x < xmin )
-	    sourceposerr << " x is " << xmin - x << 
-	      " meters away from min x (" << xmin << ")" << endl;
-	  else if ( x > m_global_xmax)
-	    sourceposerr << " x is " << x - m_global_xmax << 
-	      " meters away from max x (" << m_global_xmax << ")" << endl;
-	  if ( y < ymin )
-	    sourceposerr << " y is " << ymin - y << 
-	      " meters away from min y (" << ymin << ")" << endl;
-	  else if ( y > m_global_ymax)
-	    sourceposerr << " y is " << y - m_global_ymax << 
-	      " meters away from max y (" << m_global_ymax << ")" << endl;
-	  if ( z < zmin )
-	    sourceposerr << " z is " << zmin - z << 
-	      " meters away from min z (" << zmin << ")" << endl;
-	  else if ( z > m_global_zmax)
-	    sourceposerr << " z is " << z - m_global_zmax << 
-	      " meters away from max z (" << m_global_zmax << ")" << endl;
-	  sourceposerr << "***************************************************" << endl;
-	  if (m_myRank == 0)
-	    cout << sourceposerr.str();
-	}
-	else if( !skip_zero_slip_point && event_is_in_proc(event) )
-	{
-           event = global_to_local_event(event);
-           sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-				 tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true ); // true is correctStrengthForMu
+        if (x < xmin || x > m_global_xmax || y < ymin || y > m_global_ymax || z < zmin || z > m_global_zmax)
+        {
+          stringstream sourceposerr;
+          sourceposerr << endl
+                       << "***************************************************" << endl
+                       << " ERROR:  Source positioned outside grid!  " << endl
+                       << endl
+                       << " Source from rupture file @" << endl
+                       << "  x=" << x << " y=" << y << " z=" << z << endl
+                       << "  lat=" << lat << " lon=" << lon << " dep=" << dep << endl
+                       << endl;
 
-	  if (sourcePtr->ignore())
-	  {
-	    delete sourcePtr;
-	  }
-	  else
-	  {
-	    a_GlobalUniqueSources[event].push_back(sourcePtr);
-	    nSources++;
-	  }
-	}
-	
+          if ( x < xmin )
+            sourceposerr << " x is " << xmin - x <<
+              " meters away from min x (" << xmin << ")" << endl;
+          else if ( x > m_global_xmax)
+            sourceposerr << " x is " << x - m_global_xmax <<
+              " meters away from max x (" << m_global_xmax << ")" << endl;
+          if ( y < ymin )
+            sourceposerr << " y is " << ymin - y <<
+              " meters away from min y (" << ymin << ")" << endl;
+          else if ( y > m_global_ymax)
+            sourceposerr << " y is " << y - m_global_ymax <<
+              " meters away from max y (" << m_global_ymax << ")" << endl;
+          if ( z < zmin )
+            sourceposerr << " z is " << zmin - z <<
+              " meters away from min z (" << zmin << ")" << endl;
+          else if ( z > m_global_zmax)
+            sourceposerr << " z is " << z - m_global_zmax <<
+              " meters away from max z (" << m_global_zmax << ")" << endl;
+          sourceposerr << "***************************************************" << endl;
+          if (m_myRank == 0)
+            cout << sourceposerr.str();
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+} else if( !skip_zero_slip_point ) {
+
+#else // SW4 backend
+}
+        else if( !skip_zero_slip_point && event_is_in_proc(event) )
+        {
+           event = global_to_local_event(event);
+
+#endif // SW4 backend
+sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
+                                 tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true ); // true is correctStrengthForMu
+
+          if (sourcePtr->ignore())
+          {
+            delete sourcePtr;
+          }
+          else
+          {
+            a_GlobalUniqueSources[event].push_back(sourcePtr);
+            nSources++;
+          }
+        }
+
 
 // deallocate temporary arrays...
-	delete[] par;
-	delete[] ipar;
+        delete[] par;
+        delete[] ipar;
 
       } // end if nt1 >0
 
 // read past discrete time series for u2
       if (nt2>0)
       {
-	nu2++;
-	double dum;
-	if (proc_zero())
-	  printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
-	ret = fgets(buf,bufsize,fd);
-	token = strtok(buf, " \t");
+        nu2++;
+        double dum;
+        if (proc_zero())
+          printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
-	for( int i=0 ; i < nt2 ; i++ )
-	{
+        for( int i=0 ; i < nt2 ; i++ )
+        {
 // read another line if there are no more tokens
-	  if (token == NULL)
-	  {
-	    ret = fgets(buf,bufsize,fd);
-	    token = strtok(buf, " \t");
-	  }
+          if (token == NULL)
+          {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
+          }
 //	  printf("token='%s'\n", token);
-	  sscanf(token,"%lg", &dum );
+          sscanf(token,"%lg", &dum );
 // read next token
-	  token = strtok(NULL, " \t");
-	}
+          token = strtok(NULL, " \t");
+        }
       } // end if nt2 > 0
 
 // read past discrete time series for u3
       if (nt3>0)
       {
-	nu3++;
-	double dum;
-	if (proc_zero())
-	  printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
-	ret = fgets(buf,bufsize,fd);
-	token = strtok(buf, " \t");
+        nu3++;
+        double dum;
+        if (proc_zero())
+          printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
-	for( int i=0 ; i < nt3 ; i++ )
-	{
+        for( int i=0 ; i < nt3 ; i++ )
+        {
 // read another line if there are no more tokens
-	  if (token == NULL)
-	  {
-	    ret = fgets(buf,bufsize,fd);
-	    token = strtok(buf, " \t");
-	  }
+          if (token == NULL)
+          {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+token = strtok(buf, " \t");
+          }
 //	  printf("token='%s'\n", token);
-	  sscanf(token,"%lg", &dum );
+          sscanf(token,"%lg", &dum );
 // read next token
-	  token = strtok(NULL, " \t");
-	}
+          token = strtok(NULL, " \t");
+        }
       } // end if nt3 > 0
-      
+
     } // end for all sources
     if (proc_zero())
-      printf("Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n", 
-	     npts, nSources, nu1, nu2, nu3);
+      printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, "
+          "nu3=%i\n",
+
+#else // SW4 backend
+"Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n",
+
+#endif // SW4 backend
+npts, nSources, nu1, nu2, nu3);
     if (proc_zero() && nskip_zero_slip > 0)
       printf("Skipped %i rupture points with zero slip-velocity integral in u1.\n", nskip_zero_slip);
-    
+
     fclose(fd);
   }
 
@@ -6542,17 +8104,22 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 void EW::processMaterialBlock( char* buffer, int & blockCount )
 {
   float_sw4 vpgrad=0.0, vsgrad=0.0, rhograd=0.0;
-  bool x1set=false, x2set=false, y1set=false, y2set=false, 
+  bool x1set=false, x2set=false, y1set=false, y2set=false,
     z1set=false, z2set=false;
 
   float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-  int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
-  string name = "Block";
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
+
+#endif // SW4 backend
+string name = "Block";
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("block", token) == 0,
-	      "ERROR: material block can be set by a block line, not: " << token);
+              "ERROR: material block can be set by a block line, not: " << token);
 
   string err = token;
   err += " Error: ";
@@ -6567,7 +8134,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
           // Ignore commented lines and lines with just a space.
-	break;
+        break;
 // the xygrad keywords must occur before the corresponding xy keywords
       if (startswith("rhograd=", token))
       {
@@ -6617,8 +8184,8 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
 //                         1234567890
       else if (startswith("absdepth=", token) )
       {
-	token += 9; // skip absdepth=
-	absDepth = (bool) atoi(token);
+        token += 9; // skip absdepth=
+        absDepth = (bool) atoi(token);
       }
       else if (startswith("x1=", token))
       {
@@ -6663,7 +8230,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
       token = strtok(NULL, " \t");
     }
   // End parsing...
-  
+
   blockCount++;
   stringstream blockname;
   blockname << name << " " << blockCount;
@@ -6674,11 +8241,11 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   if (x1set)
   {
      // CHECK_INPUT(x1 >= 0.,
-     // 	     err << "x1 is less than the minimum x, " 
+     // 	     err << "x1 is less than the minimum x, "
      // 	     << x1 << " < " << 0.);
      CHECK_INPUT(x1 <= m_global_xmax,
-	     err << "x1 is greater than the maximum x, " 
-	     << x1 << " > " << m_global_xmax);
+             err << "x1 is greater than the maximum x, "
+             << x1 << " > " << m_global_xmax);
   }
   else
     x1 = -m_global_xmax; //x1 = 0.;
@@ -6686,17 +8253,17 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   if (x2set)
   {
      CHECK_INPUT(x2 >= 0.,
-             err << "x2 is less than the minimum x, " 
+             err << "x2 is less than the minimum x, "
              << x2 << " < " << 0.);
      // CHECK_INPUT(x2 <= m_global_xmax,
-     //         err << "x2 is greater than the maximum x, " 
+     //         err << "x2 is greater than the maximum x, "
      //         << x2 << " > " << m_global_xmax);
   }
   else
     x2 = 2.*m_global_xmax;//x2 = m_global_xmax;
 
   CHECK_INPUT( x2 >= x1, " (x1..x2), upper bound is smaller than lower bound");
-  
+
   //--------------------------------------------------------
   // Set j bounds, goes with Y in WPP
   //--------------------------------------------------------
@@ -6706,15 +8273,15 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
      // 	     err << "y1 is less than the minimum y, " << y1 << " < " << 0.);
 
      CHECK_INPUT(y1 <= m_global_ymax,
-		  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
+                  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
   }
   else
     y1 = -m_global_ymax;//y1 = 0.;
-      
+
   if (y2set)
   {
      CHECK_INPUT(y2 >= 0.,
-	     err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
+             err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
   }
   else
     y2 = 2.*m_global_ymax;//y2 = m_global_ymax;
@@ -6725,7 +8292,7 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
   {
     // CHECK_INPUT(topographyExists() || z1 >= 0.,
     //         err << "z1 is less than the minimum z, " << z1 << " < " << 0.);
-    CHECK_INPUT(z1 <= m_global_zmax, 
+    CHECK_INPUT(z1 <= m_global_zmax,
             err << "z1 is greater than the maximum z, " << z1 << " > " << m_global_zmax);
   }
   else
@@ -6747,10 +8314,10 @@ void EW::processMaterialBlock( char* buffer, int & blockCount )
 
   if(getVerbosity() >=2 &&  m_myRank == 0 )
      cout << name << " has bounds " << x1 << " " << x2 << " " << y1 << " "
-	  << y2 << " " << z1 << " " << z2 << endl;
+          << y2 << " " << z1 << " " << z2 << endl;
 
   CHECK_INPUT( vs > 0 && vp > 0 && rho > 0 , "Error in block " << name << " vp vs rho are   "
-	       << vp << " " << vs << " " << rho );
+               << vp << " " << vs << " " << rho );
 
   MaterialBlock* bl = new MaterialBlock( this ,rho, vs, vp, x1, x2, y1, y2, z1, z2, qs, qp, freq );
   bl->set_gradients( rhograd, vsgrad, vpgrad );
@@ -6769,16 +8336,21 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
       cgrad[m] = 0;
    }
 
-   bool x1set=false, x2set=false, y1set=false, y2set=false, 
+   bool x1set=false, x2set=false, y1set=false, y2set=false,
       z1set=false, z2set=false;
 
    float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
-   int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
 
-   char* token = strtok(buffer, " \t");
+
+#endif // SW4 backend
+char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("ablock", token) == 0,
-	       "ERROR: material block can be set by a ablock line, not: " << token);
+               "ERROR: material block can be set by a ablock line, not: " << token);
 
    string err = token;
    err += " Error: ";
@@ -6791,7 +8363,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
           // Ignore commented lines and lines with just a space.
-	 break;
+         break;
 // the xygrad keywords must occur before the corresponding xy keywords
       if (startswith("rhograd=", token))
       {
@@ -7017,42 +8589,42 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
       {
          token += 3; // skip x1=
          x1 = atof(token);
-	 x1set = true;
+         x1set = true;
       }
       else if (startswith("x2=", token))
       {
          token += 3; // skip x2=
          x2 = atof(token);
-	 x2set = true;
+         x2set = true;
       }
       else if (startswith("y1=", token))
       {
          token += 3; // skip y1=
          y1 = atof(token);
-	 y1set = true;
+         y1set = true;
       }
       else if (startswith("y2=", token))
       {
          token += 3; // skip y2=
          y2 = atof(token);
-	 y2set = true;
+         y2set = true;
       }
       else if (startswith("z1=", token))
       {
          token += 3; // skip z1=
          z1 = atof(token);
-	 z1set = true;
+         z1set = true;
       }
       else if (startswith("z2=", token))
       {
          token += 3; // skip z2=
          z2 = atof(token);
-	 z2set = true;
+         z2set = true;
       }
       else if (startswith("absdepth=", token) )
       {
-	token += 9; // skip absdepth=
-	absDepth = (bool) atoi(token);
+        token += 9; // skip absdepth=
+        absDepth = (bool) atoi(token);
       }
       else
       {
@@ -7071,11 +8643,11 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
    if (x1set)
    {
      // CHECK_INPUT(x1 >= 0.,
-     // 	     err << "x1 is less than the minimum x, " 
+     // 	     err << "x1 is less than the minimum x, "
      // 	     << x1 << " < " << 0.);
       CHECK_INPUT(x1 <= m_global_xmax,
-		  err << "x1 is greater than the maximum x, " 
-		  << x1 << " > " << m_global_xmax);
+                  err << "x1 is greater than the maximum x, "
+                  << x1 << " > " << m_global_xmax);
    }
    else
       x1 = -m_global_xmax; //x1 = 0.;
@@ -7083,17 +8655,17 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
    if (x2set)
    {
       CHECK_INPUT(x2 >= 0.,
-             err << "x2 is less than the minimum x, " 
+             err << "x2 is less than the minimum x, "
              << x2 << " < " << 0.);
      // CHECK_INPUT(x2 <= m_global_xmax,
-     //         err << "x2 is greater than the maximum x, " 
+     //         err << "x2 is greater than the maximum x, "
      //         << x2 << " > " << m_global_xmax);
    }
    else
       x2 = 2.*m_global_xmax;//x2 = m_global_xmax;
 
    CHECK_INPUT( x2 >= x1, " (x1..x2), upper bound is smaller than lower bound");
-  
+
   //--------------------------------------------------------
   // Set j bounds, goes with Y in WPP
   //--------------------------------------------------------
@@ -7103,15 +8675,15 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
      // 	     err << "y1 is less than the minimum y, " << y1 << " < " << 0.);
 
       CHECK_INPUT(y1 <= m_global_ymax,
-		  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
+                  err << "y1 is greater than the maximum y, " << y1 << " > " << m_global_ymax);
    }
    else
       y1 = -m_global_ymax;//y1 = 0.;
-      
+
    if (y2set)
    {
       CHECK_INPUT(y2 >= 0.,
-	     err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
+             err << "y2 is less than the minimum y, " << y2 << " < " << 0.);
    }
    else
       y2 = 2.*m_global_ymax;//y2 = m_global_ymax;
@@ -7122,7 +8694,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
    {
     // CHECK_INPUT(topographyExists() || z1 >= 0.,
     //         err << "z1 is less than the minimum z, " << z1 << " < " << 0.);
-      CHECK_INPUT(z1 <= m_global_zmax, 
+      CHECK_INPUT(z1 <= m_global_zmax,
             err << "z1 is greater than the maximum z, " << z1 << " > " << m_global_zmax);
    }
    else
@@ -7142,7 +8714,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
 
    if(getVerbosity() >=2 &&  m_myRank == 0 )
       cout << name << " has bounds " << x1 << " " << x2 << " " << y1 << " "
-	   << y2 << " " << z1 << " " << z2 << endl;
+           << y2 << " " << z1 << " " << z2 << endl;
 
    CHECK_INPUT( rho > 0 , "Error in ablock " << name << " rho is " << rho );
 
@@ -7151,7 +8723,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
    bl->set_gradients( rhograd, cgrad );
    bl->set_absoluteDepth( absDepth );
    m_anisotropic_mtrlblocks.push_back(bl);
-}   
+}
 
 //-----------------------------------------------------------------------
 void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
@@ -7193,56 +8765,86 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
      {
        token += strlen("writeEvery=");
        writeEvery = atoi(token);
-       CHECK_INPUT(writeEvery >= 0,
-	       err << "rechdf5 command: writeEvery must be set to a non-negative integer, not: " << token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(writeEvery >= 0, err << "rechdf5 command: writeEvery must be "
+                                          "set to a non-negative integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT(writeEvery >= 0,
+               err << "rechdf5 command: writeEvery must be set to a non-negative integer, not: "
+#endif // SW4 backend
+<< token);
      }
      else if (startswith("downSample=", token) || startswith("downsample=", token))
      {
        token += strlen("downsample=");
        downSample = atoi(token);
-       CHECK_INPUT(downSample >= 1,
-	       err << "rechdf5 command: downsample must be set to an integer greater or equal than 1, not: " << token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(downSample >= 1,
+                  err << "rechdf5 command: downsample must be set to an "
+                         "integer greater or equal than 1, not: "
+
+#else // SW4 backend
+CHECK_INPUT(downSample >= 1,
+               err << "rechdf5 command: downsample must be set to an integer greater or equal than 1, not: "
+#endif // SW4 backend
+<< token);
      }
      else if(startswith("event=",token))
      {
-	token += 6;
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-           //	   CHECK_INPUT( it != m_event_names.end(), 
+        token += 6;
+        // Ignore if no events given
+        if( m_nevents_specified > 0 )
+        {
+           map<string,int>::iterator it = m_event_names.find(token);
+           //	   CHECK_INPUT( it != m_event_names.end(),
            //		     err << "event with name "<< token << " not found" );
            //	   event = it->second;
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Receiver warning: event with name " << token << " not found" << std::endl;
-	}
+
+#endif // SW4 backend
+}
      }
      else if( startswith("variables=", token) )
      {
        token += strlen("variables=");
 
        if( strcmp("displacement",token)==0 )
-	 mode = TimeSeries::Displacement;
+         mode = TimeSeries::Displacement;
        else if( strcmp("velocity",token)==0 )
-	 mode = TimeSeries::Velocity;
+         mode = TimeSeries::Velocity;
        else if( strcmp("div",token)==0 )
-	 mode = TimeSeries::Div;
+         mode = TimeSeries::Div;
        else if( strcmp("curl",token)==0 )
-	 mode = TimeSeries::Curl;
+         mode = TimeSeries::Curl;
        else if( strcmp("strains",token)==0 )
-	 mode = TimeSeries::Strains;
+         mode = TimeSeries::Strains;
        else if( strcmp("displacementgradient",token)==0 )
-	 mode = TimeSeries::DisplacementGradient;
+         mode = TimeSeries::DisplacementGradient;
        else
        {
-	 if (proc_zero())
-	   cout << "receiver command: variables=" << token << " not understood" << endl
-		<< "using default mode (displacement)" << endl << endl;
-	 mode = TimeSeries::Displacement;
+         if (proc_zero())
+           cout << "receiver command: variables=" << token << " not understood" << endl
+                << "using default mode (displacement)" << endl << endl;
+         mode = TimeSeries::Displacement;
        }
-       
+
      }
      else
      {
@@ -7251,6 +8853,28 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
      token = strtok(NULL, " \t");
   }
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5
+  bool is_obs = false;
+  // Adjust writeEvery so it is always a multiple of downsample
+  if (writeEvery % downSample != 0) {
+    writeEvery = (int)writeEvery / downSample;
+    writeEvery *= downSample;
+    if (proc_zero())
+      cout << "receiver command: writeEvery=" << writeEvery
+           << " is not a multiple of downsample, " << downSample
+           << "adjustding writeEvery to " << writeEvery << endl;
+  }
+  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode,
+                  event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
+                  is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
+#else
+  if (proc_zero())
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"
+         << endl;
+#endif
+
+#else // SW4 backend
 #ifdef USE_HDF5
   bool is_obs = false;
   if (writeEvery % downSample != 0) {
@@ -7267,8 +8891,10 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   if (proc_zero())
     cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
 #endif
-  etime = MPI_Wtime();
-  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+
+#endif // SW4 backend
+etime = MPI_Wtime();
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0)
     a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
 }
 
@@ -7284,7 +8910,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   bool staNameGiven=false;
   double stime, etime;
   stime = MPI_Wtime();
-  
+
   int writeEvery = 1000;
   int downSample = 1;
 
@@ -7294,7 +8920,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
-  bool nsew=false; 
+  bool nsew=false;
   int event=0;
   //int vel=0;
 
@@ -7320,37 +8946,73 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
         break;
      if (startswith("x=", token))
      {
-        CHECK_INPUT(!geoCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!geoCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!geoCoordSet,
                 err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip x=
+
+#endif // SW4 backend
+token += 2; // skip x=
         cartCoordSet = true;
         x = atof(token);
         CHECK_INPUT(x >= 0.0,
-		    "receiver command: x must be greater than or equal to 0, not " << x);
+                    "receiver command: x must be greater than or equal to 0, not " << x);
         CHECK_INPUT(x <= m_global_xmax,
-		    "receiver command: x must be less than or equal to xmax, not " << x);
+                    "receiver command: x must be less than or equal to xmax, not " << x);
      }
      else if (startswith("y=", token))
      {
-        CHECK_INPUT(!geoCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!geoCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!geoCoordSet,
                 err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip y=
+
+#endif // SW4 backend
+token += 2; // skip y=
         cartCoordSet = true;
         y = atof(token);
         CHECK_INPUT(y >= 0.0,
                 "receiver command: y must be greater than or equal to 0, not " << y);
         CHECK_INPUT(y <= m_global_ymax,
-		    "receiver command: y must be less than or equal to ymax, not " << y);
+                    "receiver command: y must be less than or equal to ymax, not " << y);
      }
      else if (startswith("lat=", token))
      {
-        CHECK_INPUT(!cartCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!cartCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!cartCoordSet,
                 err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lat=
+
+#endif // SW4 backend
+token += 4; // skip lat=
         lat = atof(token);
-        CHECK_INPUT(lat >= -90.0,
-                "receiver command: lat must be greater than or equal to -90 degrees, not " 
-                << lat);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lat >= -90.0,
+                  "receiver command: lat must be greater than or equal to -90 "
+                  "degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lat >= -90.0,
+                "receiver command: lat must be greater than or equal to -90 degrees, not "
+
+#endif // SW4 backend
+<< lat);
         CHECK_INPUT(lat <= 90.0,
                 "receiver command: lat must be less than or equal to 90 degrees, not "
                 << lat);
@@ -7358,16 +9020,34 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
      }
      else if (startswith("lon=", token))
      {
-        CHECK_INPUT(!cartCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!cartCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!cartCoordSet,
                 err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lon=
+
+#endif // SW4 backend
+token += 4; // skip lon=
         lon = atof(token);
         CHECK_INPUT(lon >= -180.0,
-                "receiver command: lon must be greater or equal to -180 degrees, not " 
+                "receiver command: lon must be greater or equal to -180 degrees, not "
                 << lon);
-        CHECK_INPUT(lon <= 180.0,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lon <= 180.0,
+                  "receiver command: lon must be less than or equal to 180 "
+                  "degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lon <= 180.0,
                 "receiver command: lon must be less than or equal to 180 degrees, not "
-                << lon);
+
+#endif // SW4 backend
+<< lon);
         geoCoordSet = true;
      }
      else if (startswith("z=", token))
@@ -7376,17 +9056,25 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
        depth = z = atof(token);
        topodepth = false; // absolute depth (below mean sea level)
        CHECK_INPUT(z <= m_global_zmax,
-		   "receiver command: z must be less than or equal to zmax, not " << z);
+                   "receiver command: z must be less than or equal to zmax, not " << z);
      }
      else if (startswith("depth=", token))
      {
         token += 6; // skip depth=
        z = depth = atof(token);
        topodepth = true; // by depth we here mean depth below topography
-       CHECK_INPUT(depth >= 0.0,
-	       err << "receiver command: depth must be greater than or equal to zero");
-       CHECK_INPUT(depth <= m_global_zmax,
-		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(depth >= 0.0, err << "receiver command: depth must be "
+                                       "greater than or equal to zero");
+
+#else // SW4 backend
+CHECK_INPUT(depth >= 0.0,
+               err << "receiver command: depth must be greater than or equal to zero");
+
+#endif // SW4 backend
+CHECK_INPUT(depth <= m_global_zmax,
+                   "receiver command: depth must be less than or equal to zmax, not " << depth);
      }
 //                        1234567890
      else if (startswith("topodepth=", token))
@@ -7394,10 +9082,18 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
         token += 10; // skip topodepth=
        z = depth = atof(token);
        topodepth = true; // by depth we here mean depth below topography
-       CHECK_INPUT(depth >= 0.0,
-	       err << "receiver command: depth must be greater than or equal to zero");
-       CHECK_INPUT(depth <= m_global_zmax,
-		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(depth >= 0.0, err << "receiver command: depth must be "
+                                       "greater than or equal to zero");
+
+#else // SW4 backend
+CHECK_INPUT(depth >= 0.0,
+               err << "receiver command: depth must be greater than or equal to zero");
+
+#endif // SW4 backend
+CHECK_INPUT(depth <= m_global_zmax,
+                   "receiver command: depth must be less than or equal to zmax, not " << depth);
      }
      else if(startswith("hdf5file=", token))
      {
@@ -7413,7 +9109,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
      {
         token += strlen("sta=");
         staName = token;
-	staNameGiven=true;
+        staNameGiven=true;
      }
      else if( startswith("nsew=", token) )
      {
@@ -7429,33 +9125,63 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
      {
        token += strlen("writeEvery=");
        writeEvery = atoi(token);
-       CHECK_INPUT(writeEvery >= 0,
-	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(writeEvery >= 0, err << "sac command: writeEvery must be set "
+                                          "to a non-negative integer, not: "
+
+#else // SW4 backend
+CHECK_INPUT(writeEvery >= 0,
+               err << "sac command: writeEvery must be set to a non-negative integer, not: "
+#endif // SW4 backend
+<< token);
      }
      else if (startswith("downSample=", token) || startswith("downsample=", token))
      {
        token += strlen("downSample=");
        downSample = atoi(token);
-       CHECK_INPUT(downSample >= 1,
-	       err << "sac command: downSample must be set to an integer greater or equal than 1, not: " << token);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(downSample >= 1,
+                  err << "sac command: downSample must be set to an integer "
+                         "greater or equal than 1, not: "
+
+#else // SW4 backend
+CHECK_INPUT(downSample >= 1,
+               err << "sac command: downSample must be set to an integer greater or equal than 1, not: "
+#endif // SW4 backend
+<< token);
      }
      else if(startswith("event=",token))
      {
-	token += 6;
-	//	event = atoi(token);
-	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-           //	   CHECK_INPUT( it != m_event_names.end(), 
+        token += 6;
+        //	event = atoi(token);
+        //	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+        // Ignore if no events given
+        if( m_nevents_specified > 0 )
+        {
+           map<string,int>::iterator it = m_event_names.find(token);
+           //	   CHECK_INPUT( it != m_event_names.end(),
            //		     err << "event with name "<< token << " not found" );
            //	   event = it->second;
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Receiver warning: event with name " << token << " not found" << std::endl;
-	}
+
+#endif // SW4 backend
+}
      }
      else if( startswith("usgsformat=", token) )
      {
@@ -7477,7 +9203,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 //* testing
        // if (proc_zero())
        // 	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
-       
+
        token += strlen("variables=");
 
 //* testing
@@ -7486,36 +9212,36 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 
        if( strcmp("displacement",token)==0 )
        {
-	 mode = TimeSeries::Displacement;
+         mode = TimeSeries::Displacement;
        }
        else if( strcmp("velocity",token)==0 )
        {
-	 mode = TimeSeries::Velocity;
+         mode = TimeSeries::Velocity;
        }
        else if( strcmp("div",token)==0 )
        {
-	 mode = TimeSeries::Div;
+         mode = TimeSeries::Div;
        }
        else if( strcmp("curl",token)==0 )
        {
-	 mode = TimeSeries::Curl;
+         mode = TimeSeries::Curl;
        }
        else if( strcmp("strains",token)==0 )
        {
-	 mode = TimeSeries::Strains;
+         mode = TimeSeries::Strains;
        }
        else if( strcmp("displacementgradient",token)==0 )
        {
-	 mode = TimeSeries::DisplacementGradient;
+         mode = TimeSeries::DisplacementGradient;
        }
        else
        {
-	 if (proc_zero())
-	   cout << "receiver command: variables=" << token << " not understood" << endl
-		<< "using default mode (displacement)" << endl << endl;
-	 mode = TimeSeries::Displacement;
+         if (proc_zero())
+           cout << "receiver command: variables=" << token << " not understood" << endl
+                << "using default mode (displacement)" << endl << endl;
+         mode = TimeSeries::Displacement;
        }
-       
+
      }
      else
      {
@@ -7525,8 +9251,8 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 //* testing
      // if (proc_zero())
      //   cout << "rec command: Bottom of while loop, token:" << token << "(end token)" << endl;
-     
-  }  
+
+  }
   //  cout << "end receiver " << m_myRank << endl;
 
   if (geoCoordSet)
@@ -7539,12 +9265,12 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
     staName = fileName;
 
   bool inCurvilinear=false;
-// we are in or above the curvilinear grid 
+// we are in or above the curvilinear grid
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
   {
     inCurvilinear = true;
   }
-      
+
 // check if (x,y,z) is not in the global bounding box
   if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
   {
@@ -7552,28 +9278,35 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
     if (m_myRank == 0 && getVerbosity() > 0)
     {
       stringstream receivererr;
-  
-      receivererr << endl 
-		  << "***************************************************" << endl
-		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+
+      receivererr << endl
+                  << "***************************************************" << endl
+                  << " WARNING:  RECEIVER positioned outside grid!" << endl;
       receivererr << " No RECEIVER file will be generated for file = " << fileName << endl;
       if (geoCoordSet)
       {
-	receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+        receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
       }
       else
       {
-	receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+        receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
       }
-      
+
       receivererr << "***************************************************" << endl;
       cerr << receivererr.str();
       cerr.flush();
     }
-  }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+} else {
+
+#else // SW4 backend
+}
   else if( event_is_in_proc(event) )
   {
-    if (writeEvery % downSample != 0) {
+
+#endif // SW4 backend
+if (writeEvery % downSample != 0) {
       writeEvery = (int)writeEvery / downSample;
       writeEvery *= downSample;
       if (proc_zero())
@@ -7581,9 +9314,14 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
             << downSample << "adjustding writeEvery to " << writeEvery << endl;
     }
 
-    event = global_to_local_event(event);
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
-					topodepth, writeEvery, downSample, !nsew, event);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+event = global_to_local_event(event);
+
+#endif // SW4 backend
+TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth,
+                                        topodepth, writeEvery, downSample, !nsew, event);
 #if USE_HDF5
     if (hdf5format) {
       // Each HDF5 output file needs its own shared handle.  Receivers in the
@@ -7617,20 +9355,30 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   }
 
   etime = MPI_Wtime();
-  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0)
     a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
-  
+
 }
 
 //-----------------------------------------------------------------------
 void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
-  double x=0.0, y=0.0, z=0.0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
-  float_sw4 t0 = 0;
+
+#endif // SW4 backend
+float_sw4 t0 = 0;
   float_sw4 scalefactor=1;
-  bool cartCoordSet = false, geoCoordSet = false;
-  string inhdf5file = "";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool cartCoordSet = false, geoCoordSet = false;
+
+#endif // SW4 backend
+string inhdf5file = "";
   string outhdf5file = "station";
   int writeEvery = 0;
   int downSample = 1;
@@ -7640,8 +9388,13 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   char exclstr[4]={'\0','\0','\0','\0'};
   bool usex=true, usey=true, usez=true;
   bool scalefactor_set=false;
-  bool eventgiven=false;
-  int event=0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool eventgiven=false;
+
+#endif // SW4 backend
+int event=0;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
@@ -7668,22 +9421,40 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
      }
      else if(startswith("event=",token))
      {
-	token += 6;
-	//	event = atoi(token);
-	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-        eventgiven = true;
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-           //	   CHECK_INPUT( it != m_event_names.end(), 
+        token += 6;
+        //	event = atoi(token);
+        //	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+eventgiven = true;
+        // Ignore if no events given
+
+#endif // SW4 backend
+if( m_nevents_specified > 0 )
+        {
+           map<string,int>::iterator it = m_event_names.find(token);
+           //	   CHECK_INPUT( it != m_event_names.end(),
            //		     err << "event with name "<< token << " not found" );
            //	   event = it->second;
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Observation warning: event with name " << token << " not found" << std::endl;
-	}
+
+#endif // SW4 backend
+}
      }
      // (small) shifts of the observation in time can be used to compensate for incorrect velocites
      // in the material model
@@ -7718,7 +9489,8 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
      //			  << " or use utc=ignore" );
      //	}
      //     }
-     else if( startswith("windowL=",token))
+
+else if( startswith("windowL=",token))
      {
         token += 8;
         winl = atof(token);
@@ -7733,45 +9505,64 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
      else if( startswith("exclude=",token) )
      {
         token += 8;
-	strncpy(exclstr,token,4);
+        strncpy(exclstr,token,4);
 
-	int c=0;
-	while( c < 3 && exclstr[c] != '\0' )
-	{
-	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
-	      usex=false;
-	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
-	      usey=false;
-	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
-	      usez=false;
-	   c++;
-	}
+        int c=0;
+        while( c < 3 && exclstr[c] != '\0' )
+        {
+           if( exclstr[c] == 'x' || exclstr[c] == 'e' )
+              usex=false;
+           if( exclstr[c] == 'y' || exclstr[c] == 'n' )
+              usey=false;
+           if( exclstr[c] == 'z' || exclstr[c] == 'u' )
+              usez=false;
+           c++;
+        }
      }
      else if(startswith("filter=", token))
      {
         token += 7; // skip filter=
         if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
-	   m_filter_observations = false;
+           m_filter_observations = false;
      }
      else if( startswith("scalefactor=",token) )
      {
-	token += 12;
-	scalefactor = atof(token);
-	scalefactor_set = true;
+        token += 12;
+        scalefactor = atof(token);
+        scalefactor_set = true;
      }
      else
      {
         badOption("observation", token);
      }
      token = strtok(NULL, " \t");
-  }  
+  }
 
-  if( m_nevents_specified > 0 && !eventgiven )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_nevents_specified > 0 && !eventgiven )
   {
      if( m_myRank == 0 )
         std::cout << "Processobservationhdf5: ERROR, event not specified" << std::endl;
   }
   // Read from HDF5 file, and create time series data
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5
+  bool is_obs = true;
+  readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode,
+                  event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
+                  is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0,
+                  scalefactor_set, scalefactor);
+
+#else
+  if (proc_zero())
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"
+         << endl;
+  return;
+#endif
+#else // SW4 backend
 #ifdef USE_HDF5
   bool is_obs = true;
   if( event_is_in_proc(event) )
@@ -7792,6 +9583,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   return;
 #endif
 
+#endif // SW4 backend
 }
 
 //-----------------------------------------------------------------------
@@ -7805,12 +9597,17 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string fileName = "rec";
   string staName = "station";
   bool staNameGiven=false;
-  
+
   int writeEvery = 0;
 
-  bool dateSet = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool dateSet = false;
   bool timeSet = false;
-  bool topodepth = false;
+
+#endif // SW4 backend
+bool topodepth = false;
 
   //  int utc[7];
   //  bool utcset = false;
@@ -7845,54 +9642,126 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
         break;
      if (startswith("x=", token))
      {
-        CHECK_INPUT(!geoCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!geoCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!geoCoordSet,
                 err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip x=
+
+#endif // SW4 backend
+token += 2; // skip x=
         cartCoordSet = true;
         x = atof(token);
         CHECK_INPUT(x >= 0.0,
-		    "observation command: x must be greater than or equal to 0, not " << x);
+                    "observation command: x must be greater than or equal to 0, not " << x);
         CHECK_INPUT(x <= m_global_xmax,
-		    "observation command: x must be less than or equal to xmax, not " << x);
+                    "observation command: x must be less than or equal to xmax, not " << x);
      }
      else if (startswith("y=", token))
      {
-        CHECK_INPUT(!geoCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!geoCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!geoCoordSet,
                 err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip y=
+
+#endif // SW4 backend
+token += 2; // skip y=
         cartCoordSet = true;
         y = atof(token);
         CHECK_INPUT(y >= 0.0,
                 "observation command: y must be greater than or equal to 0, not " << y);
         CHECK_INPUT(y <= m_global_ymax,
-		    "observation command: y must be less than or equal to ymax, not " << y);
+                    "observation command: y must be less than or equal to ymax, not " << y);
      }
      else if (startswith("lat=", token))
      {
-        CHECK_INPUT(!cartCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!cartCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!cartCoordSet,
                 err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lat=
+
+#endif // SW4 backend
+token += 4; // skip lat=
         lat = atof(token);
-        CHECK_INPUT(lat >= -90.0,
-                "observation command: lat must be greater than or equal to -90 degrees, not " 
-                << lat);
-        CHECK_INPUT(lat <= 90.0,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lat >= -90.0,
+                  "observation command: lat must be greater than or equal to "
+                  "-90 degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lat >= -90.0,
+                "observation command: lat must be greater than or equal to -90 degrees, not "
+
+#endif // SW4 backend
+<< lat);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lat <= 90.0,
+                  "observation command: lat must be less than or equal to 90 "
+                  "degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lat <= 90.0,
                 "observation command: lat must be less than or equal to 90 degrees, not "
-                << lat);
+
+#endif // SW4 backend
+<< lat);
         geoCoordSet = true;
      }
      else if (startswith("lon=", token))
      {
-        CHECK_INPUT(!cartCoordSet,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(!cartCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+
+#else // SW4 backend
+CHECK_INPUT(!cartCoordSet,
                 err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lon=
+
+#endif // SW4 backend
+token += 4; // skip lon=
         lon = atof(token);
-        CHECK_INPUT(lon >= -180.0,
-                "observation command: lon must be greater or equal to -180 degrees, not " 
-                << lon);
-        CHECK_INPUT(lon <= 180.0,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lon >= -180.0,
+                  "observation command: lon must be greater or equal to -180 "
+                  "degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lon >= -180.0,
+                "observation command: lon must be greater or equal to -180 degrees, not "
+
+#endif // SW4 backend
+<< lon);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(lon <= 180.0,
+                  "observation command: lon must be less than or equal to 180 "
+                  "degrees, not "
+
+#else // SW4 backend
+CHECK_INPUT(lon <= 180.0,
                 "observation command: lon must be less than or equal to 180 degrees, not "
-                << lon);
+
+#endif // SW4 backend
+<< lon);
         geoCoordSet = true;
      }
      else if (startswith("z=", token))
@@ -7902,17 +9771,25 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
        depth = z = atof(token);
        topodepth = false;
        CHECK_INPUT(z <= m_global_zmax,
-		   "observation command: z must be less than or equal to zmax, not " << z);
+                   "observation command: z must be less than or equal to zmax, not " << z);
      }
      else if (startswith("depth=", token))
      {
         token += 6; // skip depth=
        z = depth = atof(token);
        topodepth = true;
-       CHECK_INPUT(depth >= 0.0,
-	       err << "observation command: depth must be greater than or equal to zero");
-       CHECK_INPUT(depth <= m_global_zmax,
-		   "observation command: depth must be less than or equal to zmax, not " << depth);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(depth >= 0.0, err << "observation command: depth must be "
+                                       "greater than or equal to zero");
+
+#else // SW4 backend
+CHECK_INPUT(depth >= 0.0,
+               err << "observation command: depth must be greater than or equal to zero");
+
+#endif // SW4 backend
+CHECK_INPUT(depth <= m_global_zmax,
+                   "observation command: depth must be less than or equal to zmax, not " << depth);
 // by depth we here mean depth below topography
      }
      else if(startswith("file=", token))
@@ -7923,27 +9800,40 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      }
      else if(startswith("event=",token))
      {
-	token += 6;
-	//	event = atoi(token);
-	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-           //	   CHECK_INPUT( it != m_event_names.end(), 
+        token += 6;
+        //	event = atoi(token);
+        //	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+        // Ignore if no events given
+        if( m_nevents_specified > 0 )
+        {
+           map<string,int>::iterator it = m_event_names.find(token);
+           //	   CHECK_INPUT( it != m_event_names.end(),
            //		     err << "event with name "<< token << " not found" );
            //	   event = it->second;
-             if( it != m_event_names.end() )
-                event = it->second;
-             else if( proc_zero() )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+
+#else // SW4 backend
+if( it != m_event_names.end() )
+
+#endif // SW4 backend
+event = it->second;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else if( proc_zero() )
                 std::cout << "Observation warning: event with name " << token << " not found" << std::endl;
-	}
+
+#endif // SW4 backend
+}
      }
      else if (startswith("sta=", token))
      {
         token += strlen("sta=");
         staName = token;
-	staNameGiven=true;
+        staNameGiven=true;
      }
 // (small) shifts of the observation in time can be used to compensate for incorrect velocites
 // in the material model
@@ -7978,7 +9868,8 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      //			  << " or use utc=ignore" );
      //	}
      //     }
-     else if( startswith("windowL=",token))
+
+else if( startswith("windowL=",token))
      {
         token += 8;
         winl = atof(token);
@@ -7993,71 +9884,77 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      else if( startswith("exclude=",token) )
      {
         token += 8;
-	strncpy(exclstr,token,4);
+        strncpy(exclstr,token,4);
 
-	int c=0;
-	while( c < 3 && exclstr[c] != '\0' )
-	{
-	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
-	      usex=false;
-	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
-	      usey=false;
-	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
-	      usez=false;
-	   c++;
-	}
+        int c=0;
+        while( c < 3 && exclstr[c] != '\0' )
+        {
+           if( exclstr[c] == 'x' || exclstr[c] == 'e' )
+              usex=false;
+           if( exclstr[c] == 'y' || exclstr[c] == 'n' )
+              usey=false;
+           if( exclstr[c] == 'z' || exclstr[c] == 'u' )
+              usez=false;
+           c++;
+        }
      }
      else if(startswith("filter=", token))
      {
         token += 7; // skip filter=
         if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
-	   m_filter_observations = false;
+           m_filter_observations = false;
      }
      else if( startswith("sacfile1=",token) )
      {
         token += 9;
         sacfile1 += token;
-	sf1set = true;
+        sf1set = true;
      }
      else if( startswith("sacfile2=",token) )
      {
         token += 9;
         sacfile2 += token;
-	sf2set = true;
+        sf2set = true;
      }
      else if( startswith("sacfile3=",token) )
      {
         token += 9;
         sacfile3 += token;
-	sf3set = true;
+        sf3set = true;
      }
      else if( startswith("scalefactor=",token) )
      {
-	token += 12;
-	scalefactor = atof(token);
-	scalefactor_set = true;
+        token += 12;
+        scalefactor = atof(token);
+        scalefactor_set = true;
      }
      else
      {
         badOption("observation", token);
      }
      token = strtok(NULL, " \t");
-  }  
+  }
 
   // Make sure either one usgsfile or three sac files are input.
-  if( event_is_in_proc(event) )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( event_is_in_proc(event) )
   {
      int eglobal = event;
      event = global_to_local_event(event);
-     if( usgsfileset )
+
+#endif // SW4 backend
+if( usgsfileset )
      {
         CHECK_INPUT( !sf1set && !sf2set && !sf3set, "processObservation, Error: can not give both usgs file and sacfiles" );
      }
-     else 
+     else
      {
         CHECK_INPUT( sf1set && sf2set && sf3set, "processObservation, Error: must give at least three sac files" );
 // Find a name for the SAC station
-        int l = sacfile1.length();
+
+int l = sacfile1.length();
         if( sacfile1.substr(l-4,4) == ".sac" )
            fileName = sacfile1.substr(0,l-4);
         else
@@ -8068,8 +9965,15 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
         float_sw4 latlon[2];
         if( m_myRank == 0 )
         {
-           string fname= mObsPath[eglobal];
-           fname += sacfile1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+string fname = mObsPath[event];
+
+#else // SW4 backend
+string fname= mObsPath[eglobal];
+
+#endif // SW4 backend
+fname += sacfile1;
            FILE* fd=fopen(fname.c_str(),"r");
            CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
            float float70[70];
@@ -8077,15 +9981,39 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
            CHECK_INPUT( nr == 70, "processObservation: ERROR, could not read float part of header of " << sacfile1 );
            latlon[0] = float70[31];
            latlon[1] = float70[32];
-           CHECK_INPUT( latlon[0] != -12345 && latlon[1] != -12345, 
-                       "processObservation: ERROR, sac file does not contain station coordinates " << sacfile1);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(latlon[0] != -12345 && latlon[1] != -12345,
+                  "processObservation: ERROR, sac file does not contain "
+                  "station coordinates "
+
+#else // SW4 backend
+CHECK_INPUT( latlon[0] != -12345 && latlon[1] != -12345,
+                       "processObservation: ERROR, sac file does not contain station coordinates "
+#endif // SW4 backend
+<< sacfile1);
            fclose(fd);
         }
-        MPI_Bcast( latlon, 2, MPI_DOUBLE, 0, m_1d_communicator );
-        if( geoCoordSet && ( fabs(lat-latlon[0])<1e-10 && fabs(lon-latlon[1])<1e-10 ))
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Bcast(latlon, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+#else // SW4 backend
+MPI_Bcast( latlon, 2, MPI_DOUBLE, 0, m_1d_communicator );
+
+#endif // SW4 backend
+if( geoCoordSet && ( fabs(lat-latlon[0])<1e-10 && fabs(lon-latlon[1])<1e-10 ))
         {
            if( m_myRank == 0 )
-              cout << "processObservation: WARNING station (lat,lon) on sac file do not match input (lat,lon)" << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "processObservation: WARNING station (lat,lon) on sac file do "
+                "not match input (lat,lon)"
+
+#else // SW4 backend
+cout << "processObservation: WARNING station (lat,lon) on sac file do not match input (lat,lon)"
+#endif // SW4 backend
+<< endl;
         }
         if( !cartCoordSet && !geoCoordSet )
         {
@@ -8107,12 +10035,12 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
 //
 // AP: This test is incorrect because we don't know the elevation of the observation
 //
-// we are in or above the curvilinear grid 
+// we are in or above the curvilinear grid
      if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
      {
         inCurvilinear = true;
      }
-      
+
 // check if (x,y,z) is not in the global bounding box
      if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
      {
@@ -8120,8 +10048,8 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
         if (m_myRank == 0 && getVerbosity() > 0)
         {
            stringstream observationerr;
-  
-           observationerr << endl 
+
+           observationerr << endl
                           << "***************************************************" << endl
                           << " WARNING:  OBSERVATION positioned outside grid!" << endl;
            observationerr << " No OBSERVATION file will be generated for file = " << fileName << endl;
@@ -8133,7 +10061,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
            {
               observationerr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
            }
-      
+
            observationerr << "***************************************************" << endl;
            cerr << observationerr.str();
            cerr.flush();
@@ -8141,9 +10069,9 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      }
      else
      {
-        TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
-					topodepth, writeEvery, 1, true, event );
-    // Read in file. 
+        TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth,
+                                        topodepth, writeEvery, 1, true, event );
+    // Read in file.
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
     //        This is useful for synthetic data.
 
@@ -8179,8 +10107,13 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
 
 // include the observation in the global list
         a_GlobalTimeSeries[event].push_back(ts_ptr);
-     }
-  }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+}
+
+#endif // SW4 backend
+}
 }
 
 //-----------------------------------------------------------------------
@@ -8190,7 +10123,7 @@ void EW::processScaleFactors( char* buffer )
 
   CHECK_INPUT(strcmp("scalefactors", token) == 0, "ERROR: not a scalefactors line...: " << token);
   token = strtok(NULL, " \t");
-  float_sw4 x0=1, y0=1, z0=1, mxx=1, mxy=1, mxz=1, myy=1, myz=1, mzz=1, t0=1, freq=1; 
+  float_sw4 x0=1, y0=1, z0=1, mxx=1, mxy=1, mxz=1, myy=1, myz=1, mzz=1, t0=1, freq=1;
 
   string err = "SCALEFACTORS Error: ";
 
@@ -8204,84 +10137,84 @@ void EW::processScaleFactors( char* buffer )
         token += 3;
         x0 = atof(token);
         CHECK_INPUT(x0 > 0.0,
-		    "scalefactors command: x0 must be greater than 0, not " << x0);
+                    "scalefactors command: x0 must be greater than 0, not " << x0);
      }
      else if( startswith("y0=",token))
      {
         token += 3;
         y0 = atof(token);
         CHECK_INPUT(y0 > 0.0,
-		    "scalefactors command: y0 must be greater than 0, not " << y0);
+                    "scalefactors command: y0 must be greater than 0, not " << y0);
      }
      else if( startswith("z0=",token))
      {
         token += 3;
         z0 = atof(token);
         CHECK_INPUT(z0 > 0.0,
-		    "scalefactors command: y0 must be greater than 0, not " << z0);
+                    "scalefactors command: y0 must be greater than 0, not " << z0);
      }
      else if( startswith("Mxx=",token))
      {
         token += 4;
         mxx = atof(token);
         CHECK_INPUT(mxx > 0.0,
-		    "scalefactors command: Mxx must be greater than 0, not " << mxx);
+                    "scalefactors command: Mxx must be greater than 0, not " << mxx);
      }
      else if( startswith("Mxy=",token))
      {
         token += 4;
         mxy = atof(token);
         CHECK_INPUT(mxy > 0.0,
-		    "scalefactors command: Mxy must be greater than 0, not " << mxy);
+                    "scalefactors command: Mxy must be greater than 0, not " << mxy);
      }
      else if( startswith("Mxz=",token))
      {
         token += 4;
         mxz = atof(token);
         CHECK_INPUT(mxz > 0.0,
-		    "scalefactors command: Mxz must be greater than 0, not " << mxz);
+                    "scalefactors command: Mxz must be greater than 0, not " << mxz);
      }
      else if( startswith("Myy=",token))
      {
         token += 4;
         myy = atof(token);
         CHECK_INPUT(myy > 0.0,
-		    "scalefactors command: Myy must be greater than 0, not " << myy);
+                    "scalefactors command: Myy must be greater than 0, not " << myy);
      }
      else if( startswith("Myz=",token))
      {
         token += 4;
         myz = atof(token);
         CHECK_INPUT(myz > 0.0,
-		    "scalefactors command: Myz must be greater than 0, not " << myz);
+                    "scalefactors command: Myz must be greater than 0, not " << myz);
      }
      else if( startswith("Mzz=",token))
      {
         token += 4;
         mzz = atof(token);
         CHECK_INPUT(mzz > 0.0,
-		    "scalefactors command: Mzz must be greater than 0, not " << mzz);
+                    "scalefactors command: Mzz must be greater than 0, not " << mzz);
      }
      else if( startswith("t0=",token))
      {
         token += 3;
         t0 = atof(token);
         CHECK_INPUT(t0 > 0.0,
-		    "scalefactors command: t0  must be greater than 0, not " << t0 );
+                    "scalefactors command: t0  must be greater than 0, not " << t0 );
      }
      else if( startswith("freq=",token))
      {
         token += 5;
         freq = atof(token);
         CHECK_INPUT(freq > 0.0,
-		    "scalefactors command: freq  must be greater than 0, not " << freq );
+                    "scalefactors command: freq  must be greater than 0, not " << freq );
      }
      else
      {
         badOption("scalefactors", token);
      }
      token = strtok(NULL, " \t");
-  }  
+  }
   m_scalefactors[0] = x0;
   m_scalefactors[1] = y0;
   m_scalefactors[2] = z0;
@@ -8337,150 +10270,150 @@ void EW::processCG( char* buffer )
         token += 11;
         m_maxrestart = atoi(token);
         CHECK_INPUT(m_maxrestart >= 0,
-		    "cg command: maxouterit must be greater than or equal to 0, not " << m_maxrestart );
+                    "cg command: maxouterit must be greater than or equal to 0, not " << m_maxrestart );
      }
      else if( startswith("tolerance=",token) )
      {
         token += 10;
         m_tolerance = atof(token);
         CHECK_INPUT(m_tolerance >= 0,
-		    "cg command: tolerance must be greater than or equal to 0, not " << m_tolerance );
+                    "cg command: tolerance must be greater than or equal to 0, not " << m_tolerance );
      }
      else if( startswith("initialguess=",token) )
      {
         token += 13;
         if( strcmp(token,"useSource")==0 || strcmp(token,"usesource")==0 )
-   	   m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = false;
-	else if( strcmp(token,"estimate") == 0 )
-	   m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = true;
+           m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = false;
+        else if( strcmp(token,"estimate") == 0 )
+           m_iniguess_pos = m_iniguess_t0fr = m_iniguess_mom = true;
         else if( strcmp(token,"estimatePos")==0 || strcmp(token,"estimatepos")==0 )
-	{
+        {
            m_iniguess_pos  = true;
-	   m_iniguess_t0fr = false;
-	   m_iniguess_mom  = false;
-	}
+           m_iniguess_t0fr = false;
+           m_iniguess_mom  = false;
+        }
         else if( strcmp(token,"estimateT0Pos")==0 )
-	{
+        {
            m_iniguess_pos  = true;
-	   m_iniguess_t0fr = true;
-	   m_iniguess_mom  = false;
-	}
+           m_iniguess_t0fr = true;
+           m_iniguess_mom  = false;
+        }
         else if( strcmp(token,"estimateM")==0 )
-	{
+        {
            m_iniguess_pos  = false;
-	   m_iniguess_t0fr = false;
-	   m_iniguess_mom  = true;
-	}
+           m_iniguess_t0fr = false;
+           m_iniguess_mom  = true;
+        }
         else
-	   CHECK_INPUT( false,
-		     "cg command: initialguess value " << token << " not understood");
+           CHECK_INPUT( false,
+                     "cg command: initialguess value " << token << " not understood");
      }
      else if( startswith("estimateshifts=",token) )
      {
         token += 15;
-	m_iniguess_shifts = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0;
+        m_iniguess_shifts = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0;
      }
      else if( startswith("write_initial_ts=",token) )
      {
         token += 17;
         int val=atoi(token);
-	if( val == 1 )
-	   m_output_initial_seismograms = true;
-	else if( val == 0 )
-	   m_output_initial_seismograms = false;
+        if( val == 1 )
+           m_output_initial_seismograms = true;
+        else if( val == 0 )
+           m_output_initial_seismograms = false;
         CHECK_INPUT( (val == 1) || (val== 0) ,
-		    "cg command: write_initial_ts must be equal to 0 or 1, not " << val );
+                    "cg command: write_initial_ts must be equal to 0 or 1, not " << val );
 
      }
      else if( startswith("scalefactors=",token) )
      {
         token += 13;
         if( strcmp(token,"useinput")==0 )
-	   m_compute_scalefactors = false;
-	else if( strcmp(token,"estimate") == 0 )
-	   m_compute_scalefactors = true;
+           m_compute_scalefactors = false;
+        else if( strcmp(token,"estimate") == 0 )
+           m_compute_scalefactors = true;
         else
-	   CHECK_INPUT( false,
-		     "cg command: scalefactors value " << token << " not understood");
+           CHECK_INPUT( false,
+                     "cg command: scalefactors value " << token << " not understood");
      }
      else if( startswith("linesearch=",token) )
      {
         token += 11;
         if( strcmp(token,"on")==0 )
-	   m_do_linesearch = true;
-	else if( strcmp(token,"off") == 0 )
-	   m_do_linesearch = false;
+           m_do_linesearch = true;
+        else if( strcmp(token,"off") == 0 )
+           m_do_linesearch = false;
         else
-	   CHECK_INPUT( false,
-		     "cg command: linesearch value " << token << " not understood");
+           CHECK_INPUT( false,
+                     "cg command: linesearch value " << token << " not understood");
      }
      else if( startswith("steptype=",token) )
      {
         token += 9;
         if( strcmp(token,"misfit")==0 )
-	   m_cgstepselection = 0;
-	else if( strcmp(token,"hessian") == 0 )
-	   m_cgstepselection = 1;
+           m_cgstepselection = 0;
+        else if( strcmp(token,"hessian") == 0 )
+           m_cgstepselection = 1;
         else
-	   CHECK_INPUT( false,
-		     "cg command: steptype value " << token << " not understood");
+           CHECK_INPUT( false,
+                     "cg command: steptype value " << token << " not understood");
      }
      else if( startswith("optmethod=",token) )
      {
         token += 10;
         if( strcmp(token,"fletcher-reeves")==0 )
-	{
+        {
            m_opt_method = 1;
-	   m_cgfletcherreeves = true;
-	}
-	else if( strcmp(token,"polak-ribiere") == 0 )
-	{
+           m_cgfletcherreeves = true;
+        }
+        else if( strcmp(token,"polak-ribiere") == 0 )
+        {
            m_opt_method = 1;
-	   m_cgfletcherreeves = false;
-	}
+           m_cgfletcherreeves = false;
+        }
         else if( strcmp(token,"l-BFGS") == 0 )
-	   m_opt_method = 2;
+           m_opt_method = 2;
         else if( strcmp(token,"BFGS") == 0 )
-	   m_opt_method = 3;
+           m_opt_method = 3;
         else if( strcmp(token,"steepest-descent") == 0 )
-	   m_opt_method = 4;
+           m_opt_method = 4;
         else
-	   CHECK_INPUT( false,
-		     "cg command: optmethod value " << token << " not understood");
+           CHECK_INPUT( false,
+                     "cg command: optmethod value " << token << " not understood");
      }
      else if( startswith("lbfgsvectors=",token) )
      {
         token += 13;
-	m_lbfgs_m = atoi(token);
-	CHECK_INPUT( m_lbfgs_m > 0,
-		     "Number of l-BFGS vectors must be positive. Input value = " << m_lbfgs_m );
+        m_lbfgs_m = atoi(token);
+        CHECK_INPUT( m_lbfgs_m > 0,
+                     "Number of l-BFGS vectors must be positive. Input value = " << m_lbfgs_m );
      }
      else if( startswith("solvefor=" , token) )
      {
-	token += 9;
+        token += 9;
         if( strcmp(token,"posMt0freq")==0 )
-	   m_cgvarcase = 0;
-	else if( strcmp(token,"posMt0") == 0 )
-	   m_cgvarcase = 1;
-	else if( strcmp(token,"posM") == 0 )
-	   m_cgvarcase = 2;
-	else if( strcmp(token,"posMobs") == 0 )
-	   m_cgvarcase = 3;
+           m_cgvarcase = 0;
+        else if( strcmp(token,"posMt0") == 0 )
+           m_cgvarcase = 1;
+        else if( strcmp(token,"posM") == 0 )
+           m_cgvarcase = 2;
+        else if( strcmp(token,"posMobs") == 0 )
+           m_cgvarcase = 3;
         else
-	   CHECK_INPUT( false,
-		     "cg command: solvefor value " << token << " not understood");
+           CHECK_INPUT( false,
+                     "cg command: solvefor value " << token << " not understood");
      }
      else if( startswith("opttest=",token) )
      {
         token += 8;
-	m_opt_testing =  strcmp(token,"yes")== 0 || strcmp(token,"1")==0;
+        m_opt_testing =  strcmp(token,"yes")== 0 || strcmp(token,"1")==0;
      }
      else
      {
         badOption("cg", token);
      }
      token = strtok(NULL, " \t");
-  }  
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -8491,15 +10424,23 @@ void EW::processMaterialPfile(char* buffer)
   // Used for pfiles
   string filename = "NONE";
   string directory = "NONE";
-  float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
-  string cflatten = "NONE";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
+  // float_sw4 a_ppm = 0.;
+
+#else // SW4 backend
+float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+
+#endif // SW4 backend
+string cflatten = "NONE";
   bool flatten = false;
   bool coords_geographic = true;
   int nstenc = 5;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("pfile", token) == 0,
-	      "ERROR: material data can only be set by an pfile line, not: " << token);
+              "ERROR: material data can only be set by an pfile line, not: " << token);
 
   string err = token;
   err += " Error: ";
@@ -8510,8 +10451,8 @@ void EW::processMaterialPfile(char* buffer)
     {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	break;
+        // Ignore commented lines and lines with just a space.
+        break;
       //      else if (startswith("a=", token))
       //      {
       //         token += 2; // skip a=
@@ -8519,64 +10460,64 @@ void EW::processMaterialPfile(char* buffer)
       //      }
       else if( startswith("smoothingsize=",token) )
       {
-	token += 14;
-	nstenc = atoi(token);
-	VERIFY2( nstenc >= 1 ,
-		 "processMaterialPfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
+        token += 14;
+        nstenc = atoi(token);
+        VERIFY2( nstenc >= 1 ,
+                 "processMaterialPfile Error: nstenc is " << nstenc << "but should be >= 1\n" );
       }
       else if (startswith("vpmin=", token))
       {
-	token += 6; // skip vpmin=
-	vpmin_ppm = atof(token);
+        token += 6; // skip vpmin=
+        vpmin_ppm = atof(token);
       }
       else if (startswith("vsmin=", token))
       {
-	token += 6; // skip vsmin=
-	vsmin_ppm = atof(token);
+        token += 6; // skip vsmin=
+        vsmin_ppm = atof(token);
       }
       else if (startswith("rhomin=", token))
       {
-	token += 7; // skip rhomin=
-	rhomin_ppm = atof(token);
+        token += 7; // skip rhomin=
+        rhomin_ppm = atof(token);
       }
       else if (startswith("flatten=", token))
       {
-	token += 8; // skip flatten=
-	cflatten = token;
-	VERIFY2( (int)cflatten.find('T')>=0 || (int)cflatten.find('t')>=0 ||
-		 (int)cflatten.find('F')>=0 || (int)cflatten.find('f')>=0,
-		 "processMaterialPfile Error: value of flatten unclear\n" );
-	if ((int)cflatten.find('T')>=0||(int)cflatten.find('t')>=0)
-	  flatten=true;
-	else if ((int)cflatten.find('F')>=0||(int)cflatten.find('f')>=0)
-	  flatten=false;
-	else
-	  flatten=false;
-	 
+        token += 8; // skip flatten=
+        cflatten = token;
+        VERIFY2( (int)cflatten.find('T')>=0 || (int)cflatten.find('t')>=0 ||
+                 (int)cflatten.find('F')>=0 || (int)cflatten.find('f')>=0,
+                 "processMaterialPfile Error: value of flatten unclear\n" );
+        if ((int)cflatten.find('T')>=0||(int)cflatten.find('t')>=0)
+          flatten=true;
+        else if ((int)cflatten.find('F')>=0||(int)cflatten.find('f')>=0)
+          flatten=false;
+        else
+          flatten=false;
+
       }
       else if (startswith("filename=", token))
       {
-	token += 9; // skip filename=
-	filename = token;
+        token += 9; // skip filename=
+        filename = token;
       }
       else if (startswith("directory=", token))
       {
-	token += 10; // skip directory=
-	directory = token;
+        token += 10; // skip directory=
+        directory = token;
       }
       else if (startswith("style=", token))
       {
-	token += 6; // skip style=
-	if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
-	  coords_geographic = true;
-	else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
-	  coords_geographic = false;
-	else
-	  CHECK_INPUT( false, "processMaterialPfile Error: style= " << token << " not recognized\n" );
+        token += 6; // skip style=
+        if( strcmp(token,"geographic") == 0 || strcmp(token,"Geographic")==0 )
+          coords_geographic = true;
+        else if( strcmp(token,"cartesian") == 0 || strcmp(token,"Cartesian")==0 )
+          coords_geographic = false;
+        else
+          CHECK_INPUT( false, "processMaterialPfile Error: style= " << token << " not recognized\n" );
       }
       else
       {
-	cout << token << " is not a pfile option " << endl;
+        cout << token << " is not a pfile option " << endl;
       }
       token = strtok(NULL, " \t");
     }
@@ -8596,40 +10537,54 @@ void EW::processMaterialPfile(char* buffer)
   }
 
   MaterialPfile* pf = new MaterialPfile( this,
-					filename, directory,nstenc,vpmin_ppm,vsmin_ppm,rhomin_ppm,flatten,
-					coords_geographic );
+                                        filename, directory,nstenc,vpmin_ppm,vsmin_ppm,rhomin_ppm,flatten,
+                                        coords_geographic );
 
   add_mtrl_block( pf  );
-     
+
 }
 
 void EW::processMaterialIfile( char* buffer )
 {
-  bool x1set=false, x2set=false, y1set=false, y2set=false, 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool x1set=false, x2set=false, y1set=false, y2set=false,
     z1set=false, z2set=false;
 
-  float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 x1=0.0, x2=0.0, y1=0.0, y2=0.0, z1=0.0, z2=0.0;
   int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
 
-  string name = "Ifile";
+
+#endif // SW4 backend
+string name = "Ifile";
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("ifile", token) == 0,
-	      "ERROR: material ifile can be set by a ifile line, not: " << token);
+              "ERROR: material ifile can be set by a ifile line, not: " << token);
 
   string err = token, filename="NONE";
   bool CartesianFormat=false;
-  
+
   err += " Error: ";
 
   token = strtok(NULL, " \t");
 
-  float_sw4 vp=-1, vs=-1, rho=-1, ps=-1, materialID=-1, freq=1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 vp=-1, vs=-1, rho=-1, ps=-1, materialID=-1, freq=1;
   float_sw4 vpgrad=0, vsgrad=0, rhograd=0;
   float_sw4 vp2=0, vs2=0, rho2=0;
-  
-  bool gotFileName=false;
-  
+
+
+#endif // SW4 backend
+bool gotFileName=false;
+
   while (token != NULL)
   {
     // while there are tokens in the string still
@@ -8650,16 +10605,16 @@ void EW::processMaterialIfile( char* buffer )
       token += 6; // skip input=
       if (strcmp("cartesian", token) == 0)
       {
-	CartesianFormat=true;
+        CartesianFormat=true;
       }
 // change option to geographic, but keeping grid for backwards compatibility
       else if (strcmp("geographic", token) == 0 || strcmp("grid", token) == 0)
       {
-	CartesianFormat=false;
+        CartesianFormat=false;
       }
       else
       {
-	badOption("ifile> input", token);
+        badOption("ifile> input", token);
       }
 
     }
@@ -8670,7 +10625,7 @@ void EW::processMaterialIfile( char* buffer )
     token = strtok(NULL, " \t");
   }
   // End parsing...
-  
+
   CHECK_INPUT(gotFileName, "ERROR: no filename specified in ifile command. ");
 
   if(mVerbose >=2 &&  m_myRank == 0 )
@@ -8695,7 +10650,7 @@ void EW::processMaterialVimaterial(char* buffer)
    bool rhomula;
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("vimaterial", token) == 0,
-	       "ERROR: not a vimaterial line: " << token);
+               "ERROR: not a vimaterial line: " << token);
    string err = token;
    err += " Error: ";
    token = strtok(NULL, " \t");
@@ -8703,8 +10658,8 @@ void EW::processMaterialVimaterial(char* buffer)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
+        // Ignore commented lines and lines with just a space.
+         break;
       //      else if (startswith("a=", token))
       //      {
       //         token += 2; // skip a=
@@ -8712,52 +10667,52 @@ void EW::processMaterialVimaterial(char* buffer)
       //      }
       else if( startswith("path=",token) )
       {
-	 token += 5;
-	 path = token;
+         token += 5;
+         path = token;
       }
       else if( startswith("rho=",token) )
       {
-	 token += 4;
-	 rho = token;
-	 rhoset = true;
+         token += 4;
+         rho = token;
+         rhoset = true;
       }
       else if( startswith("mu=",token) )
       {
-	 token += 3;
-	 mu = token;
-	 muset = true;
+         token += 3;
+         mu = token;
+         muset = true;
       }
       else if( startswith("lambda=",token) )
       {
-	 token += 7;
-	 lambda = token;
-	 lambdaset = true;
+         token += 7;
+         lambda = token;
+         lambdaset = true;
       }
       else if( startswith("vs=",token) )
       {
-	 token += 3;
-	 mu = token;
-	 csset = true;
+         token += 3;
+         mu = token;
+         csset = true;
       }
       else if( startswith("vp=",token) )
       {
-	 token += 3;
-	 lambda = token;
-	 cpset = true;
+         token += 3;
+         lambda = token;
+         cpset = true;
       }
       else if( startswith("qs=",token) )
       {
-	 token += 3;
-	 qs = token;
+         token += 3;
+         qs = token;
       }
       else if( startswith("qp=",token) )
       {
-	 token += 3;
-	 qp = token;
+         token += 3;
+         qp = token;
       }
       else
       {
-	 badOption("vimaterial", token);
+         badOption("vimaterial", token);
       }
       token = strtok(NULL, " \t");
    }
@@ -8781,12 +10736,22 @@ void EW::processMaterialRfile(char* buffer)
   // Used for pfiles
    string filename = "NONE";
    string directory = "NONE";
-   float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
-   string cflatten = "NONE";
-   bool flatten = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+
+#endif // SW4 backend
+string cflatten = "NONE";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool flatten = false;
    bool coords_geographic = true;
    int nstenc = 5;
-   int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
+
+#endif // SW4 backend
+int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
    char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
@@ -8800,8 +10765,8 @@ void EW::processMaterialRfile(char* buffer)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
+        // Ignore commented lines and lines with just a space.
+         break;
       //      else if (startswith("a=", token))
       //      {
       //         token += 2; // skip a=
@@ -8809,24 +10774,24 @@ void EW::processMaterialRfile(char* buffer)
       //      }
       else if (startswith("filename=", token))
       {
-	 token += 9; // skip filename=
-	 filename = token;
+         token += 9; // skip filename=
+         filename = token;
       }
       else if (startswith("directory=", token))
       {
-	 token += 10; // skip directory=
-	 directory = token;
+         token += 10; // skip directory=
+         directory = token;
       }
       else if (startswith("bufsize=", token))
       {
-	 token += 8;
-	 bufsize = atoi(token);
-	 CHECK_INPUT( bufsize > 10 && bufsize < 1e9, "ParseInputfile: rfile bufsize = " <<
-		      bufsize << " out of allowed range" );
+         token += 8;
+         bufsize = atoi(token);
+         CHECK_INPUT( bufsize > 10 && bufsize < 1e9, "ParseInputfile: rfile bufsize = " <<
+                      bufsize << " out of allowed range" );
       }
       else
       {
-	 cout << token << " is not a rfile option " << endl;
+         cout << token << " is not a rfile option " << endl;
       }
       token = strtok(NULL, " \t");
    }
@@ -8851,14 +10816,24 @@ void EW::processMaterialSfile(char* buffer)
    string name = "sfile";
    string filename = "NONE";
    string directory = "NONE";
-   float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
-   string cflatten = "NONE";
-   bool flatten = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+
+#endif // SW4 backend
+string cflatten = "NONE";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool flatten = false;
    bool coords_geographic = true;
    int nstenc = 5;
    int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
-   char* token = strtok(buffer, " \t");
+
+#endif // SW4 backend
+char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " << token);
 
@@ -8870,8 +10845,8 @@ void EW::processMaterialSfile(char* buffer)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
+        // Ignore commented lines and lines with just a space.
+         break;
       //      else if (startswith("a=", token))
       //      {
       //         token += 2; // skip a=
@@ -8879,17 +10854,17 @@ void EW::processMaterialSfile(char* buffer)
       //      }
       else if (startswith("filename=", token))
       {
-	 token += 9; // skip filename=
-	 filename = token;
+         token += 9; // skip filename=
+         filename = token;
       }
       else if (startswith("directory=", token))
       {
-	 token += 10; // skip directory=
-	 directory = token;
+         token += 10; // skip directory=
+         directory = token;
       }
       else
       {
-	 cout << token << " is not a sfile option " << endl;
+         cout << token << " is not a sfile option " << endl;
       }
       token = strtok(NULL, " \t");
    }
@@ -8914,14 +10889,24 @@ void EW::processMaterialGMG(char* buffer)
    string name = "gmg";
    string filename = "NONE";
    string directory = "NONE";
-   float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
-   string cflatten = "NONE";
-   bool flatten = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+
+#endif // SW4 backend
+string cflatten = "NONE";
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool flatten = false;
    bool coords_geographic = true;
    int nstenc = 5;
    int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
-   char* token = strtok(buffer, " \t");
+
+#endif // SW4 backend
+char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " << token);
 
@@ -8933,21 +10918,21 @@ void EW::processMaterialGMG(char* buffer)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
+        // Ignore commented lines and lines with just a space.
         break;
       else if (startswith("filename=", token))
       {
-	 token += 9; // skip filename=
-	 filename = token;
+         token += 9; // skip filename=
+         filename = token;
       }
       else if (startswith("directory=", token))
       {
-	 token += 10; // skip directory=
-	 directory = token;
+         token += 10; // skip directory=
+         directory = token;
       }
       else
       {
-	 cout << token << " is not a gmg option " << endl;
+         cout << token << " is not a gmg option " << endl;
       }
       token = strtok(NULL, " \t");
    }
@@ -8972,31 +10957,31 @@ void EW::processMaterialInvtest(char* buffer)
    int nr=1;
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("invtestmaterial", token) == 0,
-	       "ERROR: not an invtestmaterial line: " << token);
+               "ERROR: not an invtestmaterial line: " << token);
    token = strtok(NULL, " \t");
    while (token != NULL)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
+        // Ignore commented lines and lines with just a space.
+         break;
       else if( startswith("type=",token) )
       {
-	 token += 5;
+         token += 5;
          if( strcmp(token,"sineperturbation")==0 )
-	    nr = 1;
-	 else if( strcmp(token,"box")==0 )
-	    nr = 2;
-	 else if( strcmp(token,"lohsine")==0 )
-	    nr = 3;
-	 else if( strcmp(token,"smoothlayer")==0 )
-	    nr = 4;
+            nr = 1;
+         else if( strcmp(token,"box")==0 )
+            nr = 2;
+         else if( strcmp(token,"lohsine")==0 )
+            nr = 3;
+         else if( strcmp(token,"smoothlayer")==0 )
+            nr = 4;
          else
-	    CHECK_INPUT( 0, "Error invtestmaterial, type = " << token << " not recognized" );
+            CHECK_INPUT( 0, "Error invtestmaterial, type = " << token << " not recognized" );
       }
       else
       {
-	 badOption("invtestmaterial", token);
+         badOption("invtestmaterial", token);
       }
       token = strtok(NULL, " \t");
    }
@@ -9091,12 +11076,20 @@ void EW::processRandomBlock(char* buffer)
 {
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("randomblock", token) == 0,
-	       "ERROR: not a randomblock line: " << token);
+               "ERROR: not a randomblock line: " << token);
    if( m_events_parallel )
    {
       if( proc_zero() )
       {
-         std::cout << "WARNING: randomblock command does not work together with parallel seismic events" << std::endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+std::cout << "WARNING: randomblock command does not work together with "
+                   "parallel seismic events"
+
+#else // SW4 backend
+std::cout << "WARNING: randomblock command does not work together with parallel seismic events"
+#endif // SW4 backend
+<< std::endl;
          std::cout << "randomblock command will be ignored " << std::endl;
       }
       return;
@@ -9113,59 +11106,59 @@ void EW::processRandomBlock(char* buffer)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
+        // Ignore commented lines and lines with just a space.
+         break;
       else if( startswith("corrlen=",token) )
       {
-	 token += 8;
-	 corrlen = atof(token);
-	 CHECK_INPUT(corrlen>0, "Error randomblock, corrlen must be > 0, not " << token);
-	 lengthscaleset = true;
+         token += 8;
+         corrlen = atof(token);
+         CHECK_INPUT(corrlen>0, "Error randomblock, corrlen must be > 0, not " << token);
+         lengthscaleset = true;
       }
       else if( startswith("corrlenz=",token) )
       {
-	 token += 9;
-	 corrlenz = atof(token);
-	 CHECK_INPUT(corrlenz>0, "Error randomblock, corrlenz must be > 0, not " << token);
-	 lengthscalezset = true;
+         token += 9;
+         corrlenz = atof(token);
+         CHECK_INPUT(corrlenz>0, "Error randomblock, corrlenz must be > 0, not " << token);
+         lengthscalezset = true;
       }
       else if( startswith("sigma=",token) )
       {
-	 token += 6;
-	 sigma = atof(token);
-	 CHECK_INPUT(sigma>0, "Error randomblock, sigma must be > 0, not " << token);
+         token += 6;
+         sigma = atof(token);
+         CHECK_INPUT(sigma>0, "Error randomblock, sigma must be > 0, not " << token);
       }
       else if( startswith("hurst=",token) )
       {
-	 token += 6;
-	 hurst = atof(token);
+         token += 6;
+         hurst = atof(token);
       }
       else if( startswith("seed=",token) )
       {
-	 token += 5;
+         token += 5;
          seed = atoi(token);
       }
       else if( startswith("zmin=",token) )
       {
-	 token += 5;
+         token += 5;
          zmin = atof(token);
       }
       else if( startswith("zmax=",token) )
       {
-	 token += 5;
+         token += 5;
          zmax = atof(token);
       }
       else if( startswith("vsmax=",token) )
       {
-	 token += 6;
+         token += 6;
          vsmax = atof(token);
-	 vsmaxset = true;
+         vsmaxset = true;
       }
       else if( startswith("vsmin=",token) )
       {
-	 token += 6;
+         token += 6;
          vsmin = atof(token);
-	 vsminset = true;
+         vsminset = true;
       }
       else if( startswith("randomrho=",token) )
       {
@@ -9181,7 +11174,7 @@ void EW::processRandomBlock(char* buffer)
       }
       else
       {
-	 badOption("randomblock", token);
+         badOption("randomblock", token);
       }
       token = strtok(NULL, " \t");
    }
@@ -9190,14 +11183,14 @@ void EW::processRandomBlock(char* buffer)
 
    if( !random_rho )
       rhoamp = 0.0;
-   RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
-						      corrlenz, hurst, sigma, rhoamp, 
+   RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen,
+                                                      corrlenz, hurst, sigma, rhoamp,
                                                       random_rho, seed );
    if( vsmaxset )
       mtrl->set_vsmax(vsmax);
    if( vsminset )
       mtrl->set_vsmin(vsmin);
-   m_randomize_density = random_rho || m_randomize_density;   
+   m_randomize_density = random_rho || m_randomize_density;
 
    m_random_blocks.push_back(mtrl);
    //   if( !lengthscaleset && lengthscalezset )
@@ -9209,61 +11202,92 @@ void EW::processEvent( char* buffer, int enr )
 {
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("event", token) == 0,
-	       "ERROR: not an event line: " << token);
+               "ERROR: not an event line: " << token);
    token = strtok(NULL, " \t");
-   bool pathdefined=false, obspathdefined=false, namedefined=false;
 
-   while (token != NULL)
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool pathdefined=false, obspathdefined=false, namedefined=false;
+
+
+#endif // SW4 backend
+while (token != NULL)
    {
       // while there are tokens in the string still
       if (startswith("#", token) || startswith(" ", buffer))
-	// Ignore commented lines and lines with just a space.
-	 break;
+        // Ignore commented lines and lines with just a space.
+         break;
       else if( startswith("path=",token) )
       {
-	 token += 5; // skip path=
-	 string path = token;
-	 path += '/';
-	 mPath.push_back(path);
-	 //	 mPath[enr] = token;
-	 //	 mPath[enr] += '/';
-         pathdefined=true;
-      }
+         token += 5; // skip path=
+         string path = token;
+         path += '/';
+         mPath.push_back(path);
+         //	 mPath[enr] = token;
+         //	 mPath[enr] += '/';
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+pathdefined=true;
+
+#endif // SW4 backend
+}
       else if (startswith("obspath=", token))
       {
-	 token += 8; // skip obspath=
-	 string path = token;
-	 path += '/';
-	 mObsPath.push_back(path);
-	 //	 mObsPath[enr] = token;
-	 //	 mObsPath[enr] += '/';
-         obspathdefined=true;
-      }
+         token += 8; // skip obspath=
+         string path = token;
+         path += '/';
+         mObsPath.push_back(path);
+         //	 mObsPath[enr] = token;
+         //	 mObsPath[enr] += '/';
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+obspathdefined=true;
+
+#endif // SW4 backend
+}
       else if( startswith("name=",token) )
       {
-	 token += 5;
-	 map<string,int>::iterator it=m_event_names.find(token);
-	 CHECK_INPUT(it == m_event_names.end(), "ERROR: processEvent, name = " << token << " multiply defined");
-	 m_event_names[token]=enr;
-         namedefined=true;
+         token += 5;
+         map<string,int>::iterator it=m_event_names.find(token);
+         CHECK_INPUT(it == m_event_names.end(), "ERROR: processEvent, name = " << token << " multiply defined");
+         m_event_names[token]=enr;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+namedefined=true;
       }
       else if( startswith("parallel=",token) )
       {
          token += 9;
          std::string p=token;
          m_events_parallel = (p =="1" || p == "yes" || p=="on") || m_events_parallel;
-      }
+
+#endif // SW4 backend
+}
       else
       {
-	 badOption("event", token);
-      }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+badOption("randomblock", token);
+
+#else // SW4 backend
+badOption("event", token);
+
+#endif // SW4 backend
+}
       token = strtok(NULL, " \t");
    }
-   CHECK_INPUT(namedefined,"ERROR processing 'event' command, name must be given");
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+CHECK_INPUT(namedefined,"ERROR processing 'event' command, name must be given");
    if( !pathdefined )
       mPath.push_back("./");
    if( !obspathdefined )
       mObsPath.push_back("./");
+#endif // SW4 backend
 }
 
 //-----------------------------------------------------------------------
@@ -9276,7 +11300,7 @@ int EW::findNumberOfEvents()
    if (!inputFile.is_open())
    {
       if (m_myRank == 0)
-	 cerr << endl << "ERROR OPENING INPUT FILE: " << mName << endl << endl;
+         cerr << endl << "ERROR OPENING INPUT FILE: " << mName << endl << endl;
       CHECK_INPUT(false,"ERROR opening input file : " << mName << endl << endl);
    }
    int events=0;
@@ -9285,8 +11309,8 @@ int EW::findNumberOfEvents()
       inputFile.getline(buffer,512);
       if( startswith("event",buffer ) )
       {
-	 processEvent( buffer, events );
-	 events++;
+         processEvent( buffer, events );
+         events++;
       }
    }
    inputFile.close();

@@ -1,13 +1,28 @@
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "EW.h"
+#include "caliper.h"
+#include "policies.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "sw4.h"
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "EW.h"
 
+#endif // SW4 backend
 void EW::tw_aniso_force_tt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-			       float_sw4* __restrict__ fo, float_sw4 t,float_sw4 om,float_sw4 cv,float_sw4 ph,
-			       float_sw4 omm,float_sw4 phm,float_sw4 amprho,float_sw4 phc[21],float_sw4 h,
-			       float_sw4 zmin)
+                               float_sw4* __restrict__ fo, float_sw4 t,float_sw4 om,float_sw4 cv,float_sw4 ph,
+                               float_sw4 omm,float_sw4 phm,float_sw4 amprho,float_sw4 phc[21],float_sw4 h,
+                               float_sw4 zmin)
 {
-   const size_t ni    = ilast-ifirst+1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SW4_MARK_FUNCTION;
+
+#else // SW4 backend
+#endif // SW4 backend
+const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
@@ -41,8 +56,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
 #pragma omp for
    for( int k=kfirst; k<= klast; k++ )
       for( int j=jfirst; j<= jlast; j++ )
-	 for( int i=ifirst; i<= ilast; i++ )
-	 {
+         for( int i=ifirst; i<= ilast; i++ )
+         {
             float_sw4 x=(i-1)*h;
             float_sw4 y=(j-1)*h;
             float_sw4 z=zmin+(k-1)*h;
@@ -159,8 +174,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t161 = sin(t97);
         t163 = 10+t96*t161;
         t167 = -t3*t6*t11*t29-(10+t32*t34*t37)*t42*t44*t50+t60*t68-t76*t68-t86*t91+
-	   t100*t106+t115*t68-t121*t15*t44*t125+t115*t130+2*t139*t42*t44*t142-
-	   t147*t149+t155*t156*t159-t163*t42*t44*t50;
+           t100*t106+t115*t68-t121*t15*t44*t125+t115*t130+2*t139*t42*t44*t142-
+           t147*t149+t155*t156*t159-t163*t42*t44*t50;
         t168 = cos(t136);
         t169 = t168*omm;
         t170 = t135*t169;
@@ -198,8 +213,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t240 = cos(t173);
         t243 = t240*omm*t176*t161;
         t245 = t170*t91-t147*t106+t177*t99*t181+t184*t185+t189*t15*t88*t193-
-	   t201*t204+t170*t206+t210*t101*t44*t214+t218*t88*t193+t227*t101
-	   *t44*t214-t155*t18*t233-t236*t15*t44*t105+t243*t106;
+           t201*t204+t170*t206+t210*t101*t44*t214+t218*t88*t193+t227*t101
+           *t44*t214-t155*t18*t233-t236*t15*t44*t105+t243*t106;
         t251 = t1+ph6;
         t252 = sin(t251);
         t253 = t252*t56;
@@ -244,9 +259,9 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t356 = sin(t33);
         t361 = cos(t251);
         t366 = t100*t149+t303*omm*t34*t37*t181-t310*t15*t63*t285+t316*t317*
-	   omm*t204+t299*t91+t322*omm*t176*t225*t204+t328*t15*t156*t159+
-	   t341*t42*t344*t18*t49+2*t236*t179*t44*t148+t354*t29-t118*t356*
-	   t11*t181+t243*t149+t361*omm*t56*t255*t29;
+           omm*t204+t299*t91+t322*omm*t176*t225*t204+t328*t15*t156*t159+
+           t341*t42*t344*t18*t49+2*t236*t179*t44*t148+t354*t29-t118*t356*
+           t11*t181+t243*t149+t361*omm*t56*t255*t29;
         forces[0] = t167+t245+t301+t366;
         t373 = t280*t179*t44;
         t375 = cos(t70);
@@ -267,8 +282,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t416 = t328*t101*t44;
         t419 = t139*t179*t44;
         t421 = -t201*t91-t210*t15*t44*t125+t373*t148+t378*t130+t381*t288
-	   -(10+t384*t270*t84)*t15*t63*t285+t115*t149+t328*t42*t44*t142+t299*
-	   t181-t401*t68-t412*t18*t233+t416*t288+t419*t148;
+           -(10+t384*t270*t84)*t15*t63*t285+t115*t149+t328*t42*t44*t142+t299*
+           t181-t401*t68-t412*t18*t233+t416*t288+t419*t148;
         t425 = cos(t132);
         t428 = t425*omm*t134*t137;
         t430 = cos(t2);
@@ -284,8 +299,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t469 = t152*t467*omm;
         t472 = t139*t15*t44;
         t474 = t210*t179*t44*t90+t428*t149+t430*omm*t95*t10*t29+t436*t142+
-	   t439*t169*t204+t447*t88*t193+t450*omm*t151*t199*t204+t115*t106+
-	   t227*t179*t44*t90-t310*t42*t44*t50-t464*t18*t233+t469*t206-t472*t105;
+           t439*t169*t204+t447*t88*t193+t450*omm*t151*t199*t204+t115*t106+
+           t227*t179*t44*t90-t310*t42*t44*t50-t464*t18*t233+t469*t206-t472*t105;
         t477 = t189*t101*t44;
         t483 = sin(t269);
         t488 = sin(t175);
@@ -301,8 +316,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t518 = sin(t513);
         t521 = (10+t512*t518)*t15;
         t524 = t477*t261+2*t310*t101*t44*t214-t384*t483*t85*t204+t378*t68-
-	   t222*t488*t490*t181+t496*t91+t498*t63*t44*t343*t49+t428*t106-
-	   t121*t42*t44*t50+t278*t114*t181-t201*t206+t516*t130+t521*t88*t193;
+           t222*t488*t490*t181+t496*t91+t498*t63*t44*t343*t49+t428*t106-
+           t121*t42*t44*t50+t278*t114*t181-t201*t206+t516*t130+t521*t88*t193;
         t526 = t217*t42*t44;
         t531 = cos(t408);
         t533 = t407*t531*omm;
@@ -310,8 +325,8 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t540 = t315*t538*t490;
         t552 = t217*t101*t44;
         t554 = -t526*t50+2*t464*t156*t159+t533*t29-t521*t63*t285+t496*t206-
-	   t540*t149-t443*t399*t200*t29-t401*t130-t540*t106+t469*t91+t516*
-	   t68+2*t381*t185+t552*t261;
+           t540*t149-t443*t399*t200*t29-t401*t130-t540*t106+t469*t91+t516*
+           t68+2*t381*t185+t552*t261;
         forces[1] = t421+t474+t524+t554;
         t556 = cos(t108);
         t559 = t556*omm*t111*t58;
@@ -333,36 +348,42 @@ float_sw4 forces[3],t1,t10,t100,t101,t102,t103,t104,t105,t106,t108,t109,t11,t110
         t616 = cos(t93);
         t619 = t616*omm*t95*t161;
         t630 = t381*t214+t552*t185+t605*omm*t111*t225*t204-t76*t91+t526*
-	   t142-t412*t63*t285-t521*t18*t233+t619*t149+2*t412*t88*t193+
-	   t428*t206-t563*t106+t354*t149-t163*t15*t44*t105;
+           t142-t412*t63*t285-t521*t18*t233+t619*t149+2*t412*t88*t193+
+           t428*t206-t563*t106+t354*t149-t163*t15*t44*t105;
         t643 = cos(t574);
         t657 = cos(t9);
         t659 = t187*t657*omm;
         t662 = t163*t179*t44*t148+t257*t179*t44*t148+t416*t214-t404*t586
      *omm*t409*t29+t573*t643*omm*t29+t447*t156*t159+t533*t130-t76*t206-
-	   t464*t63*t285+t533*t68-t236*t42*t44*t50+t659*t206+t619*t106;
+           t464*t63*t285+t533*t68-t236*t42*t44*t50+t659*t206+t619*t106;
         t684 = -t273*t42*t44*t50-t401*t204-t436*t50+t189*t42*t44*t142+
-	   t521*t156*t159+t659*t91+t428*t91+t498*t104*t344-t589*t68+
-	   t477*t185+t253*t353*t181+2*t552*t288+t559*t130;
+           t521*t156*t159+t659*t91+t428*t91+t498*t104*t344-t589*t68+
+           t477*t185+t253*t353*t181+2*t552*t288+t559*t130;
         forces[2] = t602+t630+t662+t684;
 
-	size_t ind= base+i+ni*j+nij*k;
-	fo[ind]        = forces[0];
-	fo[ind+nijk]   = forces[1];
-	fo[ind+2*nijk] = forces[2];
-	 }
+        size_t ind= base+i+ni*j+nij*k;
+        fo[ind]        = forces[0];
+        fo[ind+nijk]   = forces[1];
+        fo[ind+2*nijk] = forces[2];
+         }
    }
 }
 
 //-----------------------------------------------------------------------
 void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-				     float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
-				     float_sw4 cv, float_sw4 ph, float_sw4 omm, float_sw4 phm,
-				     float_sw4 amprho, float_sw4 phc[21],
-				     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
-				     float_sw4* __restrict__ zz )
+                                     float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om,
+                                     float_sw4 cv, float_sw4 ph, float_sw4 omm, float_sw4 phm,
+                                     float_sw4 amprho, float_sw4 phc[21],
+                                     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
+                                     float_sw4* __restrict__ zz )
 {
-   const size_t ni    = ilast-ifirst+1;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SW4_MARK_FUNCTION;
+
+#else // SW4 backend
+#endif // SW4 backend
+const size_t ni    = ilast-ifirst+1;
    const size_t nij   = ni*(jlast-jfirst+1);
    const size_t nijk  = nij*(klast-kfirst+1);
    const size_t base  = -(ifirst+ni*jfirst+nij*kfirst);
@@ -396,9 +417,9 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
 #pragma omp for
    for( int k=kfirst; k<= klast; k++ )
       for( int j=jfirst; j<= jlast; j++ )
-	 for( int i=ifirst; i<= ilast; i++ )
-	 {
-	    size_t ind = base + i + ni*j + nij*k;
+         for( int i=ifirst; i<= ilast; i++ )
+         {
+            size_t ind = base + i + ni*j + nij*k;
             float_sw4 x=xx[ind];
             float_sw4 y=yy[ind];
             float_sw4 z=zz[ind];
@@ -515,8 +536,8 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t161 = sin(t97);
         t163 = 10+t96*t161;
         t167 = -t3*t6*t11*t29-(10+t32*t34*t37)*t42*t44*t50+t60*t68-t76*t68-t86*t91+
-	   t100*t106+t115*t68-t121*t15*t44*t125+t115*t130+2*t139*t42*t44*t142-
-	   t147*t149+t155*t156*t159-t163*t42*t44*t50;
+           t100*t106+t115*t68-t121*t15*t44*t125+t115*t130+2*t139*t42*t44*t142-
+           t147*t149+t155*t156*t159-t163*t42*t44*t50;
         t168 = cos(t136);
         t169 = t168*omm;
         t170 = t135*t169;
@@ -554,8 +575,8 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t240 = cos(t173);
         t243 = t240*omm*t176*t161;
         t245 = t170*t91-t147*t106+t177*t99*t181+t184*t185+t189*t15*t88*t193-
-	   t201*t204+t170*t206+t210*t101*t44*t214+t218*t88*t193+t227*t101
-	   *t44*t214-t155*t18*t233-t236*t15*t44*t105+t243*t106;
+           t201*t204+t170*t206+t210*t101*t44*t214+t218*t88*t193+t227*t101
+           *t44*t214-t155*t18*t233-t236*t15*t44*t105+t243*t106;
         t251 = t1+ph6;
         t252 = sin(t251);
         t253 = t252*t56;
@@ -600,9 +621,9 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t356 = sin(t33);
         t361 = cos(t251);
         t366 = t100*t149+t303*omm*t34*t37*t181-t310*t15*t63*t285+t316*t317*
-	   omm*t204+t299*t91+t322*omm*t176*t225*t204+t328*t15*t156*t159+
-	   t341*t42*t344*t18*t49+2*t236*t179*t44*t148+t354*t29-t118*t356*
-	   t11*t181+t243*t149+t361*omm*t56*t255*t29;
+           omm*t204+t299*t91+t322*omm*t176*t225*t204+t328*t15*t156*t159+
+           t341*t42*t344*t18*t49+2*t236*t179*t44*t148+t354*t29-t118*t356*
+           t11*t181+t243*t149+t361*omm*t56*t255*t29;
         forces[0] = t167+t245+t301+t366;
         t373 = t280*t179*t44;
         t375 = cos(t70);
@@ -623,8 +644,8 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t416 = t328*t101*t44;
         t419 = t139*t179*t44;
         t421 = -t201*t91-t210*t15*t44*t125+t373*t148+t378*t130+t381*t288
-	   -(10+t384*t270*t84)*t15*t63*t285+t115*t149+t328*t42*t44*t142+t299*
-	   t181-t401*t68-t412*t18*t233+t416*t288+t419*t148;
+           -(10+t384*t270*t84)*t15*t63*t285+t115*t149+t328*t42*t44*t142+t299*
+           t181-t401*t68-t412*t18*t233+t416*t288+t419*t148;
         t425 = cos(t132);
         t428 = t425*omm*t134*t137;
         t430 = cos(t2);
@@ -640,8 +661,8 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t469 = t152*t467*omm;
         t472 = t139*t15*t44;
         t474 = t210*t179*t44*t90+t428*t149+t430*omm*t95*t10*t29+t436*t142+
-	   t439*t169*t204+t447*t88*t193+t450*omm*t151*t199*t204+t115*t106+
-	   t227*t179*t44*t90-t310*t42*t44*t50-t464*t18*t233+t469*t206-t472*t105;
+           t439*t169*t204+t447*t88*t193+t450*omm*t151*t199*t204+t115*t106+
+           t227*t179*t44*t90-t310*t42*t44*t50-t464*t18*t233+t469*t206-t472*t105;
         t477 = t189*t101*t44;
         t483 = sin(t269);
         t488 = sin(t175);
@@ -657,8 +678,8 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t518 = sin(t513);
         t521 = (10+t512*t518)*t15;
         t524 = t477*t261+2*t310*t101*t44*t214-t384*t483*t85*t204+t378*t68-
-	   t222*t488*t490*t181+t496*t91+t498*t63*t44*t343*t49+t428*t106-
-	   t121*t42*t44*t50+t278*t114*t181-t201*t206+t516*t130+t521*t88*t193;
+           t222*t488*t490*t181+t496*t91+t498*t63*t44*t343*t49+t428*t106-
+           t121*t42*t44*t50+t278*t114*t181-t201*t206+t516*t130+t521*t88*t193;
         t526 = t217*t42*t44;
         t531 = cos(t408);
         t533 = t407*t531*omm;
@@ -666,8 +687,8 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t540 = t315*t538*t490;
         t552 = t217*t101*t44;
         t554 = -t526*t50+2*t464*t156*t159+t533*t29-t521*t63*t285+t496*t206-
-	   t540*t149-t443*t399*t200*t29-t401*t130-t540*t106+t469*t91+t516*
-	   t68+2*t381*t185+t552*t261;
+           t540*t149-t443*t399*t200*t29-t401*t130-t540*t106+t469*t91+t516*
+           t68+2*t381*t185+t552*t261;
         forces[1] = t421+t474+t524+t554;
         t556 = cos(t108);
         t559 = t556*omm*t111*t58;
@@ -689,23 +710,23 @@ void EW::tw_aniso_curvi_force_tt_ci( int ifirst, int ilast, int jfirst, int jlas
         t616 = cos(t93);
         t619 = t616*omm*t95*t161;
         t630 = t381*t214+t552*t185+t605*omm*t111*t225*t204-t76*t91+t526*
-	   t142-t412*t63*t285-t521*t18*t233+t619*t149+2*t412*t88*t193+
-	   t428*t206-t563*t106+t354*t149-t163*t15*t44*t105;
+           t142-t412*t63*t285-t521*t18*t233+t619*t149+2*t412*t88*t193+
+           t428*t206-t563*t106+t354*t149-t163*t15*t44*t105;
         t643 = cos(t574);
         t657 = cos(t9);
         t659 = t187*t657*omm;
         t662 = t163*t179*t44*t148+t257*t179*t44*t148+t416*t214-t404*t586
      *omm*t409*t29+t573*t643*omm*t29+t447*t156*t159+t533*t130-t76*t206-
-	   t464*t63*t285+t533*t68-t236*t42*t44*t50+t659*t206+t619*t106;
+           t464*t63*t285+t533*t68-t236*t42*t44*t50+t659*t206+t619*t106;
         t684 = -t273*t42*t44*t50-t401*t204-t436*t50+t189*t42*t44*t142+
-	   t521*t156*t159+t659*t91+t428*t91+t498*t104*t344-t589*t68+
-	   t477*t185+t253*t353*t181+2*t552*t288+t559*t130;
+           t521*t156*t159+t659*t91+t428*t91+t498*t104*t344-t589*t68+
+           t477*t185+t253*t353*t181+2*t552*t288+t559*t130;
         forces[2] = t602+t630+t662+t684;
-	 
-	fo[ind]        = forces[0];
-	fo[ind+nijk]   = forces[1];
-	fo[ind+2*nijk] = forces[2];
-	 }
+
+        fo[ind]        = forces[0];
+        fo[ind+nijk]   = forces[1];
+        fo[ind+2*nijk] = forces[2];
+         }
    }
 }
 

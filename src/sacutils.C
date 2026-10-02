@@ -1,8 +1,22 @@
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <cstdio>
+#else // SW4 backend
+#endif // SW4 backend
 #include <iostream>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include <cstdio>
 
-#include "Require.h"
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
 #include "Byteswapper.h"
+#else // SW4 backend
+#endif // SW4 backend
+#include "Require.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+#include "Byteswapper.h"
+#endif // SW4 backend
 #include "sw4.h"
 
 using namespace std;
@@ -31,13 +45,13 @@ void convertjday( int jday, int year, int& day, int& month )
       month = 1;
       while( jd < jday )
       {
-	 jd++;
+         jd++;
          day++;
-	 if( day > lastofmonth(year,month) )
-	 {
-	    day = 1;
-	    month++;
-	 }
+         if( day > lastofmonth(year,month) )
+         {
+            day = 1;
+            month++;
+         }
       }
    }
    else
@@ -46,9 +60,9 @@ void convertjday( int jday, int year, int& day, int& month )
 
 //-----------------------------------------------------------------------
 void readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
-		    float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-		    float_sw4& cmpinc, int utc[7], int& npts,
-		    bool& need_byte_reversal )
+                    float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
+                    float_sw4& cmpinc, int utc[7], int& npts,
+                    bool& need_byte_reversal )
 {
    float float70[70];
    int int35[35], logical[5];
@@ -58,8 +72,16 @@ void readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
    need_byte_reversal = false;
    if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
    {
-      cout << "readSACheader: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
-	   << fname << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "readSACheader: ERROR, size of datatypes do not match the SAC "
+            "specification. Can not read SAC file "
+
+#else // SW4 backend
+cout << "readSACheader: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
+
+#endif // SW4 backend
+<< fname << endl;
       return;
    }
 
@@ -86,14 +108,14 @@ void readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
       fclose(fd);
       return;
    }
-   nr = fread(logical, sizeof(int), 5, fd );   
+   nr = fread(logical, sizeof(int), 5, fd );
    if( nr != 5 )
    {
       cout << "readSACheader: ERROR, could not read bool part of header of " << fname << endl;
       fclose(fd);
       return;
    }
-   nr = fread(kvalues, sizeof(char), 192, fd );   
+   nr = fread(kvalues, sizeof(char), 192, fd );
    if( nr != 192 )
    {
       cout << "readSACheader: ERROR, could not read character part of header of " << fname << endl;
@@ -109,18 +131,18 @@ void readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
       bswap.byte_rev( &nvhdr, 1, "int");
       if( nvhdr >= 0 && nvhdr <= maxversion )
       {
-	 need_byte_reversal = true;
-	 bswap.byte_rev( float70, 70, "float");
-	 bswap.byte_rev( int35,   35, "int"  );
-	 bswap.byte_rev( logical, 5,  "int"  );
+         need_byte_reversal = true;
+         bswap.byte_rev( float70, 70, "float");
+         bswap.byte_rev( int35,   35, "int"  );
+         bswap.byte_rev( logical, 5,  "int"  );
       }
       else
-	 CHECK_INPUT(false,"readSACheader: ERROR reading sac header of file " << fname << " header version = "
-		 << nvhdrold << " byte swapped header version = " << nvhdr );
+         CHECK_INPUT(false,"readSACheader: ERROR reading sac header of file " << fname << " header version = "
+                 << nvhdrold << " byte swapped header version = " << nvhdr );
    }
 
 // Take out wanted information
-   dt     = float70[0]; 
+   dt     = float70[0];
    t0     = float70[5];
    lat    = float70[31];
    lon    = float70[32];
@@ -142,8 +164,16 @@ void readSACdata( const char* fname, int npts, float_sw4* u, bool need_byte_reve
 {
    if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
    {
-      cout << "readSACdata: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
-	   << fname << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "readSACdata: ERROR, size of datatypes do not match the SAC "
+            "specification. Can not read SAC file "
+
+#else // SW4 backend
+cout << "readSACdata: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
+
+#endif // SW4 backend
+<< fname << endl;
       return;
    }
 
@@ -181,7 +211,7 @@ void readSACdata( const char* fname, int npts, float_sw4* u, bool need_byte_reve
    }
 
 // Return floats as float_sw4
-#pragma omp parallel for   
+#pragma omp parallel for
    for( int i=0 ; i < npts ; i++ )
       u[i] = static_cast<float_sw4>(uf[i]);
    delete[] uf;

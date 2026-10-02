@@ -3,36 +3,44 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <iostream>
+
+#else // SW4 backend
+#endif // SW4 backend
 #include "AnisotropicMaterialBlock.h"
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include <iostream>
+#endif // SW4 backend
 #include "EW.h"
 
 using namespace std;
@@ -57,7 +65,7 @@ AnisotropicMaterialBlock::AnisotropicMaterialBlock( EW * a_ew, float_sw4 rho, fl
    mEW = a_ew;
    float_sw4 bbox[6];
    mEW->getGlobalBoundingBox( bbox );
-  
+
 // THE FOLLOWING ONLY WORKS IF m_absoluteDepth == true, or in the absence of topography
    if (!mEW->topographyExists())
    {
@@ -65,7 +73,7 @@ AnisotropicMaterialBlock::AnisotropicMaterialBlock( EW * a_ew, float_sw4 rho, fl
 // note that the global_zmin can be non-zero when topography is present
 // global zmin is 0 in the absense of topography, and is assigned by the grid generator when there is topography
      if (xmin > bbox[0] || ymin > bbox[2] || zmin > bbox[4] ||
-	 xmax < bbox[1] || ymax < bbox[3] || zmax < bbox[5] )
+         xmax < bbox[1] || ymax < bbox[3] || zmax < bbox[5] )
      {
        mCoversAllPoints = false;
 // tmp
@@ -82,7 +90,7 @@ AnisotropicMaterialBlock::AnisotropicMaterialBlock( EW * a_ew, float_sw4 rho, fl
    {
      mCoversAllPoints=false;
    }
-   
+
 }
 
 //-----------------------------------------------------------------------
@@ -102,13 +110,13 @@ void AnisotropicMaterialBlock::set_gradients( float_sw4 rhograd, float_sw4 cgrad
 //-----------------------------------------------------------------------
 bool AnisotropicMaterialBlock::inside_block( float_sw4 x, float_sw4 y, float_sw4 z )
 {
-   return m_xmin-m_tol <= x && x <= m_xmax+m_tol && m_ymin-m_tol <= y && 
+   return m_xmin-m_tol <= x && x <= m_xmax+m_tol && m_ymin-m_tol <= y &&
     y <= m_ymax+m_tol &&  m_zmin-m_tol <= z && z <= m_zmax+m_tol;
 }
 
 //-----------------------------------------------------------------------
-void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rho, 
-							std::vector<Sarray> & c )
+void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rho,
+                                                        std::vector<Sarray> & c )
 {
    //  int pc[4];
 // compute the number of parallel overlap points
@@ -117,7 +125,7 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
 
   for( int g = 0 ; g < mEW->mNumberOfCartesianGrids; g++) // Cartesian grids
   {
-#pragma omp parallel 
+#pragma omp parallel
      {
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
     float_sw4 zsurf = 0.; // ?
@@ -126,47 +134,55 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
     {
       for( int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++ )
       {
-	for( int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g] ; i++ )
-	{
-	  float_sw4 x = (i-1)*mEW->mGridSize[g]                ;
-	  float_sw4 y = (j-1)*mEW->mGridSize[g]                ;
-	  float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
-                      
-	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
-                      
-	  float_sw4 depth;
-	  if (m_absoluteDepth)
-	  {
-	    depth = z;
-	  }
-	  else
-	  {
-	    mEW->getDepth(x, y, z, depth);
-	  }	  
+        for( int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g] ; i++ )
+        {
+          float_sw4 x = (i-1)*mEW->mGridSize[g]                ;
+          float_sw4 y = (j-1)*mEW->mGridSize[g]                ;
+          float_sw4 z = mEW->m_zmin[g]+(k-1)*mEW->mGridSize[g];
 
-	  if(inside_block(x,y,depth))
-	  {
-	    if( m_rho != -1 )
-	      rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
-	    for( int nr=1 ; nr <= 21 ; nr++ )
-	       c[g](nr,i,j,k) = m_c[nr-1] + m_cgrad[nr-1]*(depth-zsurf);
-	    material++;
-	  }
-	  else
-	  {
-	    outside++;
-	    if (mEW->getVerbosity() > 5)
-	    {
-	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
-		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
-		     "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
-		     i, j, k, g, 
-		     x, y, z, depth,
-		     m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
-	    }
-	  }
-	  
-	}
+          //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
+
+          float_sw4 depth;
+          if (m_absoluteDepth)
+          {
+            depth = z;
+          }
+          else
+          {
+            mEW->getDepth(x, y, z, depth);
+          }
+
+          if(inside_block(x,y,depth))
+          {
+            if( m_rho != -1 )
+              rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
+            for( int nr=1 ; nr <= 21 ; nr++ )
+               c[g](nr,i,j,k) = m_c[nr-1] + m_cgrad[nr-1]*(depth-zsurf);
+            material++;
+          }
+          else
+          {
+            outside++;
+            if (mEW->getVerbosity() > 5)
+            {
+              printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+                     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+"is outside the block domain: %e<= x <= %e, %e <= y <= %e, "
+                    "%e <= depth <= %e\n",
+
+#else // SW4 backend
+"is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n",
+
+#endif // SW4 backend
+i, j, k, g,
+                     x, y, z, depth,
+                     m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
+            }
+          }
+
+        }
       }
     }
      }
@@ -174,13 +190,18 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
     mEW->communicate_array( rho[g], g );
     mEW->communicate_array( c[g], g );
   } // end for all Cartesian grids
-  
+
   if (mEW->topographyExists()) // curvilinear grid
   {
-     int gTop = mEW->mNumberOfGrids-1; 
-     for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids;  g++)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+int gTop = mEW->mNumberOfGrids-1;
+
+#endif // SW4 backend
+for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids;  g++)
      {
-//    int g = mEW->mNumberOfGrids-1; 
+//    int g = mEW->mNumberOfGrids-1;
 
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
 #pragma omp parallel
@@ -197,9 +218,9 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
                     float_sw4 x = mEW->mX[g](i,j,k);
                     float_sw4 y = mEW->mY[g](i,j,k);
                     float_sw4 z = mEW->mZ[g](i,j,k);
-                      
-	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
-                    
+
+          //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
+
                     float_sw4 depth;
                     if (m_absoluteDepth)
                     {
@@ -208,7 +229,7 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
                     else
                     {
                        mEW->getDepth(x,y,z,depth);
-                    }	  
+                    }
 
                     if(inside_block(x,y,depth))
                     {
@@ -224,8 +245,16 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
                        {
                           printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
                                  "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
-                                 "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
-                                 i, j, k, g, 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+"is outside the block domain: %e<= x <= %e, %e <= y <= "
+                      "%e, %e <= depth <= %e\n",
+
+#else // SW4 backend
+"is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n",
+
+#endif // SW4 backend
+i, j, k, g,
                                  x, y, z, depth,
                                  m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
                        }
@@ -236,14 +265,29 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
            } // end for k
         } // end pragma omp
      } // end for g (curvilinear)
-     
+
   } // end if topographyExists
   long long outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, mEW->m_cartesian_communicator );
-  MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, mEW->m_cartesian_communicator );
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0,
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_COMM_WORLD);
 
-  if (mEW->proc_zero()) 
+#else // SW4 backend
+mEW->m_cartesian_communicator );
+
+#endif // SW4 backend
+MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG_INT, MPI_SUM, 0,
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_COMM_WORLD);
+
+
+#else // SW4 backend
+mEW->m_cartesian_communicator );
+
+
+#endif // SW4 backend
+if (mEW->proc_zero())
     cout << "block command: outside = " << outsideSum << ", " << "material = " << materialSum << endl;
 
-} 
+}
 

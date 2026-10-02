@@ -2,47 +2,55 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "F77_FUNC.h"
+#include "Qspline.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "mpi.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "Qspline.h"
 #include "F77_FUNC.h"
 
+#endif // SW4 backend
 extern "C" { void F77_FUNC(dgbsv,DGBSV)( int*, int*, int*, int*, double*, int*, int*, double*, int*, int* ); }
 
 using namespace std;
 
 //-----------------------------------------------------------------------
 Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bclow, int bchigh,
-		  float_sw4 s1, float_sw4 t1, float_sw4 sn, float_sw4 tn )
+                  float_sw4 s1, float_sw4 t1, float_sw4 sn, float_sw4 tn )
 {
    // Quintic spline interpolation of a function defined on a uniform grid.
-   // 
+   //
    // npts - Number of spline points
    // fun  - The function to interpolate, defined at points k=0,..,npts-1
    // tmin, dt - Gives the assumed uniform grid, t_k = tmin+k*dt, k=0,..,npts-1
@@ -102,7 +110,7 @@ Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bc
    //   cout << "m_tmin = " << m_tmin << " m_dt= " << m_dt << " m_npts= " << m_npts << endl;
    // }
 // end tmp
-      
+
    int lda = (2*kl+ku+1);
    double *mat = new double[lda*2*npts];
    double *rhs = new double[2*npts];
@@ -191,14 +199,24 @@ Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bc
 #undef A
    delete[] mat;
    delete[] ipiv;
-   
+
    m_npts = npts;
-   if (npts > 1)
-      m_polcof = new float_sw4[6*(npts-1)];
-   else
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if (npts > 1)
+
+#endif // SW4 backend
+m_polcof = new float_sw4[6*(npts-1)];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+else
       m_polcof = new float_sw4[6];
 
-   for( int i= 0 ; i < npts-1 ; i++ )
+
+#endif // SW4 backend
+for( int i= 0 ; i < npts-1 ; i++ )
    {
       m_polcof[  6*i] = fun[i];
       m_polcof[1+6*i] = rhs[2*i];
@@ -220,7 +238,7 @@ Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bc
 //       k = m_npts-2;
 //    double arg=(t-(m_tmin+k*m_dt))/m_dt;
 //    f = m_polcof[6*k] + m_polcof[1+6*k]*arg + m_polcof[2+6*k]*arg*arg + m_polcof[3+6*k]*arg*arg*arg +
-//        m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg; 
+//        m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg;
 // }
 
 // //-----------------------------------------------------------------------
@@ -233,7 +251,7 @@ Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bc
 //       k = m_npts-2;
 //    double arg=(t-(m_tmin+k*m_dt))/m_dt;
 //    f = m_polcof[6*k] + m_polcof[1+6*k]*arg + m_polcof[2+6*k]*arg*arg + m_polcof[3+6*k]*arg*arg*arg +
-//        m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg; 
+//        m_polcof[4+6*k]*arg*arg*arg*arg + m_polcof[5+6*k]*arg*arg*arg*arg*arg;
 //    f1= (m_polcof[1+6*k] + 2*m_polcof[2+6*k]*arg + 3*m_polcof[3+6*k]*arg*arg + 4*m_polcof[4+6*k]*arg*arg*arg+
 // 	5*m_polcof[5+6*k]*arg*arg*arg*arg)*m_dti;
 //    f2 = (2*m_polcof[2+6*k] + 6*m_polcof[3+6*k]*arg + 12*m_polcof[4+6*k]*arg*arg + 20*m_polcof[5+6*k]*arg*arg*arg)*m_dti*m_dti;

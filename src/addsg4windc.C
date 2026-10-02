@@ -2,33 +2,33 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 //-----------------------------------------------------------------------
 // Adds 4th order artificial disssipation for super-grid damping layers
 //
@@ -36,20 +36,26 @@
 //
 //-----------------------------------------------------------------------
 #include <sys/types.h>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "Mspace.h"
+#include "caliper.h"
+#include "policies.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "sw4.h"
 
 //extern "C" {
 
 void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
-		    float_sw4*  __restrict__ a_um, float_sw4*  __restrict__ a_rho,
-		    float_sw4*  __restrict__ a_dcx, float_sw4*  __restrict__ a_dcy,
-		    float_sw4*  __restrict__ a_dcz,
-		    float_sw4*  __restrict__ a_strx, float_sw4*  __restrict__ a_stry,
-		    float_sw4*  __restrict__ a_strz,
-		    float_sw4*  __restrict__ a_cox, float_sw4*  __restrict__ a_coy,
-		    float_sw4*  __restrict__ a_coz,
-		    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-		    float_sw4 beta, int kupb, int kupe, int kwindb, int kwinde )
+                    float_sw4*  __restrict__ a_um, float_sw4*  __restrict__ a_rho,
+                    float_sw4*  __restrict__ a_dcx, float_sw4*  __restrict__ a_dcy,
+                    float_sw4*  __restrict__ a_dcz,
+                    float_sw4*  __restrict__ a_strx, float_sw4*  __restrict__ a_stry,
+                    float_sw4*  __restrict__ a_strz,
+                    float_sw4*  __restrict__ a_cox, float_sw4*  __restrict__ a_coy,
+                    float_sw4*  __restrict__ a_coz,
+                    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                    float_sw4 beta, int kupb, int kupe, int kwindb, int kwinde )
 {
 //***********************************************************************
 //*** Version with correct density scaling and supergrid stretching.
@@ -67,7 +73,30 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 //  real*8 dcz(kfirst:klast), strz(kfirst:klast), coz(kfirst:klast)
 
 // this routine uses un-divided differences in x and t
-  if( beta == 0 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+SW4_MARK_FUNCTION;
+  //***********************************************************************
+  //*** Version with correct density scaling and supergrid stretching.
+  //*** cox, coy, coz are corner factors that reduce the damping near edges and
+  // corners
+  //***
+  //***********************************************************************
+
+  //  real*8  u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+  //  real*8 um(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
+  //// up can have different size in k-index
+  //  real*8 up(3,ifirst:ilast,jfirst:jlast,kupb:kupe)
+  //  real*8  rho(ifirst:ilast,jfirst:jlast,kfirst:klast)
+  //  real*8 dcx(ifirst:ilast), strx(ifirst:ilast), cox(ifirst:ilast)
+  //  real*8 dcy(jfirst:jlast), stry(jfirst:jlast), coy(jfirst:jlast)
+  //  real*8 dcz(kfirst:klast), strz(kfirst:klast), coz(kfirst:klast)
+
+  // this routine uses un-divided differences in x and t
+
+#else // SW4 backend
+#endif // SW4 backend
+if( beta == 0 )
      return;
 
   float_sw4 coeff = beta;
@@ -106,31 +135,53 @@ void addsg4wind_ci( float_sw4* __restrict__ a_up, float_sw4*  __restrict__ a_u,
 #define strz(k) a_strz[k-kfirst]
 #define coz(k)   a_coz[k-kfirst]
 
-  for( int c=1 ; c<=3 ; c++ )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+for( int c=1 ; c<=3 ; c++ )
      for( int k=kwindb ; k<= kwinde ;k++)
 #pragma omp parallel for
-	for( int j=jfirst+2 ; j<= jlast-2; j++ )
+        for( int j=jfirst+2 ; j<= jlast-2; j++ )
 #pragma ivdep
-	   //#pragma simd
-	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
-	   {
-	      up(c,i,j,k) -= coeff*( 
+           //#pragma simd
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
+  RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
+  RAJA::RangeSegment k_range(kwindb, kwinde + 1);
+  RAJA::RangeSegment c_range(1, 4);
+  RAJA::kernel<ADDSGD_POL_ASYNC>(
+      RAJA::make_tuple(i_range, j_range, k_range, c_range),
+      [=] RAJA_DEVICE(int i, int j, int k, int c) {
+
+#else // SW4 backend
+for( int i=ifirst+2 ; i<= ilast-2; i++ )
+           {
+
+#endif // SW4 backend
+up(c,i,j,k) -= coeff*(
 // x-differences
-                   strx(i)*coy(j)*coz(k)*( rho(i+1,j,k)*dcx(i+1)*( u(c,i+2,j,k) -2*u(c,i+1,j,k)+ u(c,i,  j,k)) 
-                   -2*rho(i,j,k)*dcx(i)  * ( u(c,i+1,j,k) -2*u(c,i,  j,k)+ u(c,i-1,j,k)) 
-                   +rho(i-1,j,k)*dcx(i-1)*( u(c,i,  j,k) -2*u(c,i-1,j,k)+ u(c,i-2,j,k)) 
-                   -rho(i+1,j,k)*dcx(i+1)*(um(c,i+2,j,k)-2*um(c,i+1,j,k)+um(c,i,  j,k)) 
+                   strx(i)*coy(j)*coz(k)*( rho(i+1,j,k)*dcx(i+1)*( u(c,i+2,j,k) -2*u(c,i+1,j,k)+ u(c,i,  j,k))
+                   -2*rho(i,j,k)*dcx(i)  * ( u(c,i+1,j,k) -2*u(c,i,  j,k)+ u(c,i-1,j,k))
+                   +rho(i-1,j,k)*dcx(i-1)*( u(c,i,  j,k) -2*u(c,i-1,j,k)+ u(c,i-2,j,k))
+                   -rho(i+1,j,k)*dcx(i+1)*(um(c,i+2,j,k)-2*um(c,i+1,j,k)+um(c,i,  j,k))
                    +2*rho(i,j,k)*dcx(i)*(um(c,i+1,j,k)-2*um(c,i,  j,k)+um(c,i-1,j,k))
-                   -rho(i-1,j,k)*dcx(i-1)* (um(c,i,  j,k)-2*um(c,i-1,j,k)+um(c,i-2,j,k)) ) 
+                   -rho(i-1,j,k)*dcx(i-1)* (um(c,i,  j,k)-2*um(c,i-1,j,k)+um(c,i-2,j,k)) )
 // y-differences
-                   +stry(j)*cox(i)*coz(k)*( rho(i,j+1,k)*dcy(j+1)* ( u(c,i,j+2,k) -2*u(c,i,j+1,k)+ u(c,i,j,  k)) 
-                   -2*rho(i,j,k)*dcy(j)  * ( u(c,i,j+1,k) -2*u(c,i,j,  k)+ u(c,i,j-1,k)) 
-                   +rho(i,j-1,k)*dcy(j-1)* ( u(c,i,j,  k) -2*u(c,i,j-1,k)+ u(c,i,j-2,k)) 
-                   -rho(i,j+1,k)*dcy(j+1)* (um(c,i,j+2,k)-2*um(c,i,j+1,k)+um(c,i,j,  k)) 
-                   +2*rho(i,j,k)*dcy(j)  * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k)) 
-	            -rho(i,j-1,k)*dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )  
-				     )/rho(i,j,k);
-	   }
+                   +stry(j)*cox(i)*coz(k)*( rho(i,j+1,k)*dcy(j+1)* ( u(c,i,j+2,k) -2*u(c,i,j+1,k)+ u(c,i,j,  k))
+                   -2*rho(i,j,k)*dcy(j)  * ( u(c,i,j+1,k) -2*u(c,i,j,  k)+ u(c,i,j-1,k))
+                   +rho(i,j-1,k)*dcy(j-1)* ( u(c,i,j,  k) -2*u(c,i,j-1,k)+ u(c,i,j-2,k))
+                   -rho(i,j+1,k)*dcy(j+1)* (um(c,i,j+2,k)-2*um(c,i,j+1,k)+um(c,i,j,  k))
+                   +2*rho(i,j,k)*dcy(j)  * (um(c,i,j+1,k)-2*um(c,i,j,  k)+um(c,i,j-1,k))
+                    -rho(i,j-1,k)*dcy(j-1) * (um(c,i,j,  k)-2*um(c,i,j-1,k)+um(c,i,j-2,k)) )
+                                     )/rho(i,j,k);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+});  // SYNC_STREAM;
+#else // SW4 backend
+}
+#endif // SW4 backend
 }
 
 //}

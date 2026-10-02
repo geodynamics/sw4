@@ -2,39 +2,57 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 //#include "mpi.h"
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <mpi.h>
+#include <omp.h>
+
+#else // SW4 backend
 #include "EW.h"
 
+#endif // SW4 backend
 #include <cstring>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#else // SW4 backend
+#endif // SW4 backend
 #include <string>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "EW.h"
+#include "Mspace.h"
+#include "policies.h"
+#else // SW4 backend
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -43,8 +61,23 @@
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
+#endif // SW4 backend
 #include "version.h"
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef ENABLE_CUDA
+#include "cuda_profiler_api.h"
+#if defined(__has_include)
+#if __has_include("nvToolsExtCuda.h")
+#include "nvToolsExtCuda.h"
+#elif __has_include("nvToolsExt.h")
+#include "nvToolsExt.h"
+#endif
+#endif
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
 #ifdef USE_ZFP
 #include "H5Zzfp_lib.h"
 #include "H5Zzfp_props.h"
@@ -54,6 +87,25 @@
 #include "H5Z_SZ.h"
 #endif
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef SW4_USE_SCR
+#include "scr.h"
+#endif
+#if defined(SW4_SIGNAL_CHECKPOINT)
+//
+// Currently no way to get the singnal to all processes without killing the job
+//
+#include <csignal>
+extern volatile std::sig_atomic_t signal_status;
+
+void signal_handler(int signal) {
+  signal_status = signal;
+  std::cout << " RECEIVED SIGNAL " << signal << "\n";
+}
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
 using namespace std;
 
 void usage(string thereason)
@@ -69,21 +121,173 @@ void usage(string thereason)
 int
 main(int argc, char **argv)
 {
-  int myRank = 0, nProcs = 0;
-  string fileName;
-  bool checkmode = false;
 
-  stringstream reason;
+int myRank = 0, nProcs = 0;
+  string fileName;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+bool checkmode = false;
+
+
+#endif // SW4 backend
+stringstream reason;
 
   // Initialize MPI...
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5_ASYNC
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
+  //MPI_Init(&argc, &argv);
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+#endif
+
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef SW4_USE_SCR
+  SCR_Configf("SCR_DEBUG=%d",1);
+  SCR_Configf("SCR_CACHE_SIZE=%d",2);
+  SCR_Configf("SCR_CACHE_BYPASS=%d",1); // Default 1 . 0 leaves everything in cache
+  SCR_Configf("SCR_FLUSH=%d",0);
+  SCR_Configf("SCR_FLUSH_ASYNC=%d",1);
+  SCR_Configf("SCR_FLUSH_TYPE=%s","PTHREAD");
+  SCR_Init();
+#endif
+
+#else // SW4 backend
 #ifdef USE_HDF5_ASYNC
   int provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 #else
   MPI_Init(&argc, &argv);
 #endif
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
+#endif // SW4 backend
+MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (!myRank){
+  time_t now;
+  time(&now);
+  printf("After MPI_Init %s \n",ctime(&now));
+}
+
+  //check_affinity(myRank);
+
+#ifdef SW4_NORM_TRACE
+  if (!myRank) std::cout<<"\n\n\n\nWARNING "" SW4 NORM TRACE is On. Output in Norms.dat \n\n\n";
+#endif
+
+  MPI_Info info;
+  MPI_Comm shared_comm;
+  MPI_Info_create(&info);
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, myRank, info,
+                      &shared_comm);
+  int local_rank = -1, local_size = -1;
+  MPI_Comm_rank(shared_comm, &local_rank);
+  MPI_Comm_size(shared_comm, &local_size);
+  MPI_Info_free(&info);
+
+  int device = presetGPUID(myRank, local_rank, local_size);
+
+#if defined(SW4_SIGNAL_CHECKPOINT)
+  std::signal(SIGUSR1, signal_handler);
+#endif
+
+#ifdef SW4_USE_UMPIRE
+  umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+#ifdef ENABLE_HIP
+  auto allocator = rma.getAllocator("DEVICE::" + std::to_string(device));
+#else
+  auto allocator = rma.getAllocator("UM");
+#endif
+  // auto device_allocator = rma.getAllocator("DEVICE");
+#ifdef ENABLE_HIP
+  const size_t pool_size =
+      static_cast<size_t>(32) * 1024 * 1024 * 1024;  //+102*1024*1024;
+#else
+  const size_t pool_size =
+      static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
+#endif
+
+#ifdef ENABLE_HIP
+  auto pref_allocator = allocator;
+#else
+  // auto aligned_allocator =
+  // rma.makeAllocator<umpire::strategy::AlignedAllocator>(
+  //   "aligned_allocator", allocator, 256);
+  auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
+      "preferred_location_device", allocator, "SET_PREFERRED_LOCATION",
+      global_variables.device);
+#endif
+
+  const int alignment = 512; // 1024 may be 1% faster on Crusher
+  auto pooled_allocator =
+      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
+#ifdef ENABLE_HIP
+  const size_t pool_size_small = static_cast<size_t>(1024) * 1024 * 1024;
+#else
+  const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
+#endif
+
+  // This is a temporary workaround to the issue of Umpire always using device 0
+  // for cudaMemAdvises using AllocationAdvisor.
+  // if (global_variables.num_devices==1){
+
+  // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
+  auto pooled_allocator_small =
+      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+          string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
+          alignment);
+
+#ifdef ENABLE_HIP
+  const size_t object_pool_size = static_cast<size_t>(3) *1024* 1024 * 1024;
+#else
+  const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
+#endif
+
+  // rma.makeAllocator<umpire::strategy::MonotonicAllocationStrategy,false>(string("UM_object_pool"),
+  //					   object_pool_size,allocator);
+
+  auto pooled_allocator_objects =
+      rma.makeAllocator<umpire::strategy::QuickPool, false>(
+          string("UM_object_pool"), allocator, object_pool_size);
+
+#ifdef SW4_MASS_PREFETCH
+  std::cout << "Mass prefetch operational\n";
+  global_variables.massprefetch.push_back(std::make_tuple(
+      static_cast<char *>(pooled_allocator.allocate(1)), pool_size));
+  global_variables.massprefetch.push_back(
+      std::make_tuple(static_cast<char *>(pooled_allocator_small.allocate(1)),
+                      pool_size_small));
+  global_variables.massprefetch.push_back(
+      std::make_tuple(static_cast<char *>(pooled_allocator_objects.allocate(1)),
+                      object_pool_size));
+#endif
+  // rma.makeAllocator<umpire::strategy::MixedPool,false>(string("UM_object_pool"),
+  //							   allocator,object_pool_size);
+
+  // rma.makeAllocator<umpire::strategy::FixedPool,false>(string("UM_object_pool"),
+  // 						     allocator,object_pool_size);
+
+  // } else {
+  //   auto pooled_allocator_small =
+  //     rma.makeAllocator<umpire::strategy::QuickPool,true>(string("UM_pool_temps"),
+  //  							   pref_allocator,pool_size_small);
+  // }
+
+  // auto pooled_allocator2 =
+  //   rma.makeAllocator<umpire::strategy::QuickPool,false>(string("UM_pool_temps"),
+  //                                                   allocator);
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
 #ifdef ENABLE_TAU
    TAU_PROFILE_INIT(argc, argv);
 #endif
@@ -95,18 +299,36 @@ main(int argc, char **argv)
 
   if (argc != 2 && argc != 3 && argc != (2+mpi2args) && argc != (3+mpi2args) )
     {
-      reason << "Wrong number of args (1-2), not: " << argc-1 << endl; 
-      
+      reason << "Wrong number of args (1-2), not: " << argc-1 << endl;
+
       if (myRank == 0)
       {
-	for (int i = 0; i < argc; ++i)
-	  cout << "Argv[" << i << "] = " << argv[i] << endl;
+        for (int i = 0; i < argc; ++i)
+          cout << "Argv[" << i << "] = " << argv[i] << endl;
 
-	usage(reason.str());
+        usage(reason.str());
       }
-      
+
 // Stop MPI
-      MPI_Finalize();
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_MAGMA
+    if (magma_finalize() != MAGMA_SUCCESS) {
+      std::cerr << "ERROR MAGMA INIT FAILED\n";
+      abort();
+    }
+#endif
+    // Stop MPI
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef SW4_USE_SCR
+  SCR_Finalize();
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
+MPI_Finalize();
       return 1;
     }
   else if (strcmp(argv[1],"-v") == 0 )
@@ -118,35 +340,35 @@ main(int argc, char **argv)
      return status;
   }
   else
-     if (argc == 1) 
+     if (argc == 1)
      {
         reason  << "ERROR: ****No input file specified!" << endl;
         for (int i = 0; i < argc; ++i)
            reason << "Argv[" << i << "] = " << argv[i] << endl;
-        
+
         if (myRank == 0) usage(reason.str());
 // Stop MPI
-	MPI_Finalize();
+        MPI_Finalize();
         return 1;
      }
 
   else
     fileName = argv[1];
 
-  if (myRank == 0) 
+  if (myRank == 0)
   {
     cout << ewversion::getVersionInfo() << endl;
     cout << "Input file: " << fileName << endl;
   }
-  
+
   MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
 
   cout.precision(8);
 // use sci format: 1.2345e-6
   cout << std::scientific;
-  
+
 // Save the source description here
-  vector<vector<Source*> > GlobalSources; 
+  vector<vector<Source*> > GlobalSources;
 // Save the time series here
   vector<vector<TimeSeries*> > GlobalTimeSeries;
 
@@ -162,9 +384,18 @@ main(int argc, char **argv)
 #endif
 
 // make a new simulation object by reading the input file 'fileName'
-  EW simulation(fileName, GlobalSources, GlobalTimeSeries );
 
-  if (!simulation.wasParsingSuccessful())
+#if defined(SW4_USE_RAJA) // SW4 backend
+#if defined(SW4_EXCEPTIONS)
+  try {
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
+EW simulation(fileName, GlobalSources, GlobalTimeSeries );
+
+
+if (!simulation.wasParsingSuccessful())
   {
     if (myRank == 0)
     {
@@ -175,67 +406,109 @@ main(int argc, char **argv)
   else
   {
 // get the simulation object ready for time-stepping
-    simulation.setupRun( GlobalSources );
 
-    if (!simulation.isInitialized())
-    { 
+simulation.setupRun( GlobalSources );
+
+
+if (!simulation.isInitialized())
+    {
       if (myRank == 0)
       {
-	cout << "Error: simulation object not ready for time stepping" << endl;
-      }
+
+cout << "Error: simulation object not ready for time stepping" << endl;
+
+}
       status=1;
     }
     else
     {
       if (myRank == 0)
       {
-	 int nth=1;
+         int nth=1;
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef _OPENMP
+#pragma omp parallel
+          {
+            if (omp_get_thread_num() == 0) {
+              nth = omp_get_num_threads();
+            }
+          }
+#endif
+
+#else // SW4 backend
 #ifndef SW4_NOOMP
 #pragma omp parallel
-	 {
-	    if( omp_get_thread_num() == 0 )
-	    {
-	       nth=omp_get_num_threads();
-	    }
-	 }
+         {
+            if( omp_get_thread_num() == 0 )
+            {
+               nth=omp_get_num_threads();
+            }
+         }
 #endif
-	 if( nth == 1 )
-	 {
-	    if( nProcs > 1 )
-	       cout << "Running sw4 on " <<  nProcs << " processors..." << endl;
-	    else
-	       cout << "Running sw4 on " <<  nProcs << " processor..." << endl;
-	 }
-	 else
-	 {
-	    if( nProcs > 1 )
-	       // Assume same number of threads for each MPI-task.
-	       cout << "Running sw4 on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
-	    else
-	       cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
-	 }
-	 //FTNC	 if( simulation.m_croutines )
-	 //FTNC	    cout << "   Using C routines." << endl;
-	 //FTNC	 else
-	 //FTNC	    cout << "   Using fortran routines." << endl;
-	 cout << "Writing output to directory: " 
-		 << simulation.getPath() << endl;
-      
-      }
+
+#endif // SW4 backend
+if( nth == 1 )
+         {
+            if( nProcs > 1 )
+               cout << "Running sw4 on " <<  nProcs << " processors..." << endl;
+            else
+               cout << "Running sw4 on " <<  nProcs << " processor..." << endl;
+         }
+         else
+         {
+            if( nProcs > 1 )
+               // Assume same number of threads for each MPI-task.
+
+cout << "Running sw4 on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
+
+else
+               cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
+         }
+         //FTNC	 if( simulation.m_croutines )
+         //FTNC	    cout << "   Using C routines." << endl;
+         //FTNC	 else
+         //FTNC	    cout << "   Using fortran routines." << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (simulation.m_croutines)
+            cout << "   Using C routines." << endl;
+          else
+            cout << "   Using fortran routines." << endl;
+          cout << "Writing output to directory: " << simulation.getPath()
+               << endl;
+
+#else // SW4 backend
+cout << "Writing output to directory: "
+                 << simulation.getPath() << endl;
+
+
+#endif // SW4 backend
+}
 // run the simulation
-      int ng=simulation.mNumberOfGrids;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+simulation.solve(GlobalSources[0], GlobalTimeSeries[0], 0);
+
+        // save all time series
+
+
+#else // SW4 backend
+int ng=simulation.mNumberOfGrids;
       vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
       vector<Sarray> U(ng), Um(ng), ph(ng);
-      simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
-			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
-			ucorr_saved, false, 0, 0, 0, ph );
+      simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu,
+                        simulation.mLambda, simulation.mRho, U, Um, upred_saved,
+                        ucorr_saved, false, 0, 0, 0, ph );
 
 // save all time series
-      
-      double myWriteTime = 0.0, allWriteTime;
-      for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
+
+
+#endif // SW4 backend
+double myWriteTime = 0.0, allWriteTime;
+
+for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
-	GlobalTimeSeries[0][ts]->writeFile();
+        GlobalTimeSeries[0][ts]->writeFile();
 #ifdef USE_HDF5
         myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
         if( ts == GlobalTimeSeries[0].size()-1) {
@@ -255,24 +528,48 @@ main(int argc, char **argv)
 
       if( myRank == 0 )
       {
-	cout << "============================================================" << endl
-	     << " program sw4 finished! " << endl
-	     << "============================================================" << endl;
+        cout << "============================================================" << endl
+             << " program sw4 finished! " << endl
+             << "============================================================" << endl;
       }
 
       status = 0;
     }
   }
-  
-  if( status == 1 )
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#if defined(SW4_EXCEPTIONS)
+  } catch (int e) {
+    printf("Exception %d in EW init\n", e);
+    MPI_Finalize();
+    return status;
+  }
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
+if( status == 1 )
   {
     cout  << "============================================================" << endl
-	  << "The execution on proc " << myRank << " was UNSUCCESSFUL." << endl
-	  << "============================================================" << endl;
+          << "The execution on proc " << myRank << " was UNSUCCESSFUL." << endl
+          << "============================================================" << endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
-  
 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+print_hwm(myRank);
+
+#ifdef USE_MAGMA
+  if (magma_finalize() != MAGMA_SUCCESS) {
+    std::cerr << "ERROR MAGMA FINALIZE FAILED\n";
+    abort();
+  }  // else std::cout<<"MAGMA FINALIZE SUCCESSFULL\n"<<std::flush;
+#endif
+
+#else // SW4 backend
+#endif // SW4 backend
 #ifdef USE_ZFP
   H5Z_zfp_finalize();
 #endif
@@ -282,6 +579,23 @@ main(int argc, char **argv)
 #endif
 
 // Stop MPI
-  MPI_Finalize();
-  return status;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef SW4_USE_SCR
+  // Flush any cached checkpoints to parallel file system
+  SCR_Finalize();
+#endif
+
+  if (!myRank){
+  time_t now;
+  time(&now);
+  printf("Pre MPI_Finalize %s \n",ctime(&now));
+}
+  // Stop MPI
+
+#else // SW4 backend
+#endif // SW4 backend
+MPI_Finalize();
+
+return status;
 } // end of main

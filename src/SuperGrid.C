@@ -2,36 +2,45 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <cstdio>
+
+#include "Require.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "SuperGrid.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "Require.h"
 #include <cstdio>
+#endif // SW4 backend
 using namespace std;
 
 SuperGrid::SuperGrid()
@@ -48,7 +57,15 @@ SuperGrid::SuperGrid()
 
 void SuperGrid::print_parameters() const
 {
-   printf("SuperGrid parameters left=%i, right=%i, x0=%e, x1=%e, width=%e, transition=%e epsL=%e\n", m_left, m_right, m_x0, m_x1, m_width, m_trans_width,m_epsL);
+   printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"SuperGrid parameters left=%i, right=%i, x0=%e, x1=%e, width=%e, "
+      "transition=%e epsL=%e\n",
+
+#else // SW4 backend
+"SuperGrid parameters left=%i, right=%i, x0=%e, x1=%e, width=%e, transition=%e epsL=%e\n",
+#endif // SW4 backend
+m_left, m_right, m_x0, m_x1, m_width, m_trans_width,m_epsL);
 }
 
 void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right, float_sw4 rightEnd, float_sw4 width)
@@ -64,7 +81,7 @@ void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right, float_s
 //  m_trans_width = 1.0*width;
 //  m_trans_width = transWidth;
   m_const_width = m_width - m_trans_width;
-  
+
 // sanity checks
   if (m_left || m_right)
   {
@@ -72,35 +89,73 @@ void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right, float_s
      CHECK_INPUT(m_width > 0., "The supergrid taper width must be positive, not = " << m_width);
      CHECK_INPUT(m_width < dlen, "The supergrid taper width must be smaller than the domain, not = " << m_width);
      CHECK_INPUT(m_trans_width > 0., "The supergrid taper transition width must be positive, not = " << m_trans_width);
-     CHECK_INPUT(m_const_width >= 0., "The supergrid const_width = width - trans_width must be non-negative, not = " << m_const_width);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(m_const_width >= 0.,
+                "The supergrid const_width = width - trans_width must be "
+                "non-negative, not = "
+
+#else // SW4 backend
+CHECK_INPUT(m_const_width >= 0., "The supergrid const_width = width - trans_width must be non-negative, not = "
+#endif // SW4 backend
+<< m_const_width);
   }
-  
+
   if (m_left && m_right)
   {
     if (m_x0+m_width > m_x1-m_width)
     {
       print_parameters();
-      CHECK_INPUT(false, "The supergrid taper functions at the left and right must be separated. Here x0+width = " << m_x0+m_width << 
-		  " and x1-width = " << m_x1-m_width);
-    }
-    
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(false,
+                  "The supergrid taper functions at the left and right must be "
+                  "separated. Here x0+width = "
+                      << m_x0 + m_width
+                      << " and x1-width = " << m_x1 - m_width);
+
+#else // SW4 backend
+CHECK_INPUT(false, "The supergrid taper functions at the left and right must be separated. Here x0+width = " << m_x0+m_width <<
+                  " and x1-width = " << m_x1-m_width);
+
+#endif // SW4 backend
+}
+
   }
   else if( m_left )
   {
     if (m_x0+m_width > m_x1 )
     {
       print_parameters();
-      CHECK_INPUT(false, "The supergrid taper functions at the left must be smaller than the domain. Here x0+width = " << m_x0+m_width << 
-		  " and x1 = " << m_x1);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(false,
+                  "The supergrid taper functions at the left must be smaller "
+                  "than the domain. Here x0+width = "
+
+#else // SW4 backend
+CHECK_INPUT(false, "The supergrid taper functions at the left must be smaller than the domain. Here x0+width = "
+#endif // SW4 backend
+<< m_x0+m_width <<
+                  " and x1 = " << m_x1);
     }
-  }    
+  }
   else if( m_right )
   {
     if (m_x0 > m_x1-m_width )
     {
       print_parameters();
-      CHECK_INPUT(false, "The supergrid taper functions at the right must be smaller than the domain. Here x0 = " << m_x0 << 
-		  " and x1-width = " << m_x1-m_width );
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+CHECK_INPUT(false,
+                  "The supergrid taper functions at the right must be smaller "
+                  "than the domain. Here x0 = "
+
+#else // SW4 backend
+CHECK_INPUT(false, "The supergrid taper functions at the right must be smaller than the domain. Here x0 = "
+#endif // SW4 backend
+<< m_x0 <<
+                  " and x1-width = " << m_x1-m_width );
     }
   }
 }
@@ -112,7 +167,7 @@ float_sw4 SuperGrid::dampingCoeff(float_sw4 x) const
 //  float_sw4 f=(1-phi)/phi/(1-m_epsL);
   float_sw4 f = PsiDamp(x)/phi;
 // replaced PsiAux by PsiDamp, which goes to one faster
-  
+
   return f;
 }
 
@@ -128,9 +183,9 @@ float_sw4 SuperGrid::PsiAux(float_sw4 x) const
   float_sw4 f=0.;
   if (m_left && x < m_x0+m_width)
 // the following makes the damping transition in 0 <= x <= m_width
-    f=Psi0( (m_x0 + m_width - x)/m_width); 
+    f=Psi0( (m_x0 + m_width - x)/m_width);
   else if (m_right && x > m_x1-m_width)
-// the following makes the damping transition in m_x1-m_width < x < m_x1 
+// the following makes the damping transition in m_x1-m_width < x < m_x1
     f=Psi0( (x - (m_x1-m_width) )/m_width);
   return f;
 }
@@ -143,7 +198,7 @@ float_sw4 SuperGrid::PsiDamp(float_sw4 x) const
   if (m_left && x < m_x0+m_width)
 // the following makes the damping transition in 0 < const_width <= x <= const_width+trans_width = m_width
 // constant damping in 0 <= x <= const_width
-    f=Psi0( (m_x0 + m_width - x)/m_trans_width); 
+    f=Psi0( (m_x0 + m_width - x)/m_trans_width);
   else if (m_right && x > m_x1-m_width)
 // the following makes the damping transition in m_x1-m_width < x < m_x1 - const_width < m_x1
 // constant damping in m_x1 - const_width <= x <= m_x1
@@ -152,13 +207,13 @@ float_sw4 SuperGrid::PsiDamp(float_sw4 x) const
 }
 
 float_sw4 SuperGrid::linTaper(float_sw4 x) const
-{ 
+{
 // this function is zero for m_x0+m_width <= x <= m_x1-m_width
 // and one for x=m_x0 and x=m_x1
   float_sw4 f=0.;
   if (m_left && x < m_x0+m_width)
 //  linear taper from 0 to 1
-    f= (m_x0 + m_width - x)/m_width; 
+    f= (m_x0 + m_width - x)/m_width;
   else if (m_right && x > m_x1-m_width)
 // linear taper from 0 to 1
     f= (x - (m_x1-m_width) )/m_width;
@@ -178,7 +233,7 @@ float_sw4 SuperGrid::Psi0(float_sw4 xi) const
 //    f=xi*xi*xi*(10 - 15*xi + 6*xi*xi);
 //    f = fmin + (1.-fmin)*xi*xi*xi*(10 - 15*xi + 6*xi*xi);
 // C4 function
-//    f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*( 
+//    f = fmin + (1.-fmin)* xi*xi*xi*xi*xi*(
 //      126 - 420*xi + 540*xi*xi - 315*xi*xi*xi + 70*xi*xi*xi*xi );
 // Skewed C4 fcn (p3)
 //    f = xi*xi*xi*xi*xi*(-14.0 + 70.0*xi - 90.0*xi*xi + 35.0*xi*xi*xi);
@@ -187,7 +242,7 @@ float_sw4 SuperGrid::Psi0(float_sw4 xi) const
        462-1980*xi+3465*xi*xi-3080*xi*xi*xi+1386*xi*xi*xi*xi-252*xi*xi*xi*xi*xi);
 // one-sided C5 fcn (p2)
 //     f =  xi*xi*xi*xi*xi*xi*(84.0 - 216.0*xi + 189.0*xi*xi - 56.0*xi*xi*xi);
-   
+
    return f;
 }
 
@@ -201,13 +256,17 @@ float_sw4 SuperGrid::tw_stretching( float_sw4 x ) const
 {
    return 1 + 0.5*sin(m_tw_omega*x);
 }
-  
+
 void SuperGrid::set_twilight( float_sw4 omega )
 {
    m_tw_omega = omega;
 }
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+void SuperGrid::set_eps(double new_eps) { m_epsL = new_eps; }
+#else // SW4 backend
 void SuperGrid::set_eps( float_sw4 new_eps )
 {
    m_epsL = new_eps;
 }
+#endif // SW4 backend

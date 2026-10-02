@@ -3,43 +3,64 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
+// #
 // # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <mpi.h>
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <unistd.h>
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include <cstdlib>
+#else // SW4 backend
+#endif // SW4 backend
 #include <iostream>
 #include <sstream>
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include <cstdlib>
 #include <unistd.h>
 
+#endif // SW4 backend
 #include "TimeSeries.h"
 //#include "mpi.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "EW.h"
+#include "Filter.h"
+#include "Require.h"
+#include "csstime.h"
+#else // SW4 backend
+#endif // SW4 backend
 #include "sacsubc.h"
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "csstime.h"
 
 #include "Require.h"
@@ -48,6 +69,7 @@
 #include "EW.h"
 #include "GridGenerator.h"
 
+#endif // SW4 backend
 #ifdef USE_HDF5
 #include "sachdf5.h"
 #endif
@@ -55,11 +77,11 @@
 using namespace std;
 
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
-		int& second, int& msecond, int& fail );
+                int& second, int& msecond, int& fail );
 
-TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, 
-                        bool sacFormat, bool usgsFormat, bool hdf5Format, std::string hdf5FileName, 
-                        float_sw4 x, float_sw4 y, float_sw4 depth, 
+TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode,
+                        bool sacFormat, bool usgsFormat, bool hdf5Format, std::string hdf5FileName,
+                        float_sw4 x, float_sw4 y, float_sw4 depth,
                         bool topoDepth, int writeEvery, int downSample, bool xyzcomponent, int event ):
   m_ew(a_ew),
   m_mode(mode),
@@ -68,8 +90,15 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_fileName(fileName),
   m_staName(staName),
   m_hdf5Name(hdf5FileName),
-  m_path(a_ew->getPath(event)),
-  mX(x),
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_path(a_ew->getPath()),
+
+#else // SW4 backend
+m_path(a_ew->getPath(event)),
+
+#endif // SW4 backend
+mX(x),
   mY(y),
   mZ(depth),
   mGPX(0.0),
@@ -112,11 +141,16 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   //  m_utc_set(false),
   //  m_utc_offset_computed(false),
   m_use_win(false),
-  m_winL(-1e38),
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+m_winL(-1e38),
   m_winR(1e38),
   m_winL2(-1e38),
   m_winR2(1e38),
-  m_use_x(true),
+
+#endif // SW4 backend
+m_use_x(true),
   m_use_y(true),
   m_use_z(true),
   mQuietMode(false),
@@ -135,40 +169,82 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 #endif
   m_event(event)
 {
-   m_global_event = a_ew->local_to_global_event(m_event);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+m_global_event = a_ew->local_to_global_event(m_event);
    m_path         = a_ew->getPath(m_global_event);
 
  // 1. Adjust z if depth below topography is given
-   if (a_ew->topographyExists() ) 
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (m_zRelativeToTopography && a_ew->topographyExists()) {
+
+#else // SW4 backend
+if (a_ew->topographyExists() )
    {
-      float_sw4 zTopoLocal;
-      if(!a_ew->m_gridGenerator->interpolate_topography( a_ew, mX, mY, zTopoLocal, a_ew->mTopoGridExt))
-         zTopoLocal=-1e38;
-      MPI_Allreduce( &zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX, a_ew->m_1d_communicator );
+
+#endif // SW4 backend
+float_sw4 zTopoLocal;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, zTopoLocal,
+                                                      a_ew->mTopoGridExt) < 0)
+
+#else // SW4 backend
+if(!a_ew->m_gridGenerator->interpolate_topography( a_ew, mX, mY, zTopoLocal, a_ew->mTopoGridExt))
+
+#endif // SW4 backend
+zTopoLocal=-1e38;
+      MPI_Allreduce( &zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_COMM_WORLD);
+
+
+#else // SW4 backend
+a_ew->m_1d_communicator );
          //      mZ += m_zTopo;
-   } 
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+mZ += m_zTopo;
+
+#else // SW4 backend
+#endif // SW4 backend
+}
    else
       m_zTopo = 0;
-   if( m_zRelativeToTopography )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_zRelativeToTopography )
    {
       mZ += m_zTopo;
-      m_zRelativeToTopography = false;
-   }
+
+#endif // SW4 backend
+m_zRelativeToTopography = false;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+}
    float_sw4 rofftol = 1e-9;
    if(sizeof(float_sw4) == 4 )
       rofftol = 1e-5;
 // Make sure the station is below the topography (z is positive downwards)
    if ( mZ < m_zTopo - rofftol)
    {
-      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
-	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
+      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n",
+             m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
       m_myPoint=false;
       return;
    }
 
 
 // 2. Find nearest grid point and its grid.
-   m_myPoint = a_ew->computeNearestGridPoint2( m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ );
+
+#endif // SW4 backend
+m_myPoint = a_ew->computeNearestGridPoint2( m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ );
 
    //   if( m_myPoint )
    //   cout << "station at ("<< mX  << " " << mY << " " << mZ <<" placed at grid point " <<
@@ -176,10 +252,11 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
 //   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
 
-// quiet mode? Note that this flag can change in the EW object, so it is better to test for 
+// quiet mode? Note that this flag can change in the EW object, so it is better to test for
 // m_ew->getQuiet()
-   mQuietMode = a_ew->getQuiet();
-   
+
+mQuietMode = a_ew->getQuiet();
+
 // does this processor write this station?
 //   m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
 
@@ -187,9 +264,17 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 // We could remove this check if we were certain that interior_point_in_proc() never lies
    int iwrite = m_myPoint ? 1 : 0;
    int counter;
-   MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, a_ew->m_1d_communicator );
 
-   a_ew->get_utc( m_utc, m_event );
+#if defined(SW4_USE_RAJA) // SW4 backend
+MPI_Allreduce(&iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+
+#else // SW4 backend
+MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, a_ew->m_1d_communicator );
+
+
+#endif // SW4 backend
+a_ew->get_utc( m_utc, m_event );
    //   int size;
    //   MPI_Comm_size(MPI_COMM_WORLD,&size);
    //   std::vector<int> whoIsOne(size);
@@ -199,10 +284,17 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    //      if (whoIsOne[i] == 1)
    //	 counter++;
 
-   REQUIRE2(counter == 1,"Exactly one processor must be writing each SAC, but counter = " << counter <<
-	    " for receiver station " << m_fileName << " at (x,y,depth)=" <<  mX << ", " << mY 
+   REQUIRE2(counter == 1,"Exactly one processor must be writing each SAC, but counter = "
+#if defined(SW4_USE_RAJA) // SW4 backend
+<< counter << " for receiver station " << m_fileName);
+
+#else // SW4 backend
+<< counter <<
+            " for receiver station " << m_fileName << " at (x,y,depth)=" <<  mX << ", " << mY
             << ", "  << mZ );
-   if (!m_myPoint)
+
+#endif // SW4 backend
+if (!m_myPoint)
    {
       m_compute_scalefactor = false;
       return;
@@ -231,14 +323,14 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 //      m_zTopo = 0; // no topography
 //   }
 
-// if location was specified with topodepth, correct z-level  
+// if location was specified with topodepth, correct z-level
 //   if (m_zRelativeToTopography)
 //   {
 //      mZ += m_zTopo;
 //      m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
 //   }
-     
-// now we can find the closest grid point  
+
+// now we can find the closest grid point
 //   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
 //   if( m_grid0 >= a_ew->mNumberOfCartesianGrids-1 && a_ew->topographyExists() )
 //   {
@@ -256,15 +348,73 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 //      }
 //      else
 //      {
-//	 cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= " 
+//	 cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= "
 //	      << mY << " mZ= " << mZ << endl;
 //	 cerr << "Placing the station on the surface (depth=0)." << endl;
 //	 m_k0 = 1;
 //      }
 //   }
-//   
+//
 // actual location of station (nearest grid point)
-   float_sw4 xG, yG, zG;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 rofftol = 1e-9;
+  if (sizeof(float_sw4) == 4) rofftol = 1e-5;
+
+  float_sw4 zMin = m_zTopo - rofftol;  // allow for a little roundoff
+
+  // make sure the station is below the topography (z is positive downwards)
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (mZ < zMin) {
+    //      mIgnore = true;
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+printf(
+        "Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the "
+        "topography z=%g\n",
+        m_staName.c_str(), mX, mY, mZ, m_zTopo);
+    // don't write this station
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_myPoint = false;
+    return;
+  }
+
+  // now we can find the closest grid point
+  // a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
+  // if (m_grid0 == a_ew->mNumberOfGrids - 1 && a_ew->topographyExists()) {
+  //   // Curvilinear
+  //   bool canBeInverted =
+  //       a_ew->invert_curvilinear_grid_mapping(mX, mY, mZ, q, r, s);
+  //   if (a_ew->invert_curvilinear_grid_mapping(
+  //           mX, mY, mZ, q, r, s))  // the inversion was successful
+  //   {
+  //     m_k0 = (int)floor(s);
+  //     if (s - (m_k0 + 0.5) > 0.) m_k0++;
+  //     m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
+  //     int Nz = a_ew->m_kEndInt[m_grid0];
+  //     m_k0 = min(Nz, m_k0);
+  //   } else {
+  //     cerr << "Can't invert curvilinear grid mapping for recevier station"
+  //          << m_fileName << " mX= " << mX << " mY= " << mY << " mZ= " << mZ
+  //          << endl;
+  //     cerr << "Placing the station on the surface (depth=0)." << endl;
+  //     m_k0 = 1;
+  //   }
+  // }
+
+  // actual location of station (nearest grid point)
+
+#else // SW4 backend
+#endif // SW4 backend
+float_sw4 xG, yG, zG;
    xG = (m_i0-1)*a_ew->mGridSize[m_grid0];
    yG = (m_j0-1)*a_ew->mGridSize[m_grid0];
    if (m_grid0 < a_ew->mNumberOfCartesianGrids)
@@ -275,7 +425,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    {
       zG = a_ew->mZ[m_grid0](m_i0, m_j0, m_k0);
    }
-   
+
 // remember corrected location
    mGPX = xG;
    mGPY = yG;
@@ -287,7 +437,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    {
       cout << "Receiver INFO for station " << m_fileName << ":" << endl <<
       "     initial location (x,y,z) = " << mX << " " << mY << " " << mZ << " zTopo= " << m_zTopo << endl <<
-      "     nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << " h= " << a_ew->mGridSize[m_grid0] << 
+      "     nearest grid point (x,y,z) = " << mGPX << " " << mGPY << " " << mGPZ << " h= " << a_ew->mGridSize[m_grid0] <<
       " with indices (i,j,k)= " << m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 << endl;
    }
 
@@ -323,14 +473,14 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    {
       mRecordedFloats = new float*[m_nComp];
       for (int q=0; q<m_nComp; q++)
-	 mRecordedFloats[q] = static_cast<float*>(0);
+         mRecordedFloats[q] = static_cast<float*>(0);
    }
    else
       mRecordedFloats = static_cast<float**>(0);
-  
+
 // do some misc pre computations
    m_x_azimuth = a_ew->getGridAzimuth(); // degrees
-  
+
    double xd, yd, lond, latd;
    xd=mX;
    yd=mY;
@@ -376,7 +526,7 @@ TimeSeries::~TimeSeries()
     for (int q=0; q<m_nComp; q++)
     {
       if (mRecordedSol[q])
-	delete [] mRecordedSol[q];
+        delete [] mRecordedSol[q];
     }
     delete [] mRecordedSol;
   }
@@ -386,7 +536,7 @@ TimeSeries::~TimeSeries()
     for (int q=0; q<m_nComp; q++)
     {
       if (mRecordedFloats[q])
-	delete [] mRecordedFloats[q];
+        delete [] mRecordedFloats[q];
     }
     delete [] mRecordedFloats;
   }
@@ -395,10 +545,15 @@ TimeSeries::~TimeSeries()
 //--------------------------------------------------------------
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep )
 {
-  m_shift = startTime-m_t0;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+m_shift = startTime-m_t0;
   m_dt = timeStep;
 
-  if (!m_myPoint) return; // only one processor saves each time series
+
+#endif // SW4 backend
+if (!m_myPoint) return; // only one processor saves each time series
   if (numberOfTimeSteps > 0)
   {
     mAllocatedSize = numberOfTimeSteps+1;
@@ -406,33 +561,60 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
     for (int q=0; q<m_nComp; q++)
     {
       if (mRecordedSol[q]) delete [] mRecordedSol[q];
-      mRecordedSol[q] = new float_sw4[mAllocatedSize]();
-    }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mRecordedSol[q] = new float_sw4[mAllocatedSize];
+
+#else // SW4 backend
+mRecordedSol[q] = new float_sw4[mAllocatedSize]();
+
+#endif // SW4 backend
+}
 
     if (m_sacFormat || m_hdf5Format)
     {
       for (int q=0; q<m_nComp; q++)
       {
-	if (mRecordedFloats[q]) delete [] mRecordedFloats[q];
-	mRecordedFloats[q] = new float[mAllocatedSize]();
-      }
+        if (mRecordedFloats[q]) delete [] mRecordedFloats[q];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mRecordedFloats[q] = new float[mAllocatedSize];
+
+#else // SW4 backend
+mRecordedFloats[q] = new float[mAllocatedSize]();
+
+#endif // SW4 backend
+}
     }
   }
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+m_shift = startTime - m_t0;
+  m_dt = timeStep;
+#else // SW4 backend
+#endif // SW4 backend
 }
 
 //--------------------------------------------------------------
-void TimeSeries::recordData(vector<float_sw4> & u) 
+void TimeSeries::recordData(vector<float_sw4> & u)
 {
    if (!m_myPoint) return;
 
 // better pass the right amount of data!
    if (u.size() != m_nComp)
    {
-     printf("Error: TimeSeries::recordData: passing a vector of size=%i but nComp=%i\n", (int) u.size(), m_nComp);
+     printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Error: TimeSeries::recordData: passing a vector of size=%i but "
+        "nComp=%i\n",
+
+#else // SW4 backend
+"Error: TimeSeries::recordData: passing a vector of size=%i but nComp=%i\n",
+#endif // SW4 backend
+(int) u.size(), m_nComp);
      return;
    }
-   
+
 // ---------------------------------------------------------------
 // This routine only knows how to push the nComp doubles on the array stack.
 // The calling routine need to figure out what needs to be saved
@@ -444,45 +626,60 @@ void TimeSeries::recordData(vector<float_sw4> & u)
    {
       //      if( m_xyzcomponent || (m_nComp != 3) )
       //      {
-	 for (int q=0; q<m_nComp; q++)
-	    mRecordedSol[q][mLastTimeStep] = u[q];
-	 if (m_sacFormat || m_hdf5Format)
-	 {
-	    for (int q=0; q<m_nComp; q++)
-	       mRecordedFloats[q][mLastTimeStep] = (float) u[q];
-	 }
+         for (int q=0; q<m_nComp; q++)
+            mRecordedSol[q][mLastTimeStep] = u[q];
+         if (m_sacFormat || m_hdf5Format)
+         {
+            for (int q=0; q<m_nComp; q++)
+               mRecordedFloats[q][mLastTimeStep] = (float) u[q];
+         }
 // AP: The transformation to east-north-up components is now done just before the file is written
 //      }
-	 //      else
-	 //      {
-	 //// Transform to North-South, East-West, and Up components
-	 //	 double uns = m_thynrm*u[0]-m_thxnrm*u[1];
-	 //	 double uew = m_salpha*u[0]+m_calpha*u[1];
-	 //         mRecordedSol[0][mLastTimeStep] = uew;
-	 //         mRecordedSol[1][mLastTimeStep] = uns;
-	 //         mRecordedSol[2][mLastTimeStep] =-u[2];
-	 //	 if( m_sacFormat )
-	 //	 {
-	 //	    mRecordedFloats[0][mLastTimeStep] = static_cast<float>(uew);
-	 //	    mRecordedFloats[1][mLastTimeStep] = static_cast<float>(uns);
-	 //	    mRecordedFloats[2][mLastTimeStep] =-static_cast<float>(u[2]);
-	 //	 }
-	 //      }
+         //      else
+         //      {
+         //// Transform to North-South, East-West, and Up components
+         //	 double uns = m_thynrm*u[0]-m_thxnrm*u[1];
+         //	 double uew = m_salpha*u[0]+m_calpha*u[1];
+         //         mRecordedSol[0][mLastTimeStep] = uew;
+         //         mRecordedSol[1][mLastTimeStep] = uns;
+         //         mRecordedSol[2][mLastTimeStep] =-u[2];
+         //	 if( m_sacFormat )
+         //	 {
+         //	    mRecordedFloats[0][mLastTimeStep] = static_cast<float>(uew);
+         //	    mRecordedFloats[1][mLastTimeStep] = static_cast<float>(uns);
+         //	    mRecordedFloats[2][mLastTimeStep] =-static_cast<float>(u[2]);
+         //	 }
+         //      }
    }
    else
    {
-     printf("Ran out of recording space for the receiver station at (i,j,k,grid) = (%i, %i, %i, %i)\n",
-	    m_i0, m_j0, m_k0, m_grid0);
-     cout << "last time step = " << mLastTimeStep << " allocated size " << mAllocatedSize << endl;
-     return;
+     printf(
+#if defined(SW4_USE_RAJA) // SW4 backend
+"Ran out of recording space for the receiver station at (i,j,k,grid) = "
+        "(%i, %i, %i, %i)\n",
+
+#else // SW4 backend
+"Ran out of recording space for the receiver station at (i,j,k,grid) = (%i, %i, %i, %i)\n",
+
+#endif // SW4 backend
+m_i0, m_j0, m_k0, m_grid0);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+cout << "last time step = " << mLastTimeStep << " allocated size " << mAllocatedSize << endl;
+
+#endif // SW4 backend
+return;
    }
 
    if (mWriteEvery > 0 && mLastTimeStep > 0 && mLastTimeStep % mWriteEvery == 0)
       writeFile();
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 }
 
-   
+
 //----------------------------------------------------------------------
 void TimeSeries::writeWindows( string suffix )
 {
@@ -568,7 +765,7 @@ void TimeSeries::readWindows()
               }
            }
            else
-              std::cout << "TimeSeries::readWindows: No time windows found for station " << m_staName 
+              std::cout << "TimeSeries::readWindows: No time windows found for station " << m_staName
                         << std::endl;
            H5Gclose(grp);
         }
@@ -581,6 +778,7 @@ void TimeSeries::readWindows()
         std::cout << "TimeSeries::readWindows fid is invalid, cannot open file" << std::endl;
   }
 #endif
+#endif // SW4 backend
 }
 
 //----------------------------------------------------------------------
@@ -597,7 +795,7 @@ void TimeSeries::writeFile( string suffix )
 
 // get the epicenter from EW object (note that the epicenter is not always known when this object is created)
   m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_event );
- 
+
   stringstream filePrefix;
 
 //building the file name...
@@ -607,13 +805,67 @@ void TimeSeries::writeFile( string suffix )
      filePrefix << m_fileName << "." ;
   else
      filePrefix << m_fileName << suffix.c_str() << "." ;
-  
+
   stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
-  
+
+#if defined(SW4_USE_RAJA) // SW4 backend
 #ifdef USE_HDF5
   // Open the output HDF5 file if not already opened
   std::string h5fname, fidName;
-  hid_t fid, grp = 0; 
+  hid_t fid, grp = 0;
+  double stlalodp[3], stxyz[3];
+  float origintime;
+  int myRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
+  // create a new function to write metadata only
+  if (m_hdf5Format) {
+    /* if (myRank == 0) { */
+    /*   printf("Writing station timeseries data\n", myRank, m_staName.c_str());
+     */
+    /*   fflush(stdout); */
+    /* } */
+    fid = openHDF5File(suffix);
+
+    if (fid <= 0)
+      printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank,
+             __func__, filePrefix.str().c_str());
+    else {
+      grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+      if (grp < 0)
+        printf("TimeSeries::writeFile Error opening group [%s]\n",
+               m_staName.c_str());
+
+      if (grp > 0 && !m_isMetaWritten) {
+        stlalodp[0] = double(m_rec_lat);
+        stlalodp[1] = double(m_rec_lon);
+        stlalodp[2] = double(m_sta_z);
+
+        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
+
+        stxyz[0] = double(mX);
+        stxyz[1] = double(mY);
+        stxyz[2] = double(m_sta_z);
+        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
+
+        origintime = float(m_epi_time_offset);
+        openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
+
+        m_isMetaWritten = true;
+      }
+    }
+  }
+
+#endif
+
+  // Write out displacement components (ux, uy, uz)
+
+
+#else // SW4 backend
+#ifdef USE_HDF5
+  // Open the output HDF5 file if not already opened
+  std::string h5fname, fidName;
+  hid_t fid, grp = 0;
   double stlalodp[3], stxyz[3], dist;
   float origintime, windows[4];
   int myRank;
@@ -628,12 +880,12 @@ void TimeSeries::writeFile( string suffix )
     /* } */
     fid = openHDF5File(suffix);
 
-    if (fid <= 0) 
+    if (fid <= 0)
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank, __func__, filePrefix.str().c_str());
-    else 
+    else
     {
       grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
-      if (grp < 0) 
+      if (grp < 0)
         printf("TimeSeries::writeFile Error opening group [%s]\n", m_staName.c_str());
 
       if (grp > 0 && !m_isMetaWritten) {
@@ -672,158 +924,160 @@ void TimeSeries::writeFile( string suffix )
   }
 
 #endif
- 
+
 // Write out displacement components (ux, uy, uz)
 
-  if( m_sacFormat || m_hdf5Format)
+
+#endif // SW4 backend
+if( m_sacFormat || m_hdf5Format)
   {
     string mode = "ASCII";
     if (mBinaryMode)
       mode = "BINARY";
 
-    if (m_sacFormat && m_hdf5Format) 
+    if (m_sacFormat && m_hdf5Format)
         mode += " and HDF5";
-    else if (m_hdf5Format) 
+    else if (m_hdf5Format)
         mode = "HDF5";
-            
+
     inihdr();
     stringstream msg;
     msg << "Writing " << mode << " SAC files, "
-	<< "of size " << mLastTimeStep+1 << ": "
-	<< filePrefix.str();
+        << "of size " << mLastTimeStep+1 << ": "
+        << filePrefix.str();
 
     string xfield, yfield, zfield, xyfield, xzfield, yzfield, yxfield, zxfield, zyfield;
      float azimx, azimy, updownang;
      if( m_mode == Displacement )
      {
-	if( m_xyzcomponent )
-	{
-	   xfield = "X";
-	   yfield = "Y";
-	   zfield = "Z";
-	   ux << filePrefix.str() << "x";
-	   uy << filePrefix.str() << "y";
-	   uz << filePrefix.str() << "z";
-	   azimx = m_x_azimuth;
-	   azimy = m_x_azimuth+90.;
-	   updownang = 180;
-	   msg << "[x|y|z]" << endl;
-	}
-	else
-	{
- 	   xfield = "EW";
- 	   yfield = "NS";
- 	   zfield = "UP";
- 	   ux << filePrefix.str() << "e";
- 	   uy << filePrefix.str() << "n";
- 	   uz << filePrefix.str() << "u";
- 	   azimx = 90.;// UX is east if !m_xycomponent
- 	   azimy = 0.; // UY is north if !m_xycomponent
- 	   updownang = 0;
- 	   msg << "[e|n|u]" << endl;
+        if( m_xyzcomponent )
+        {
+           xfield = "X";
+           yfield = "Y";
+           zfield = "Z";
+           ux << filePrefix.str() << "x";
+           uy << filePrefix.str() << "y";
+           uz << filePrefix.str() << "z";
+           azimx = m_x_azimuth;
+           azimy = m_x_azimuth+90.;
+           updownang = 180;
+           msg << "[x|y|z]" << endl;
+        }
+        else
+        {
+           xfield = "EW";
+           yfield = "NS";
+           zfield = "UP";
+           ux << filePrefix.str() << "e";
+           uy << filePrefix.str() << "n";
+           uz << filePrefix.str() << "u";
+           azimx = 90.;// UX is east if !m_xycomponent
+           azimy = 0.; // UY is north if !m_xycomponent
+           updownang = 0;
+           msg << "[e|n|u]" << endl;
 
-	}
+        }
      }
      else if( m_mode == Velocity )
      {
         if( m_xyzcomponent )
-	{
-	   xfield = "Vx";
-	   yfield = "Vy";
-	   zfield = "Vz";
-	   ux << filePrefix.str() << "xv";
-	   uy << filePrefix.str() << "yv";
-	   uz << filePrefix.str() << "zv";
-	   azimx = m_x_azimuth;
-	   azimy = m_x_azimuth+90.;
-	   updownang = 180;
-	   msg << "[xv|yv|zv]" << endl;
-	}
-	else
-	{
- 	   xfield = "Vew";
- 	   yfield = "Vns";
- 	   zfield = "Vup";
- 	   ux << filePrefix.str() << "ev";
- 	   uy << filePrefix.str() << "nv";
- 	   uz << filePrefix.str() << "uv";
- 	   azimx = 90.;// UX is east if !m_xycomponent
- 	   azimy = 0.; // UY is north if !m_xycomponent
- 	   updownang = 0;
- 	   msg << "[ev|nv|uv]" << endl;
-	}
+        {
+           xfield = "Vx";
+           yfield = "Vy";
+           zfield = "Vz";
+           ux << filePrefix.str() << "xv";
+           uy << filePrefix.str() << "yv";
+           uz << filePrefix.str() << "zv";
+           azimx = m_x_azimuth;
+           azimy = m_x_azimuth+90.;
+           updownang = 180;
+           msg << "[xv|yv|zv]" << endl;
+        }
+        else
+        {
+           xfield = "Vew";
+           yfield = "Vns";
+           zfield = "Vup";
+           ux << filePrefix.str() << "ev";
+           uy << filePrefix.str() << "nv";
+           uz << filePrefix.str() << "uv";
+           azimx = 90.;// UX is east if !m_xycomponent
+           azimy = 0.; // UY is north if !m_xycomponent
+           updownang = 0;
+           msg << "[ev|nv|uv]" << endl;
+        }
      }
      else if( m_mode == Div )
      {
-     	xfield = "Div";
-     	ux << filePrefix.str() << "div";
-	azimx = m_x_azimuth;
-	azimy = m_x_azimuth+90.;
-	updownang = 180;
-     	msg << "[div]" << endl;
+        xfield = "Div";
+        ux << filePrefix.str() << "div";
+        azimx = m_x_azimuth;
+        azimy = m_x_azimuth+90.;
+        updownang = 180;
+        msg << "[div]" << endl;
      }
      else if( m_mode == Curl )
      {
-     	xfield = "Curlx";
-     	yfield = "Curly";
-     	zfield = "Curlz";
-     	ux << filePrefix.str() << "curlx";
-     	uy << filePrefix.str() << "curly";
-     	uz << filePrefix.str() << "curlz";
-	azimx = m_x_azimuth;
-	azimy = m_x_azimuth+90.;
-	updownang = 180;
-     	msg << "[curlx|curly|curlz]" << endl;
+        xfield = "Curlx";
+        yfield = "Curly";
+        zfield = "Curlz";
+        ux << filePrefix.str() << "curlx";
+        uy << filePrefix.str() << "curly";
+        uz << filePrefix.str() << "curlz";
+        azimx = m_x_azimuth;
+        azimy = m_x_azimuth+90.;
+        updownang = 180;
+        msg << "[curlx|curly|curlz]" << endl;
      }
      else if( m_mode == Strains )
      {
-     	xfield = "Uxx";
-     	yfield = "Uyy";
-     	zfield = "Uzz";
-     	xyfield = "Uxy";
-     	xzfield = "Uxz";
-     	yzfield = "Uyz";
-     	ux << filePrefix.str() << "xx";
-     	uy << filePrefix.str() << "yy";
-     	uz << filePrefix.str() << "zz";
-     	uxy << filePrefix.str() << "xy";
-     	uxz << filePrefix.str() << "xz";
-     	uyz << filePrefix.str() << "yz";
-	azimx = m_x_azimuth;
-	azimy = m_x_azimuth+90.;
-     	updownang = 180;
-     	msg << "[xx|yy|zz|xy|xz|yz]" << endl;
+        xfield = "Uxx";
+        yfield = "Uyy";
+        zfield = "Uzz";
+        xyfield = "Uxy";
+        xzfield = "Uxz";
+        yzfield = "Uyz";
+        ux << filePrefix.str() << "xx";
+        uy << filePrefix.str() << "yy";
+        uz << filePrefix.str() << "zz";
+        uxy << filePrefix.str() << "xy";
+        uxz << filePrefix.str() << "xz";
+        uyz << filePrefix.str() << "yz";
+        azimx = m_x_azimuth;
+        azimy = m_x_azimuth+90.;
+        updownang = 180;
+        msg << "[xx|yy|zz|xy|xz|yz]" << endl;
      }
      else if( m_mode == DisplacementGradient )
      {
-     	xfield  = "DUXDX";
-     	xyfield = "DUXDY";
-     	xzfield = "DUXDZ";
+        xfield  = "DUXDX";
+        xyfield = "DUXDY";
+        xzfield = "DUXDZ";
 
-     	yxfield = "DUYDX";
-     	yfield  = "DUYDY";
-     	yzfield = "DUYDZ";
+        yxfield = "DUYDX";
+        yfield  = "DUYDY";
+        yzfield = "DUYDZ";
 
-     	zxfield = "DUZDX";
-     	zyfield = "DUZDY";
-     	zfield  = "DUZDZ";
+        zxfield = "DUZDX";
+        zyfield = "DUZDY";
+        zfield  = "DUZDZ";
 
-     	ux  << filePrefix.str() << "duxdx";
-     	uxy << filePrefix.str() << "duxdy";
-     	uxz << filePrefix.str() << "duxdz";
+        ux  << filePrefix.str() << "duxdx";
+        uxy << filePrefix.str() << "duxdy";
+        uxz << filePrefix.str() << "duxdz";
 
-     	uyx << filePrefix.str() << "duydx";
-     	uy << filePrefix.str()  << "duydy";
-     	uyz << filePrefix.str() << "duydz";
+        uyx << filePrefix.str() << "duydx";
+        uy << filePrefix.str()  << "duydy";
+        uyz << filePrefix.str() << "duydz";
 
-     	uzx << filePrefix.str() << "duzdx";
-     	uzy << filePrefix.str() << "duzdy";
-     	uz << filePrefix.str()  << "duzdz";
+        uzx << filePrefix.str() << "duzdx";
+        uzy << filePrefix.str() << "duzdy";
+        uz << filePrefix.str()  << "duzdz";
 
-	azimx = m_x_azimuth;
-	azimy = m_x_azimuth+90.;
-     	updownang = 180;
-     	msg << "[duxdx|duxdy|duxdz|duydx|duydy|duydz|duzdx|duzdy|duzdz]" << endl;
+        azimx = m_x_azimuth;
+        azimy = m_x_azimuth+90.;
+        updownang = 180;
+        msg << "[duxdx|duxdy|duxdz|duydx|duydy|duydz|duzdx|duzdy|duzdz]" << endl;
      }
      // 	else if( !m_xycomponent && !m_velocities )
      // 	{
@@ -926,94 +1180,94 @@ void TimeSeries::writeFile( string suffix )
 // time to write the SAC files
      if (m_mode == Displacement || m_mode == Velocity || m_mode == Curl) // 3 components
      {
-	if( m_xyzcomponent )
-	{
+        if( m_xyzcomponent )
+        {
            // Only create a .bak if we're doing checkpointing
            bool makeCopy = m_ew->m_check_point->do_checkpointing();
            if (m_sacFormat) {
-	     write_sac_format(mLastTimeStep+1,
-	          	const_cast<char*>(ux.str().c_str()),
-	          	mRecordedFloats[0], (float) m_shift, (float) m_dt,
-	          	const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy);
-	     write_sac_format(mLastTimeStep+1,
-	          	const_cast<char*>(uy.str().c_str()),
-	          	mRecordedFloats[1], (float) m_shift, (float) m_dt,
-	          	const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy);
-	     write_sac_format(mLastTimeStep+1,
-	          	const_cast<char*>(uz.str().c_str()),
-	          	mRecordedFloats[2], (float) m_shift, (float) m_dt,
-	          	const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy);
+             write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(ux.str().c_str()),
+                        mRecordedFloats[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy);
+             write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uy.str().c_str()),
+                        mRecordedFloats[1], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy);
+             write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uz.str().c_str()),
+                        mRecordedFloats[2], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy);
            }
 #ifdef USE_HDF5
            if (m_hdf5Format) {
-	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
-	          	const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy, false);
-	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[1], (float) m_shift, (float) m_dt,
-	          	const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy, false);
-	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[2], (float) m_shift, (float) m_dt,
-	          	const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy, true);
+             write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy, false);
+             write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[1], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy, makeCopy, false);
+             write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[2], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy, true);
              m_isIncAzWritten = true;
            }
 #endif
-	}
-	else
-	{
+        }
+        else
+        {
            float** geographic = new float*[3];
-	   geographic[0] = new float[mLastTimeStep+1];
-	   geographic[1] = new float[mLastTimeStep+1];
-	   geographic[2] = new float[mLastTimeStep+1];
-#pragma omp parallel for	   
-	   for( int i=0 ; i <= mLastTimeStep ; i++ )
-	   {
-	      geographic[1][i] = m_thynrm*mRecordedFloats[0][i]-m_thxnrm*mRecordedFloats[1][i]; //ns
-	      geographic[0][i] = m_salpha*mRecordedFloats[0][i]+m_calpha*mRecordedFloats[1][i]; //ew
-	      geographic[2][i] = -mRecordedFloats[2][i];
+           geographic[0] = new float[mLastTimeStep+1];
+           geographic[1] = new float[mLastTimeStep+1];
+           geographic[2] = new float[mLastTimeStep+1];
+#pragma omp parallel for
+           for( int i=0 ; i <= mLastTimeStep ; i++ )
+           {
+              geographic[1][i] = m_thynrm*mRecordedFloats[0][i]-m_thxnrm*mRecordedFloats[1][i]; //ns
+              geographic[0][i] = m_salpha*mRecordedFloats[0][i]+m_calpha*mRecordedFloats[1][i]; //ew
+              geographic[2][i] = -mRecordedFloats[2][i];
 
-	   }
+           }
            if (m_sacFormat) {
-	     write_sac_format(mLastTimeStep+1, 
-	  		const_cast<char*>(ux.str().c_str()), 
-	  		geographic[0], (float) m_shift, (float) m_dt,
-	  		const_cast<char*>(xfield.c_str()), 90.0, azimx); 
-	     write_sac_format(mLastTimeStep+1, 
-	  		const_cast<char*>(uy.str().c_str()), 
-	  		geographic[1], (float) m_shift, (float) m_dt,
-	  		const_cast<char*>(yfield.c_str()), 90.0, azimy); 
-	     write_sac_format(mLastTimeStep+1, 
-	  		const_cast<char*>(uz.str().c_str()), 
-	  		geographic[2], (float) m_shift, (float) m_dt,
-	  		const_cast<char*>(zfield.c_str()), updownang, 0.0);
+             write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(ux.str().c_str()),
+                        geographic[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx);
+             write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uy.str().c_str()),
+                        geographic[1], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy);
+             write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uz.str().c_str()),
+                        geographic[2], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0);
            }
 #ifdef USE_HDF5
            if (m_hdf5Format) {
-	     write_hdf5_format(mLastTimeStep+1, grp, geographic[0], (float) m_shift, (float) m_dt,
-	  		const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false); 
-	     write_hdf5_format(mLastTimeStep+1, grp, geographic[1], (float) m_shift, (float) m_dt,
-	  		const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false); 
-	     write_hdf5_format(mLastTimeStep+1, grp, geographic[2], (float) m_shift, (float) m_dt,
-	  		const_cast<char*>(zfield.c_str()), updownang, 0.0, false, true);
+             write_hdf5_format(mLastTimeStep+1, grp, geographic[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false);
+             write_hdf5_format(mLastTimeStep+1, grp, geographic[1], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false);
+             write_hdf5_format(mLastTimeStep+1, grp, geographic[2], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0, false, true);
              m_isIncAzWritten = true;
            }
 #endif
            delete[] geographic[0];
            delete[] geographic[1];
            delete[] geographic[2];
-	   delete[] geographic;
-	}
+           delete[] geographic;
+        }
      }
      else if (m_mode == Div) // 1 component
      {
        if (m_sacFormat) {
-         write_sac_format(mLastTimeStep+1, 
-  			const_cast<char*>(ux.str().c_str()), 
-  			mRecordedFloats[0], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(ux.str().c_str()),
+                        mRecordedFloats[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx);
        }
 
 #ifdef USE_HDF5
        if (m_hdf5Format) {
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xfield.c_str()), 90.0, azimx, false, true); 
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx, false, true);
          m_isIncAzWritten = true;
        }
 #endif
@@ -1021,45 +1275,45 @@ void TimeSeries::writeFile( string suffix )
      else if (m_mode == Strains) // 6 components
      {
        if (m_sacFormat) {
-         write_sac_format(mLastTimeStep+1, 
-          		const_cast<char*>(ux.str().c_str()), 
-          		mRecordedFloats[0], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(xfield.c_str()), 90.0, azimx); 
-         write_sac_format(mLastTimeStep+1, 
-          		const_cast<char*>(uy.str().c_str()), 
-          		mRecordedFloats[1], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(yfield.c_str()), 90.0, azimy); 
-         write_sac_format(mLastTimeStep+1, 
-          		const_cast<char*>(uz.str().c_str()), 
-          		mRecordedFloats[2], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(zfield.c_str()), updownang, 0.0); 
          write_sac_format(mLastTimeStep+1,
-          		const_cast<char*>(uxy.str().c_str()), 
-          		mRecordedFloats[3], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(xyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(ux.str().c_str()),
+                        mRecordedFloats[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx);
          write_sac_format(mLastTimeStep+1,
-          		const_cast<char*>(uxz.str().c_str()), 
-          		mRecordedFloats[4], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(xzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(uy.str().c_str()),
+                        mRecordedFloats[1], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy);
          write_sac_format(mLastTimeStep+1,
-			const_cast<char*>(uyz.str().c_str()), 
-			mRecordedFloats[5], (float) m_shift, (float) m_dt,
-			const_cast<char*>(yzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(uz.str().c_str()),
+                        mRecordedFloats[2], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0);
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uxy.str().c_str()),
+                        mRecordedFloats[3], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uxz.str().c_str()),
+                        mRecordedFloats[4], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uyz.str().c_str()),
+                        mRecordedFloats[5], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
        }
 #ifdef USE_HDF5
        if (m_hdf5Format) {
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false); 
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false);
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[1], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false); 
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false);
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[2], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(zfield.c_str()), updownang, 0.0, false, false); 
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0, false, false);
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[3], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(xyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(xyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[4], (float) m_shift, (float) m_dt,
-          		const_cast<char*>(xzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(xzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[5], (float) m_shift, (float) m_dt,
-			const_cast<char*>(yzfield.c_str()), 90.0, azimx, false, true); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(yzfield.c_str()), 90.0, azimx, false, true); // not sure what the updownang or azimuth should be here
          m_isIncAzWritten = true;
        }
 #endif
@@ -1067,74 +1321,74 @@ void TimeSeries::writeFile( string suffix )
      else if (m_mode == DisplacementGradient ) // 9 components
      {
        if (m_sacFormat) {
-         write_sac_format(mLastTimeStep+1, 
-  			const_cast<char*>(ux.str().c_str()), 
-  			mRecordedFloats[0], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xfield.c_str()), 90.0, azimx); 
          write_sac_format(mLastTimeStep+1,
-  			const_cast<char*>(uxy.str().c_str()), 
-  			mRecordedFloats[1], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(ux.str().c_str()),
+                        mRecordedFloats[0], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx);
          write_sac_format(mLastTimeStep+1,
-  			const_cast<char*>(uxz.str().c_str()), 
-  			mRecordedFloats[2], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
-  
+                        const_cast<char*>(uxy.str().c_str()),
+                        mRecordedFloats[1], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
          write_sac_format(mLastTimeStep+1,
-  			const_cast<char*>(uyx.str().c_str()), 
-  			mRecordedFloats[3], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(yxfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
-         write_sac_format(mLastTimeStep+1, 
-  			const_cast<char*>(uy.str().c_str()), 
-  			mRecordedFloats[4], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(yfield.c_str()), 90.0, azimy); 
+                        const_cast<char*>(uxz.str().c_str()),
+                        mRecordedFloats[2], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(xzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
+
          write_sac_format(mLastTimeStep+1,
-  			const_cast<char*>(uyz.str().c_str()), 
-  			mRecordedFloats[5], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(yzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
-  
+                        const_cast<char*>(uyx.str().c_str()),
+                        mRecordedFloats[3], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yxfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
          write_sac_format(mLastTimeStep+1,
-  			const_cast<char*>(uzx.str().c_str()), 
-  			mRecordedFloats[6], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(zxfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(uy.str().c_str()),
+                        mRecordedFloats[4], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy);
          write_sac_format(mLastTimeStep+1,
-  			const_cast<char*>(uzy.str().c_str()), 
-  			mRecordedFloats[7], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(zyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here 
-         write_sac_format(mLastTimeStep+1, 
-  			const_cast<char*>(uz.str().c_str()), 
-  			mRecordedFloats[8], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(zfield.c_str()), updownang, 0.0); 
+                        const_cast<char*>(uyz.str().c_str()),
+                        mRecordedFloats[5], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(yzfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
+
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uzx.str().c_str()),
+                        mRecordedFloats[6], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zxfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uzy.str().c_str()),
+                        mRecordedFloats[7], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zyfield.c_str()), 90.0, azimx); // not sure what the updownang or azimuth should be here
+         write_sac_format(mLastTimeStep+1,
+                        const_cast<char*>(uz.str().c_str()),
+                        mRecordedFloats[8], (float) m_shift, (float) m_dt,
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0);
        }
 #ifdef USE_HDF5
        if (m_hdf5Format) {
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false); 
+                        const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false);
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[1], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(xyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[2], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(xzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
-  
+                        const_cast<char*>(xzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
+
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[3], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(yxfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(yxfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[4], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false); 
+                        const_cast<char*>(yfield.c_str()), 90.0, azimy, false, false);
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[5], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(yzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
-  
+                        const_cast<char*>(yzfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
+
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[6], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(zxfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(zxfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[7], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(zyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here 
+                        const_cast<char*>(zyfield.c_str()), 90.0, azimx, false, false); // not sure what the updownang or azimuth should be here
          write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[8], (float) m_shift, (float) m_dt,
-  			const_cast<char*>(zfield.c_str()), updownang, 0.0, false, true); 
+                        const_cast<char*>(zfield.c_str()), updownang, 0.0, false, true);
          m_isIncAzWritten = true;
        }
 #endif
      }
 
   } // end if m_sacFormat || m_hdf5Format
-  
+
   if( m_usgsFormat )
   {
     filePrefix << "txt";
@@ -1148,7 +1402,7 @@ void TimeSeries::writeFile( string suffix )
 
 #ifdef USE_HDF5
   if (m_hdf5Format) {
-    if (grp > 0) 
+    if (grp > 0)
       H5Gclose(grp);
   }
   etime = MPI_Wtime();
@@ -1178,26 +1432,26 @@ void TimeSeries::writeFileUSGS( string suffix )
   filePrefix << "txt";
   if (m_ew->getVerbosity() >= 3)
      cout << "Writing ASCII USGS file, "
-	  << "of size " << mLastTimeStep+1 << ": "
-	  << filePrefix.str() << endl;
+          << "of size " << mLastTimeStep+1 << ": "
+          << filePrefix.str() << endl;
   write_usgs_format( filePrefix.str() );
 }
 
 //-----------------------------------------------------------------------
 void TimeSeries::
 write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *var,
-		 float cmpinc, float cmpaz, bool makeCopy /*=false*/)
+                 float cmpinc, float cmpaz, bool makeCopy /*=false*/)
 {
   /*
     PURPOSE: SAVE RECEIVER DATA ON A SAC FILE
-    
-    	ofile	Char	name of file
-    	y	R	array of values
-    	npts	I	number of points in data
-    	btime	R	start time
-    	dt	R	sample interval
-    	maxpts	I	maximum number of points to read
-    	nerr	I	error return
+
+        ofile	Char	name of file
+        y	R	array of values
+        npts	I	number of points in data
+        btime	R	start time
+        dt	R	sample interval
+        maxpts	I	maximum number of points to read
+        nerr	I	error return
     -----
   */
   float e;
@@ -1207,9 +1461,9 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
 //               0         1         2         3          4         5           6          7          8          9
   const char *nm[]={"DEPMAX", "DEPMIN", "DEPMEN", "NPTS    ","DELTA   ","B       ", "E       ","LEVEN   ","LOVROK  ","LCALDA  ",
 //              10          11          12          13          14          15           16          17          18
-	       "NZYEAR  ", "NZJDAY  ", "NZHOUR  ", "NZMIN   ", "NZSEC   ", "NZMSEC   ", "KCMPNM  ", "STLA    ", "STLO    ",
+               "NZYEAR  ", "NZJDAY  ", "NZHOUR  ", "NZMIN   ", "NZSEC   ", "NZMSEC   ", "KCMPNM  ", "STLA    ", "STLO    ",
 //              19          20          21          22          23          24          25
-	       "EVLA    ", "EVLO    ", "EVDP    ", "O       ", "CMPINC  ", "CMPAZ   ", "KSTNM   "
+               "EVLA    ", "EVLO    ", "EVDP    ", "O       ", "CMPINC  ", "CMPAZ   ", "KSTNM   "
   };
 
   newhdr();
@@ -1232,7 +1486,7 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   //  {
      int days = 0;
      for( int m=1 ; m<m_utc[1]; m++ )
-	days += lastofmonth(m_utc[0],m);
+        days += lastofmonth(m_utc[0],m);
      days += m_utc[2];
 
      setnhv( nm[10], m_utc[0], nerr);
@@ -1289,11 +1543,73 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
     bwsac(npts, ofile, y);
 }
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5
+//-----------------------------------------------------------------------
+void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
+                                   float dt, char* var, float cmpinc,
+                                   float cmpaz, bool makeCopy /*=false*/,
+                                   bool isLast /*=false*/) {
+  bool is_debug = false;
+  /* is_debug = true; */
+  /* double stime, etime; */
+
+  hsize_t start, count;
+  int ret = 1;
+  int write_npts;
+  float* write_data;
+
+  /* stime = MPI_Wtime(); */
+
+  write_npts = npts;
+  write_data = y;
+
+  if (mDownSample > 1) {
+    write_npts = npts > 0 ? 1 + (npts - 1) / mDownSample : 0;
+    write_data = new float[write_npts];
+    for (int i = 0; i < write_npts; i++) write_data[i] = y[i * mDownSample];
+  }
+
+  // write only new data
+  start = (hsize_t)m_nptsWritten;
+  count = (hsize_t)(write_npts - m_nptsWritten);
+
+  if (is_debug) {
+    printf("dset %s, start=%llu, count=%llu, write_npts=%d, nptswritten=%d\n",
+           var, start, count, write_npts, m_nptsWritten);
+    fflush(stdout);
+  }
+
+  if (count > 0)
+    ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1,
+                        &start, &count, write_npts, btime, cmpinc, cmpaz,
+                        m_isIncAzWritten, isLast);
+  CHECK_INPUT(ret == 1, "Could not write receiver HDF5 component " << var
+                        << " for station " << m_staName);
+
+  if (isLast && ret == 1) {
+    m_nptsWritten += count;
+    /* H5Gflush(grp); */
+  }
+
+  if (mDownSample > 1) delete[] write_data;
+
+  /* etime = MPI_Wtime(); */
+  /* int myRank; */
+  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+  /* printf("Rank %d: [%s], write_npts=%d, time=%f\n", myRank, var, count,
+   * etime-stime); */
+  /* fflush(stdout); */
+}
+#endif
+
+//-----------------------------------------------------------------------
+#else // SW4 backend
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
 void TimeSeries::
 write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *var,
-		 float cmpinc, float cmpaz, bool makeCopy /*=false*/, bool isLast /*=false*/)
+                 float cmpinc, float cmpaz, bool makeCopy /*=false*/, bool isLast /*=false*/)
 {
   bool is_debug = false;
   /* is_debug = true; */
@@ -1311,7 +1627,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   if (mDownSample > 1) {
     write_npts = npts > 0 ? 1 + (npts - 1) / mDownSample : 0;
     write_data = new float[write_npts];
-    for (int i = 0; i < write_npts; i++) 
+    for (int i = 0; i < write_npts; i++)
       write_data[i] = y[i*mDownSample];
   }
 
@@ -1324,7 +1640,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
     fflush(stdout);
   }
 
-  if (count > 0) 
+  if (count > 0)
     ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
 
   CHECK_INPUT(ret == 1, "Could not write receiver HDF5 component " << var
@@ -1335,7 +1651,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
     // H5Gflush(grp);
   }
 
-  if (mDownSample > 1) 
+  if (mDownSample > 1)
     delete [] write_data;
 
   /* etime = MPI_Wtime(); */
@@ -1347,6 +1663,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 #endif
 
 //-----------------------------------------------------------------------
+#endif // SW4 backend
 void TimeSeries::write_usgs_format(string a_fileName)
 {
    string mname[] = {"Zero","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
@@ -1374,7 +1691,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
 //   if( m_utc_set )
 // AP: micro-second field is padded from left with 0, i.e., 1 micro sec gets written as 001, second is also padded by a zero, if needed
    fprintf(fd, "# Date: UTC  %02i/%02i/%i:%i:%i:%02i.%.3i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
-	   m_utc[4], m_utc[5], m_utc[6] );
+           m_utc[4], m_utc[5], m_utc[6] );
       //   else
       //      fprintf(fd, "# Date: %i-%s-%i\n", mEventDay, mname[mEventMonth].c_str(), mEventYear);
 
@@ -1385,7 +1702,7 @@ void TimeSeries::write_usgs_format(string a_fileName)
 // distance in horizontal plane
    fprintf(fd, "# Distance from target to actual location (m): %e\n", sqrt( (mX-mGPX)*(mX-mGPX)+(mY-mGPY)*(mY-mGPY) ) );
    fprintf(fd, "# nColumns: %i\n", m_nComp+1);
-   
+
    fprintf(fd, "# Column 1: Time (s)\n");
    if (m_mode == Displacement && m_xyzcomponent )
    {
@@ -1450,39 +1767,39 @@ void TimeSeries::write_usgs_format(string a_fileName)
    {
       for( int i = 0 ; i <= mLastTimeStep ; i++ )
       {
-	 fprintf(fd, "%e", m_shift + i*m_dt);
-	 for (int q=0; q<m_nComp; q++)
+         fprintf(fd, "%e", m_shift + i*m_dt);
+         for (int q=0; q<m_nComp; q++)
 // AP (not always enough resolution)	    fprintf(fd, " %20.12g", mRecordedSol[q][i]);
-	    fprintf(fd, " %24.17e", mRecordedSol[q][i]);
-	 fprintf(fd, "\n");
+            fprintf(fd, " %24.17e", mRecordedSol[q][i]);
+         fprintf(fd, "\n");
       }
    }
    else if( m_mode == Displacement || m_mode == Velocity )
    {
       for( int i = 0 ; i <= mLastTimeStep ; i++ )
       {
-	 fprintf(fd, "%e", m_shift + i*m_dt);
-	 float_sw4 uns = m_thynrm*mRecordedSol[0][i]-m_thxnrm*mRecordedSol[1][i];
-	 float_sw4 uew = m_salpha*mRecordedSol[0][i]+m_calpha*mRecordedSol[1][i];
+         fprintf(fd, "%e", m_shift + i*m_dt);
+         float_sw4 uns = m_thynrm*mRecordedSol[0][i]-m_thxnrm*mRecordedSol[1][i];
+         float_sw4 uew = m_salpha*mRecordedSol[0][i]+m_calpha*mRecordedSol[1][i];
 // AP (not always enough resolution)
-	 // fprintf(fd, " %20.12g", uew );
-	 // fprintf(fd, " %20.12g", uns );
-	 // fprintf(fd, " %20.12g", -mRecordedSol[2][i] );
-	 fprintf(fd, " %24.17e", uew );
-	 fprintf(fd, " %24.17e", uns );
-	 fprintf(fd, " %24.17e", -mRecordedSol[2][i] );
-	 fprintf(fd, "\n");
+         // fprintf(fd, " %20.12g", uew );
+         // fprintf(fd, " %20.12g", uns );
+         // fprintf(fd, " %20.12g", -mRecordedSol[2][i] );
+         fprintf(fd, " %24.17e", uew );
+         fprintf(fd, " %24.17e", uns );
+         fprintf(fd, " %24.17e", -mRecordedSol[2][i] );
+         fprintf(fd, "\n");
       }
    }
    else
    {
       printf("TimeSeries::write_usgs_format, Can not write ");
       if( m_mode == Strains )
-	 printf("strains");
+         printf("strains");
       else if( m_mode == Curl )
-	 printf("curl");
+         printf("curl");
       else if( m_mode == DisplacementGradient )
-	 printf("displacement gradient");
+         printf("displacement gradient");
       printf(" in geographic coordinates\n" );
    }
    fclose(fd);
@@ -1493,168 +1810,227 @@ void TimeSeries::write_usgs_format(string a_fileName)
 void TimeSeries::readFile( EW *ew, bool ignore_utc )
 {
 //building the file name...
-// 
-   char *ret;
-   stringstream filePrefix;
-   if( ew->getObservationPath(m_global_event) != "./" && ew->getObservationPath(m_global_event) != "" )
+//
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+char *ret;
+
+#endif // SW4 backend
+stringstream filePrefix;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if ((ew->getObservationPath(m_event) != "./") &&
+      (ew->getObservationPath(m_event) != ""))
+    filePrefix << ew->getObservationPath(m_event);
+
+#else // SW4 backend
+if( ew->getObservationPath(m_global_event) != "./" && ew->getObservationPath(m_global_event) != "" )
       filePrefix << ew->getObservationPath(m_global_event);
-   else if( mIsRestart )
-      filePrefix << ew->getPath() << "/";
-   filePrefix << m_fileName << ".txt" ;
+
+#endif // SW4 backend
+else if( mIsRestart )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+filePrefix << ew->getPath();
+
+
+#else // SW4 backend
+filePrefix << ew->getPath() << "/";
+
+#endif // SW4 backend
+filePrefix << m_fileName << ".txt" ;
 
 
    if( m_myPoint && m_usgsFormat )
    {
       bool debug = false;
       FILE *fd=fopen(filePrefix.str().c_str(),"r");
-      if( fd == NULL )
-	 cout << "ERROR: observed data file " << filePrefix.str() << " not found " << endl;
-      else
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (fd == NULL) {
+      cerr << " ERROR: observed data file " << filePrefix.str() << " not found "
+
+#else // SW4 backend
+if( fd == NULL )
+         cout << "ERROR: observed data file " << filePrefix.str() << " not found "
+#endif // SW4 backend
+<< endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << " ERROR: observed data file " << filePrefix.str() << " not found "
+           << std::flush;
+      cout << "ERROR PATH " << ew->getPath() << " flag =  " << mIsRestart
+           << "\n"
+           << std::flush;
+      abort();
+    } else {
+
+#else // SW4 backend
+else
       {
-	 int bufsize=1024;
-	 char* buf = new char[bufsize];
+
+#endif // SW4 backend
+int bufsize=1024;
+         char* buf = new char[bufsize];
 
       // Read header
-	 for( int line=0 ; line < 13 ; line++ )
-	 {
-	    ret = fgets(buf,bufsize,fd);
-            if( line == 2 && !ignore_utc )
-	    {
-	       // set UTC time, if defined in file
-	       string timestr(buf);
-	       size_t utcind = timestr.find("UTC");
+         for( int line=0 ; line < 13 ; line++ )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+fgets(buf, bufsize, fd);
+
+#else // SW4 backend
+ret = fgets(buf,bufsize,fd);
+
+#endif // SW4 backend
+if( line == 2 && !ignore_utc )
+            {
+               // set UTC time, if defined in file
+               string timestr(buf);
+               size_t utcind = timestr.find("UTC");
                if( utcind != string::npos  )
-	       {
+               {
                   int fail;
                   char *utcstr=new char[timestr.size()];
-		  // Skip characters 'UTC'
-		  utcind += 3;
-		  timestr.copy(utcstr, timestr.size()-utcind , utcind );
+                  // Skip characters 'UTC'
+                  utcind += 3;
+                  timestr.copy(utcstr, timestr.size()-utcind , utcind );
                   utcstr[timestr.size()-utcind] = '\0';
-		  ew->parsedate( utcstr, m_utc[0], m_utc[1], m_utc[2], m_utc[3],
-				 m_utc[4], m_utc[5], m_utc[6], fail );
+                  ew->parsedate( utcstr, m_utc[0], m_utc[1], m_utc[2], m_utc[3],
+                                 m_utc[4], m_utc[5], m_utc[6], fail );
                   if( fail != 0 )
-		     cout << "ERROR reading observation " << m_fileName << " , UTC parse failure no. " << fail << endl;
+                     cout << "ERROR reading observation " << m_fileName << " , UTC parse failure no. " << fail << endl;
                   else
-		  {
+                  {
                      int utcrefsim[7];
-		     m_ew->get_utc(utcrefsim, m_event );
-		     //		     cout << "UTC from EW : ";
-		     //		     for( int c=0;c<7;c++ )
-		     //			cout << utcrefsim[c] << " " ;
-		     //		     cout << endl;
-		     //		     cout << "UTC from file : ";
-		     //		     for( int c=0;c<7;c++ )
-		     //			cout << m_utc[c] << " " ;
-		     //		     cout << endl;
-		     m_t0 = utc_distance( utcrefsim, m_utc );
-		  }
+                     m_ew->get_utc(utcrefsim, m_event );
+                     //		     cout << "UTC from EW : ";
+                     //		     for( int c=0;c<7;c++ )
+                     //			cout << utcrefsim[c] << " " ;
+                     //		     cout << endl;
+                     //		     cout << "UTC from file : ";
+                     //		     for( int c=0;c<7;c++ )
+                     //			cout << m_utc[c] << " " ;
+                     //		     cout << endl;
+                     m_t0 = utc_distance( utcrefsim, m_utc );
+                  }
                   delete[] utcstr;
                   if( debug )
-		  {
-		     cout << "found observation utc time " ;
+                  {
+                     cout << "found observation utc time " ;
                      for( int u=0 ; u < 7 ; u++ )
-			cout << m_utc[u] << " ";
-		     cout << endl;
-		  }
-	       }
-	    }
-	 }
+                        cout << m_utc[u] << " ";
+                     cout << endl;
+                  }
+               }
+            }
+         }
          string bufstr(buf);
          bool foundd = (bufstr.find("displacement") != string::npos);
          bool foundv = (bufstr.find("velocity") != string::npos);
          if( foundd || foundv )
-	 {
-	    // The file contains velocities or displacements. 
-	    // The last line read contains the z-component. Check whether it is a ENU or XYZ file.
+         {
+            // The file contains velocities or displacements.
+            // The last line read contains the z-component. Check whether it is a ENU or XYZ file.
             bool cartesian = (bufstr.find("Z") != string::npos);
-	    
+
             m_xyzcomponent = cartesian;
 
             if( debug )
-	    {
-	       cout << "Found observed ";
-	       if( foundd )
-		  cout << "displacement ";
-	       else
-		  cout << "velocity ";
-	       cout << "file with ";
-	       if( cartesian )
-		  cout << "Cartesian ";
-	       else
-		  cout << "geographic ";
-	       cout << "components " << endl;
-	    }
-	    float_sw4 tstart, dt, td, ux, uy, uz;
-	    int nlines = 0;
-	    if( fscanf(fd,"%le %le %le %le",&tstart,&ux,&uy,&uz) != EOF )
-	       nlines++;
-	    if( fscanf(fd,"%le %le %le %le",&dt,&ux,&uy,&uz) != EOF )
-	       nlines++;
-	    dt = dt-tstart;
-	    while( fscanf(fd,"%le %le %le %le",&td,&ux,&uy,&uz) != EOF )
-	       nlines++;
-	    fclose(fd);
-	    // Use offset in time column.
+            {
+               cout << "Found observed ";
+               if( foundd )
+                  cout << "displacement ";
+               else
+                  cout << "velocity ";
+               cout << "file with ";
+               if( cartesian )
+                  cout << "Cartesian ";
+               else
+                  cout << "geographic ";
+               cout << "components " << endl;
+            }
+            float_sw4 tstart, dt, td, ux, uy, uz;
+            int nlines = 0;
+            if( fscanf(fd,"%le %le %le %le",&tstart,&ux,&uy,&uz) != EOF )
+               nlines++;
+            if( fscanf(fd,"%le %le %le %le",&dt,&ux,&uy,&uz) != EOF )
+               nlines++;
+            dt = dt-tstart;
+            while( fscanf(fd,"%le %le %le %le",&td,&ux,&uy,&uz) != EOF )
+               nlines++;
+            fclose(fd);
+            // Use offset in time column.
       // Only allocate arrays if we aren't doing a restart
-	    if(!mIsRestart)
-	       allocateRecordingArrays( nlines, m_t0+tstart, dt );
-	    if( nlines <= 1 )
-	    {
-	       cout << "ERROR: observed data is too short" << endl;
-	       cout << "    File " << filePrefix.str() << " not read." << endl;
-	    }
-	    fd=fopen(filePrefix.str().c_str(),"r");	 
-	    if( fd == NULL )
-	       cout << "ERROR: observed data file " << filePrefix.str() << " could not be reopened" << endl;
+            if(!mIsRestart)
+               allocateRecordingArrays( nlines, m_t0+tstart, dt );
+            if( nlines <= 1 )
+            {
+               cout << "ERROR: observed data is too short" << endl;
+               cout << "    File " << filePrefix.str() << " not read." << endl;
+            }
+            fd=fopen(filePrefix.str().c_str(),"r");
+            if( fd == NULL )
+               cout << "ERROR: observed data file " << filePrefix.str() << " could not be reopened" << endl;
 
-	 // Read past header
-	    for( int line=0 ; line < 13 ; line++ )
-	       ret = fgets(buf,bufsize,fd);
-	    // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
-            float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+         // Read past header
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+for (int line = 0; line < 13; line++) fgets(buf, bufsize, fd);
+        // Mapping to invert (e,n) to (x,y) components, Only needed in the
+        // non-cartesian case.
+
+#else // SW4 backend
+for( int line=0 ; line < 13 ; line++ )
+               ret = fgets(buf,bufsize,fd);
+            // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
+
+#endif // SW4 backend
+float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
             float_sw4 a11 = m_calpha*deti;
-	    float_sw4 a12 = m_thxnrm*deti;
+            float_sw4 a12 = m_thxnrm*deti;
             float_sw4 a21 =-m_salpha*deti;
-	    float_sw4 a22 = m_thynrm*deti;
-	 // Read the data on file	 
+            float_sw4 a22 = m_thynrm*deti;
+         // Read the data on file
             if( debug )
-	       cout << "Found " << nlines << " lines of observation data " << endl;
+               cout << "Found " << nlines << " lines of observation data " << endl;
             for( int line=0 ; line < nlines ; line++ )
-	    {
-	       int nr=fscanf(fd, "%lf %lf %lf %lf \n", &tstart,&ux,&uy,&uz);
+            {
+               int nr=fscanf(fd, "%lf %lf %lf %lf \n", &tstart,&ux,&uy,&uz);
        //               cout << "nr = " << nr << " tstart " << tstart << " ux " << ux << " uy " << uy << " uz " << uz << endl;
                if( nr != 4 )
-	       {
-		  cout << "ERROR: could not read observed data file " << endl;
-	       }
+               {
+                  cout << "ERROR: could not read observed data file " << endl;
+               }
                if( cartesian )
-	       {
-		  mRecordedSol[0][line]=ux;
-		  mRecordedSol[1][line]=uy;
-		  mRecordedSol[2][line]=uz;
-	       }
-	       else
-	       {
-		  // Geographic coordinates, read East, North, and Up velocities/displacements
+               {
+                  mRecordedSol[0][line]=ux;
+                  mRecordedSol[1][line]=uy;
+                  mRecordedSol[2][line]=uz;
+               }
+               else
+               {
+                  // Geographic coordinates, read East, North, and Up velocities/displacements
                   float_sw4 uns = uy;
                   float_sw4 uew = ux;
-		  mRecordedSol[2][line] = -uz;
-		  // Transform to Cartesian
+                  mRecordedSol[2][line] = -uz;
+                  // Transform to Cartesian
                   mRecordedSol[0][line] = a11*uns + a12*uew;
-		  mRecordedSol[1][line] = a21*uns + a22*uew;
-	       }
+                  mRecordedSol[1][line] = a21*uns + a22*uew;
+               }
 
-	    }
-	    fclose(fd);
+            }
+            fclose(fd);
             mLastTimeStep = nlines-1;
-	 }
-	 else
-	 {
-	    cout << "ERROR: observed data must contain displacements" << endl;
-	    cout << "    File " << filePrefix.str() << " not read " << endl;
-	 }
-	 delete[] buf;
+         }
+         else
+         {
+            cout << "ERROR: observed data must contain displacements" << endl;
+            cout << "    File " << filePrefix.str() << " not read " << endl;
+         }
+         delete[] buf;
       }
    }
    else if( !m_usgsFormat )
@@ -1681,107 +2057,107 @@ void TimeSeries::interpolate( TimeSeries& intpfrom )
       int mmin = ie-order/2+1;
       int mmax = ie+order/2;
       if( m_usgsFormat )
-	 mRecordedSol[0][i] = mRecordedSol[1][i] = mRecordedSol[2][i] = 0;
+         mRecordedSol[0][i] = mRecordedSol[1][i] = mRecordedSol[2][i] = 0;
       else
-	 mRecordedFloats[0][i] = mRecordedFloats[1][i] = mRecordedFloats[2][i] = 0;
+         mRecordedFloats[0][i] = mRecordedFloats[1][i] = mRecordedFloats[2][i] = 0;
       if( mmax-mmin+1 > nfrsteps )
       {
          cout << "Error in TimeSeries::interpolate : Can not interpolate, " <<
-	    "because the grid is too coarse " << endl;
-	 return;
+            "because the grid is too coarse " << endl;
+         return;
       }
 
 // If too far past the end of intpfrom, extrapolate constant value
       if( ie > nfrsteps + order/2 )
       {
-	 if( m_usgsFormat )
-	 {
-	    mRecordedSol[0][i] = mRecordedSol[0][i-1];
-	    mRecordedSol[1][i] = mRecordedSol[1][i-1];
-	    mRecordedSol[2][i] = mRecordedSol[2][i-1];
-	 }
-	 else
-	 {
-	    mRecordedFloats[0][i] = mRecordedFloats[0][i-1];
+         if( m_usgsFormat )
+         {
+            mRecordedSol[0][i] = mRecordedSol[0][i-1];
+            mRecordedSol[1][i] = mRecordedSol[1][i-1];
+            mRecordedSol[2][i] = mRecordedSol[2][i-1];
+         }
+         else
+         {
+            mRecordedFloats[0][i] = mRecordedFloats[0][i-1];
             mRecordedFloats[1][i] = mRecordedFloats[1][i-1];
             mRecordedFloats[2][i] = mRecordedFloats[2][i-1];
-	 }
+         }
       }
       else if( ie < 1 )
       {
 // Before start of intpfrom, use first value
-	 if( m_usgsFormat )
-	 {
-	    mRecordedSol[0][i] = intpfrom.mRecordedSol[0][0];
-	    mRecordedSol[1][i] = intpfrom.mRecordedSol[1][0];
-	    mRecordedSol[2][i] = intpfrom.mRecordedSol[2][0];
-	 }
-	 else
-	 {
-	    mRecordedFloats[0][i] = intpfrom.mRecordedFloats[0][0];
+         if( m_usgsFormat )
+         {
+            mRecordedSol[0][i] = intpfrom.mRecordedSol[0][0];
+            mRecordedSol[1][i] = intpfrom.mRecordedSol[1][0];
+            mRecordedSol[2][i] = intpfrom.mRecordedSol[2][0];
+         }
+         else
+         {
+            mRecordedFloats[0][i] = intpfrom.mRecordedFloats[0][0];
             mRecordedFloats[1][i] = intpfrom.mRecordedFloats[1][0];
             mRecordedFloats[2][i] = intpfrom.mRecordedFloats[2][0];
-	 }
+         }
 
       }
       else
       {
          int off;
-	 if( mmin < 1 )
-	 {
-	    off = 1-mmin;
-	    mmin = mmin + off;
-	    mmax = mmax + off;
-	 }
-	 if( mmax > nfrsteps )
-	 {
-	    off = mmax - nfrsteps;
-	    mmin = mmin - off;
-	    mmax = mmax - off;
-	 }
-	 for( int m = mmin ; m <= mmax ; m++ )
-	 {
-	    float_sw4 cof=1;
-	    for( int k = mmin ; k <= mmax ; k++ )
-	       if( k != m )
-		  cof *= (ir-k)/(m-k);
+         if( mmin < 1 )
+         {
+            off = 1-mmin;
+            mmin = mmin + off;
+            mmax = mmax + off;
+         }
+         if( mmax > nfrsteps )
+         {
+            off = mmax - nfrsteps;
+            mmin = mmin - off;
+            mmax = mmax - off;
+         }
+         for( int m = mmin ; m <= mmax ; m++ )
+         {
+            float_sw4 cof=1;
+            for( int k = mmin ; k <= mmax ; k++ )
+               if( k != m )
+                  cof *= (ir-k)/(m-k);
 
-	    if( m_usgsFormat && intpfrom.m_usgsFormat )
-	    {
-	       mRecordedSol[0][i] += cof*intpfrom.mRecordedSol[0][m];
-	       mRecordedSol[1][i] += cof*intpfrom.mRecordedSol[1][m];
-	       mRecordedSol[2][i] += cof*intpfrom.mRecordedSol[2][m];
-	    }
-	    else if( m_usgsFormat && !intpfrom.m_usgsFormat )
-	    {
-	       mRecordedSol[0][i] += cof*intpfrom.mRecordedFloats[0][m];
-	       mRecordedSol[1][i] += cof*intpfrom.mRecordedFloats[1][m];
-	       mRecordedSol[2][i] += cof*intpfrom.mRecordedFloats[2][m];
-	    }
-	    else if( !m_usgsFormat && intpfrom.m_usgsFormat )
-	    {
-	       mRecordedFloats[0][i] += cof*intpfrom.mRecordedSol[0][m];
-	       mRecordedFloats[1][i] += cof*intpfrom.mRecordedSol[1][m];
-	       mRecordedFloats[2][i] += cof*intpfrom.mRecordedSol[2][m];
-	    }
-	    else if( !m_usgsFormat && !intpfrom.m_usgsFormat )
-	    {
-	       mRecordedFloats[0][i] += cof*intpfrom.mRecordedFloats[0][m];
-	       mRecordedFloats[1][i] += cof*intpfrom.mRecordedFloats[1][m];
-	       mRecordedFloats[2][i] += cof*intpfrom.mRecordedFloats[2][m];
-	    }
-	 }
+            if( m_usgsFormat && intpfrom.m_usgsFormat )
+            {
+               mRecordedSol[0][i] += cof*intpfrom.mRecordedSol[0][m];
+               mRecordedSol[1][i] += cof*intpfrom.mRecordedSol[1][m];
+               mRecordedSol[2][i] += cof*intpfrom.mRecordedSol[2][m];
+            }
+            else if( m_usgsFormat && !intpfrom.m_usgsFormat )
+            {
+               mRecordedSol[0][i] += cof*intpfrom.mRecordedFloats[0][m];
+               mRecordedSol[1][i] += cof*intpfrom.mRecordedFloats[1][m];
+               mRecordedSol[2][i] += cof*intpfrom.mRecordedFloats[2][m];
+            }
+            else if( !m_usgsFormat && intpfrom.m_usgsFormat )
+            {
+               mRecordedFloats[0][i] += cof*intpfrom.mRecordedSol[0][m];
+               mRecordedFloats[1][i] += cof*intpfrom.mRecordedSol[1][m];
+               mRecordedFloats[2][i] += cof*intpfrom.mRecordedSol[2][m];
+            }
+            else if( !m_usgsFormat && !intpfrom.m_usgsFormat )
+            {
+               mRecordedFloats[0][i] += cof*intpfrom.mRecordedFloats[0][m];
+               mRecordedFloats[1][i] += cof*intpfrom.mRecordedFloats[1][m];
+               mRecordedFloats[2][i] += cof*intpfrom.mRecordedFloats[2][m];
+            }
+         }
       }
    }
 }
 
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
-			      float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
+                              float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
 {
    //-----------------------------------------------------------------------
-   // Computes  misfit, as norm of difference between `this' and `observed'. 
-   // 
+   // Computes  misfit, as norm of difference between `this' and `observed'.
+   //
    // The misfit is assumed of the form \sum_n (u_j^n - obs(t_n-s))^2, where s is a
    // shift of the observed data. The observed data are interpolated onto the grid
    // of `this' and is set to zero outside its interval of definition.
@@ -1814,39 +2190,67 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
       bool compute_difference = (diff!=NULL);
       float_sw4** misfitsource;
-      float**     misfitsource_float;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 aw, bw;
+
+#else // SW4 backend
+float**     misfitsource_float;
       float_sw4 itau;//aw, bw,
       bool dbg = false;
       if( dbg )
       {
-         cout << "DBG " << m_staName << " use_win= " << m_use_win << 
-            " p-win=[ " << m_winL << ", " << m_winR << "]" << 
+         cout << "DBG " << m_staName << " use_win= " << m_use_win <<
+            " p-win=[ " << m_winL << ", " << m_winR << "]" <<
             " s-win=[ " << m_winL2 << ", " << m_winR2 << "]" << endl;
       }
 
-      if( m_use_win )
+
+#endif // SW4 backend
+if( m_use_win )
       {
          //	aw = M_PI/(m_winR-m_winL);
          //	bw = -aw*0.5*(m_winR+m_winL);
-        itau =1/(5*m_dt);
-      }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+aw = M_PI / (m_winR - m_winL);
+      bw = -aw * 0.5 * (m_winR + m_winL);
+
+#else // SW4 backend
+itau =1/(5*m_dt);
+
+#endif // SW4 backend
+}
       if( compute_difference )
       {
-	 if( diff->mLastTimeStep < mLastTimeStep )
-	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
-	 misfitsource = diff->getRecordingArray();
-         if( m_hdf5Format )
+         if( diff->mLastTimeStep < mLastTimeStep )
+            diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
+         misfitsource = diff->getRecordingArray();
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_hdf5Format )
             misfitsource_float = diff->getRecordingArrayFloats();
-      }
+
+#endif // SW4 backend
+}
       if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
-	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = " << m_t0+m_shift << " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "WARNING: Mismatch between observation start time and simulation "
+              "start time is large. Station Tstart = "
+
+#else // SW4 backend
+cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = "
+#endif // SW4 backend
+<< m_t0+m_shift << " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
 
       // Weight to ramp down the end of misfit.
       float_sw4 wghv;
       int p =20 ; // Number of points in ramp;
       int istart = 1; // Starting index for downward ramp.
       if( mLastTimeStep-p+1 > 1 )
-	 istart = mLastTimeStep-p+1;
+         istart = mLastTimeStep-p+1;
 
       //      cout << "in misfit, " ;
       //      if( m_use_win )
@@ -1867,244 +2271,304 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       //      cout << "in misfit t0fr= = " << t0fr << endl;
       for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
-	 wghv = 1;
-	 if( i >= istart )
-	 {
-	    float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
-	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
-	 }
+         wghv = 1;
+         if( i >= istart )
+         {
+            float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
+            wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+         }
 
 
-	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = (t-t0fr)/dtfr;
-	 int ie   = static_cast<int>(ir);
-	 //	 int mmin = ie-order/2+1;
-	 //	 int mmax = ie+order/2;
+         float_sw4 t  = m_t0 + m_shift + i*m_dt;
+         float_sw4 ir = (t-t0fr)/dtfr;
+         int ie   = static_cast<int>(ir);
+         //	 int mmin = ie-order/2+1;
+         //	 int mmax = ie+order/2;
          int mmin = ie-2;
-	 int mmax = ie+3;
-	 if( mmax-mmin+1 > nfrsteps )
-	 {
-	    cout << "Error in TimeSeries::misfit : Can not interpolate, " <<
-	       "because the grid is too coarse " << endl;
+         int mmax = ie+3;
+         if( mmax-mmin+1 > nfrsteps )
+         {
+            cout << "Error in TimeSeries::misfit : Can not interpolate, " <<
+               "because the grid is too coarse " << endl;
             cout << "mmin = " << mmin << endl;
             cout << "mmax = " << mmax << endl;
-	    cout << "nfrsteps = " << nfrsteps << endl;
-	    return 0.0;
-	 }
+            cout << "nfrsteps = " << nfrsteps << endl;
+            return 0.0;
+         }
 
 // Windowing and component selection
          float_sw4 wghx, wghy, wghz;
-	 wghx = wghy = wghz = wghv;
+         wghx = wghy = wghz = wghv;
          if( m_use_win )
-	 {
-            wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (t < m_winL || t > m_winR)
+          wghx = wghy = wghz = 0;
+        else
+          wghx = wghy = wghz = pow(cos(aw * t + bw), 10.0) * wghv;
+
+#else // SW4 backend
+wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
             // First window
-            //	   if( t < m_winL || t > m_winR ) 
+            //	   if( t < m_winL || t > m_winR )
             //              wghx = 0;
             //	   else
             //              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau)); // old fcn: pow(cos(aw*t+bw),10.0)*wghv;
 
-           // Second window 
-           if( m_winL2>0 || m_winR2>0 ) 
-           { 
+           // Second window
+           if( m_winL2>0 || m_winR2>0 )
+           {
               float_sw4 wgh2 = 0.5*(tanh((t-m_winL2)*itau) - tanh((t-m_winR2)*itau));
-              //              if( t < m_winL2 || t > m_winR2 ) 
+              //              if( t < m_winL2 || t > m_winR2 )
               //	         wgh2 = 0;
               //	      else
               //                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
               wghx = wghx >= wgh2 ? wghx : wgh2;  // take the maximum of either window weight
-           } 
+           }
            wghz = wghy = wghx;
            //        std::cout << "time=" << t << " winR2=" << m_winR2 << " wghx=" << wghx << std::endl;
-	 }
-         if( !m_use_x )
-	    wghx = 0;
-         if( !m_use_y )
-	    wghy = 0;
-         if( !m_use_z )
-	    wghz = 0;
 
-	 // If too far past the end of observed, set to zero.
-	 //	 if( ie > nfrsteps + order/2 )
-         if( ie > nfrsteps-1 )
-	 {
-	    mf[0]   = mf[1]   = mf[2]   = 0;
+#endif // SW4 backend
+}
+         if( !m_use_x )
+            wghx = 0;
+         if( !m_use_y )
+            wghy = 0;
+         if( !m_use_z )
+            wghz = 0;
+
+         // If too far past the end of observed, set to zero.
+         //	 if( ie > nfrsteps + order/2 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (ie > nfrsteps + 1) {
+
+#else // SW4 backend
+if( ie > nfrsteps-1 )
+         {
+
+#endif // SW4 backend
+mf[0]   = mf[1]   = mf[2]   = 0;
             dmf[0]  = dmf[1]  = dmf[2]  = 0;
             ddmf[0] = ddmf[1] = ddmf[2] = 0;
-	 }
+         }
          else if( ie < 1 )
-	 {
-	    // Before the starting point of the observations.
-	    mf[0]   = mf[1]   = mf[2]   = 0;
+         {
+            // Before the starting point of the observations.
+            mf[0]   = mf[1]   = mf[2]   = 0;
             dmf[0]  = dmf[1]  = dmf[2]  = 0;
             ddmf[0] = ddmf[1] = ddmf[2] = 0;
-	 }
-	 else
-	 {
-   	    mf[0]   = mf[1]   = mf[2]   = 0;
-   	    dmf[0]  = dmf[1]  = dmf[2]  = 0;
-   	    ddmf[0] = ddmf[1] = ddmf[2] = 0;
-	    //	    int off;
-	    //	    if( mmin < 1 )
-	    //	    {
-	    //	       off = 1-mmin;
-	    //	       mmin = mmin + off;
-	    //	       mmax = mmax + off;
-	    //	    }
-	    //	    if( mmax > nfrsteps )
-	    //	    {
-	    //	       off = mmax - nfrsteps;
-	    //	       mmin = mmin - off;
-	    //	       mmax = mmax - off;
-	    //	    }
+         }
+         else
+         {
+            mf[0]   = mf[1]   = mf[2]   = 0;
+            dmf[0]  = dmf[1]  = dmf[2]  = 0;
+            ddmf[0] = ddmf[1] = ddmf[2] = 0;
+            //	    int off;
+            //	    if( mmin < 1 )
+            //	    {
+            //	       off = 1-mmin;
+            //	       mmin = mmin + off;
+            //	       mmax = mmax + off;
+            //	    }
+            //	    if( mmax > nfrsteps )
+            //	    {
+            //	       off = mmax - nfrsteps;
+            //	       mmin = mmin - off;
+            //	       mmax = mmax - off;
+            //	    }
 
             float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
             if( ie < 3 )
-	    {
-	       mmin = 0;
-	       mmax = 4;
-	       ai   = ir - (mmin+2);
-	       getwgh5( ai, wgh, dwgh, ddwgh );
-            
-	    }
-	    else if( ie > nfrsteps-3 )
-	    {
-	       mmin = nfrsteps-5;
-	       mmax = nfrsteps-1;
-	       ai   = ir - (mmin+2);
-	       getwgh5( ai, wgh, dwgh, ddwgh );
-	    }
+            {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mmin = 1;
+          mmax = 5;
+
+#else // SW4 backend
+mmin = 0;
+               mmax = 4;
+
+#endif // SW4 backend
+ai   = ir - (mmin+2);
+               getwgh5( ai, wgh, dwgh, ddwgh );
+
+            }
+            else if( ie > nfrsteps-3 )
+            {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mmin = nfrsteps - 4;
+          mmax = nfrsteps;
+
+#else // SW4 backend
+mmin = nfrsteps-5;
+               mmax = nfrsteps-1;
+
+#endif // SW4 backend
+ai   = ir - (mmin+2);
+               getwgh5( ai, wgh, dwgh, ddwgh );
+            }
             else
-	    {
-	       ai = ir-(mmin+2);
-	       getwgh( ai, wgh, dwgh, ddwgh );
-	    }
+            {
+               ai = ir-(mmin+2);
+               getwgh( ai, wgh, dwgh, ddwgh );
+            }
 
             float_sw4 idtfr = 1/dtfr;
-	    float_sw4 idtfr2 = idtfr*idtfr;
-	    for( int m = mmin ; m <= mmax ; m++ )
-	    {
-	       if( observed.m_usgsFormat )
-	       {
+            float_sw4 idtfr2 = idtfr*idtfr;
+            for( int m = mmin ; m <= mmax ; m++ )
+            {
+               if( observed.m_usgsFormat )
+               {
 
-		  mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
-		  mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
-		  mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
+                  mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m];
+                  mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m];
+                  mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m];
 
-		  dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr;
-		  dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr;
-		  dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr;
+                  dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr;
+                  dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr;
+                  dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr;
 
-		  ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2;
-		  ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2;
-		  ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2;
-	       }
+                  ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2;
+                  ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2;
+                  ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2;
+               }
                else
-	       {
-		  mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m];
-		  mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m];
-		  mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m];
-		  dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr;
-		  dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr;
-		  dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr;
-		  ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2;
-		  ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2;
-		  ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
-	       }
-	    }
-	 }
-	 if( m_usgsFormat )
-	 {
-	    misfit += ( (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx + 
-			(mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy + 
-			(mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i])*wghz    );
+               {
+                  mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m];
+                  mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m];
+                  mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m];
+                  dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr;
+                  dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr;
+                  dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr;
+                  ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2;
+                  ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2;
+                  ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
+               }
+            }
+         }
+         if( m_usgsFormat )
+         {
+            misfit += ( (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx +
+                        (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy +
+                        (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i])*wghz    );
 
             dshift -= wghx*(mf[0]-mRecordedSol[0][i])*dmf[0]+
-	              wghy*(mf[1]-mRecordedSol[1][i])*dmf[1]+
-	              wghz*(mf[2]-mRecordedSol[2][i])*dmf[2];
+                      wghy*(mf[1]-mRecordedSol[1][i])*dmf[1]+
+                      wghz*(mf[2]-mRecordedSol[2][i])*dmf[2];
 
             ddshift += wghx*(mf[0]-mRecordedSol[0][i])*ddmf[0]+
-	               wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
- 	               wghz*(mf[2]-mRecordedSol[2][i])*ddmf[2] +
-	               wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
+                       wghy*(mf[1]-mRecordedSol[1][i])*ddmf[1]+
+                       wghz*(mf[2]-mRecordedSol[2][i])*ddmf[2] +
+                       wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
-	    if( compute_difference )
-	    {
-	       misfitsource[0][i] = wghx*(mRecordedSol[0][i]-mf[0]);
-	       misfitsource[1][i] = wghy*(mRecordedSol[1][i]-mf[1]);
-	       misfitsource[2][i] = wghz*(mRecordedSol[2][i]-mf[2]);
-               if( m_hdf5Format )
+            if( compute_difference )
+            {
+               misfitsource[0][i] = wghx*(mRecordedSol[0][i]-mf[0]);
+               misfitsource[1][i] = wghy*(mRecordedSol[1][i]-mf[1]);
+               misfitsource[2][i] = wghz*(mRecordedSol[2][i]-mf[2]);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_hdf5Format )
                {
                   misfitsource_float[0][i]= (float)wghx*(mRecordedSol[0][i]-mf[0]);
                   misfitsource_float[1][i]= (float)wghy*(mRecordedSol[1][i]-mf[1]);
                   misfitsource_float[2][i]= (float)wghz*(mRecordedSol[2][i]-mf[2]);
                }
-	    }
-	 }
-	 else
-	 {
-	    misfit += ( wghx*(mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) + 
-			wghy*(mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) + 
-			wghz*(mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]) );
+
+#endif // SW4 backend
+}
+         }
+         else
+         {
+            misfit += ( wghx*(mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i]) +
+                        wghy*(mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i]) +
+                        wghz*(mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i]) );
 
             dshift -= wghx*(mf[0]-mRecordedFloats[0][i])*dmf[0]+
                       wghy*(mf[1]-mRecordedFloats[1][i])*dmf[1]+
-	              wghz*(mf[2]-mRecordedFloats[2][i])*dmf[2];
+                      wghz*(mf[2]-mRecordedFloats[2][i])*dmf[2];
 
             ddshift += wghx*(mf[0]-mRecordedFloats[0][i])*ddmf[0]+
                        wghy*(mf[1]-mRecordedFloats[1][i])*ddmf[1]+
-	               wghz*(mf[2]-mRecordedFloats[2][i])*ddmf[2] + 
+                       wghz*(mf[2]-mRecordedFloats[2][i])*ddmf[2] +
                        wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
 
             dd1shift += wghx*dmf[0]*dmf[0]+wghy*dmf[1]*dmf[1]+wghz*dmf[2]*dmf[2];
-	    if( compute_difference )
-	    {
-	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
-	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
-	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
-               if( m_hdf5Format )
+            if( compute_difference )
+            {
+               misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
+               misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
+               misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_hdf5Format )
                {
                   misfitsource_float[0][i]= (float)wghx*(misfitsource[0][i]);
                   misfitsource_float[1][i]= (float)wghy*(misfitsource[1][i]);
                   misfitsource_float[2][i]= (float)wghz*(misfitsource[2][i]);
                }
-	    }
-	 }
-	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
+
+#endif // SW4 backend
+}
+         }
+         scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
       }
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
       {
-	 if( scale_factor == 0 )
-	 {
-	    cout << "WARNING: Observation contains zero data" <<
-               "1  win = " << m_winL << " " <<m_winR << " " << 
-               m_winL2 << " " << m_winR2 << 
+         if( scale_factor == 0 )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "WARNING: Observation contains zero data" << endl;
+
+#else // SW4 backend
+cout << "WARNING: Observation contains zero data" <<
+               "1  win = " << m_winL << " " <<m_winR << " " <<
+               m_winL2 << " " << m_winR2 <<
                " t0 = " << m_t0 << " shift= " << m_shift << endl;
 
-	    scale_factor=1;
-	 }
-	 float_sw4 iscale = 1/scale_factor;
-	 misfit *= iscale;
-	 if( compute_difference )
-	    for( int i=0 ; i <= mLastTimeStep ; i++ )
-	    {
-	       misfitsource[0][i] *= iscale;
-	       misfitsource[1][i] *= iscale;
-	       misfitsource[2][i] *= iscale;
-	    }
-	 if( compute_difference && m_hdf5Format )
-	    for( int i=0 ; i <= mLastTimeStep ; i++ )
-	    {
-	       misfitsource_float[0][i] *= iscale;
-	       misfitsource_float[1][i] *= iscale;
-	       misfitsource_float[2][i] *= iscale;
-	    }
-      }
+
+#endif // SW4 backend
+scale_factor=1;
+         }
+         float_sw4 iscale = 1/scale_factor;
+         misfit *= iscale;
+         if( compute_difference )
+            for( int i=0 ; i <= mLastTimeStep ; i++ )
+            {
+               misfitsource[0][i] *= iscale;
+               misfitsource[1][i] *= iscale;
+               misfitsource[2][i] *= iscale;
+            }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( compute_difference && m_hdf5Format )
+            for( int i=0 ; i <= mLastTimeStep ; i++ )
+            {
+               misfitsource_float[0][i] *= iscale;
+               misfitsource_float[1][i] *= iscale;
+               misfitsource_float[2][i] *= iscale;
+
+#endif // SW4 backend
+}
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+}
       if( dbg )
          cout << "DBG " << m_staName << " misfit= " << misfit << endl;
-   }
+
+#endif // SW4 backend
+}
    else
       misfit = 0;
    return 0.5*misfit;
@@ -2121,57 +2585,124 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
       int noptpt = 40;
       float_sw4 tlim = 2, fmax = -1e38, tmax=0;
       float_sw4 f, df, ddf;
-      if( dbg )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (dbg)
+      cout << m_event << "Compute maxshift \n 1. scan through time points "
+           << endl;
+
+#else // SW4 backend
+if( dbg )
       {
          cout << m_staName << " : " << m_global_event << "Compute maxshift \n 1. scan through time points " << endl;
       }
-      for( int n=0 ; n < noptpt ; n++ )
+
+#endif // SW4 backend
+for( int n=0 ; n < noptpt ; n++ )
       {
-	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
-	 shiftfunc( observed, tshift, f, df, ddf );
-	 if( f > fmax )
-	 {
-	    fmax = f;
-	    tmax = tshift;
-	 }
-	 if( dbg )
+         float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
+         shiftfunc( observed, tshift, f, df, ddf );
+         if( f > fmax )
+         {
+            fmax = f;
+            tmax = tshift;
+         }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (dbg) cout << m_event << "ts= " << tshift << " f= " << f << endl;
+
+#else // SW4 backend
+if( dbg )
             cout << m_staName<< " : " << m_global_event << "ts= " << tshift << " f= " << f << endl;
-      }
+
+#endif // SW4 backend
+}
       // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
-      int maxit=15, it=0;
-      float_sw4 tol=1e-12;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+int maxit = 10, it = 0;
+
+#else // SW4 backend
+int maxit=15, it=0;
+
+#endif // SW4 backend
+float_sw4 tol=1e-12;
       float_sw4 err=tol+1;
       float_sw4 t1 = tmax;
       //      t1 = 0;
-      if( dbg )
-	cout << m_global_event << " 2. Newton iteration" << endl;
-      while( it < maxit && err > tol )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (dbg) cout << m_event << " 2. Newton iteration" << endl;
+
+#else // SW4 backend
+if( dbg )
+        cout << m_global_event << " 2. Newton iteration" << endl;
+
+#endif // SW4 backend
+while( it < maxit && err > tol )
       {
-	 shiftfunc( observed, t1, f, df, ddf );
-	 float_sw4 tnew = t1 - df/ddf;
-	 err = abs(tnew-t1);
-	 t1=tnew;
-	 it++;
-	 if( dbg )
+         shiftfunc( observed, t1, f, df, ddf );
+         float_sw4 tnew = t1 - df/ddf;
+         err = abs(tnew-t1);
+         t1=tnew;
+         it++;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (dbg) cout << m_event << " it " << it << " err " << err << endl;
+
+#else // SW4 backend
+if( dbg )
             cout << m_staName << " : " << m_global_event << " it " << it << " err " << err << endl;
-      }
+
+#endif // SW4 backend
+}
       //      if( err < tol )
-      if( f > fmax ) // && ( -tlim <= t1 && t1 <= tlim ) )
+
+if( f > fmax ) // && ( -tlim <= t1 && t1 <= tlim ) )
       {
-	 tmax = t1;
-	 if( err > tol )
-	 {
-	    cout << m_staName << " ERROR: No convergence in compute_maxshift, err= " << err << endl;
-	 }
-	 if( ddf >= 0 )
-	 {
-	    cout << m_staName << " ERROR: compute_maxshift found a minimum,  f'' = " << ddf << endl;
-	 }
-      }
+
+tmax = t1;
+         if( err > tol )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "ERROR: No convergence in compute_maxshift, err= " << err
+
+#else // SW4 backend
+cout << m_staName << " ERROR: No convergence in compute_maxshift, err= " << err
+#endif // SW4 backend
+<< endl;
+         }
+         if( ddf >= 0 )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "ERROR: compute_maxshift found a minimum,  f'' = " << ddf
+
+#else // SW4 backend
+cout << m_staName << " ERROR: compute_maxshift found a minimum,  f'' = " << ddf
+#endif // SW4 backend
+<< endl;
+         }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+}
+
+#else // SW4 backend
+}
       else
          cout << m_staName << " WARNING: compute_maxshift:  max shift not determined by f'=0" << endl;
-      if( dbg )
-         cout << m_staName << " : " << m_global_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
+
+#endif // SW4 backend
+if( dbg )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << m_event << " Found optimal time shift = " << tmax << " df= " << df
+
+#else // SW4 backend
+cout << m_staName << " : " << m_global_event << " Found optimal time shift = " << tmax << " df= " << df
+#endif // SW4 backend
+<< " f= " << f << " fmax= " << fmax << endl;
       return tmax;
    }
    else
@@ -2180,7 +2711,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 
 //-----------------------------------------------------------------------
 void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
-			    float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc )
+                            float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc )
 {
 // Interpolate data to this object
 
@@ -2198,17 +2729,32 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
    func = dfunc = ddfunc = 0;
    bool compute_adjsrc = adjsrc != NULL;
    //   float_sw4 scale_factor=0;
-      
-   float_sw4 itaufr, itau;//aw, bw,
-   if( m_use_win )
+
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 aw, bw;
+
+#else // SW4 backend
+float_sw4 itaufr, itau;//aw, bw,
+
+#endif // SW4 backend
+if( m_use_win )
    {
       //      aw = M_PI/(m_winR-m_winL);
       //      bw = -aw*0.5*(m_winR+m_winL);
 
       //      itaufr = 1/(2*dtfr);
-      itau   = 1/(5*m_dt);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+aw = M_PI / (m_winR - m_winL);
+    bw = -aw * 0.5 * (m_winR + m_winL);
+
+#else // SW4 backend
+itau   = 1/(5*m_dt);
       itaufr = itau;
-   }
+
+#endif // SW4 backend
+}
 
    // Weight to ramp down the end of misfit.
    float_sw4 wghv;
@@ -2218,7 +2764,10 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       istart = mLastTimeStep-p+1;
 
     // allocate space for a copy
-   float** obs_windowed = new float*[observed.m_nComp];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+float** obs_windowed = new float*[observed.m_nComp];
    if( nfrsteps > 0 )
    {
       for( int q=0 ; q < observed.m_nComp; q++ )
@@ -2229,18 +2778,18 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       float_sw4 wghxobs, wghyobs, wghzobs;
       wghxobs = wghyobs = wghzobs=1.;
       if( m_use_win )
-      {         
-         double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time 
-	       // Window data in this object w(t_n+tshift)
+      {
+         double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time
+               // Window data in this object w(t_n+tshift)
          wghxobs= 0.5*tanh((tobs-m_winL)*itaufr) - 0.5*tanh((tobs-m_winR)*itaufr);
-         //         if( tobs < m_winL || tobs > m_winR ) 
+         //         if( tobs < m_winL || tobs > m_winR )
          //            wghxobs = 0.;
          //         else
          //            wghxobs= 0.5*tanhf((tobs-m_winL)*itaufr) - 0.5*tanhf((tobs-m_winR)*itaufr);
-         if(m_winL2>0 || m_winR2>0 ) 
-         {  
+         if(m_winL2>0 || m_winR2>0 )
+         {
             float_sw4 wghobs2= 0.5*tanh((tobs-m_winL2)*itaufr) - 0.5*tanh((tobs-m_winR2)*itaufr);   //windowing of waveform
-            //            if( tobs < m_winL2 || tobs > m_winR2 )  
+            //            if( tobs < m_winL2 || tobs > m_winR2 )
             //               wghobs2 = 0;
             //            else
             //               wghobs2= 0.5*tanhf((tobs-m_winL2)*itaufr) - 0.5*tanhf((tobs-m_winR2)*itaufr);   //windowing of waveform
@@ -2257,7 +2806,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       if( !m_use_z )
          wghzobs = 0;
 
-      if( observed.m_usgsFormat ) 
+      if( observed.m_usgsFormat )
       {
          obs_windowed[0][i] = observed.mRecordedSol[0][i];
          obs_windowed[1][i] = observed.mRecordedSol[1][i];
@@ -2269,20 +2818,22 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
          obs_windowed[1][i] = observed.mRecordedFloats[1][i];
          obs_windowed[2][i] = observed.mRecordedFloats[2][i];
       }
-      //      if( !compute_adjsrc ) 
+      //      if( !compute_adjsrc )
       {
          obs_windowed[0][i] *= wghxobs;
          obs_windowed[1][i] *= wghxobs;
-         obs_windowed[2][i] *= wghxobs;     
+         obs_windowed[2][i] *= wghxobs;
       }
    }
-   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+
+#endif // SW4 backend
+for( int i= 0 ; i <= mLastTimeStep ; i++ )
    {
       wghv = 1;
       if( i >= istart )
       {
-	 float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
-	 wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+         float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
+         wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
       }
       float_sw4 t  = m_t0 + m_shift + i*m_dt + tshift;
       float_sw4 ir = (t-t0fr)/dtfr;
@@ -2294,41 +2845,51 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       int mmax = ie+3;
       if( mmax-mmin+1 > nfrsteps )
       {
-	 cout << "Error in TimeSeries::shiftfunc : Can not interpolate, " <<
-	    "because the grid is too coarse " << endl;
-	 cout << "mmin = " << mmin << endl;
-	 cout << "mmax = " << mmax << endl;
-	 cout << "nfrsteps = " << nfrsteps << endl;
-	 return;
+         cout << "Error in TimeSeries::shiftfunc : Can not interpolate, " <<
+            "because the grid is too coarse " << endl;
+         cout << "mmin = " << mmin << endl;
+         cout << "mmax = " << mmax << endl;
+         cout << "nfrsteps = " << nfrsteps << endl;
+         return;
       }
 // Windowing and component selection
       float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
       if( m_use_win )
       {
-	 // Window data in this object w(t_n)
-         wghx = 0.5*tanh((t-tshift-m_winL)*itau) - 0.5*tanh((t-tshift-m_winR)*itau);
-         //	 if( t-tshift < m_winL || t-tshift > m_winR ) 
+         // Window data in this object w(t_n)
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (t - tshift < m_winL || t - tshift > m_winR)
+        wghx = wghy = wghz = 0;
+      else
+        wghx = wghy = wghz = pow(cos(aw * (t - tshift) + bw), 5.0) * wghv;
+
+#else // SW4 backend
+wghx = 0.5*tanh((t-tshift-m_winL)*itau) - 0.5*tanh((t-tshift-m_winR)*itau);
+         //	 if( t-tshift < m_winL || t-tshift > m_winR )
          //	    wghx = 0;
          //	 else
          //            wghx = 0.5*tanhf((t-tshift-m_winL)*itau) - 0.5*tanhf((t-tshift-m_winR)*itau);
-         if( m_winL2>0 || m_winR2>0) 
+         if( m_winL2>0 || m_winR2>0)
          {
             float_sw4 wgh2= 0.5*tanh((t-tshift-m_winL2)*itau) - 0.5*tanh((t-tshift-m_winR2)*itau);
-            //            if( t-tshift < m_winL2 || t-tshift > m_winR2 ) 
+            //            if( t-tshift < m_winL2 || t-tshift > m_winR2 )
             //	         wgh2 = 0;
             //            else
             //               wgh2= 0.5*tanhf((t-tshift-m_winL2)*itau) - 0.5*tanhf((t-tshift-m_winR2)*itau);
             wghx = (wghx >= wgh2? wghx : wgh2);  // take the maximum of either window weight
          }
          wghz = wghy = wghx;
-      }
+
+#endif // SW4 backend
+}
       if( !m_use_x )
-	 wghx = 0;
+         wghx = 0;
       if( !m_use_y )
-	 wghy = 0;
+         wghy = 0;
       if( !m_use_z )
-	 wghz = 0;
+         wghz = 0;
 
 // Set to zero before the starting point of the observations, or past end of observed data.
       mf[0]   = mf[1]   = mf[2]   = 0;
@@ -2336,78 +2897,162 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       ddmf[0] = ddmf[1] = ddmf[2] = 0;
       if(  1 <= ie && ie <= nfrsteps )
       {
-	 float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
-	 if( ie < 3 )
-	 {
-	    mmin = 0;
-	    mmax = 4;
-	    ai   = ir - (mmin+2);
-	    getwgh5( ai, wgh, dwgh, ddwgh );
-	 }
-	 else if( ie > nfrsteps-3 )
-	 {
-	    mmin = nfrsteps-5;
-	    mmax = nfrsteps-1;
-	    ai   = ir - (mmin+2);
-	    getwgh5( ai, wgh, dwgh, ddwgh );
-	 }
-	 else
-	 {
-	    ai = ir-(mmin+2);
-	    getwgh( ai, wgh, dwgh, ddwgh );
-	 }
-	 for( int m = mmin ; m <= mmax ; m++ )
-	 {
-            mf[0]   += wgh[m-mmin]*obs_windowed[0][m];
+         float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
+         if( ie < 3 )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mmin = 1;
+        mmax = 5;
+
+#else // SW4 backend
+mmin = 0;
+            mmax = 4;
+
+#endif // SW4 backend
+ai   = ir - (mmin+2);
+            getwgh5( ai, wgh, dwgh, ddwgh );
+         }
+         else if( ie > nfrsteps-3 )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+mmin = nfrsteps - 4;
+        mmax = nfrsteps;
+
+#else // SW4 backend
+mmin = nfrsteps-5;
+            mmax = nfrsteps-1;
+
+#endif // SW4 backend
+ai   = ir - (mmin+2);
+            getwgh5( ai, wgh, dwgh, ddwgh );
+         }
+         else
+         {
+            ai = ir-(mmin+2);
+            getwgh( ai, wgh, dwgh, ddwgh );
+         }
+         for( int m = mmin ; m <= mmax ; m++ )
+         {
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+mf[0]   += wgh[m-mmin]*obs_windowed[0][m];
             mf[1]   += wgh[m-mmin]*obs_windowed[1][m];
             mf[2]   += wgh[m-mmin]*obs_windowed[2][m];
 
-            dmf[0]  += dwgh[m-mmin]*obs_windowed[0][m]*idtfr;
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 wghxobs, wghyobs, wghzobs;
+        wghxobs = wghyobs = wghzobs = 1;
+        if (m_use_win) {
+          double tobs = m * dtfr + t0fr;  // t_n+tshift in Observation time
+          // Window data in this object w(t_n+tshift)
+
+#else // SW4 backend
+dmf[0]  += dwgh[m-mmin]*obs_windowed[0][m]*idtfr;
             dmf[1]  += dwgh[m-mmin]*obs_windowed[1][m]*idtfr;
             dmf[2]  += dwgh[m-mmin]*obs_windowed[2][m]*idtfr;
 
-            ddmf[0] += ddwgh[m-mmin]*obs_windowed[0][m]*idtfr2;
+
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (tobs < m_winL || tobs > m_winR)
+            wghxobs = wghyobs = wghzobs = 0;
+          else
+            wghxobs = wghyobs = wghzobs = pow(cos(aw * (tobs) + bw), 5.0);
+        }
+
+        if (observed.m_usgsFormat) {
+          mf[0] += wgh[m - mmin] * observed.mRecordedSol[0][m] * wghxobs;
+          mf[1] += wgh[m - mmin] * observed.mRecordedSol[1][m] * wghyobs;
+          mf[2] += wgh[m - mmin] * observed.mRecordedSol[2][m] * wghzobs;
+
+          dmf[0] +=
+              dwgh[m - mmin] * observed.mRecordedSol[0][m] * idtfr * wghxobs;
+          dmf[1] +=
+              dwgh[m - mmin] * observed.mRecordedSol[1][m] * idtfr * wghyobs;
+          dmf[2] +=
+              dwgh[m - mmin] * observed.mRecordedSol[2][m] * idtfr * wghzobs;
+
+          ddmf[0] +=
+              ddwgh[m - mmin] * observed.mRecordedSol[0][m] * idtfr2 * wghxobs;
+          ddmf[1] +=
+              ddwgh[m - mmin] * observed.mRecordedSol[1][m] * idtfr2 * wghyobs;
+          ddmf[2] +=
+              ddwgh[m - mmin] * observed.mRecordedSol[2][m] * idtfr2 * wghzobs;
+        } else {
+          mf[0] += wgh[m - mmin] * observed.mRecordedFloats[0][m] * wghxobs;
+          mf[1] += wgh[m - mmin] * observed.mRecordedFloats[1][m] * wghyobs;
+          mf[2] += wgh[m - mmin] * observed.mRecordedFloats[2][m] * wghzobs;
+
+          dmf[0] +=
+              dwgh[m - mmin] * observed.mRecordedFloats[0][m] * idtfr * wghxobs;
+          dmf[1] +=
+              dwgh[m - mmin] * observed.mRecordedFloats[1][m] * idtfr * wghyobs;
+          dmf[2] +=
+              dwgh[m - mmin] * observed.mRecordedFloats[2][m] * idtfr * wghzobs;
+
+          ddmf[0] += ddwgh[m - mmin] * observed.mRecordedFloats[0][m] * idtfr2 *
+                     wghxobs;
+          ddmf[1] += ddwgh[m - mmin] * observed.mRecordedFloats[1][m] * idtfr2 *
+                     wghyobs;
+          ddmf[2] += ddwgh[m - mmin] * observed.mRecordedFloats[2][m] * idtfr2 *
+                     wghzobs;
+        }
+
+#else // SW4 backend
+ddmf[0] += ddwgh[m-mmin]*obs_windowed[0][m]*idtfr2;
             ddmf[1] += ddwgh[m-mmin]*obs_windowed[1][m]*idtfr2;
             ddmf[2] += ddwgh[m-mmin]*obs_windowed[2][m]*idtfr2;
-	     
-         }
+
+
+#endif // SW4 backend
+}
       }
       if( m_usgsFormat )
       {
-	 func += ( mf[0]*mRecordedSol[0][i]*wghx + 
-		   mf[1]*mRecordedSol[1][i]*wghy + 
-		   mf[2]*mRecordedSol[2][i]*wghz   );
-	 dfunc += ( dmf[0]*mRecordedSol[0][i]*wghx + 
-		    dmf[1]*mRecordedSol[1][i]*wghy + 
-		    dmf[2]*mRecordedSol[2][i]*wghz   );
-	 ddfunc += ( ddmf[0]*mRecordedSol[0][i]*wghx + 
-		     ddmf[1]*mRecordedSol[1][i]*wghy + 
-		     ddmf[2]*mRecordedSol[2][i]*wghz   );
+         func += ( mf[0]*mRecordedSol[0][i]*wghx +
+                   mf[1]*mRecordedSol[1][i]*wghy +
+                   mf[2]*mRecordedSol[2][i]*wghz   );
+         dfunc += ( dmf[0]*mRecordedSol[0][i]*wghx +
+                    dmf[1]*mRecordedSol[1][i]*wghy +
+                    dmf[2]*mRecordedSol[2][i]*wghz   );
+         ddfunc += ( ddmf[0]*mRecordedSol[0][i]*wghx +
+                     ddmf[1]*mRecordedSol[1][i]*wghy +
+                     ddmf[2]*mRecordedSol[2][i]*wghz   );
       }
       else
       {
-	 func += ( mf[0]*mRecordedFloats[0][i]*wghx + 
-	           mf[1]*mRecordedFloats[1][i]*wghy + 
-	 	   mf[2]*mRecordedFloats[2][i]*wghz );
-	 dfunc += ( dmf[0]*mRecordedFloats[0][i]*wghx + 
-	            dmf[1]*mRecordedFloats[1][i]*wghy + 
-	 	    dmf[2]*mRecordedFloats[2][i]*wghz );
-	 ddfunc += ( ddmf[0]*mRecordedFloats[0][i]*wghx + 
-	             ddmf[1]*mRecordedFloats[1][i]*wghy + 
-	 	     ddmf[2]*mRecordedFloats[2][i]*wghz );
+         func += ( mf[0]*mRecordedFloats[0][i]*wghx +
+                   mf[1]*mRecordedFloats[1][i]*wghy +
+                   mf[2]*mRecordedFloats[2][i]*wghz );
+         dfunc += ( dmf[0]*mRecordedFloats[0][i]*wghx +
+                    dmf[1]*mRecordedFloats[1][i]*wghy +
+                    dmf[2]*mRecordedFloats[2][i]*wghz );
+         ddfunc += ( ddmf[0]*mRecordedFloats[0][i]*wghx +
+                     ddmf[1]*mRecordedFloats[1][i]*wghy +
+                     ddmf[2]*mRecordedFloats[2][i]*wghz );
       }
       //      scale_factor += wghx*mf[0]*mf[0] + wghy*mf[1]*mf[1] + wghz*mf[2]*mf[2];
 
       if( compute_adjsrc )
       {
-	 adjsrc[0][i] = -tshift*wghx*dmf[0];
-	 adjsrc[1][i] = -tshift*wghy*dmf[1];
-	 adjsrc[2][i] = -tshift*wghz*dmf[2];
+         adjsrc[0][i] = -tshift*wghx*dmf[0];
+         adjsrc[1][i] = -tshift*wghy*dmf[1];
+         adjsrc[2][i] = -tshift*wghz*dmf[2];
       }
    }
    if( compute_adjsrc )
    {
-      float_sw4 iddf;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 iddf = 1 / ddfunc;
+
+#else // SW4 backend
+float_sw4 iddf;
       if( ddfunc == 0 )
       {
          std::cout <<"TimeSeries::shiftfunc: WARNING ddf = 0 " << std::endl;
@@ -2416,22 +3061,29 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       else
          iddf=1/ddfunc;
 
-      for( int i= 0 ; i <= mLastTimeStep ; i++ )      
+
+#endif // SW4 backend
+for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
-	 adjsrc[0][i] *= iddf;
-	 adjsrc[1][i] *= iddf;
-	 adjsrc[2][i] *= iddf;
+         adjsrc[0][i] *= iddf;
+         adjsrc[1][i] *= iddf;
+         adjsrc[2][i] *= iddf;
       }
-   }
-   if(obs_windowed) 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+}
+   if(obs_windowed)
    {
       for (int q=0; q<observed.m_nComp; q++)
       {
-         if (obs_windowed[q]) 
+         if (obs_windowed[q])
             delete [] obs_windowed[q];
       }
       delete [] obs_windowed;
-   }
+
+#endif // SW4 backend
+}
 }
 
 //-----------------------------------------------------------------------
@@ -2445,16 +3097,28 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
    float_sw4 misfit = 0;
    if( m_myPoint )
    {
-      if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (abs(m_t0 + m_shift - (observed.m_t0 + observed.m_shift)) > 100)
+      cout << "WARNING: Mismatch between observation start time and simulation "
+              "start time is large. "
+
+#else // SW4 backend
+if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
       {
-	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. " << 
-                    "Station Tstart = " << m_t0+m_shift << 
+         cout <<"WARNING: Mismatch between observation start time and simulation start time is large. "
+#endif // SW4 backend
+<<
+                    "Station Tstart = " << m_t0+m_shift <<
                " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
-         cout << "station utc = " << m_utc[0] << " " << m_utc[1] << " " << m_utc[2] 
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+cout << "station utc = " << m_utc[0] << " " << m_utc[1] << " " << m_utc[2]
               << m_utc[3] << " " << m_utc[4] << " " << m_utc[5] << " " << m_utc[6] << endl;
          int sutc[7];
          m_ew->get_utc(sutc);
-         cout << "simulation utc = " << sutc[0] << " " << sutc[1] << " " << sutc[2] 
+         cout << "simulation utc = " << sutc[0] << " " << sutc[1] << " " << sutc[2]
               << sutc[3] << " " << sutc[4] << " " << sutc[5] << " " << sutc[6] << endl;
          cout << "Observation t0 = " <<observed.m_t0 << " shift= " << observed.m_shift << endl;
          cout << " station  t0 = " << m_t0 << " shift= " << m_shift << endl;
@@ -2462,21 +3126,23 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
       // DEBUG
       //      if( m_myPoint && m_staName=="GS.CN181" )
       //      {
-      //         cout << "station GS.CN181, window lims "  
-      //              << m_winL << " " << m_winR  << " " 
+      //         cout << "station GS.CN181, window lims "
+      //              << m_winL << " " << m_winR  << " "
       //              << m_winL2 << " " << m_winR2 << endl;
       //      }
-      float_sw4 ms=compute_maxshift( observed );
+
+#endif // SW4 backend
+float_sw4 ms=compute_maxshift( observed );
       misfit = 0.5*ms*ms;
 
       if( diff != NULL )
       {
-	 float_sw4 f, df, ddf;
-	 float_sw4** misfitsource;
-	 if( diff->mLastTimeStep < mLastTimeStep )
-	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
-	 misfitsource = diff->getRecordingArray();
-	 shiftfunc( observed, ms, f, df, ddf, misfitsource );
+         float_sw4 f, df, ddf;
+         float_sw4** misfitsource;
+         if( diff->mLastTimeStep < mLastTimeStep )
+            diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
+         misfitsource = diff->getRecordingArray();
+         shiftfunc( observed, ms, f, df, ddf, misfitsource );
          // DBG
          //         cout << m_staName << " shift = " << ms << " f= " << f << " df= " << df << " ddf= " << ddf <<endl;
          //         float_sw4 h=1e-6, fp, dfp, ddfp, fm, dfm, ddfm;
@@ -2484,7 +3150,8 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
          //	 shiftfunc( observed, ms-h, fm, dfm, ddfm );
          //         cout << m_staName << " num df= " << (fp-fm)/(2*h) << " num ddf= " << (dfp-dfm)/(2*h) << endl;
          // end DBG
-      }
+
+}
    }
    return misfit;
 }
@@ -2493,14 +3160,14 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
 TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
 {
    string hdf5name = m_hdf5Name;
-   if( addname ) 
+   if( addname )
    {
-      hdf5name = m_hdf5Name + filename; 
+      hdf5name = m_hdf5Name + filename;
       filename = m_fileName + filename;
    }
 
-   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, hdf5name, 
-					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, mDownSample, m_xyzcomponent, m_event );
+   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, hdf5name,
+                                        mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, mDownSample, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;
    retval->m_shift = m_shift;
@@ -2527,49 +3194,62 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
 // UTC time reference point:
    for( int c=0; c < 7; c++ )
       retval->m_utc[c] = m_utc[c];
-	 
+
 // windows and exclusions
    retval->m_use_win = m_use_win;
    retval->m_winL = m_winL;
    retval->m_winR = m_winR;
-   retval->m_winL2 = m_winL2;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+retval->m_winL2 = m_winL2;
    retval->m_winR2 = m_winR2;
-   retval->m_use_x = m_use_x;
+
+#endif // SW4 backend
+retval->m_use_x = m_use_x;
    retval->m_use_y = m_use_y;
    retval->m_use_z = m_use_z;
    if( m_myPoint )
    {
       if( m_sacFormat )
       {
-	 // Overwrite pointers, don't want to copy them.
-	 retval->mRecordedFloats = new float*[m_nComp];
-	 if( mAllocatedSize > 0 )
-	 {
-	    for( int q=0 ; q < m_nComp ; q++ )
-	       retval->mRecordedFloats[q] = new float[mAllocatedSize];
-	    for( int q=0 ; q < m_nComp ; q++ )
-	       for( int i=0 ; i < mAllocatedSize ; i++ )
-		  retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
-	 }
-	 else
-	 {
-	    for( int q=0 ; q < m_nComp ; q++ )
-	       retval->mRecordedFloats[q] = NULL;
-	 }
+         // Overwrite pointers, don't want to copy them.
+         retval->mRecordedFloats = new float*[m_nComp];
+         if( mAllocatedSize > 0 )
+         {
+            for( int q=0 ; q < m_nComp ; q++ )
+               retval->mRecordedFloats[q] = new float[mAllocatedSize];
+            for( int q=0 ; q < m_nComp ; q++ )
+               for( int i=0 ; i < mAllocatedSize ; i++ )
+                  retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
+         }
+         else
+         {
+            for( int q=0 ; q < m_nComp ; q++ )
+               retval->mRecordedFloats[q] = NULL;
+         }
       }
       else
       {
-	 retval->mRecordedSol = new float_sw4*[m_nComp];
-         if( m_hdf5Format )  
+         retval->mRecordedSol = new float_sw4*[m_nComp];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_hdf5Format )
             retval->mRecordedFloats = new float*[m_nComp];
-	 if( mAllocatedSize > 0 )
-	 {
-	    for( int q=0 ; q < m_nComp ; q++ )
-	       retval->mRecordedSol[q] = new float_sw4[mAllocatedSize];
-	    for( int q=0 ; q < m_nComp ; q++ )
-	       for( int i=0 ; i < mAllocatedSize ; i++ )
-		  retval->mRecordedSol[q][i] = mRecordedSol[q][i];
-            if( m_hdf5Format )
+
+#endif // SW4 backend
+if( mAllocatedSize > 0 )
+         {
+            for( int q=0 ; q < m_nComp ; q++ )
+               retval->mRecordedSol[q] = new float_sw4[mAllocatedSize];
+            for( int q=0 ; q < m_nComp ; q++ )
+               for( int i=0 ; i < mAllocatedSize ; i++ )
+                  retval->mRecordedSol[q][i] = mRecordedSol[q][i];
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if( m_hdf5Format )
             {
                for( int q=0 ; q < m_nComp ; q++ )
                   retval->mRecordedFloats[q] = new float[mAllocatedSize];
@@ -2577,17 +3257,24 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
                   for( int i=0 ; i < mAllocatedSize ; i++ )
                      retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
             }
-	 }
-	 else
-	 {
-	    for( int q=0 ; q < m_nComp ; q++ )
-	       retval->mRecordedSol[q] = NULL;
-            if(m_hdf5Format) 
+
+#endif // SW4 backend
+}
+         else
+         {
+            for( int q=0 ; q < m_nComp ; q++ )
+               retval->mRecordedSol[q] = NULL;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+if(m_hdf5Format)
             {
                for( int q=0 ; q < m_nComp ; q++ )
                   retval->mRecordedFloats[q] = NULL;
             }
-	 }
+
+#endif // SW4 backend
+}
       }
    }
    return retval;
@@ -2599,42 +3286,50 @@ float_sw4 TimeSeries::arrival_time( float_sw4 lod )
   // Assume three components
    if( m_nComp != 3 )
    {
-      cout << "ERROR: TimeSeries::arrival_time: Number of components must be three";
-      cout << " not " << m_nComp << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "ERROR: TimeSeries::arrival_time: Number of components must be "
+            "three";
+
+#else // SW4 backend
+cout << "ERROR: TimeSeries::arrival_time: Number of components must be three";
+
+#endif // SW4 backend
+cout << " not " << m_nComp << endl;
       return -1;
    }
 
    float_sw4* maxes = new float_sw4[m_nComp];
    for( int c=0 ; c < m_nComp ; c++ )
       maxes[c] = 0;
-   
+
    int n;
    if( m_usgsFormat )
    {
       for( int i=0 ; i <= mLastTimeStep ; i++ )
-	 for( int c=0 ; c < m_nComp ; c++ )
-	    if( fabs(mRecordedSol[c][i]) > maxes[c] )
-	       maxes[c] = fabs(mRecordedSol[c][i]);
+         for( int c=0 ; c < m_nComp ; c++ )
+            if( fabs(mRecordedSol[c][i]) > maxes[c] )
+               maxes[c] = fabs(mRecordedSol[c][i]);
       n=0;
   //            cout << "max = " << maxes[0] << " " << maxes[1] << " " << maxes[2] << endl;
       while( fabs(mRecordedSol[0][n])<maxes[0]*lod &&
-	     fabs(mRecordedSol[1][n])<maxes[1]*lod &&
-	     fabs(mRecordedSol[2][n])<maxes[2]*lod &&
-	     n < mLastTimeStep )
-	 n++;
+             fabs(mRecordedSol[1][n])<maxes[1]*lod &&
+             fabs(mRecordedSol[2][n])<maxes[2]*lod &&
+             n < mLastTimeStep )
+         n++;
    }
    else
    {
       for( int i=0 ; i <= mLastTimeStep ; i++ )
-	 for( int c=0 ; c < m_nComp ; c++ )
-	    if( fabs(mRecordedFloats[c][i]) > maxes[c] )
-	       maxes[c] = fabs(mRecordedFloats[c][i]);
+         for( int c=0 ; c < m_nComp ; c++ )
+            if( fabs(mRecordedFloats[c][i]) > maxes[c] )
+               maxes[c] = fabs(mRecordedFloats[c][i]);
       n=0;
       while( fabs(mRecordedFloats[0][n])<maxes[0]*lod &&
-	     fabs(mRecordedFloats[1][n])<maxes[1]*lod &&
-	     fabs(mRecordedFloats[2][n])<maxes[2]*lod &&
-	     n < mLastTimeStep )
-	 n++;
+             fabs(mRecordedFloats[1][n])<maxes[1]*lod &&
+             fabs(mRecordedFloats[2][n])<maxes[2]*lod &&
+             n < mLastTimeStep )
+         n++;
    }
 
    delete[] maxes;
@@ -2643,30 +3338,48 @@ float_sw4 TimeSeries::arrival_time( float_sw4 lod )
 
 //-----------------------------------------------------------------------
 void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
-				 std::vector<float_sw4> & h, float_sw4 dt,
-				 vector<Sarray>& Jac, bool topography_exists )
+                                 std::vector<float_sw4> & h, float_sw4 dt,
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+Sarray& Jac, bool topography_exists) {
+  // Use at grid point, n, in the grid of this object.
+
+#else // SW4 backend
+vector<Sarray>& Jac, bool topography_exists )
 {
    // Use at grid point, n, in the grid of this object.
-   if( m_myPoint )
+
+#endif // SW4 backend
+if( m_myPoint )
    {
       float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
       float_sw4 ih3 = 1.0/(h[m_grid0]*h[m_grid0]*h[m_grid0]);
-      if( topography_exists && m_grid0 >= m_ew->mNumberOfCartesianGrids )
-	 ih3 = 1.0/Jac[m_grid0](m_i0,m_j0,m_k0);
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (topography_exists && m_grid0 == h.size() - 1)
+      ih3 = 1.0 / Jac(m_i0, m_j0, m_k0);
+
+    //      float_sw4 ih3 = 1.0;
+
+#else // SW4 backend
+if( topography_exists && m_grid0 >= m_ew->mNumberOfCartesianGrids )
+         ih3 = 1.0/Jac[m_grid0](m_i0,m_j0,m_k0);
 
       //      float_sw4 ih3 = 1.0;
-      float_sw4 iwgh = 1.0;
+
+#endif // SW4 backend
+float_sw4 iwgh = 1.0;
       if( 1 <= m_k0 && m_k0 <= 4  )
-	 iwgh = 1.0/normwgh[m_k0-1];
+         iwgh = 1.0/normwgh[m_k0-1];
       ih3 *= iwgh;
       // Compensate for  dt^4/12 factor in forward corrector step.
       ih3 *= 12/(dt*dt);
       //      n = static_cast<int>(round( (t-m_t0)/m_dt ));
       if( n >= 0 && n <= mLastTimeStep )
       {
-	 f[m_grid0](1,m_i0,m_j0,m_k0) -= mRecordedSol[0][n]*ih3;
-	 f[m_grid0](2,m_i0,m_j0,m_k0) -= mRecordedSol[1][n]*ih3;
-	 f[m_grid0](3,m_i0,m_j0,m_k0) -= mRecordedSol[2][n]*ih3;
+         f[m_grid0](1,m_i0,m_j0,m_k0) -= mRecordedSol[0][n]*ih3;
+         f[m_grid0](2,m_i0,m_j0,m_k0) -= mRecordedSol[1][n]*ih3;
+         f[m_grid0](3,m_i0,m_j0,m_k0) -= mRecordedSol[2][n]*ih3;
       }
    }
 }
@@ -2682,9 +3395,9 @@ float_sw4 TimeSeries::product( TimeSeries& ts ) const
 #pragma omp parallel for reduction(+:prod)
       for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
-	 prod += ts.mRecordedSol[0][i]*mRecordedSol[0][i] +
-	    ts.mRecordedSol[1][i]*mRecordedSol[1][i] + 
-	    ts.mRecordedSol[2][i]*mRecordedSol[2][i];
+         prod += ts.mRecordedSol[0][i]*mRecordedSol[0][i] +
+            ts.mRecordedSol[1][i]*mRecordedSol[1][i] +
+            ts.mRecordedSol[2][i]*mRecordedSol[2][i];
       }
    }
    else
@@ -2729,7 +3442,7 @@ float_sw4 TimeSeries::product( TimeSeries& ts ) const
 //	    wghz = 0;
 //
 //	 prod += (ts.mRecordedSol[0][i]*mRecordedSol[0][i]*wghx +
-//  	          ts.mRecordedSol[1][i]*mRecordedSol[1][i]*wghy + 
+//  	          ts.mRecordedSol[1][i]*mRecordedSol[1][i]*wghy +
 //	          ts.mRecordedSol[2][i]*mRecordedSol[2][i]*wghz );
 //      }
 //   }
@@ -2739,6 +3452,47 @@ float_sw4 TimeSeries::product( TimeSeries& ts ) const
 //}
 
 //-----------------------------------------------------------------------
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
+  // Product which uses weighting, for computing Hessian
+  float_sw4 prod = 0;
+  if (mLastTimeStep == ts.mLastTimeStep) {
+    // Weight to ramp down the end of misfit.
+    int p = 20;  // Number of points in ramp;
+    int istart = 1;
+    if (mLastTimeStep - p + 1 > 1) istart = mLastTimeStep - p + 1;
+
+#pragma omp parallel for reduction(+ : prod)
+    for (int i = 0; i <= mLastTimeStep; i++) {
+      float_sw4 wghv = 1;
+      if (i >= istart) {
+        float_sw4 arg = (mLastTimeStep - i) / (p - 1.0);
+        wghv = arg * arg * arg * arg *
+               (35 - 84 * arg + 70 * arg * arg - 20 * arg * arg * arg);
+      }
+
+      // Windowing and component selection
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+float_sw4 wghx, wghy, wghz;
+      wghx = wghy = wghz = wghv;
+      float_sw4 t = m_t0 + i * m_dt;
+      if (m_use_win && (t < m_winL || t > m_winR)) wghx = wghy = wghz = 0;
+      if (!m_use_x) wghx = 0;
+      if (!m_use_y) wghy = 0;
+      if (!m_use_z) wghz = 0;
+
+
+#else // SW4 backend
+#endif // SW4 backend
+#if defined(SW4_USE_RAJA) // SW4 backend
+prod += (ts.mRecordedSol[0][i] * mRecordedSol[0][i] * wghx +
+               ts.mRecordedSol[1][i] * mRecordedSol[1][i] * wghy +
+               ts.mRecordedSol[2][i] * mRecordedSol[2][i] * wghz);
+
+#else // SW4 backend
 void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
 {
 
@@ -2750,12 +3504,21 @@ void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
          {
             mLastTimeStep  = A.mLastTimeStep;
             mAllocatedSize = A.mAllocatedSize;
-	    for( int q=0 ; q < m_nComp ; q++ )
+            for( int q=0 ; q < m_nComp ; q++ )
             {
                delete[] mRecordedSol[q];
-	       mRecordedSol[q] = new float_sw4[mAllocatedSize];
-            }
-         }
+               mRecordedSol[q] = new float_sw4[mAllocatedSize];
+
+#endif // SW4 backend
+}
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+} else
+    cout << "TimeSeries::product_wgh: Error time series have incompatible sizes"
+         << endl;
+  return prod;
+#else // SW4 backend
+}
          for( int i = 0 ; i <= B.mLastTimeStep ; i++ )
          {
             mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i]+wghB*B.mRecordedSol[0][i];
@@ -2775,10 +3538,10 @@ void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
          {
             mLastTimeStep  = B.mLastTimeStep;
             mAllocatedSize = B.mAllocatedSize;
-	    for( int q=0 ; q < m_nComp ; q++ )
+            for( int q=0 ; q < m_nComp ; q++ )
             {
                delete[] mRecordedSol[q];
-	       mRecordedSol[q] = new float_sw4[mAllocatedSize];
+               mRecordedSol[q] = new float_sw4[mAllocatedSize];
             }
          }
          for( int i= 0 ; i <= A.mLastTimeStep ; i++ )
@@ -2795,6 +3558,7 @@ void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
          }
       }
    }
+#endif // SW4 backend
 }
 
 //-----------------------------------------------------------------------
@@ -2815,28 +3579,28 @@ float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
       bool onesmallest;
       if( utc1[c] < utc2[c] )
          for( int k= 0 ; k <7 ;k++)
-	 {
-	    start[k] = utc1[k];
+         {
+            start[k] = utc1[k];
             finish[k] = utc2[k];
             onesmallest = true;
-	 }
+         }
       else
          for( int k= 0 ; k <7 ;k++)
-	 {
-	    start[k] = utc2[k];
+         {
+            start[k] = utc2[k];
             finish[k] = utc1[k];
             onesmallest = false;
-	 }
+         }
       float_sw4 d = 0;
       if( c <= 1 )
       {
-	 // different month or year, count days
+         // different month or year, count days
          d = 0;
          while( !(start[0]==finish[0] && start[1]==finish[1]) )
-	 {
-	    dayinc( start );
-	    d++; 
-	 }
+         {
+            dayinc( start );
+            d++;
+         }
       }
       d = d + finish[2]-start[2];
       // Convert days,min,secs, and msecs to seconds
@@ -2845,8 +3609,15 @@ float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
          sg = -1;
       int ls = leap_second_correction(start,finish);
       return sg*(86400.0*d + (finish[3]-start[3])*3600.0 + (finish[4]-start[4])*60.0 +
-		 (finish[5]-start[5]) +(finish[6]-start[6])*1e-6 + ls);
-   }
+                 (finish[5]-start[5]) +
+#if defined(SW4_USE_RAJA) // SW4 backend
+(finish[6] - start[6]) * 1e-3 + ls);
+
+#else // SW4 backend
+(finish[6]-start[6])*1e-6 + ls);
+
+#endif // SW4 backend
+}
 }
 
 //-----------------------------------------------------------------------
@@ -2892,12 +3663,12 @@ int TimeSeries::utccompare( int utc1[7], int utc2[7] )
    else
    {
       if( utc1[c] < utc2[c] )
-	 retval=-1;
+         retval=-1;
       else
-	 retval=1;
+         retval=1;
    }
    return retval;
-}   
+}
 
 //-----------------------------------------------------------------------
 int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
@@ -2907,7 +3678,7 @@ int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
    int nls = 25;
    leap_sec_y = new int[nls];
    leap_sec_m = new int[nls];
-   // Table of UTC leap seconds, added at the end of june (6) or december (12) 
+   // Table of UTC leap seconds, added at the end of june (6) or december (12)
    leap_sec_y[0] = 1972;
    leap_sec_m[0] = 6;
    leap_sec_y[1] = 1972;
@@ -2968,13 +3739,13 @@ int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
    if( utccompare(utc1,utc2) <= 0 )
       for( int c=0 ; c < 7 ;c++ )
       {
-	 start[c] = utc1[c];
+         start[c] = utc1[c];
          end[c]   = utc2[c];
       }
    else
       for( int c=0 ; c < 7 ;c++ )
       {
-	 start[c] = utc2[c];
+         start[c] = utc2[c];
          end[c]   = utc1[c];
       }
 
@@ -2988,9 +3759,9 @@ int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
       l++;
       if( l <= nls-1 )
       {
-	 leaps[0] = leap_sec_y[l];
-	 leaps[1] = leap_sec_m[l];
-	 leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
+         leaps[0] = leap_sec_y[l];
+         leaps[1] = leap_sec_m[l];
+         leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
       }
    }
    lstart = l;
@@ -3004,9 +3775,9 @@ int TimeSeries::leap_second_correction( int utc1[7], int utc2[7] )
       l--;
       if( l >= 0 )
       {
-	 leaps[0] = leap_sec_y[l];
-	 leaps[1] = leap_sec_m[l];
-	 leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
+         leaps[0] = leap_sec_y[l];
+         leaps[1] = leap_sec_m[l];
+         leaps[2] = leap_sec_m[l] == 6 ? 30 : 31;
       }
    }
    lend = l;
@@ -3030,26 +3801,26 @@ void TimeSeries::filter_data( Filter* filter_ptr )
 
 // Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter
       if( filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass )
-      {    
-	 float_sw4 wghv, xi;
-	 int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+      {
+         float_sw4 wghv, xi;
+         int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
 
-	 for( int i=1 ; i<=p0-1 ; i++ )
-	 {
-	    mRecordedSol[0][i-1] = 0;
-	    mRecordedSol[1][i-1] = 0;
-	    mRecordedSol[2][i-1] = 0;
-	 }
-	 for( int i=p0 ; i<=p0+p ; i++ )
-	 {
-	    wghv = 0;
-	    xi = (i-p0)/((float_sw4) p);
-	 // polynomial P(xi), P(0) = 0, P(1)=1
-	    wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
-	    mRecordedSol[0][i-1] *= wghv;
-	    mRecordedSol[1][i-1] *= wghv;
-	    mRecordedSol[2][i-1] *= wghv;
-	 }
+         for( int i=1 ; i<=p0-1 ; i++ )
+         {
+            mRecordedSol[0][i-1] = 0;
+            mRecordedSol[1][i-1] = 0;
+            mRecordedSol[2][i-1] = 0;
+         }
+         for( int i=p0 ; i<=p0+p ; i++ )
+         {
+            wghv = 0;
+            xi = (i-p0)/((float_sw4) p);
+         // polynomial P(xi), P(0) = 0, P(1)=1
+            wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+            mRecordedSol[0][i-1] *= wghv;
+            mRecordedSol[1][i-1] *= wghv;
+            mRecordedSol[2][i-1] *= wghv;
+         }
       }
    }
 }
@@ -3059,12 +3830,12 @@ void TimeSeries::print_timeinfo() const
 {
    if( m_myPoint )
    {
-     cout << "Observation/TimeSeries from station '" << m_staName << "' at grid point " << 
+     cout << "Observation/TimeSeries from station '" << m_staName << "' at grid point " <<
        m_i0 << " " << m_j0 << " " << m_k0 << endl;
      cout << "   t0 = " << m_t0 << " shift= " << m_shift << " dt= " << m_dt << endl;
      cout << "   Observation interval  [ " << m_t0+m_shift << " , " << m_t0 + m_shift + m_dt*mLastTimeStep << " ] simulation time " << endl;
      printf( "   Observation reference UTC  %02i/%02i/%i:%i:%i:%02i.%03i\n", m_utc[1], m_utc[2], m_utc[0], m_utc[3],
-	     m_utc[4], m_utc[5], m_utc[6] );
+             m_utc[4], m_utc[5], m_utc[6] );
    }
 }
 
@@ -3077,6 +3848,8 @@ void TimeSeries::set_window( float_sw4 winl, float_sw4 winr )
 }
 
 //-----------------------------------------------------------------------
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 void TimeSeries::get_windows( float_sw4 win[4] )
 {
    win[0] = m_winL;
@@ -3090,13 +3863,14 @@ void TimeSeries::print_windows( )
 {
    if( m_myPoint )
    {
-      std::cout << m_staName << " time windows = " << 
+      std::cout << m_staName << " time windows = " <<
          "p-wave = [" <<  m_winL << ", " << m_winR << "] s-wave = [" <<
          m_winL2 << ", " << m_winR2 << "]" << std::endl;
    }
 }
 
 //-----------------------------------------------------------------------
+#endif // SW4 backend
 void TimeSeries::exclude_component( bool usex, bool usey, bool usez )
 {
    m_use_x = usex;
@@ -3106,15 +3880,25 @@ void TimeSeries::exclude_component( bool usex, bool usey, bool usez )
 
 //-----------------------------------------------------------------------
 void TimeSeries::readSACfiles( EW *ew, const char* sac1,
-			       const char* sac2, const char* sac3, bool ignore_utc )
+                               const char* sac2, const char* sac3, bool ignore_utc )
 {
    string file1, file2, file3;
-   if( ew->getObservationPath(m_global_event) != "./" )
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+if (ew->getObservationPath(m_event) != "./") {
+    file1 += ew->getObservationPath(m_event);
+    file2 += ew->getObservationPath(m_event);
+    file3 += ew->getObservationPath(m_event);
+
+#else // SW4 backend
+if( ew->getObservationPath(m_global_event) != "./" )
    {
       file1 += ew->getObservationPath(m_global_event);
       file2 += ew->getObservationPath(m_global_event);
       file3 += ew->getObservationPath(m_global_event);
-   }
+
+#endif // SW4 backend
+}
    file1 += sac1;
    file2 += sac2;
    file3 += sac3;
@@ -3146,22 +3930,22 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 
       bool utcequal=true;
       for( int c=0 ; c < 7 ; c++ )
-	 if( utc1[c] != utc2[c] )
-	    utcequal = false;
+         if( utc1[c] != utc2[c] )
+            utcequal = false;
       for( int c=0 ; c < 7 ; c++ )
-	 if( utc1[c] != utc3[c] )
-	    utcequal = false;
+         if( utc1[c] != utc3[c] )
+            utcequal = false;
       for( int c=0 ; c < 7 ; c++ )
-	 if( utc2[c] != utc3[c] )
-	    utcequal = false;
+         if( utc2[c] != utc3[c] )
+            utcequal = false;
       if( !utcequal )
-	 eflag = 1;
-      
+         eflag = 1;
+
       if( eflag == 0 )
 // Headers are ok, get the data
       {
-	 // Check that all data are available
-         
+         // Check that all data are available
+
          bool azfail = false, incfail = false;
          if( cmpaz1 == -12345 || cmpaz2 == -12345 || cmpaz3 == -12345 )
             azfail = true;
@@ -3169,143 +3953,148 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
             incfail = true;
 
          if( !azfail && !incfail )
-	 {
-	    float_sw4* u1 = new float_sw4[npts1];
-	    float_sw4* u2 = new float_sw4[npts1];
-	    float_sw4* u3 = new float_sw4[npts1];
-	    readSACdata( file1.c_str(), npts1, u1 );
-	    readSACdata( file2.c_str(), npts1, u2 );
-	    readSACdata( file3.c_str(), npts1, u3 );
+         {
+            float_sw4* u1 = new float_sw4[npts1];
+            float_sw4* u2 = new float_sw4[npts1];
+            float_sw4* u3 = new float_sw4[npts1];
+            readSACdata( file1.c_str(), npts1, u1 );
+            readSACdata( file2.c_str(), npts1, u2 );
+            readSACdata( file3.c_str(), npts1, u3 );
 
-      // For restart, don't overwrite member vars except data 
-	    if (!mIsRestart) 
-	    {
-	       if( !ignore_utc )
-	       {
-		  for( int c=0 ; c < 7 ; c++ )
-		     m_utc[c] = utc1[c];
-		  int utcrefsim[7];
-		  m_ew->get_utc(utcrefsim,m_event);
-		  m_t0 = utc_distance( utcrefsim, m_utc );
-	       }
-	       m_shift = t01;
-	       allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
-	    }
+      // For restart, don't overwrite member vars except data
+            if (!mIsRestart)
+            {
+               if( !ignore_utc )
+               {
+                  for( int c=0 ; c < 7 ; c++ )
+                     m_utc[c] = utc1[c];
+                  int utcrefsim[7];
+                  m_ew->get_utc(utcrefsim,m_event);
+                  m_t0 = utc_distance( utcrefsim, m_utc );
+               }
+               m_shift = t01;
+               allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
+            }
 
-	    if( debug )
-	    {
-	       cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
-	       cout << "UTC = " << utc1[1] << "/" << utc1[2] << "/" << utc1[0] << ":" << utc1[3]
-		    << ":" << utc1[4] << ":" << utc1[5] << "." << utc1[6] << endl;
-	       cout << " lat = " << lat1 << " lon = " << lon1 << endl;
-	       cout << " dt = " << dt1 << " t0= " << t01  << " npts = " << npts1 << endl;
-	       cout << " az1 = " << cmpaz1 << " inc1 = " << cmpinc1 << endl;
-	       cout << " az2 = " << cmpaz2 << " inc2 = " << cmpinc2 << endl;
-	       cout << " az3 = " << cmpaz3 << " inc3 = " << cmpinc3 << endl;
-	    }
+            if( debug )
+            {
+               cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
+               cout << "UTC = " << utc1[1] << "/" << utc1[2] << "/" << utc1[0] << ":" << utc1[3]
+                    << ":" << utc1[4] << ":" << utc1[5] << "." << utc1[6] << endl;
+               cout << " lat = " << lat1 << " lon = " << lon1 << endl;
+               cout << " dt = " << dt1 << " t0= " << t01  << " npts = " << npts1 << endl;
+               cout << " az1 = " << cmpaz1 << " inc1 = " << cmpinc1 << endl;
+               cout << " az2 = " << cmpaz2 << " inc2 = " << cmpinc2 << endl;
+               cout << " az3 = " << cmpaz3 << " inc3 = " << cmpinc3 << endl;
+            }
 // Assume that we are using geographic coordinates, transform to (east,north,up) components.
-	    const float_sw4 convfactor = M_PI/180.0;
-	    cmpaz1  *= convfactor;
-	    cmpaz2  *= convfactor;
-	    cmpaz3  *= convfactor;
-	    cmpinc1 *= convfactor;
-	    cmpinc2 *= convfactor;
-	    cmpinc3 *= convfactor;
+            const float_sw4 convfactor = M_PI/180.0;
+            cmpaz1  *= convfactor;
+            cmpaz2  *= convfactor;
+            cmpaz3  *= convfactor;
+            cmpinc1 *= convfactor;
+            cmpinc2 *= convfactor;
+            cmpinc3 *= convfactor;
 
 // Convert from station azimut to (e,n,u) components
-	    float_sw4 tmat[9];
-	    tmat[0] = sin(cmpinc1)*cos(cmpaz1);
-	    tmat[1] = sin(cmpinc2)*cos(cmpaz2);
-	    tmat[2] = sin(cmpinc3)*cos(cmpaz3);
-	    tmat[3] = sin(cmpinc1)*sin(cmpaz1);
-	    tmat[4] = sin(cmpinc2)*sin(cmpaz2);
-	    tmat[5] = sin(cmpinc3)*sin(cmpaz3);
-	    tmat[6] = cos(cmpinc1);
-	    tmat[7] = cos(cmpinc2);
-	    tmat[8] = cos(cmpinc3);
+            float_sw4 tmat[9];
+            tmat[0] = sin(cmpinc1)*cos(cmpaz1);
+            tmat[1] = sin(cmpinc2)*cos(cmpaz2);
+            tmat[2] = sin(cmpinc3)*cos(cmpaz3);
+            tmat[3] = sin(cmpinc1)*sin(cmpaz1);
+            tmat[4] = sin(cmpinc2)*sin(cmpaz2);
+            tmat[5] = sin(cmpinc3)*sin(cmpaz3);
+            tmat[6] = cos(cmpinc1);
+            tmat[7] = cos(cmpinc2);
+            tmat[8] = cos(cmpinc3);
 
-	    if (!mIsRestart) // For restart, already in xyz format?
-	    {
-	       m_xyzcomponent = false; //note this is format on output file, 
- 	      //internally, we always use (x,y,z) during computation.
+            if (!mIsRestart) // For restart, already in xyz format?
+            {
+               m_xyzcomponent = false; //note this is format on output file,
+              //internally, we always use (x,y,z) during computation.
 
         // Convert (e,n,u) to (x,y,z) components.
-	       float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-	       float_sw4 a11 = m_calpha*deti;
-	       float_sw4 a12 = m_thxnrm*deti;
-	       float_sw4 a21 =-m_salpha*deti;
-	       float_sw4 a22 = m_thynrm*deti;
-	       for( int i=0 ; i < npts1 ; i++ )
-	       {
-		  float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-		  float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-		  float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-		  mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-		  mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-		  mRecordedSol[2][i] = -ucomp;
-	       }
-	       mLastTimeStep = npts1-1;
-	    }
-	    else
-	    {
-	       // Just copy the read values into our time series
-	       for( int i=0 ; i < npts1 ; i++ )
-	       {
-		  mRecordedSol[0][i] = u1[i];
-		  mRecordedSol[1][i] = u2[i];
-		  mRecordedSol[2][i] = u3[i];
-		  mRecordedFloats[0][i] = (float) u1[i];
-		  mRecordedFloats[1][i] = (float) u2[i];
-		  mRecordedFloats[2][i] = (float) u3[i];
-	       }
-	    }
-            delete[] u1;
+               float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
+               float_sw4 a11 = m_calpha*deti;
+               float_sw4 a12 = m_thxnrm*deti;
+               float_sw4 a21 =-m_salpha*deti;
+               float_sw4 a22 = m_thynrm*deti;
+               for( int i=0 ; i < npts1 ; i++ )
+               {
+                  float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
+                  float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
+                  float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
+                  mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
+                  mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
+                  mRecordedSol[2][i] = -ucomp;
+               }
+               mLastTimeStep = npts1-1;
+            }
+            else
+            {
+               // Just copy the read values into our time series
+               for( int i=0 ; i < npts1 ; i++ )
+               {
+                  mRecordedSol[0][i] = u1[i];
+                  mRecordedSol[1][i] = u2[i];
+                  mRecordedSol[2][i] = u3[i];
+                  mRecordedFloats[0][i] = (float) u1[i];
+                  mRecordedFloats[1][i] = (float) u2[i];
+                  mRecordedFloats[2][i] = (float) u3[i];
+               }
+            }
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
+delete[] u1;
             delete[] u2;
             delete[] u3;
-	 }
-	 else
-	 {
-	    cout << "readSACfile, ERROR: no information about ";
+
+#endif // SW4 backend
+}
+         else
+         {
+            cout << "readSACfile, ERROR: no information about ";
             if( azfail )
-	       cout << "component azimut ";
-	    if( incfail )
-	       cout << "component inclination ";
-	    cout << " found on sac file" << endl;
-  	    cout << "  station not read " << endl;
-	 }
+               cout << "component azimut ";
+            if( incfail )
+               cout << "component inclination ";
+            cout << " found on sac file" << endl;
+            cout << "  station not read " << endl;
+         }
         if( m_ew->getVerbosity() >= 3 )
           cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       }
       else
       {
          cout << "readSACfile, ERROR: found inconsistent meta data for files " << file1 << ", "
-	      << file2 << ", " << file3 << endl;
-	 cout << "  station not read " << endl;
+              << file2 << ", " << file3 << endl;
+         cout << "  station not read " << endl;
          cout << "dt = " << dt1 << " " << dt2 << " " << dt3 << endl;
          cout << "t0 = " << t01 << " " << t02 << " " << t03 << endl;
          cout << "lat= " << lat1 << " " << lat2 << " " << lat3 << endl;
          cout << "lon= " << lon1 << " " << lon2 << " " << lon3 << endl;
          cout << "npt= " << npts1 << " " << npts2 << " " << npts3 << endl;
-	 cout << "utc1 = " ;
-	 for( int c=0 ; c < 7 ; c++ )
-	    cout << utc1[c] << " ";
-	 cout << endl;
-	 cout << "utc2 = " ;
-	 for( int c=0 ; c < 7 ; c++ )
-	    cout << utc2[c] << " ";
-	 cout << endl;
-	 cout << "utc3 = " ;
-	 for( int c=0 ; c < 7 ; c++ )
-	    cout << utc3[c] << " ";
-	 cout << endl;
+         cout << "utc1 = " ;
+         for( int c=0 ; c < 7 ; c++ )
+            cout << utc1[c] << " ";
+         cout << endl;
+         cout << "utc2 = " ;
+         for( int c=0 ; c < 7 ; c++ )
+            cout << utc2[c] << " ";
+         cout << endl;
+         cout << "utc3 = " ;
+         for( int c=0 ; c < 7 ; c++ )
+            cout << utc3[c] << " ";
+         cout << endl;
       }
    }
 }
 
 //-----------------------------------------------------------------------
 void TimeSeries::readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
-				float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-				float_sw4& cmpinc, int utc[7], int& npts )
+                                float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
+                                float_sw4& cmpinc, int utc[7], int& npts )
 {
 
    float float70[70];
@@ -3314,8 +4103,16 @@ void TimeSeries::readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
 
    if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
    {
-      cout << "readSACheader: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
-	   << fname << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "readSACheader: ERROR, size of datatypes do not match the SAC "
+            "specification. Can not read SAC file "
+
+#else // SW4 backend
+cout << "readSACheader: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
+
+#endif // SW4 backend
+<< fname << endl;
       return;
    }
 
@@ -3342,14 +4139,14 @@ void TimeSeries::readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
       fclose(fd);
       return;
    }
-   nr = fread(logical, sizeof(int), 5, fd );   
+   nr = fread(logical, sizeof(int), 5, fd );
    if( nr != 5 )
    {
       cout << "readSACheader: ERROR, could not read bool part of header of " << fname << endl;
       fclose(fd);
       return;
    }
-   nr = fread(kvalues, sizeof(char), 192, fd );   
+   nr = fread(kvalues, sizeof(char), 192, fd );
    if( nr != 192 )
    {
       cout << "readSACheader: ERROR, could not read character part of header of " << fname << endl;
@@ -3358,7 +4155,7 @@ void TimeSeries::readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
    }
 
 // Take out wanted information
-   dt     = float70[0]; 
+   dt     = float70[0];
    t0     = float70[5];
    lat    = float70[31];
    lon    = float70[32];
@@ -3379,8 +4176,16 @@ void TimeSeries::readSACdata( const char* fname, int npts, float_sw4* u )
 {
    if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
    {
-      cout << "readSACdata: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
-	   << fname << endl;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+cout << "readSACdata: ERROR, size of datatypes do not match the SAC "
+            "specification. Can not read SAC file "
+
+#else // SW4 backend
+cout << "readSACdata: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
+
+#endif // SW4 backend
+<< fname << endl;
       return;
    }
 
@@ -3429,13 +4234,13 @@ void TimeSeries::convertjday( int jday, int year, int& day, int& month )
       month = 1;
       while( jd < jday )
       {
-	 jd++;
+         jd++;
          day++;
-	 if( day > lastofmonth(year,month) )
-	 {
-	    day = 1;
-	    month++;
-	 }
+         if( day > lastofmonth(year,month) )
+         {
+            day = 1;
+            month++;
+         }
       }
    }
    else
@@ -3461,8 +4266,8 @@ void TimeSeries::set_utc_to_simulation_utc()
 }
 
 #ifdef USE_HDF5
-/* 
- * Cubic interpolation code spline, splint, spline1_c are modified from 
+/*
+ * Cubic interpolation code spline, splint, spline1_c are modified from
  * https://www.atnf.csiro.au/computing/software/gipsy/sub/spline.c
  */
 static int spline( float *x, float *y, int n, float yp1, float ypn, float *y2)
@@ -3511,7 +4316,7 @@ static int splint(float *xa, float *ya, float *y2a, int n, float x, float *y)
     h=xa[khi]-xa[klo];
     if (h == 0.0) {
        memset(y, 0, sizeof(float)*n) ;
-    } 
+    }
     else {
        a=(xa[khi]-x)/h;
        b=(x-xa[klo])/h;
@@ -3536,7 +4341,7 @@ static int cubic_interp(float *xi, float *yi, int nin, float *xo, float *yo, int
     float *y2;
     int error, n;
 
-    if (NULL==xi || NULL==yi || NULL==xo || NULL==yo) 
+    if (NULL==xi || NULL==yi || NULL==xo || NULL==yo)
         return -1;
 
     y2 = (float *)malloc(nin * sizeof(float));
@@ -3767,7 +4572,7 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
 //-----------------------------------------------------------------------
 // Restart by reading in prior time series file
 void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle)
-{   
+{
   // Read in this TimeSeries' file
   isRestart();
   if (m_sacFormat)
@@ -3775,7 +4580,14 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
     // Read the old SAC files from the fileio path directory
     std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_fileName;
-    std::string filex, filey, filez;
+
+#if defined(SW4_USE_RAJA) // SW4 backend
+std::string filex = fullFilePath + ".x";
+    std::string filey = fullFilePath + ".y";
+    std::string filez = fullFilePath + ".z";
+
+#else // SW4 backend
+std::string filex, filey, filez;
     if( m_mode == Displacement ) {
       if( m_xyzcomponent ) {
         filex = fullFilePath + ".x";
@@ -3806,7 +4618,9 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
       filez = fullFilePath + ".curlz";
     }
 
-    readSACfiles(ew, const_cast<char*>(filex.c_str()), 
+
+#endif // SW4 backend
+readSACfiles(ew, const_cast<char*>(filex.c_str()),
         const_cast<char*>(filey.c_str()),
         const_cast<char*>(filez.c_str()), ignore_utc);
   }
@@ -3942,6 +4756,108 @@ float_sw4 TimeSeries::get_scalefactor() const
 }
 
 //-----------------------------------------------------------------------
+#if defined(SW4_USE_RAJA) // SW4 backend
+#ifdef USE_HDF5
+int TimeSeries::allocFid() {
+  m_fid_ptr = new hid_t;
+  *m_fid_ptr = 0;
+  return 0;  // Added 6/16/202 in Raja code. not tested PBUGS
+}
+
+int TimeSeries::closeHDF5File() {
+  /* int myRank; */
+  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+
+  if (m_fid_ptr && *m_fid_ptr > 0) {
+    /* printf("%d: Closing HDf5 file: %ld\n", myRank, *m_fid_ptr); */
+    /* fflush(stdout); */
+    H5Fclose(*m_fid_ptr);
+    *m_fid_ptr = 0;
+    if (this->m_ts0Ptr)
+      this->m_ts0Ptr->m_fidName = "";
+    else
+      printf("%s: Error with ts0 pointer!\n", __func__);
+    /* printf("HDf5 file closed\n"); */
+    /* fflush(stdout); */
+  }
+
+  return 0;
+}
+void TimeSeries::resetHDF5file() {
+  // doRestart has already positioned the writer at the checkpoint. Reopening
+  // the HDF5 handle must not move it back to the start of the receiver file.
+  if (!mIsRestart) m_nptsWritten = 0;
+  m_isMetaWritten = m_isIncAzWritten = false;
+  closeHDF5File();
+}
+
+hid_t TimeSeries::openHDF5File(std::string suffix, bool quiet) {
+  hid_t fapl;
+  bool is_debug = false;
+  /* is_debug = true; */
+
+  std::string filename;
+
+  if (NULL == m_fid_ptr) {
+    printf("%s Error! No HDF5 fid allocated!\n", __func__);
+    return 0;
+  }
+
+  // Build the file name
+  if (m_path != ".") filename = m_path;
+
+  filename.append(m_hdf5Name);
+  filename.append(suffix);
+
+  if (m_hdf5Name.find(".hdf5") == string::npos &&
+      m_hdf5Name.find(".h5") == string::npos)
+    filename.append(".hdf5");
+
+  if (*m_fid_ptr > 0 && this->m_ts0Ptr &&
+      filename.compare(this->m_ts0Ptr->m_fidName) == 0) {
+    // If file is alread open, no need to open it again
+    return *m_fid_ptr;
+  } else {
+    // Close file and open a new one
+    closeHDF5File();
+  }
+
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+  /* H5Pset_fapl_sec2(fapl); */
+  /* H5Pset_fapl_stdio(fapl); */
+
+  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
+  /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
+  /* H5Pset_coll_metadata_write(fapl, false); */
+  /* H5Pset_all_coll_metadata_ops(fapl, false); */
+
+  *m_fid_ptr = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);
+  if (*m_fid_ptr <= 0) {
+    if (!quiet) printf("%s Error opening file [%s]\n", __func__, filename.c_str());
+    H5Pclose(fapl);
+    return 0;
+  }
+
+  if (this->m_ts0Ptr)
+    this->m_ts0Ptr->m_fidName = filename;
+  else
+    printf("%s: Error with ts0 pointer!\n", __func__);
+
+  int myRank;
+  if (is_debug) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    printf("Rank %d: HDF5 file [%s] successfully opened: %ld\n", myRank,
+           filename.c_str(), *m_fid_ptr);
+    fflush(stdout);
+  }
+
+  H5Pclose(fapl);
+
+  return *m_fid_ptr;
+}
+
+#endif
+#else // SW4 backend
 bool TimeSeries::is_in_supergrid_layer()
 {
    if( m_myPoint )
@@ -3949,7 +4865,7 @@ bool TimeSeries::is_in_supergrid_layer()
 return
    m_i0<m_ew->m_iStartActGlobal[m_grid0] ||
    m_ew->m_iEndActGlobal[m_grid0] < m_i0  ||
-   m_j0<m_ew->m_jStartActGlobal[m_grid0] || 
+   m_j0<m_ew->m_jStartActGlobal[m_grid0] ||
    m_ew->m_jEndActGlobal[m_grid0] < m_j0  ||
   (m_grid0==0 && m_ew->m_kEndActGlobal[m_grid0] < m_k0);
    }
@@ -3981,7 +4897,7 @@ void TimeSeries::syncSolFloats()
 //-----------------------------------------------------------------------
 void TimeSeries::print_utc()
 {
-   printf("Recording start time is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], 
+   printf("Recording start time is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2],
           m_utc[0], m_utc[3], m_utc[4], m_utc[5], m_utc[6]);
 }
 
@@ -3990,7 +4906,7 @@ float_sw4 TimeSeries::getMaxValue(const int comp) const
 {
    float_sw4 max_value = -1e20;
    float maxf =-1e20;
-   for(int i=0; i<mLastTimeStep; i++) 
+   for(int i=0; i<mLastTimeStep; i++)
    {
       if(mRecordedSol[comp][i] > max_value) max_value = mRecordedSol[comp][i];
       if(mRecordedFloats[comp][i] > maxf) maxf = mRecordedFloats[comp][i];  // for qc hdf5 output
@@ -4003,7 +4919,7 @@ float_sw4 TimeSeries::getMinValue(const int comp) const
 {
    float_sw4 min_value = -1e20;
    float minf =-1e20;
-   for(int i=0; i<mLastTimeStep; i++) 
+   for(int i=0; i<mLastTimeStep; i++)
    {
       if(mRecordedSol[comp][i] < min_value) min_value = mRecordedSol[comp][i];
       if(mRecordedFloats[comp][i] < minf) minf = mRecordedFloats[comp][i];  // for qc hdf5 output
@@ -4012,7 +4928,7 @@ float_sw4 TimeSeries::getMinValue(const int comp) const
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, 
+void TimeSeries::set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2,
                              float_sw4 winr2 )
 {
    m_use_win = true;
@@ -4033,7 +4949,7 @@ int TimeSeries::allocFid()
 
 //-----------------------------------------------------------------------
 int TimeSeries::closeHDF5File()
-{ 
+{
   /* int myRank; */
   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
 
@@ -4073,7 +4989,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix, bool quiet)
   std::string filename;
 
   if (NULL == m_fid_ptr) {
-    printf("%s Error! No HDF5 fid allocated!\n", __func__); 
+    printf("%s Error! No HDF5 fid allocated!\n", __func__);
     return 0;
   }
 
@@ -4084,7 +5000,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix, bool quiet)
   filename.append(m_hdf5Name);
   filename.append(suffix);
 
-  if (m_hdf5Name.find(".hdf5") == string::npos && m_hdf5Name.find(".h5") == string::npos) 
+  if (m_hdf5Name.find(".hdf5") == string::npos && m_hdf5Name.find(".h5") == string::npos)
     filename.append(".hdf5");
 
   if (*m_fid_ptr > 0 && this->m_ts0Ptr &&
@@ -4096,7 +5012,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix, bool quiet)
     // Close file and open a new one
     closeHDF5File();
   }
- 
+
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   /* H5Pset_fapl_sec2(fapl); */
   /* H5Pset_fapl_stdio(fapl); */
@@ -4139,7 +5055,7 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
                                 float_sw4& misfit, float_sw4& dmisfit )
 {
    //-----------------------------------------------------------------------
-   // Computes  misfit, as norm of difference between `this' and `observed'. 
+   // Computes  misfit, as norm of difference between `this' and `observed'.
    // Also computes the derivative of the misfit for one material parameter,
    // as given by dudp, the derivative of the displacement wrt. one parameter
    //
@@ -4168,156 +5084,156 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
       int nfrsteps    = observed->mLastTimeStep+1;
 
       if( abs(m_t0+m_shift-(observed->m_t0+observed->m_shift)) > 100 )
-	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = " << m_t0+m_shift << " Observation Tstart = " << observed->m_t0+observed->m_shift << endl;
+         cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = " << m_t0+m_shift << " Observation Tstart = " << observed->m_t0+observed->m_shift << endl;
 
      // Weight to ramp down the end of misfit.
       float_sw4 wghv;
       int p =20 ; // Number of points in ramp;
       int istart = 1; // Starting index for downward ramp.
       if( mLastTimeStep-p+1 > 1 )
-	 istart = mLastTimeStep-p+1;
+         istart = mLastTimeStep-p+1;
 
 
       for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
      // Weight to ramp down end of time series
-	 wghv = 1;
-	 if( i >= istart )
-	 {
-	    float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
-	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
-	 }
+         wghv = 1;
+         if( i >= istart )
+         {
+            float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
+            wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+         }
 
      // Interpolation stencil, for interpolating observations to 'this'
-	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = (t-t0fr)/dtfr;
-	 int ie   = static_cast<int>(ir);
+         float_sw4 t  = m_t0 + m_shift + i*m_dt;
+         float_sw4 ir = (t-t0fr)/dtfr;
+         int ie   = static_cast<int>(ir);
 
          int mmin = ie-2;
-	 int mmax = ie+3;
-	 if( mmax-mmin+1 > nfrsteps )
-	 {
-	    cout << "Error in TimeSeries::misfitanddudp : Can not interpolate, " <<
-	       "because the grid is too coarse " << endl;
+         int mmax = ie+3;
+         if( mmax-mmin+1 > nfrsteps )
+         {
+            cout << "Error in TimeSeries::misfitanddudp : Can not interpolate, " <<
+               "because the grid is too coarse " << endl;
             cout << "mmin = " << mmin << endl;
             cout << "mmax = " << mmax << endl;
-	    cout << "nfrsteps = " << nfrsteps << endl;
-	    return;
-	 }
+            cout << "nfrsteps = " << nfrsteps << endl;
+            return;
+         }
 
 // Windowing and component selection
          float_sw4 wghx, wghy, wghz;
-	 wghx = wghy = wghz = wghv;
+         wghx = wghy = wghz = wghv;
          if( m_use_win )
-	 {
+         {
             float_sw4 itau=1/(5*m_dt);
             wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
             // First window
-            //	   if( t < m_winL || t > m_winR ) 
+            //	   if( t < m_winL || t > m_winR )
             //              wghx = 0;
             //	   else
             //              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau));
 
-           // Second window 
-           if( m_winL2>0 || m_winR2>0 ) 
-           { 
+           // Second window
+           if( m_winL2>0 || m_winR2>0 )
+           {
               float wgh2= 0.5*(tanh((t-m_winL2)*itau) - tanh((t-m_winR2)*itau));
-              //              if( t < m_winL2 || t > m_winR2 ) 
+              //              if( t < m_winL2 || t > m_winR2 )
               //	         wgh2 = 0;
               //	      else
               //                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
               wghx = wghx >= wgh2 ? wghx : wgh2;  // take the maximum of either window weight
-           } 
+           }
            wghz = wghy = wghx;
-	 }
+         }
          if( !m_use_x )
-	    wghx = 0;
+            wghx = 0;
          if( !m_use_y )
-	    wghy = 0;
+            wghy = 0;
          if( !m_use_z )
-	    wghz = 0;
+            wghz = 0;
 
          mf[0] = mf[1] = mf[2] = 0;
          if( (1 <= ie) && (ie <= nfrsteps-1) )
-	 {
+         {
         // In range for interpolation from observations
             float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
             if( ie < 3 )
-	    {
-	       mmin = 0;
-	       mmax = 4;
-	       ai   = ir - (mmin+2);
-	       getwgh5( ai, wgh, dwgh, ddwgh );
-            
-	    }
-	    else if( ie > nfrsteps-3 )
-	    {
-	       mmin = nfrsteps-5;
-	       mmax = nfrsteps-1;
-	       ai   = ir - (mmin+2);
-	       getwgh5( ai, wgh, dwgh, ddwgh );
-	    }
+            {
+               mmin = 0;
+               mmax = 4;
+               ai   = ir - (mmin+2);
+               getwgh5( ai, wgh, dwgh, ddwgh );
+
+            }
+            else if( ie > nfrsteps-3 )
+            {
+               mmin = nfrsteps-5;
+               mmax = nfrsteps-1;
+               ai   = ir - (mmin+2);
+               getwgh5( ai, wgh, dwgh, ddwgh );
+            }
             else
-	    {
-	       ai = ir-(mmin+2);
-	       getwgh( ai, wgh, dwgh, ddwgh );
-	    }
+            {
+               ai = ir-(mmin+2);
+               getwgh( ai, wgh, dwgh, ddwgh );
+            }
 
             // Interpolate observed data to time i*m_dt
-	    for( int m = mmin ; m <= mmax ; m++ )
-	    {
-	       if( observed->m_usgsFormat )
-	       {
+            for( int m = mmin ; m <= mmax ; m++ )
+            {
+               if( observed->m_usgsFormat )
+               {
 
-		  mf[0]   += wgh[m-mmin]*observed->mRecordedSol[0][m];
-		  mf[1]   += wgh[m-mmin]*observed->mRecordedSol[1][m];
-		  mf[2]   += wgh[m-mmin]*observed->mRecordedSol[2][m];
-	       }
+                  mf[0]   += wgh[m-mmin]*observed->mRecordedSol[0][m];
+                  mf[1]   += wgh[m-mmin]*observed->mRecordedSol[1][m];
+                  mf[2]   += wgh[m-mmin]*observed->mRecordedSol[2][m];
+               }
                else
-	       {
-		  mf[0]   += wgh[m-mmin]*observed->mRecordedFloats[0][m];
-		  mf[1]   += wgh[m-mmin]*observed->mRecordedFloats[1][m];
-		  mf[2]   += wgh[m-mmin]*observed->mRecordedFloats[2][m];
-	       }
-	    }
-	 }
-	 if( m_usgsFormat )
-	 {
-	    misfit += (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx + 
-		      (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy + 
+               {
+                  mf[0]   += wgh[m-mmin]*observed->mRecordedFloats[0][m];
+                  mf[1]   += wgh[m-mmin]*observed->mRecordedFloats[1][m];
+                  mf[2]   += wgh[m-mmin]*observed->mRecordedFloats[2][m];
+               }
+            }
+         }
+         if( m_usgsFormat )
+         {
+            misfit += (mf[0]-mRecordedSol[0][i])*(mf[0]-mRecordedSol[0][i])*wghx +
+                      (mf[1]-mRecordedSol[1][i])*(mf[1]-mRecordedSol[1][i])*wghy +
                       (mf[2]-mRecordedSol[2][i])*(mf[2]-mRecordedSol[2][i])*wghz;
 
             dmisfit -= (mf[0]-mRecordedSol[0][i])*(dudp->mRecordedSol[0][i])*wghx +
                        (mf[1]-mRecordedSol[1][i])*(dudp->mRecordedSol[1][i])*wghy +
                        (mf[2]-mRecordedSol[2][i])*(dudp->mRecordedSol[2][i])*wghz;
-	 }
-	 else
-	 {
-	    misfit += (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i])*wghx + 
-		      (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i])*wghy + 
+         }
+         else
+         {
+            misfit += (mf[0]-mRecordedFloats[0][i])*(mf[0]-mRecordedFloats[0][i])*wghx +
+                      (mf[1]-mRecordedFloats[1][i])*(mf[1]-mRecordedFloats[1][i])*wghy +
                       (mf[2]-mRecordedFloats[2][i])*(mf[2]-mRecordedFloats[2][i])*wghz;
 
             dmisfit -= (mf[0]-mRecordedFloats[0][i])*(dudp->mRecordedFloats[0][i])*wghx +
                        (mf[1]-mRecordedFloats[1][i])*(dudp->mRecordedFloats[1][i])*wghy +
                        (mf[2]-mRecordedFloats[2][i])*(dudp->mRecordedFloats[2][i])*wghz;
          }
-	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
+         scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
       }
       misfit = 0.5*misfit;
 
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
       {
-	 if( scale_factor == 0 )
-	 {
-	    cout << "WARNING: Observation contains zero data" << 
-               "2  win = " << m_winL << " " <<m_winR << " " << 
-               m_winL2 << " " << m_winR2 << 
+         if( scale_factor == 0 )
+         {
+            cout << "WARNING: Observation contains zero data" <<
+               "2  win = " << m_winL << " " <<m_winR << " " <<
+               m_winL2 << " " << m_winR2 <<
                " t0 = " << m_t0 << " shift= " << m_shift << endl;
-	    scale_factor=1;
-	 }
-	 float_sw4 iscale = 1/scale_factor;
-	 misfit  *= iscale;
+            scale_factor=1;
+         }
+         float_sw4 iscale = 1/scale_factor;
+         misfit  *= iscale;
          dmisfit *= iscale;
       }
    }
@@ -4341,3 +5257,4 @@ void TimeSeries::disableWindows()
    m_winL2 = -1e38;
    m_winR2 =  1e38;
 }
+#endif // SW4 backend

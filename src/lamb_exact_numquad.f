@@ -182,6 +182,7 @@ c            write(*,*) 'Doing 3'
          enddo
       enddo
 
+      deallocate(iwork,work)
       return
       end
 

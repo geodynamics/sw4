@@ -1,10 +1,19 @@
 #include <sys/types.h>
 
+#if defined(SW4_USE_RAJA) // SW4 backend
+#else // SW4 backend
 #include "sw4.h"
+#endif // SW4 backend
 #include "AllDims.h"
 #include "Patch.h"
 
 //-----------------------------------------------------------------------
+#if defined(SW4_USE_RAJA) // SW4 backend
+#include "sw4.h"
+
+//-----------------------------------------------------------------------
+#else // SW4 backend
+#endif // SW4 backend
 Patch::Patch( int dims[6], int procid )
 {
    m_ib=dims[0];
@@ -39,8 +48,8 @@ void Patch::pack( T* array, AllDims& dims, T* array_patch )
    }
    for( int k=m_kb ; k<= m_ke ; k++ )
       for( int j=m_jb ; j<= m_je ; j++ )
-	 for( int i=m_ib ; i<= m_ie ; i++ )
-	    array_patch[ind++] = array[ai*(i-myib)+aj*(j-myjb)+ak*(k-mykb)];
+         for( int i=m_ib ; i<= m_ie ; i++ )
+            array_patch[ind++] = array[ai*(i-myib)+aj*(j-myjb)+ak*(k-mykb)];
 }
 
 //-----------------------------------------------------------------------
@@ -66,8 +75,8 @@ void Patch::unpack( T* array, AllDims& dims, T* array_patch )
    }
    for( int k=m_kb ; k<= m_ke ; k++ )
       for( int j=m_jb ; j<= m_je ; j++ )
-	 for( int i=m_ib ; i<= m_ie ; i++ )
-	    array[ai*(i-myib)+aj*(j-myjb)+ak*(k-mykb)] = array_patch[ind++];
+         for( int i=m_ib ; i<= m_ie ; i++ )
+            array[ai*(i-myib)+aj*(j-myjb)+ak*(k-mykb)] = array_patch[ind++];
 }
 
 //-----------------------------------------------------------------------
@@ -110,11 +119,11 @@ void Patch::selfcopy( AllDims& src, T* src_array, AllDims& dest, T* dest_array )
    }
    for( int k=m_kb ; k<= m_ke ; k++ )
       for( int j=m_jb ; j<= m_je ; j++ )
-	 for( int i=m_ib ; i<= m_ie ; i++ )
-	    dest_array[aid*(i-myibd)+ajd*(j-myjbd)+akd*(k-mykbd)] =
-	       src_array[ ai*(i-myib) + aj*(j-myjb) + ak*(k-mykb)];
+         for( int i=m_ib ; i<= m_ie ; i++ )
+            dest_array[aid*(i-myibd)+ajd*(j-myjbd)+akd*(k-mykbd)] =
+               src_array[ ai*(i-myib) + aj*(j-myjb) + ak*(k-mykb)];
 }
-      
+
 //-----------------------------------------------------------------------
 size_t Patch::size()
 {

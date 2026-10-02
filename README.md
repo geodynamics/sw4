@@ -75,3 +75,10 @@ License
 SW4 is published under [GPL v2 or newer](LICENSE.txt).
 
 
+
+## Native CPU and optional GPU builds
+
+CMake defaults to standalone native OpenMP. Select `SW4_BACKEND=CUDA` or
+`SW4_BACKEND=HIP` explicitly to build the retained RAJA GPU implementation.
+RAJA/Umpire and GPU toolchains are unnecessary for the default CPU build.
+See [build options and backend tests](doc/unified-backends.md).
