@@ -141,10 +141,10 @@ def main():
         if result.returncode:raise RuntimeError(f'Solver failed: {directory}/run.log')
         check_solver_log(directory/'run.log')
         report[name]=check(directory,mode,orientation,downsample)
-        if args.reader and mode in ('displacement','velocity') and downsample==1:
+        if args.reader:
             # The native reader executable runs on CPUs even for GPU-written files.
             reader_command=['srun','--exclusive','--exact','--gres=none','-N','1','-n',str(args.tasks),'-c','4',
-                            str(args.reader.resolve(strict=True)),str(directory/'case.in'),str(directory/'output'),mode,str(orientation)]
+                            str(args.reader.resolve(strict=True)),str(directory/'case.in'),str(directory/'output'),mode,str(orientation),str(downsample)]
             with (directory/'reader.log').open('w') as log:
                 reader=subprocess.run(reader_command,cwd=directory,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=300)
             check_solver_log(directory/'reader.log')

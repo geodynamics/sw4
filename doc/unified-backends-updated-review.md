@@ -43,3 +43,61 @@ An immutable source archive can be configured with
 version metadata. Retain the archive/source, configure commands, dependency
 versions and binary/script hashes alongside execution logs; the version string
 alone does not establish provenance.
+
+## Receiver read-back and restoration (R2–R5)
+
+SAC allocation and sample basis are now separate decisions. Geographic histories
+are always inverted to internal grid components, including restart; Cartesian
+histories retain their grid samples. All quantities use one shared component and
+filename mapping for output and restart, including velocity, curl, divergence,
+strains and displacement gradients. Missing/truncated/nonfinite/incompatible
+histories fail before their data are used. USGS ingestion now handles the
+quantity's complete column set instead of assuming three displacement columns.
+
+New vector SAC output records `KUSER0=SW4XYZ` or `SW4ENU`. Cartesian files also
+store the grid-to-geographic horizontal matrix in `USER0`–`USER3`. Matching-grid
+observations retain their original samples; another grid uses the stored matrix
+and the receiving grid's inverse. Unmarked external observations continue to use
+`CMPAZ/CMPINC` for instrument rotation. For legacy unmarked SW4 Cartesian SAC
+observations, specify `observation ... sacbasis=grid`; the default is `auto`.
+Explicit grid input requires matching X/Y/Z (or velocity) component names and
+rejects an incompatible geographic marker. Legacy restart uses its configured
+output basis and validated component names.
+
+Receiver HDF5 selects the requested quantity's exact datasets and units,
+validates all component extents/counts/finiteness and downsampling, and keeps
+restart allocation/timing intact. Its metadata readers validate scalar/string
+sizes; waveform reads use an explicit bounded memory dataspace. `ignore_utc`
+now deliberately preserves the simulation's reference UTC. New files record
+relative `STARTTIME` and dimensionless quantities use `UNIT=1`; legacy derivative
+files without UNIT remain readable through their exact component names.
+The remaining GPU UTC-difference millisecond conversion now uses SW4's internal
+microsecond scale, consistent with the previously approved timestamp fix.
+
+```sh
+cmake --build build --target sw4_receiver_check
+python tests/backends/receiver_formats.py --sw4 build/bin/sw4 \
+  --reader build/bin/sw4_receiver_check --work-dir "$SCRATCH/sw4-formats"
+python tests/backends/receiver_restart.py --sw4 build/bin/sw4 \
+  --work-dir "$SCRATCH/sw4-restarts"
+python tests/backends/receiver_negative.py --reader build/bin/sw4_receiver_check \
+  --fixture "$SCRATCH/sw4-formats/displacement-nsew0-ds1-topo0-utc234567" \
+  --work-dir "$SCRATCH/sw4-invalid-receivers"
+```
+
+CPU forward-format checks passed 22 cases. A full checkpoint matrix passed eight
+comparisons: two successive restorations per elastic azimuth-0/27, attenuating
+azimuth-27 and refined azimuth-27 case. Every receiver quantity was exercised
+through SAC, USGS and HDF5 with downsample 1/3. Receiver comparisons use
+`1e-12 + 2e-6 * component_peak`, independently for each component; final PDE state
+uses `1e-12 + 2e-5 * component_peak`. Observed PDE state differences were zero;
+receiver differences were at float32 storage precision. Nineteen real-reader
+failure/basis cases passed, including missing/truncated files, malformed scalar
+metadata, wrong quantities/units/basis/downsampling, nonfinite samples,
+big-endian SAC and externally oriented orthogonal channels at 13/45 degrees.
+
+These are developmental-build results under
+`/pscratch/sd/h/houhun/sw4-review-r1-r6`; immutable-source CPU/CUDA reruns and
+refreshed performance acceptance remain necessary. Restart validation keeps the
+planned simulation duration unchanged. Existing fixed-size HDF5 receiver output
+cannot yet be extended from a shorter originally planned duration.

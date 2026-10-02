@@ -9589,6 +9589,7 @@ bool topodepth = false;
   string hdf5file = "";
 
   bool usgsformat = 1, sacformat=0, hdf5format = 0;
+  bool sac_grid_basis=false;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
   float_sw4 winl, winr;
   bool winlset=false, winrset=false;
@@ -9762,6 +9763,13 @@ CHECK_INPUT(depth >= 0.0,
 CHECK_INPUT(depth <= m_global_zmax,
                    "observation command: depth must be less than or equal to zmax, not " << depth);
 // by depth we here mean depth below topography
+     }
+     else if(startswith("sacbasis=", token))
+     {
+        token += strlen("sacbasis=");
+        CHECK_INPUT(strcmp(token,"auto")==0 || strcmp(token,"grid")==0,
+                    err << "sacbasis must be auto or grid");
+        sac_grid_basis=strcmp(token,"grid")==0;
      }
      else if(startswith("file=", token))
      {
@@ -10049,7 +10057,7 @@ cout << "processObservation: WARNING station (lat,lon) on sac file do not match 
         if( usgsfileset )
            ts_ptr->readFile( this, false );
         else
-           ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), false );
+           ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), false, sac_grid_basis );
 
 // Set reference UTC to simulation UTC, for easier plotting.
         ts_ptr->set_utc_to_simulation_utc();

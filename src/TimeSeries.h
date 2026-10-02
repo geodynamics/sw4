@@ -69,6 +69,8 @@ class TimeSeries {
              int downSample, bool xyzcomponent = true, int event = 0);
   ~TimeSeries();
 
+  float_sw4 getStartTime() const { return m_t0; }
+  float_sw4 getTimeShift() const { return m_shift; }
   void allocateRecordingArrays(int numberOfTimeSteps, float_sw4 startTime,
                                float_sw4 timeStep);
 
@@ -133,8 +135,10 @@ class TimeSeries {
     m_winR2 = winr2;
   }
   void exclude_component(bool usex, bool usey, bool usez);
+  // Read a complete requested quantity; false rejects invalid histories.
+  bool readSACcomponents(EW* ew, const std::vector<std::string>& files, bool ignore_utc, bool grid_basis=false);
   void readSACfiles(EW* ew, const char* sac1, const char* sac2,
-                    const char* sac3, bool ignore_utc);
+                    const char* sac3, bool ignore_utc, bool grid_basis=false);
   void isRestart();
   void doRestart(EW* ew, bool ignore_utc, float_sw4 shift, int beginCycle);
   void set_shift(float_sw4 shift);
@@ -190,10 +194,6 @@ class TimeSeries {
   int utccompare(int utc1[7], int utc2[7]);
   int leap_second_correction(int utc1[7], int utc2[7]);
 
-  void readSACheader(const char* fname, float_sw4& dt, float_sw4& t0,
-                     float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-                     float_sw4& cmpinc, int utc[7], int& npts);
-  void readSACdata(const char* fname, int npts, float_sw4* u);
   void convertjday(int jday, int year, int& day, int& month);
   void getwgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6],
               float_sw4 ddwgh[6]);
@@ -400,7 +400,8 @@ void set_window( float_sw4 winl, float_sw4 winr );
 void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2 );
 void print_windows();
 void exclude_component( bool usex, bool usey, bool usez );
-void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
+bool readSACcomponents(EW* ew, const std::vector<std::string>& files, bool ignore_utc, bool grid_basis=false);
+void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc, bool grid_basis=false );
 void isRestart();
 void doRestart( EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle );
 void set_shift( float_sw4 shift );
@@ -465,9 +466,6 @@ int lastofmonth( int year, int month );
 int utccompare( int utc1[7], int utc2[7] );
 int leap_second_correction( int utc1[7], int utc2[7] );
 
-void readSACheader( const char* fname, float_sw4& dt, float_sw4& t0, float_sw4& lat,
-                    float_sw4& lon, float_sw4& cmpaz, float_sw4& cmpinc, int utc[7], int& npts);
-void readSACdata( const char* fname, int npts, float_sw4* u );
 void convertjday( int jday, int year, int& day, int& month );
 void getwgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 void getwgh5( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );

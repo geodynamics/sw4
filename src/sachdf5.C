@@ -30,6 +30,8 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include "TimeSeries.h"
+#include "ReceiverComponents.h"
+#include <cstring>
 #ifdef USE_HDF5
 namespace {
 // Match the component conventions used by TimeSeries::writeFile for SAC.
@@ -449,12 +451,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
   // units, units for motion (m for displacement, m/s for velocity, m/s/s for
   // acceleration
   mode = TimeSeries[0]->getMode();
-  if (mode == TimeSeries::Displacement)
-    createWriteAttrStr(fid, "UNIT", "m");
-  else if (mode == TimeSeries::Velocity)
-    createWriteAttrStr(fid, "UNIT", "m/s");
-  /* else if( mode == TimeSeries::??) */
-  /* createWriteAttrStr(fid, "Unit", "m/s/s"); */
+  createWriteAttrStr(fid, "UNIT", sw4::receiver_unit(mode));
+  float trace_start=TimeSeries[0]->getTimeShift();
+  createWriteAttr(fid, "STARTTIME", H5T_NATIVE_FLOAT, attr_space1, &trace_start);
 
   float cmpazs[9] = {0}, cmpincs[9] = {0};
 
@@ -497,58 +496,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
     cmpincs[2] = 180.;
     mode = TimeSeries[ts]->getMode();
     // Datasets
-    if (mode == TimeSeries::Displacement) {
-      ndset = 3;
-      if (xyzcomponent) {
-        dset_names[0] = "X";
-        dset_names[1] = "Y";
-        dset_names[2] = "Z";
-      } else {
-        dset_names[0] = "EW";
-        dset_names[1] = "NS";
-        dset_names[2] = "UP";
-        cmpincs[2] = 0.;
-      }
-    } else if (mode == TimeSeries::Velocity) {
-      ndset = 3;
-      if (xyzcomponent) {
-        dset_names[0] = "Vx";
-        dset_names[1] = "Vy";
-        dset_names[2] = "Vz";
-      } else {
-        dset_names[0] = "Vew";
-        dset_names[1] = "Vns";
-        dset_names[2] = "Vup";
-        cmpincs[2] = 0.;
-      }
-    } else if (mode == TimeSeries::Div) {
-      ndset = 1;
-      dset_names[0] = "Div";
-    } else if (mode == TimeSeries::Curl) {
-      ndset = 3;
-      dset_names[0] = "Curlx";
-      dset_names[1] = "Curly";
-      dset_names[2] = "Curlz";
-    } else if (mode == TimeSeries::Strains) {
-      ndset = 6;
-      dset_names[0] = "Uxx";
-      dset_names[1] = "Uyy";
-      dset_names[2] = "Uzz";
-      dset_names[3] = "Uxy";
-      dset_names[4] = "Uxz";
-      dset_names[5] = "Uyz";
-    } else if (mode == TimeSeries::DisplacementGradient) {
-      ndset = 9;
-      dset_names[0] = "DUXDX";
-      dset_names[1] = "DUXDY";
-      dset_names[2] = "DUXDZ";
-      dset_names[3] = "DUYDX";
-      dset_names[4] = "DUYDY";
-      dset_names[5] = "DUYDZ";
-      dset_names[6] = "DUZDX";
-      dset_names[7] = "DUZDY";
-      dset_names[8] = "DUZDZ";
-    }
+    const auto components=sw4::receiver_components(mode,xyzcomponent);
+    ndset=components.size();
+    for(int c=0;c<ndset;++c) dset_names[c]=components[c].name;
 
     int station_downsample = TimeSeries[ts]->getDownSample();
     if (totalSteps < 1 || station_downsample < 1) {
@@ -601,135 +551,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
   return 1;
 }
 
-int readAttrStr(hid_t loc, const char *name, char *str) {
-  herr_t ret;
-  hid_t attr, atype;
 
-  ASSERT(name);
-  ASSERT(str);
-
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-  if (attr < 0) {
-    printf("Error with H5Aopen [%s]\n", name);
-    return -1;
-  }
-  atype = H5Aget_type(attr);
-
-  ret = H5Aread(attr, atype, str);
-  if (ret < 0) {
-    printf("Error with H5Aread [%s]\n", name);
-    return -1;
-  }
-
-  H5Tclose(atype);
-  H5Aclose(attr);
-
-  return 1;
-}
-
-int readAttrInt(hid_t loc, const char *name, int *data) {
-  hid_t attr;
-  herr_t ret;
-
-#ifdef USE_DSET_ATTR
-  attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
-  if (attr < 0) {
-    printf("%s: Error with H5Aopen [%s]\n", __func__, name);
-    return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, (void *)data);
-  H5Pclose(dxpl);
-#else
-  ret = H5Aread(attr, H5T_NATIVE_INT, (void *)data);
-#endif
-  if (ret < 0) {
-    printf("%s: Error with H5Aread [%s]\n", __func__, name);
-    return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  H5Dclose(attr);
-#else
-  H5Aclose(attr);
-#endif
-
-  return 1;
-}
-
-int readAttrFloat(hid_t loc, const char *name, float *data) {
-  hid_t attr;
-  herr_t ret;
-
-#ifdef USE_DSET_ATTR
-  attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
-  if (attr < 0) {
-    printf("%s: Error with H5Aopen [%s]\n", __func__, name);
-    return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret = H5Dread(attr, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, dxpl, (void *)data);
-  H5Pclose(dxpl);
-#else
-  ret = H5Aread(attr, H5T_NATIVE_FLOAT, (void *)data);
-#endif
-  if (ret < 0) {
-    printf("%s: Error with H5Aread [%s]\n", __func__, name);
-    return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  H5Dclose(attr);
-#else
-  H5Aclose(attr);
-#endif
-
-  return 1;
-}
-
-int readHDF5Data(hid_t loc, const char *name, int npts, void *data) {
-  hid_t dset, filespace, dxpl;
-  hsize_t start, count;
-  herr_t ret;
-
-  dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-
-  dset = H5Dopen(loc, name, H5P_DEFAULT);
-  if (dset < 0) {
-    printf("%s: Error with H5Dopen [%s]\n", __func__, name);
-    return -1;
-  }
-
-  start = 0;
-  count = (hsize_t)npts;
-  filespace = H5Dget_space(dset);
-  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start, NULL, &count, NULL);
-
-  ret = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, filespace, dxpl, data);
-  if (ret < 0) {
-    printf("%s: Error with H5Dread [%s]\n", __func__, name);
-    return -1;
-  }
-
-  H5Pclose(dxpl);
-  H5Sclose(filespace);
-  H5Dclose(dset);
-
-  return 1;
-}
 
 #endif  // USE_HDF5
 
@@ -1127,12 +949,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
   // units, units for motion (m for displacement, m/s for velocity, m/s/s for acceleration
   mode = TimeSeries[0]->getMode();
-  if( mode == TimeSeries::Displacement )
-      createWriteAttrStr(fid, "UNIT", "m");
-  else if( mode == TimeSeries::Velocity)
-      createWriteAttrStr(fid, "UNIT", "m/s");
-  /* else if( mode == TimeSeries::??) */
-      /* createWriteAttrStr(fid, "Unit", "m/s/s"); */
+  createWriteAttrStr(fid, "UNIT", sw4::receiver_unit(mode));
+  float trace_start=TimeSeries[0]->getTimeShift();
+  createWriteAttr(fid, "STARTTIME", H5T_NATIVE_FLOAT, attr_space1, &trace_start);
 
   float cmpazs[9] = {0}, cmpincs[9] = {0};
 
@@ -1181,75 +1000,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     cmpincs[2] = 180.;
     mode         = TimeSeries[ts]->getMode();
     // Datasets
-    if( mode == TimeSeries::Displacement )
-    {
-        ndset = 3;
-       if( xyzcomponent )
-       {
-          dset_names[0] = "X";
-          dset_names[1] = "Y";
-          dset_names[2] = "Z";
-       }
-       else
-       {
-          dset_names[0] = "EW";
-          dset_names[1] = "NS";
-          dset_names[2] = "UP";
-          cmpincs[2] = 0.;
-       }
-    }
-    else if( mode == TimeSeries::Velocity )
-    {
-       ndset = 3;
-       if( xyzcomponent )
-       {
-          dset_names[0] = "Vx";
-          dset_names[1] = "Vy";
-          dset_names[2] = "Vz";
-       }
-       else
-       {
-          dset_names[0] = "Vew";
-          dset_names[1] = "Vns";
-          dset_names[2] = "Vup";
-          cmpincs[2] = 0.;
-       }
-    }
-    else if( mode == TimeSeries::Div )
-    {
-        ndset = 1;
-        dset_names[0] = "Div";
-    }
-    else if( mode == TimeSeries::Curl )
-    {
-        ndset = 3;
-        dset_names[0] = "Curlx";
-        dset_names[1] = "Curly";
-        dset_names[2] = "Curlz";
-    }
-    else if( mode == TimeSeries::Strains )
-    {
-        ndset = 6;
-        dset_names[0] = "Uxx";
-        dset_names[1] = "Uyy";
-        dset_names[2] = "Uzz";
-        dset_names[3] = "Uxy";
-        dset_names[4] = "Uxz";
-        dset_names[5] = "Uyz";
-    }
-    else if( mode == TimeSeries::DisplacementGradient )
-    {
-        ndset = 9;
-        dset_names[0] = "DUXDX";
-        dset_names[1] = "DUXDY";
-        dset_names[2] = "DUXDZ";
-        dset_names[3] = "DUYDX";
-        dset_names[4] = "DUYDY";
-        dset_names[5] = "DUYDZ";
-        dset_names[6] = "DUZDX";
-        dset_names[7] = "DUZDY";
-        dset_names[8] = "DUZDZ";
-    }
+    const auto components=sw4::receiver_components(mode,xyzcomponent);
+    ndset=components.size();
+    for(int c=0;c<ndset;++c) dset_names[c]=components[c].name;
 
     int station_downsample = TimeSeries[ts]->getDownSample();
     if (totalSteps < 1 || station_downsample < 1) {
@@ -1299,142 +1052,73 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   return 1;
 }
 
-int readAttrStr(hid_t loc, const char *name, char* str)
-{
-    herr_t ret;
-    hid_t attr, atype;
 
-    ASSERT(name);
-    ASSERT(str);
-
-    attr = H5Aopen(loc, name, H5P_DEFAULT);
-    if (attr < 0) {
-        printf("Error with H5Aopen [%s]\n", name);
-        return -1;
-    }
-    atype = H5Aget_type(attr);
-
-    ret = H5Aread(attr, atype, str);
-    if (ret < 0) {
-        printf("Error with H5Aread [%s]\n", name);
-        return -1;
-    }
-
-    H5Tclose(atype);
-    H5Aclose(attr);
-
-    return 1;
-}
-
-int readAttrInt(hid_t loc, const char *name, int *data)
-{
-  hid_t attr;
-  herr_t ret;
-
-#ifdef USE_DSET_ATTR
-  attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
-  if (attr < 0) {
-      printf("%s: Error with H5Aopen [%s]\n", __func__, name);
-      return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret  = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
-  H5Pclose(dxpl);
-#else
-  ret  = H5Aread(attr, H5T_NATIVE_INT, (void*)data);
-#endif
-  if (ret < 0) {
-      printf("%s: Error with H5Aread [%s]\n", __func__, name);
-      return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  H5Dclose(attr);
-#else
-  H5Aclose(attr);
-#endif
-
-    return 1;
-}
-
-int readAttrFloat(hid_t loc, const char *name, float *data)
-{
-  hid_t attr;
-  herr_t ret;
-
-#ifdef USE_DSET_ATTR
-  attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
-  if (attr < 0) {
-      printf("%s: Error with H5Aopen [%s]\n", __func__, name);
-      return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret  = H5Dread(attr, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
-  H5Pclose(dxpl);
-#else
-  ret  = H5Aread(attr, H5T_NATIVE_FLOAT, (void*)data);
-#endif
-  if (ret < 0) {
-      printf("%s: Error with H5Aread [%s]\n", __func__, name);
-      return -1;
-  }
-
-#ifdef USE_DSET_ATTR
-  H5Dclose(attr);
-#else
-  H5Aclose(attr);
-#endif
-
-    return 1;
-}
-
-int readHDF5Data(hid_t loc, const char *name, int npts, void *data)
-{
-  hid_t dset, filespace, dxpl;
-  hsize_t start, count;
-  herr_t ret;
-
-  dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-
-  dset = H5Dopen(loc, name, H5P_DEFAULT);
-  if (dset < 0) {
-    printf("%s: Error with H5Dopen [%s]\n", __func__, name);
-    return -1;
-  }
-
-  start = 0;
-  count = (hsize_t) npts;
-  filespace = H5Dget_space(dset);
-  H5Sselect_hyperslab (filespace, H5S_SELECT_SET, &start, NULL, &count, NULL);
-
-  ret  = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, filespace, dxpl, data);
-  if (ret < 0) {
-      printf("%s: Error with H5Dread [%s]\n", __func__, name);
-      return -1;
-  }
-
-  H5Pclose(dxpl);
-  H5Sclose(filespace);
-  H5Dclose(dset);
-
-  return 1;
-}
 
 
 #endif // USE_HDF5
 
 #endif // SACHDF5_C
 #endif // SW4 backend
+
+#ifdef USE_HDF5
+namespace {
+int read_receiver_scalar(hid_t loc,const char* name,hid_t type,void* data)
+{
+   hid_t dataset=H5Dopen(loc,name,H5P_DEFAULT);
+   if(dataset<0) return -1;
+   hid_t space=H5Dget_space(dataset);
+   const bool valid=space>=0 && H5Sget_simple_extent_npoints(space)==1;
+   const herr_t result=valid ? H5Dread(dataset,type,H5S_ALL,H5S_ALL,H5P_DEFAULT,data):-1;
+   if(space>=0) H5Sclose(space);
+   H5Dclose(dataset);
+   return result<0 ? -1:1;
+}
+}
+int readAttrStr(hid_t loc,const char* name,char* text,size_t capacity)
+{
+   hid_t attr=H5Aopen(loc,name,H5P_DEFAULT);
+   if(attr<0) return -1;
+   hid_t type=H5Aget_type(attr),space=H5Aget_space(attr);
+   bool valid=capacity>0 && type>=0 && space>=0 && H5Tget_class(type)==H5T_STRING &&
+      H5Sget_simple_extent_npoints(space)==1;
+   herr_t result=-1;
+   if(valid && H5Tis_variable_str(type)>0) {
+      char* value=nullptr;
+      if(H5Aread(attr,type,&value)>=0 && value) {
+         const size_t length=std::strlen(value);
+         if(length<capacity) { std::memcpy(text,value,length+1); result=0; }
+         H5free_memory(value);
+      }
+   } else if(valid && H5Tget_size(type)<capacity) {
+      std::memset(text,0,capacity);
+      result=H5Aread(attr,type,text);
+   }
+   if(type>=0) H5Tclose(type);
+   if(space>=0) H5Sclose(space);
+   H5Aclose(attr);
+   return result<0 ? -1:1;
+}
+int readAttrInt(hid_t loc,const char* name,int* data)
+{ return read_receiver_scalar(loc,name,H5T_NATIVE_INT,data); }
+int readAttrFloat(hid_t loc,const char* name,float* data)
+{ return read_receiver_scalar(loc,name,H5T_NATIVE_FLOAT,data); }
+int readHDF5Data(hid_t loc,const char* name,int npts,void* data)
+{
+   if(npts<1) return -1;
+   hid_t dataset=H5Dopen(loc,name,H5P_DEFAULT);
+   if(dataset<0) return -1;
+   hid_t file_space=H5Dget_space(dataset),memory=-1;
+   hsize_t extent=0,start=0,count=npts;
+   bool valid=file_space>=0 && H5Sget_simple_extent_ndims(file_space)==1 &&
+      H5Sget_simple_extent_dims(file_space,&extent,nullptr)==1 && extent>=count;
+   herr_t result=-1;
+   if(valid && H5Sselect_hyperslab(file_space,H5S_SELECT_SET,&start,nullptr,&count,nullptr)>=0) {
+      memory=H5Screate_simple(1,&count,nullptr);
+      if(memory>=0) result=H5Dread(dataset,H5T_NATIVE_FLOAT,memory,file_space,H5P_DEFAULT,data);
+   }
+   if(memory>=0) H5Sclose(memory);
+   if(file_space>=0) H5Sclose(file_space);
+   H5Dclose(dataset);
+   return result<0 ? -1:1;
+}
+#endif

@@ -50,6 +50,10 @@
 
 #endif // SW4 backend
 #include "TimeSeries.h"
+#include "ReceiverComponents.h"
+#include "ReceiverSAC.h"
+#include <limits>
+#include <fstream>
 //#include "mpi.h"
 #if defined(SW4_USE_RAJA) // SW4 backend
 #include "EW.h"
@@ -897,233 +901,25 @@ if( m_sacFormat || m_hdf5Format)
         << filePrefix.str();
 
     string xfield, yfield, zfield, xyfield, xzfield, yzfield, yxfield, zxfield, zyfield;
-     float azimx, azimy, updownang;
-     if( m_mode == Displacement )
-     {
-        if( m_xyzcomponent )
-        {
-           xfield = "X";
-           yfield = "Y";
-           zfield = "Z";
-           ux << filePrefix.str() << "x";
-           uy << filePrefix.str() << "y";
-           uz << filePrefix.str() << "z";
-           azimx = m_x_azimuth;
-           azimy = m_x_azimuth+90.;
-           updownang = 180;
-           msg << "[x|y|z]" << endl;
-        }
-        else
-        {
-           xfield = "EW";
-           yfield = "NS";
-           zfield = "UP";
-           ux << filePrefix.str() << "e";
-           uy << filePrefix.str() << "n";
-           uz << filePrefix.str() << "u";
-           azimx = 90.;// UX is east if !m_xycomponent
-           azimy = 0.; // UY is north if !m_xycomponent
-           updownang = 0;
-           msg << "[e|n|u]" << endl;
-
-        }
+     const bool geographic=!m_xyzcomponent && (m_mode==Displacement || m_mode==Velocity);
+     const float azimx=geographic ? 90.f:m_x_azimuth;
+     const float azimy=geographic ? 0.f:m_x_azimuth+90;
+     const float updownang=geographic ? 0.f:180.f;
+     const auto components=sw4::receiver_components(m_mode,m_xyzcomponent);
+     std::vector<std::stringstream*> paths={&ux,&uy,&uz,&uxy,&uxz,&uyz};
+     std::vector<std::string*> fields={&xfield,&yfield,&zfield,&xyfield,&xzfield,&yzfield};
+     if(m_mode==DisplacementGradient) {
+        paths={&ux,&uxy,&uxz,&uyx,&uy,&uyz,&uzx,&uzy,&uz};
+        fields={&xfield,&xyfield,&xzfield,&yxfield,&yfield,&yzfield,&zxfield,&zyfield,&zfield};
      }
-     else if( m_mode == Velocity )
-     {
-        if( m_xyzcomponent )
-        {
-           xfield = "Vx";
-           yfield = "Vy";
-           zfield = "Vz";
-           ux << filePrefix.str() << "xv";
-           uy << filePrefix.str() << "yv";
-           uz << filePrefix.str() << "zv";
-           azimx = m_x_azimuth;
-           azimy = m_x_azimuth+90.;
-           updownang = 180;
-           msg << "[xv|yv|zv]" << endl;
-        }
-        else
-        {
-           xfield = "Vew";
-           yfield = "Vns";
-           zfield = "Vup";
-           ux << filePrefix.str() << "ev";
-           uy << filePrefix.str() << "nv";
-           uz << filePrefix.str() << "uv";
-           azimx = 90.;// UX is east if !m_xycomponent
-           azimy = 0.; // UY is north if !m_xycomponent
-           updownang = 0;
-           msg << "[ev|nv|uv]" << endl;
-        }
+     for(size_t c=0;c<components.size();++c) {
+        paths[c]->str("");
+        *paths[c] << filePrefix.str() << components[c].suffix;
+        *fields[c]=components[c].name;
+        msg << (c ? "|":"[") << components[c].suffix;
      }
-     else if( m_mode == Div )
-     {
-        xfield = "Div";
-        ux << filePrefix.str() << "div";
-        azimx = m_x_azimuth;
-        azimy = m_x_azimuth+90.;
-        updownang = 180;
-        msg << "[div]" << endl;
-     }
-     else if( m_mode == Curl )
-     {
-        xfield = "Curlx";
-        yfield = "Curly";
-        zfield = "Curlz";
-        ux << filePrefix.str() << "curlx";
-        uy << filePrefix.str() << "curly";
-        uz << filePrefix.str() << "curlz";
-        azimx = m_x_azimuth;
-        azimy = m_x_azimuth+90.;
-        updownang = 180;
-        msg << "[curlx|curly|curlz]" << endl;
-     }
-     else if( m_mode == Strains )
-     {
-        xfield = "Uxx";
-        yfield = "Uyy";
-        zfield = "Uzz";
-        xyfield = "Uxy";
-        xzfield = "Uxz";
-        yzfield = "Uyz";
-        ux << filePrefix.str() << "xx";
-        uy << filePrefix.str() << "yy";
-        uz << filePrefix.str() << "zz";
-        uxy << filePrefix.str() << "xy";
-        uxz << filePrefix.str() << "xz";
-        uyz << filePrefix.str() << "yz";
-        azimx = m_x_azimuth;
-        azimy = m_x_azimuth+90.;
-        updownang = 180;
-        msg << "[xx|yy|zz|xy|xz|yz]" << endl;
-     }
-     else if( m_mode == DisplacementGradient )
-     {
-        xfield  = "DUXDX";
-        xyfield = "DUXDY";
-        xzfield = "DUXDZ";
 
-        yxfield = "DUYDX";
-        yfield  = "DUYDY";
-        yzfield = "DUYDZ";
-
-        zxfield = "DUZDX";
-        zyfield = "DUZDY";
-        zfield  = "DUZDZ";
-
-        ux  << filePrefix.str() << "duxdx";
-        uxy << filePrefix.str() << "duxdy";
-        uxz << filePrefix.str() << "duxdz";
-
-        uyx << filePrefix.str() << "duydx";
-        uy << filePrefix.str()  << "duydy";
-        uyz << filePrefix.str() << "duydz";
-
-        uzx << filePrefix.str() << "duzdx";
-        uzy << filePrefix.str() << "duzdy";
-        uz << filePrefix.str()  << "duzdz";
-
-        azimx = m_x_azimuth;
-        azimy = m_x_azimuth+90.;
-        updownang = 180;
-        msg << "[duxdx|duxdy|duxdz|duydx|duydy|duydz|duzdx|duzdy|duzdz]" << endl;
-     }
-     // 	else if( !m_xycomponent && !m_velocities )
-     // 	{
-     // 	   xfield = "EW";
-     // 	   yfield = "NS";
-     // 	   zfield = "UP";
-     // 	   ux << filePrefix.str() << "e";
-     // 	   uy << filePrefix.str() << "n";
-     // 	   uz << filePrefix.str() << "u";
-     // 	   azimx = 90.;// UX is east if !m_xycomponent
-     // 	   azimy = 0.; // UY is north if !m_xycomponent
-     // 	   updownang = 0;
-     // 	   msg << "[e|n|u]" << endl;
-     // 	}
-     // 	else if( !m_xycomponent && m_velocities )
-     // 	{
-     // 	   xfield = "Vew";
-     // 	   yfield = "Vns";
-     // 	   zfield = "Vup";
-     // 	   ux << filePrefix.str() << "ev";
-     // 	   uy << filePrefix.str() << "nv";
-     // 	   uz << filePrefix.str() << "uv";
-     // 	   azimx = 90.;// UX is east if !m_xycomponent
-     // 	   azimy = 0.; // UY is north if !m_xycomponent
-     // 	   updownang = 0;
-     // 	   msg << "[ev|nv|uv]" << endl;
-     // 	}
-     // }
-     // else if( m_div && m_velocities )
-     // {
-     // 	xfield = "VelDiv";
-     // 	ux << filePrefix.str() << "vdiv";
-     // 	azimx = a_ew->mGeoAz;
-     // 	azimy = a_ew->mGeoAz+90.;
-     // 	updownang = 180;
-     // 	msg << "[vdiv]" << endl;
-     // }
-     // else if( m_curl && m_velocities && m_xycomponent )
-     // {
-     // 	xfield = "VelCurlx";
-     // 	yfield = "VelCurly";
-     // 	zfield = "VelCurlz";
-     // 	ux << filePrefix.str() << "vcurlx";
-     // 	uy << filePrefix.str() << "vcurly";
-     // 	uz << filePrefix.str() << "vcurlz";
-     // 	azimx = a_ew->mGeoAz;
-     // 	azimy = a_ew->mGeoAz+90.;
-     // 	updownang = 180;
-     // 	msg << "[vcurlx|vcurly|vcurlz]" << endl;
-     // }
-     // else if( m_curl && !m_velocities && !m_xycomponent )
-     // {
-     // 	xfield = "CurlEW";
-     // 	yfield = "CurlNS";
-     // 	zfield = "CurlUP";
-     // 	ux << filePrefix.str() << "curle";
-     // 	uy << filePrefix.str() << "curln";
-     // 	uz << filePrefix.str() << "curlu";
-     // 	azimx = a_ew->mGeoAz;
-     // 	azimy = a_ew->mGeoAz+90.;
-     // 	updownang = 180;
-     // 	msg << "[curle|curln|curlu]" << endl;
-     // }
-     // else if( m_curl && m_velocities && !m_xycomponent )
-     // {
-     // 	xfield = "VelCurlEW";
-     // 	yfield = "VelCurlNS";
-     // 	zfield = "VelCurlUP";
-     // 	ux << filePrefix.str() << "vcurle";
-     // 	uy << filePrefix.str() << "vcurln";
-     // 	uz << filePrefix.str() << "vcurlu";
-     // 	azimx = a_ew->mGeoAz;
-     // 	azimy = a_ew->mGeoAz+90.;
-     // 	updownang = 180;
-     // 	msg << "[vcurle|vcurln|vcurlu]" << endl;
-     // }
-     // else if( m_strains && m_velocities )
-     // {
-     // 	xfield = "Velxx";
-     // 	yfield = "Velyy";
-     // 	zfield = "Velzz";
-     // 	xyfield = "Velxy";
-     // 	xzfield = "Velxz";
-     // 	yzfield = "Velyz";
-     // 	ux << filePrefix.str() << "vxx";
-     // 	uy << filePrefix.str() << "vyy";
-     // 	uz << filePrefix.str() << "vzz";
-     // 	uxy << filePrefix.str() << "vxy";
-     // 	uxz << filePrefix.str() << "vxz";
-     // 	uyz << filePrefix.str() << "vyz";
-     // 	azimx = a_ew->mGeoAz;
-     // 	azimy = a_ew->mGeoAz+90.;
-     // 	updownang = 180;
-     // 	msg << "[vxx|vyy|vzz|vxy|vxz|vyz]" << endl;
-     // }
-
+     msg << "]" << endl;
      if (m_ew->getVerbosity() >=3)
        cout << msg.str();
 
@@ -1478,6 +1274,17 @@ write_sac_format(int npts, char *ofile, float *y, float btime, float dt, char *v
   setfhv( nm[23], cmpinc, nerr);
   setfhv( nm[24], cmpaz, nerr);
 
+  if(sw4::receiver_vector(m_mode)) {
+     setkhv("KUSER0", const_cast<char*>(m_xyzcomponent ? "SW4XYZ" : "SW4ENU"), nerr);
+     if(m_xyzcomponent) {
+        // N=USER0*X+USER1*Y, E=USER2*X+USER3*Y, U=-Z.
+        setfhv("USER0", m_thynrm, nerr);
+        setfhv("USER1", -m_thxnrm, nerr);
+        setfhv("USER2", m_salpha, nerr);
+        setfhv("USER3", m_calpha, nerr);
+     }
+  }
+
   // set the station name
   setkhv( nm[25], const_cast<char*>(m_staName.c_str()), nerr);
 
@@ -1760,237 +1567,89 @@ void TimeSeries::write_usgs_format(string a_fileName)
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::readFile( EW *ew, bool ignore_utc )
+void TimeSeries::readFile(EW* ew, bool ignore_utc)
 {
-//building the file name...
-//
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
-char *ret;
-
-#endif // SW4 backend
-stringstream filePrefix;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if ((ew->getObservationPath(m_event) != "./") &&
-      (ew->getObservationPath(m_event) != ""))
-    filePrefix << ew->getObservationPath(m_event);
-
-#else // SW4 backend
-if( ew->getObservationPath(m_global_event) != "./" && ew->getObservationPath(m_global_event) != "" )
-      filePrefix << ew->getObservationPath(m_global_event);
-
-#endif // SW4 backend
-else if( mIsRestart )
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-filePrefix << ew->getPath();
-
-
-#else // SW4 backend
-filePrefix << ew->getPath() << "/";
-
-#endif // SW4 backend
-filePrefix << m_fileName << ".txt" ;
-
-
-   if( m_myPoint && m_usgsFormat )
-   {
-      bool debug = false;
-      FILE *fd=fopen(filePrefix.str().c_str(),"r");
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (fd == NULL) {
-      cerr << " ERROR: observed data file " << filePrefix.str() << " not found "
-
-#else // SW4 backend
-if( fd == NULL )
-         cout << "ERROR: observed data file " << filePrefix.str() << " not found "
-#endif // SW4 backend
-<< endl;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << " ERROR: observed data file " << filePrefix.str() << " not found "
-           << std::flush;
-      cout << "ERROR PATH " << ew->getPath() << " flag =  " << mIsRestart
-           << "\n"
-           << std::flush;
-      abort();
-    } else {
-
-#else // SW4 backend
-else
-      {
-
-#endif // SW4 backend
-int bufsize=1024;
-         char* buf = new char[bufsize];
-
-      // Read header
-         for( int line=0 ; line < 13 ; line++ )
-         {
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-fgets(buf, bufsize, fd);
-
-#else // SW4 backend
-ret = fgets(buf,bufsize,fd);
-
-#endif // SW4 backend
-if( line == 2 && !ignore_utc )
-            {
-               // set UTC time, if defined in file
-               string timestr(buf);
-               size_t utcind = timestr.find("UTC");
-               if( utcind != string::npos  )
-               {
-                  int fail;
-                  char *utcstr=new char[timestr.size()];
-                  // Skip characters 'UTC'
-                  utcind += 3;
-                  timestr.copy(utcstr, timestr.size()-utcind , utcind );
-                  utcstr[timestr.size()-utcind] = '\0';
-                  ew->parsedate( utcstr, m_utc[0], m_utc[1], m_utc[2], m_utc[3],
-                                 m_utc[4], m_utc[5], m_utc[6], fail );
-                  if( fail != 0 )
-                     cout << "ERROR reading observation " << m_fileName << " , UTC parse failure no. " << fail << endl;
-                  else
-                  {
-                     int utcrefsim[7];
-                     m_ew->get_utc(utcrefsim, m_event );
-                     //		     cout << "UTC from EW : ";
-                     //		     for( int c=0;c<7;c++ )
-                     //			cout << utcrefsim[c] << " " ;
-                     //		     cout << endl;
-                     //		     cout << "UTC from file : ";
-                     //		     for( int c=0;c<7;c++ )
-                     //			cout << m_utc[c] << " " ;
-                     //		     cout << endl;
-                     m_t0 = utc_distance( utcrefsim, m_utc );
-                  }
-                  delete[] utcstr;
-                  if( debug )
-                  {
-                     cout << "found observation utc time " ;
-                     for( int u=0 ; u < 7 ; u++ )
-                        cout << m_utc[u] << " ";
-                     cout << endl;
-                  }
-               }
-            }
+   if(!m_myPoint) return;
+   std::string path;
+   if(mIsRestart) path=ew->getPath()+"/";
+   else if(!m_fileName.empty() && m_fileName[0]!='/' && ew->getObservationPath(m_event)!="./")
+      path=ew->getObservationPath(m_event);
+   path+=m_fileName+".txt";
+   std::ifstream input(path);
+   CHECK_INPUT(input && m_usgsFormat,"Could not open USGS receiver " << path << ". ");
+   std::vector<std::vector<double>> rows;
+   std::vector<double> times;
+   std::string line,description,date;
+   int columns=0;
+   while(std::getline(input,line)) {
+      if(line.empty()) continue;
+      if(line[0]=='#') {
+         if(line.find("# nColumns:")==0) {
+            std::istringstream number(line.substr(11)); number>>columns;
          }
-         string bufstr(buf);
-         bool foundd = (bufstr.find("displacement") != string::npos);
-         bool foundv = (bufstr.find("velocity") != string::npos);
-         if( foundd || foundv )
-         {
-            // The file contains velocities or displacements.
-            // The last line read contains the z-component. Check whether it is a ENU or XYZ file.
-            bool cartesian = (bufstr.find("Z") != string::npos);
-
-            m_xyzcomponent = cartesian;
-
-            if( debug )
-            {
-               cout << "Found observed ";
-               if( foundd )
-                  cout << "displacement ";
-               else
-                  cout << "velocity ";
-               cout << "file with ";
-               if( cartesian )
-                  cout << "Cartesian ";
-               else
-                  cout << "geographic ";
-               cout << "components " << endl;
-            }
-            float_sw4 tstart, dt, td, ux, uy, uz;
-            int nlines = 0;
-            if( fscanf(fd,"%le %le %le %le",&tstart,&ux,&uy,&uz) != EOF )
-               nlines++;
-            if( fscanf(fd,"%le %le %le %le",&dt,&ux,&uy,&uz) != EOF )
-               nlines++;
-            dt = dt-tstart;
-            while( fscanf(fd,"%le %le %le %le",&td,&ux,&uy,&uz) != EOF )
-               nlines++;
-            fclose(fd);
-            // Use offset in time column.
-      // Only allocate arrays if we aren't doing a restart
-            if(!mIsRestart)
-               allocateRecordingArrays( nlines, m_t0+tstart, dt );
-            if( nlines <= 1 )
-            {
-               cout << "ERROR: observed data is too short" << endl;
-               cout << "    File " << filePrefix.str() << " not read." << endl;
-            }
-            fd=fopen(filePrefix.str().c_str(),"r");
-            if( fd == NULL )
-               cout << "ERROR: observed data file " << filePrefix.str() << " could not be reopened" << endl;
-
-         // Read past header
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-for (int line = 0; line < 13; line++) fgets(buf, bufsize, fd);
-        // Mapping to invert (e,n) to (x,y) components, Only needed in the
-        // non-cartesian case.
-
-#else // SW4 backend
-for( int line=0 ; line < 13 ; line++ )
-               ret = fgets(buf,bufsize,fd);
-            // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
-
-#endif // SW4 backend
-float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-            float_sw4 a11 = m_calpha*deti;
-            float_sw4 a12 = m_thxnrm*deti;
-            float_sw4 a21 =-m_salpha*deti;
-            float_sw4 a22 = m_thynrm*deti;
-         // Read the data on file
-            if( debug )
-               cout << "Found " << nlines << " lines of observation data " << endl;
-            for( int line=0 ; line < nlines ; line++ )
-            {
-               int nr=fscanf(fd, "%lf %lf %lf %lf \n", &tstart,&ux,&uy,&uz);
-       //               cout << "nr = " << nr << " tstart " << tstart << " ux " << ux << " uy " << uy << " uz " << uz << endl;
-               if( nr != 4 )
-               {
-                  cout << "ERROR: could not read observed data file " << endl;
-               }
-               if( cartesian )
-               {
-                  mRecordedSol[0][line]=ux;
-                  mRecordedSol[1][line]=uy;
-                  mRecordedSol[2][line]=uz;
-               }
-               else
-               {
-                  // Geographic coordinates, read East, North, and Up velocities/displacements
-                  float_sw4 uns = uy;
-                  float_sw4 uew = ux;
-                  mRecordedSol[2][line] = -uz;
-                  // Transform to Cartesian
-                  mRecordedSol[0][line] = a11*uns + a12*uew;
-                  mRecordedSol[1][line] = a21*uns + a22*uew;
-               }
-
-            }
-            fclose(fd);
-            mLastTimeStep = nlines-1;
-         }
-         else
-         {
-            cout << "ERROR: observed data must contain displacements" << endl;
-            cout << "    File " << filePrefix.str() << " not read " << endl;
-         }
-         delete[] buf;
+         if(line.find("# Column 2:")==0 || line.find("# Column 2 :")==0) description=line;
+         const auto utc=line.find("UTC");
+         if(line.find("# Date:")==0 && utc!=std::string::npos) date=line.substr(utc+3);
+         continue;
       }
+      std::istringstream record(line);
+      double time,extra;
+      std::vector<double> values(m_nComp);
+      bool valid=bool(record>>time) && std::isfinite(time);
+      for(auto& value:values) valid=valid && bool(record>>value) && std::isfinite(value);
+      CHECK_INPUT(valid && !(record>>extra),"Invalid USGS sample in " << path << ". ");
+      times.push_back(time); rows.push_back(values);
    }
-   else if( !m_usgsFormat )
-   {
-      cout << "ERROR: observed data must be an ASCII USGS file" << endl;
-      cout << "    File " << filePrefix.str() << " not read " << endl;
+   CHECK_INPUT(!input.bad() && rows.size()>1 && columns==m_nComp+1,
+               "Invalid USGS sample count/components in " << path << ". ");
+   receiverMode quantity=Displacement;
+   if(description.find("velocity")!=std::string::npos) quantity=Velocity;
+   else if(description.find("divergence")!=std::string::npos) quantity=Div;
+   else if(description.find("curl")!=std::string::npos) quantity=Curl;
+   else if(description.find("strain")!=std::string::npos) quantity=Strains;
+   else if(description.find("dux/dx")!=std::string::npos) quantity=DisplacementGradient;
+   CHECK_INPUT(!description.empty() && quantity==m_mode,
+               "USGS quantity does not match receiver " << m_staName << ". ");
+   CHECK_INPUT((m_mode!=Displacement && m_mode!=Velocity) ||
+               description.find(std::string("(")+sw4::receiver_unit(m_mode)+")")!=std::string::npos,
+               "USGS units do not match receiver quantity. ");
+   const bool cartesian=description.find("East-west")==std::string::npos;
+   const double start=times[0],dt=times[1]-start;
+   CHECK_INPUT(std::isfinite(dt) && dt>0,"Invalid USGS sampling interval. ");
+   for(size_t i=0;i<times.size();++i)
+      CHECK_INPUT(std::abs(times[i]-(start+i*dt))<=2e-6*std::max(std::abs(times[i]),dt),
+                  "Nonuniform USGS sample times in " << path << ". ");
+   if(mIsRestart) {
+      CHECK_INPUT(rows.size()<=static_cast<size_t>(mAllocatedSize) &&
+                  std::abs(dt-m_dt)<=2e-6*std::abs(m_dt) && cartesian==m_xyzcomponent,
+                  "USGS history is incompatible with restart. ");
+   } else {
+      if(!ignore_utc) {
+         int utc[7],bad=0;
+         std::vector<char> stamp(date.begin(),date.end()); stamp.push_back(0);
+         ew->parsedate(stamp.data(),utc[0],utc[1],utc[2],utc[3],utc[4],utc[5],utc[6],bad);
+         CHECK_INPUT(!date.empty() && !bad,"Invalid USGS UTC in " << path << ". ");
+         std::copy(utc,utc+7,m_utc);
+         int reference[7]; ew->get_utc(reference,m_event);
+         m_t0=utc_distance(reference,m_utc);
+      }
+      allocateRecordingArrays(rows.size(),m_t0+start,dt);
+      m_xyzcomponent=cartesian;
    }
+   const double determinant=m_thynrm*m_calpha+m_thxnrm*m_salpha;
+   CHECK_INPUT(cartesian || std::abs(determinant)>1e-12,"Singular geographic receiver mapping. ");
+   for(size_t i=0;i<rows.size();++i) {
+      for(int c=0;c<m_nComp;++c) mRecordedSol[c][i]=rows[i][c];
+      if(!cartesian && sw4::receiver_vector(m_mode)) {
+         const double east=rows[i][0],north=rows[i][1];
+         mRecordedSol[0][i]=(m_calpha*north+m_thxnrm*east)/determinant;
+         mRecordedSol[1][i]=(-m_salpha*north+m_thynrm*east)/determinant;
+         mRecordedSol[2][i]=-rows[i][2];
+      }
+      if(mRecordedFloats)
+         for(int c=0;c<m_nComp;++c) mRecordedFloats[c][i]=mRecordedSol[c][i];
+   }
+   mLastTimeStep=rows.size()-1;
 }
 
 //-----------------------------------------------------------------------
@@ -3563,13 +3222,8 @@ float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
       int ls = leap_second_correction(start,finish);
       return sg*(86400.0*d + (finish[3]-start[3])*3600.0 + (finish[4]-start[4])*60.0 +
                  (finish[5]-start[5]) +
-#if defined(SW4_USE_RAJA) // SW4 backend
-(finish[6] - start[6]) * 1e-3 + ls);
-
-#else // SW4 backend
 (finish[6]-start[6])*1e-6 + ls);
 
-#endif // SW4 backend
 }
 }
 
@@ -3832,350 +3486,127 @@ void TimeSeries::exclude_component( bool usex, bool usey, bool usez )
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::readSACfiles( EW *ew, const char* sac1,
-                               const char* sac2, const char* sac3, bool ignore_utc )
+void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
+                              const char* sac3, bool ignore_utc, bool grid_basis)
 {
-   string file1, file2, file3;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (ew->getObservationPath(m_event) != "./") {
-    file1 += ew->getObservationPath(m_event);
-    file2 += ew->getObservationPath(m_event);
-    file3 += ew->getObservationPath(m_event);
-
-#else // SW4 backend
-if( ew->getObservationPath(m_global_event) != "./" )
-   {
-      file1 += ew->getObservationPath(m_global_event);
-      file2 += ew->getObservationPath(m_global_event);
-      file3 += ew->getObservationPath(m_global_event);
-
-#endif // SW4 backend
+   CHECK_INPUT(!m_myPoint || (m_nComp==3 && readSACcomponents(ew,{sac1,sac2,sac3},ignore_utc,grid_basis)),
+               "Could not read SAC observations for station " << m_staName << ". ");
 }
-   file1 += sac1;
-   file2 += sac2;
-   file3 += sac3;
 
-   if( m_myPoint )
-   {
-      bool debug = false;
-      float_sw4 dt1, dt2, dt3, t01, t02, t03, lat1, lat2, lat3, lon1, lon2, lon3;
-      float_sw4 cmpaz1, cmpaz2, cmpaz3, cmpinc1, cmpinc2, cmpinc3;
-      int utc1[7], utc2[7], utc3[7], npts1, npts2, npts3;
-
-// Read header information
-      readSACheader( file1.c_str(), dt1, t01, lat1, lon1, cmpaz1, cmpinc1, utc1, npts1 );
-      readSACheader( file2.c_str(), dt2, t02, lat2, lon2, cmpaz2, cmpinc2, utc2, npts2 );
-      readSACheader( file3.c_str(), dt3, t03, lat3, lon3, cmpaz3, cmpinc3, utc3, npts3 );
-
-// Check that files are consistent with each other
-      int eflag = 0;
-      if( dt1 != dt2 || dt1 != dt3 || dt2 != dt3 )
-         eflag = 1;
-      if( t01 != t02 || t01 != t03 || t02 != t03 )
-         eflag = 1;
-      if( lat1 != lat2 || lat1 != lat3 || lat2 != lat3 )
-         eflag = 1;
-      if( lon1 != lon2 || lon1 != lon3 || lon2 != lon3 )
-         eflag = 1;
-      if( npts1 != npts2 || npts1 != npts3 || npts2 != npts3 )
-         eflag = 1;
-
-      bool utcequal=true;
-      for( int c=0 ; c < 7 ; c++ )
-         if( utc1[c] != utc2[c] )
-            utcequal = false;
-      for( int c=0 ; c < 7 ; c++ )
-         if( utc1[c] != utc3[c] )
-            utcequal = false;
-      for( int c=0 ; c < 7 ; c++ )
-         if( utc2[c] != utc3[c] )
-            utcequal = false;
-      if( !utcequal )
-         eflag = 1;
-
-      if( eflag == 0 )
-// Headers are ok, get the data
-      {
-         // Check that all data are available
-
-         bool azfail = false, incfail = false;
-         if( cmpaz1 == -12345 || cmpaz2 == -12345 || cmpaz3 == -12345 )
-            azfail = true;
-         if( cmpinc1 == -12345 || cmpinc2 == -12345 || cmpinc3 == -12345 )
-            incfail = true;
-
-         if( !azfail && !incfail )
-         {
-            float_sw4* u1 = new float_sw4[npts1];
-            float_sw4* u2 = new float_sw4[npts1];
-            float_sw4* u3 = new float_sw4[npts1];
-            readSACdata( file1.c_str(), npts1, u1 );
-            readSACdata( file2.c_str(), npts1, u2 );
-            readSACdata( file3.c_str(), npts1, u3 );
-
-      // For restart, don't overwrite member vars except data
-            if (!mIsRestart)
-            {
-               if( !ignore_utc )
-               {
-                  for( int c=0 ; c < 7 ; c++ )
-                     m_utc[c] = utc1[c];
-                  int utcrefsim[7];
-                  m_ew->get_utc(utcrefsim,m_event);
-                  m_t0 = utc_distance( utcrefsim, m_utc );
-               }
-               m_shift = t01;
-               allocateRecordingArrays( npts1, m_t0+m_shift, dt1 );
-            }
-
-            if( debug )
-            {
-               cout << "Read sac files " << file1 << " " << file2 << " " << file3 << endl;
-               cout << "UTC = " << utc1[1] << "/" << utc1[2] << "/" << utc1[0] << ":" << utc1[3]
-                    << ":" << utc1[4] << ":" << utc1[5] << "." << utc1[6] << endl;
-               cout << " lat = " << lat1 << " lon = " << lon1 << endl;
-               cout << " dt = " << dt1 << " t0= " << t01  << " npts = " << npts1 << endl;
-               cout << " az1 = " << cmpaz1 << " inc1 = " << cmpinc1 << endl;
-               cout << " az2 = " << cmpaz2 << " inc2 = " << cmpinc2 << endl;
-               cout << " az3 = " << cmpaz3 << " inc3 = " << cmpinc3 << endl;
-            }
-// Assume that we are using geographic coordinates, transform to (east,north,up) components.
-            const float_sw4 convfactor = M_PI/180.0;
-            cmpaz1  *= convfactor;
-            cmpaz2  *= convfactor;
-            cmpaz3  *= convfactor;
-            cmpinc1 *= convfactor;
-            cmpinc2 *= convfactor;
-            cmpinc3 *= convfactor;
-
-// Convert from station azimut to (e,n,u) components
-            float_sw4 tmat[9];
-            tmat[0] = sin(cmpinc1)*cos(cmpaz1);
-            tmat[1] = sin(cmpinc2)*cos(cmpaz2);
-            tmat[2] = sin(cmpinc3)*cos(cmpaz3);
-            tmat[3] = sin(cmpinc1)*sin(cmpaz1);
-            tmat[4] = sin(cmpinc2)*sin(cmpaz2);
-            tmat[5] = sin(cmpinc3)*sin(cmpaz3);
-            tmat[6] = cos(cmpinc1);
-            tmat[7] = cos(cmpinc2);
-            tmat[8] = cos(cmpinc3);
-
-            if (!mIsRestart) // For restart, already in xyz format?
-            {
-               m_xyzcomponent = false; //note this is format on output file,
-              //internally, we always use (x,y,z) during computation.
-
-        // Convert (e,n,u) to (x,y,z) components.
-               float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-               float_sw4 a11 = m_calpha*deti;
-               float_sw4 a12 = m_thxnrm*deti;
-               float_sw4 a21 =-m_salpha*deti;
-               float_sw4 a22 = m_thynrm*deti;
-               for( int i=0 ; i < npts1 ; i++ )
-               {
-                  float_sw4 ncomp = tmat[0]*u1[i] + tmat[1]*u2[i] + tmat[2]*u3[i];
-                  float_sw4 ecomp = tmat[3]*u1[i] + tmat[4]*u2[i] + tmat[5]*u3[i];
-                  float_sw4 ucomp = tmat[6]*u1[i] + tmat[7]*u2[i] + tmat[8]*u3[i];
-                  mRecordedSol[0][i] = a11*ncomp + a12*ecomp;
-                  mRecordedSol[1][i] = a21*ncomp + a22*ecomp;
-                  mRecordedSol[2][i] = -ucomp;
-               }
-               mLastTimeStep = npts1-1;
-            }
-            else
-            {
-               // Just copy the read values into our time series
-               for( int i=0 ; i < npts1 ; i++ )
-               {
-                  mRecordedSol[0][i] = u1[i];
-                  mRecordedSol[1][i] = u2[i];
-                  mRecordedSol[2][i] = u3[i];
-                  mRecordedFloats[0][i] = (float) u1[i];
-                  mRecordedFloats[1][i] = (float) u2[i];
-                  mRecordedFloats[2][i] = (float) u3[i];
-               }
-            }
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
-delete[] u1;
-            delete[] u2;
-            delete[] u3;
-
-#endif // SW4 backend
-}
-         else
-         {
-            cout << "readSACfile, ERROR: no information about ";
-            if( azfail )
-               cout << "component azimut ";
-            if( incfail )
-               cout << "component inclination ";
-            cout << " found on sac file" << endl;
-            cout << "  station not read " << endl;
+bool TimeSeries::readSACcomponents(EW* ew, const std::vector<std::string>& files,
+                                   bool ignore_utc, bool grid_basis)
+{
+   if(!m_myPoint) return true;
+   if(files.size()!=static_cast<size_t>(m_nComp)) return false;
+   auto fail=[&](const std::string& reason) {
+      std::cerr<<"SAC receiver "<<m_staName<<": "<<reason<<std::endl;
+      return false;
+   };
+   std::vector<sw4::SACTrace> traces(files.size());
+   for(size_t c=0;c<files.size();++c) {
+      std::string path=files[c];
+      if(!mIsRestart && !path.empty() && path[0]!='/' && ew->getObservationPath(m_event)!="./")
+         path=ew->getObservationPath(m_event)+path;
+      if(!traces[c].read(path)) return fail("invalid, missing or truncated trace "+path);
+   }
+   const auto& first=traces[0];
+   const int npts=first.integer[9];
+   const double dt=first.real[0], start=first.real[5];
+   const std::string basis=first.field(17); // KUSER0
+   if(grid_basis && basis=="SW4ENU") return fail("grid input conflicts with geographic basis marker");
+   bool cartesian=grid_basis || basis=="SW4XYZ";
+   bool geographic=basis=="SW4ENU";
+   if(mIsRestart && !cartesian && !geographic) {
+      cartesian=m_xyzcomponent || !sw4::receiver_vector(m_mode);
+      geographic=!cartesian;
+   }
+   const auto components=sw4::receiver_components(m_mode,cartesian);
+   for(size_t c=0;c<traces.size();++c) {
+      const auto& trace=traces[c];
+      if(trace.real[0]!=first.real[0] || trace.real[5]!=first.real[5] ||
+         trace.real[31]!=first.real[31] || trace.real[32]!=first.real[32] ||
+         trace.integer[9]!=npts || trace.field(17)!=basis ||
+         !std::equal(trace.integer.begin(),trace.integer.begin()+6,first.integer.begin()))
+         return fail("inconsistent component metadata");
+      if((mIsRestart || cartesian || geographic) && trace.field(20)!=components[c].name)
+         return fail("component "+trace.field(20)+" does not match requested quantity/basis");
+      if(cartesian && basis=="SW4XYZ")
+         for(int j=0;j<4;++j)
+            if(!std::isfinite(trace.real[40+j]) || trace.real[40+j]!=first.real[40+j])
+               return fail("inconsistent Cartesian basis metadata");
+   }
+   int utc[7];
+   if(!ignore_utc) {
+      const auto& ints=first.integer;
+      if(ints[0]<1 || ints[1]<1 || ints[1]>365+(lastofmonth(ints[0],2)==29) ||
+         ints[2]<0 || ints[2]>23 || ints[3]<0 || ints[3]>59 ||
+         ints[4]<0 || ints[4]>60 || ints[5]<0 || ints[5]>999)
+         return fail("invalid reference UTC");
+      utc[0]=ints[0]; convertjday(ints[1],utc[0],utc[2],utc[1]);
+      utc[3]=ints[2]; utc[4]=ints[3]; utc[5]=ints[4]; utc[6]=1000*ints[5];
+   }
+   if(mIsRestart) {
+      if(npts>mAllocatedSize || std::abs(dt-m_dt)>2e-7*std::abs(m_dt))
+         return fail("history length or sampling interval incompatible with restart");
+   } else {
+      if(!ignore_utc) {
+         std::copy(utc,utc+7,m_utc);
+         int reference[7]; ew->get_utc(reference,m_event);
+         m_t0=utc_distance(reference,m_utc);
+      }
+      m_shift=start;
+      allocateRecordingArrays(npts,m_t0+m_shift,dt);
+      if(sw4::receiver_vector(m_mode)) m_xyzcomponent=cartesian;
+   }
+   const double determinant=m_thynrm*m_calpha+m_thxnrm*m_salpha;
+   if(sw4::receiver_vector(m_mode) && std::abs(determinant)<1e-12)
+      return fail("singular geographic mapping");
+   const double a11=m_calpha/determinant, a12=m_thxnrm/determinant;
+   const double a21=-m_salpha/determinant, a22=m_thynrm/determinant;
+   bool same_grid=true;
+   if(cartesian && basis=="SW4XYZ") {
+      const double local[]={m_thynrm,-m_thxnrm,m_salpha,m_calpha};
+      for(int j=0;j<4;++j)
+         same_grid=same_grid && std::abs(first.real[40+j]-local[j])<2e-7;
+      if(std::abs(first.real[40]*first.real[43]-first.real[41]*first.real[42])<1e-12)
+         return fail("singular stored Cartesian mapping");
+   }
+   double transform[9]={};
+   if(sw4::receiver_vector(m_mode) && !cartesian && !geographic) {
+      // External SAC channels retain their instrument-to-geographic rotation.
+      for(int c=0;c<3;++c) {
+         const double az=traces[c].real[57], inc=traces[c].real[58];
+         if(!std::isfinite(az) || !std::isfinite(inc) || az==-12345 || inc==-12345)
+            return fail("missing channel orientation");
+         const double factor=M_PI/180;
+         transform[c]=std::sin(inc*factor)*std::cos(az*factor);
+         transform[3+c]=std::sin(inc*factor)*std::sin(az*factor);
+         transform[6+c]=std::cos(inc*factor);
+      }
+   }
+   for(int i=0;i<npts;++i) {
+      for(int c=0;c<m_nComp;++c) mRecordedSol[c][i]=traces[c].samples[i];
+      if(sw4::receiver_vector(m_mode) && (!cartesian || !same_grid)) {
+         const double x=traces[0].samples[i],y=traces[1].samples[i],z=traces[2].samples[i];
+         double north,east,up;
+         if(cartesian) {
+            north=first.real[40]*x+first.real[41]*y;
+            east=first.real[42]*x+first.real[43]*y; up=-z;
+         } else if(geographic) { east=x; north=y; up=z; }
+         else {
+            north=transform[0]*x+transform[1]*y+transform[2]*z;
+            east=transform[3]*x+transform[4]*y+transform[5]*z;
+            up=transform[6]*x+transform[7]*y+transform[8]*z;
          }
-        if( m_ew->getVerbosity() >= 3 )
-          cout << "read sac file m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
+         mRecordedSol[0][i]=a11*north+a12*east;
+         mRecordedSol[1][i]=a21*north+a22*east;
+         mRecordedSol[2][i]=-up;
       }
-      else
-      {
-         cout << "readSACfile, ERROR: found inconsistent meta data for files " << file1 << ", "
-              << file2 << ", " << file3 << endl;
-         cout << "  station not read " << endl;
-         cout << "dt = " << dt1 << " " << dt2 << " " << dt3 << endl;
-         cout << "t0 = " << t01 << " " << t02 << " " << t03 << endl;
-         cout << "lat= " << lat1 << " " << lat2 << " " << lat3 << endl;
-         cout << "lon= " << lon1 << " " << lon2 << " " << lon3 << endl;
-         cout << "npt= " << npts1 << " " << npts2 << " " << npts3 << endl;
-         cout << "utc1 = " ;
-         for( int c=0 ; c < 7 ; c++ )
-            cout << utc1[c] << " ";
-         cout << endl;
-         cout << "utc2 = " ;
-         for( int c=0 ; c < 7 ; c++ )
-            cout << utc2[c] << " ";
-         cout << endl;
-         cout << "utc3 = " ;
-         for( int c=0 ; c < 7 ; c++ )
-            cout << utc3[c] << " ";
-         cout << endl;
-      }
+      if(mRecordedFloats)
+         for(int c=0;c<m_nComp;++c) mRecordedFloats[c][i]=mRecordedSol[c][i];
    }
-}
-
-//-----------------------------------------------------------------------
-void TimeSeries::readSACheader( const char* fname, float_sw4& dt, float_sw4& t0,
-                                float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-                                float_sw4& cmpinc, int utc[7], int& npts )
-{
-
-   float float70[70];
-   int int35[35], logical[5];
-   char kvalues[192];
-
-   if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
-   {
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << "readSACheader: ERROR, size of datatypes do not match the SAC "
-            "specification. Can not read SAC file "
-
-#else // SW4 backend
-cout << "readSACheader: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
-
-#endif // SW4 backend
-<< fname << endl;
-      return;
-   }
-
-// Open SAC file
-   FILE* fd=fopen(fname,"r");
-   if( fd == NULL )
-   {
-      cout << "readSACheader: ERROR, observed data file " << fname << " could not be opened" << endl;
-      return;
-   }
-
-// Read header data blocks
-   size_t nr = fread(float70, sizeof(float), 70, fd );
-   if( nr != 70 )
-   {
-      cout << "readSACheader: ERROR, could not read float part of header of " << fname << endl;
-      fclose(fd);
-      return;
-   }
-   nr = fread(int35, sizeof(int), 35, fd );
-   if( nr != 35 )
-   {
-      cout << "readSACheader: ERROR, could not read int part of header of " << fname << endl;
-      fclose(fd);
-      return;
-   }
-   nr = fread(logical, sizeof(int), 5, fd );
-   if( nr != 5 )
-   {
-      cout << "readSACheader: ERROR, could not read bool part of header of " << fname << endl;
-      fclose(fd);
-      return;
-   }
-   nr = fread(kvalues, sizeof(char), 192, fd );
-   if( nr != 192 )
-   {
-      cout << "readSACheader: ERROR, could not read character part of header of " << fname << endl;
-      fclose(fd);
-      return;
-   }
-
-// Take out wanted information
-   dt     = float70[0];
-   t0     = float70[5];
-   lat    = float70[31];
-   lon    = float70[32];
-   cmpaz  = float70[57];
-   cmpinc = float70[58];
-   utc[0] = int35[0];
-   int jday=int35[1];
-   convertjday( jday, utc[0], utc[2], utc[1] );
-   utc[3] = int35[2];
-   utc[4] = int35[3];
-   utc[5] = int35[4];
-   utc[6] = 1000*int35[5]; // SAC milliseconds to SW4 microseconds
-   npts   = int35[9];
-   fclose(fd);
-}
-
-//-----------------------------------------------------------------------
-void TimeSeries::readSACdata( const char* fname, int npts, float_sw4* u )
-{
-   if( !(sizeof(float)==4) || !(sizeof(int)==4) || !(sizeof(char)==1) )
-   {
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << "readSACdata: ERROR, size of datatypes do not match the SAC "
-            "specification. Can not read SAC file "
-
-#else // SW4 backend
-cout << "readSACdata: ERROR, size of datatypes do not match the SAC specification. Can not read SAC file "
-
-#endif // SW4 backend
-<< fname << endl;
-      return;
-   }
-
-// Open SAC file
-   FILE* fd=fopen(fname,"r");
-   if( fd == NULL )
-   {
-      cout << "readSACdata: ERROR, observed data file " << fname << " could not be opened" << endl;
-      return;
-   }
-
-// Skip header
-   int retcode = fseek(fd,158*4,SEEK_SET);
-   if( retcode != 0 )
-   {
-      cout << "readSACdata: ERROR, could not skip header in file " << fname << endl;
-      fclose(fd);
-      return;
-   }
-
-// Read data
-   float* uf = new float[npts];
-   size_t nr = fread( uf, sizeof(float), npts, fd );
-   if( nr != npts )
-   {
-      cout << "readSACdata: ERROR, could not read float array of " << fname << endl;
-      delete[] uf;
-      fclose(fd);
-      return;
-   }
-
-// Return floats as float_sw4s
-   for( int i=0 ; i < npts ; i++ )
-      u[i] = static_cast<float_sw4>(uf[i]);
-   delete[] uf;
-   fclose(fd);
+   mLastTimeStep=npts-1;
+   return true;
 }
 
 //-----------------------------------------------------------------------
@@ -4314,212 +3745,104 @@ static int cubic_interp(float *xi, float *yi, int nin, float *xo, float *yo, int
     return 0;
 }
 
-bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
-  /* bool debug = false; */
-  hid_t fid, grp = -1;
-  /* char data[128]; */
-  /* hsize_t ndim, dims[4]; */
-  int ret;
-
-  if (!m_myPoint) return true;
-
-  /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
-  fid = H5Fopen(FileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-  if (fid < 0) {
-    printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
-    return false;
-  }
-
-  auto fail = [&]() {
-    if (grp >= 0) H5Gclose(grp);
-    H5Fclose(fid);
-    return false;
-  };
-
-  char datetime[128];
-  if (readAttrStr(fid, "DATETIME", datetime) < 0) return fail();
-
-  if (sscanf(datetime, "%4d-%2d-%2dT%2d:%2d:%2d.%d", &m_utc[0], &m_utc[1],
-             &m_utc[2], &m_utc[3], &m_utc[4], &m_utc[5], &m_utc[6]) != 7) {
-    cout << "ERROR reading observation " << m_fileName << " , UTC parse ["
-         << datetime << "] failed!" << endl;
-    return fail();
-  }
-  int utcrefsim[7];
-  m_ew->get_utc(utcrefsim, m_event);
-  m_t0 = utc_distance(utcrefsim, m_utc);
-
-  // dt may be downsampled
-  int downsample;
-  if (readAttrInt(fid, "DOWNSAMPLE", &downsample) < 0) return fail();
-  if (downsample < 1) {
-    cout << "ERROR: downsample=" << downsample << " is invalid!" << endl;
-    return fail();
-  }
-  if (downsample != mDownSample) {
-    cout << "ERROR: receiver downsample mismatch for station " << m_staName
-         << ": file=" << downsample << ", input=" << mDownSample << endl;
-    return fail();
-  }
-
-  std::string dset_names[3];
-  char unit[128];
-  if (readAttrStr(fid, "UNIT", unit) < 0) return fail();
-  bool foundd = (strstr(unit, "m") != NULL);
-  bool foundv = (strstr(unit, "m/s") != NULL);
-
-  if (foundd || foundv) {
-    // The file contains velocities or displacements.
-    bool cartesian = false;
-
-    grp = H5Gopen(fid, m_staName.c_str(), H5P_DEFAULT);
-    if (grp < 0) {
-      cout << "ERROR opening group [" << m_staName << "] !" << endl;
+bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
+{
+   if(!m_myPoint) return true;
+   hid_t fid=H5Fopen(FileName.c_str(),H5F_ACC_RDONLY,H5P_DEFAULT),grp=-1;
+   if(fid<0) return false;
+   auto fail=[&]() {
+      if(grp>=0) H5Gclose(grp);
+      H5Fclose(fid);
+      std::cerr<<"Invalid receiver HDF5 history for "<<m_staName<<" in "<<FileName<<std::endl;
+      return false;
+   };
+   char datetime[128],unit[128];
+   int utc[7],downsample,is_nsew,npts;
+   float dt,start=0;
+   if(readAttrStr(fid,"DATETIME",datetime)<0 ||
+      sscanf(datetime,"%4d-%2d-%2dT%2d:%2d:%2d.%d",&utc[0],&utc[1],&utc[2],
+             &utc[3],&utc[4],&utc[5],&utc[6])!=7 ||
+      utc[0]<1 || utc[1]<1 || utc[1]>12 || utc[2]<1 || utc[2]>lastofmonth(utc[0],utc[1]) ||
+      utc[3]<0 || utc[3]>23 || utc[4]<0 || utc[4]>59 || utc[5]<0 || utc[5]>60 ||
+      utc[6]<0 || utc[6]>999999 ||
+      readAttrInt(fid,"DOWNSAMPLE",&downsample)<0 || downsample<1 || downsample!=mDownSample ||
+      readAttrFloat(fid,"DELTA",&dt)<0 || !std::isfinite(dt) || dt<=0)
       return fail();
-    }
-
-    int is_nsew, npts, sw4npts;
-    if (readAttrInt(grp, "ISNSEW", &is_nsew) < 0) return fail();
-
-    htri_t nsew_status = H5Lexists(grp, "EW", H5P_DEFAULT);
-    htri_t xyz_status = H5Lexists(grp, "X", H5P_DEFAULT);
-    if (nsew_status < 0 || xyz_status < 0) return fail();
-    bool has_nsew = nsew_status > 0;
-    bool has_xyz = xyz_status > 0;
-
-    if (has_nsew && (is_nsew == 1 || !has_xyz)) {
-      dset_names[0] = "EW";
-      dset_names[1] = "NS";
-      dset_names[2] = "UP";
-    } else if (has_xyz) {
-      cartesian = true;
-      dset_names[0] = "X";
-      dset_names[1] = "Y";
-      dset_names[2] = "Z";
-    } else {
-      cout << "ERROR: no complete displacement component set in group ["
-           << m_staName << "]" << endl;
+   if(H5Lexists(fid,"STARTTIME",H5P_DEFAULT)>0 && readAttrFloat(fid,"STARTTIME",&start)<0)
       return fail();
-    }
-    m_xyzcomponent = cartesian;
-
-    if (readAttrInt(grp, "NPTS", &npts) < 0) return fail();
-    if (npts <= 1) {
-      cout << "ERROR: observed data is too short" << endl;
-      cout << "    File " << FileName << " not read." << endl;
-      return fail();
-    }
-
-    float dt, tstart;
-    if (readAttrFloat(fid, "DELTA", &dt) < 0) return fail();
-
-    sw4npts = (npts - 1) * downsample + 1;
-
-    // Only allocate arrays if we aren't doing a restart
-    if (!mIsRestart) {
-      // Assumes starting from time 0 and timestep 0
-      tstart = 0;
-      allocateRecordingArrays(sw4npts, m_t0 + tstart, tstart);
-    }
-
-    if (mAllocatedSize <= 0 || sw4npts > mAllocatedSize) {
-      cout << "ERROR: receiver history exceeds recording array for station "
-           << m_staName << endl;
-      return fail();
-    }
-
-    std::vector<float> buf_0(npts), buf_1(npts), buf_2(npts);
-    if (readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0.data()) < 0 ||
-        readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1.data()) < 0 ||
-        readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2.data()) < 0)
-      return fail();
-
-    // Mapping to invert (e,n) to (x,y) components, Only needed in the
-    // non-cartesian case.
-    float_sw4 deti = 1.0 / (m_thynrm * m_calpha + m_thxnrm * m_salpha);
-    float_sw4 a11 = m_calpha * deti;
-    float_sw4 a12 = m_thxnrm * deti;
-    float_sw4 a21 = -m_salpha * deti;
-    float_sw4 a22 = m_thynrm * deti;
-
-    if (downsample > 1) {
-      std::vector<float> buf_0up(sw4npts), buf_1up(sw4npts),
-          buf_2up(sw4npts), x(npts), nx(sw4npts);
-      for (int i = 0; i < npts; i++) x[i] = i * downsample;
-
-      for (int i = 0; i < sw4npts; i++) nx[i] = i;
-
-      // Cubic interpolation
-      ret = cubic_interp(x.data(), buf_0.data(), npts, nx.data(),
-                         buf_0up.data(), sw4npts);
-      if (ret < 0) {
-        cout << "ERROR: cubic_interp failed!" << endl;
-        return fail();
+   if(!std::isfinite(start)) return fail();
+   // Legacy derivative files omit UNIT. Their exact component names define the
+   // requested dimensionless quantity; vector files must state their exact unit.
+   const htri_t has_unit=H5Aexists(fid,"UNIT");
+   if(has_unit<0 || (has_unit==0 && (m_mode==Displacement || m_mode==Velocity)) ||
+      (has_unit>0 && (readAttrStr(fid,"UNIT",unit)<0 ||
+                     std::string(unit)!=sw4::receiver_unit(m_mode)))) return fail();
+   grp=H5Gopen(fid,m_staName.c_str(),H5P_DEFAULT);
+   if(grp<0 || readAttrInt(grp,"ISNSEW",&is_nsew)<0 || (is_nsew!=0 && is_nsew!=1) ||
+      readAttrInt(grp,"NPTS",&npts)<0 || npts<=1 ||
+      npts-1>(std::numeric_limits<int>::max()-1)/downsample) return fail();
+   const bool cartesian=is_nsew==0;
+   const auto components=sw4::receiver_components(m_mode,cartesian);
+   if(components.size()!=static_cast<size_t>(m_nComp)) return fail();
+   const int count=(npts-1)*downsample+1;
+   std::vector<std::vector<float>> data(m_nComp,std::vector<float>(npts));
+   hsize_t common_extent=0;
+   for(int c=0;c<m_nComp;++c) {
+      if(H5Lexists(grp,components[c].name,H5P_DEFAULT)<=0) return fail();
+      hid_t dataset=H5Dopen(grp,components[c].name,H5P_DEFAULT);
+      if(dataset<0) return fail();
+      hid_t space=H5Dget_space(dataset);
+      hsize_t extent=0;
+      bool valid=space>=0 && H5Sget_simple_extent_ndims(space)==1 &&
+         H5Sget_simple_extent_dims(space,&extent,nullptr)==1 && extent>=static_cast<hsize_t>(npts);
+      if(space>=0) H5Sclose(space);
+      H5Dclose(dataset);
+      if(!valid || (c && extent!=common_extent)) return fail();
+      common_extent=extent;
+      if(readHDF5Data(grp,components[c].name,npts,data[c].data())<0) return fail();
+      for(float value:data[c]) if(!std::isfinite(value)) return fail();
+   }
+   if(downsample>1) {
+      std::vector<float> x(npts),nx(count);
+      for(int i=0;i<npts;++i) x[i]=i*downsample;
+      for(int i=0;i<count;++i) nx[i]=i;
+      for(auto& component:data) {
+         std::vector<float> up(count);
+         if(cubic_interp(x.data(),component.data(),npts,nx.data(),up.data(),count)<0) return fail();
+         for(float value:up) if(!std::isfinite(value)) return fail();
+         component.swap(up);
       }
-      ret = cubic_interp(x.data(), buf_1.data(), npts, nx.data(),
-                         buf_1up.data(), sw4npts);
-      if (ret < 0) {
-        cout << "ERROR: cubic_interp failed!" << endl;
-        return fail();
+   }
+   const double determinant=m_thynrm*m_calpha+m_thxnrm*m_salpha;
+   if(sw4::receiver_vector(m_mode) && !cartesian && std::abs(determinant)<1e-12) return fail();
+   if(mIsRestart) {
+      if(count>mAllocatedSize || std::abs(dt/downsample-m_dt)>2e-7*std::abs(m_dt)) return fail();
+   } else {
+      if(!ignore_utc) {
+         std::copy(utc,utc+7,m_utc);
+         int reference[7]; ew->get_utc(reference,m_event);
+         m_t0=utc_distance(reference,m_utc);
       }
-      ret = cubic_interp(x.data(), buf_2.data(), npts, nx.data(),
-                         buf_2up.data(), sw4npts);
-      if (ret < 0) {
-        cout << "ERROR: cubic_interp failed!" << endl;
-        return fail();
+      allocateRecordingArrays(count,m_t0+start,dt/downsample);
+      m_xyzcomponent=cartesian;
+   }
+   for(int i=0;i<count;++i) {
+      for(int c=0;c<m_nComp;++c) mRecordedSol[c][i]=data[c][i];
+      if(sw4::receiver_vector(m_mode) && !cartesian) {
+         const double east=data[0][i],north=data[1][i];
+         mRecordedSol[0][i]=(m_calpha*north+m_thxnrm*east)/determinant;
+         mRecordedSol[1][i]=(-m_salpha*north+m_thynrm*east)/determinant;
+         mRecordedSol[2][i]=-data[2][i];
       }
-
-      for (int i = 0; i < sw4npts; i++) {
-        if (cartesian) {
-          mRecordedSol[0][i] = (float_sw4)buf_0up[i];
-          mRecordedSol[1][i] = (float_sw4)buf_1up[i];
-          mRecordedSol[2][i] = (float_sw4)buf_2up[i];
-        } else {
-          mRecordedSol[0][i] =
-              a11 * (float_sw4)buf_1up[i] + a12 * (float_sw4)buf_0up[i];
-          mRecordedSol[1][i] =
-              a21 * (float_sw4)buf_1up[i] + a22 * (float_sw4)buf_0up[i];
-          mRecordedSol[2][i] = -(float_sw4)buf_2up[i];
-        }
-      }
-
-    } else {
-      for (int i = 0; i < sw4npts; i++) {
-        if (cartesian) {
-          mRecordedSol[0][i] = (float_sw4)buf_0[i];
-          mRecordedSol[1][i] = (float_sw4)buf_1[i];
-          mRecordedSol[2][i] = (float_sw4)buf_2[i];
-        } else {
-          mRecordedSol[0][i] =
-              a11 * (float_sw4)buf_1[i] + a12 * (float_sw4)buf_0[i];
-          mRecordedSol[1][i] =
-              a21 * (float_sw4)buf_1[i] + a22 * (float_sw4)buf_0[i];
-          mRecordedSol[2][i] = -(float_sw4)buf_2[i];
-        }
-      }
-    }
-
-    for (int i = 0; i < sw4npts; i++) {
-      mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
-      mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
-      mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
-    }
-
-    m_dt = dt / downsample;
-    mLastTimeStep = sw4npts - 1;
-    if (H5Gclose(grp) < 0) {
-      grp = -1;
-      return fail();
-    }
-    grp = -1;
-  } else {
-    cout << "ERROR: unit [" << unit
-         << "] is unrecognized! Currently supports m or m/s" << endl;
-    return fail();
-  }
-
-  return H5Fclose(fid) >= 0;
+      if(mRecordedFloats)
+         for(int c=0;c<m_nComp;++c) mRecordedFloats[c][i]=mRecordedSol[c][i];
+   }
+   mLastTimeStep=count-1;
+   const bool closed=H5Gclose(grp)>=0;
+   grp=-1;
+   return H5Fclose(fid)>=0 && closed;
 }
+
 #endif
 
 
@@ -4535,48 +3858,14 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
     std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_fileName;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-std::string filex = fullFilePath + ".x";
-    std::string filey = fullFilePath + ".y";
-    std::string filez = fullFilePath + ".z";
+    std::vector<std::string> files;
+    for(const auto& component: sw4::receiver_components(m_mode,m_xyzcomponent))
+       files.push_back(fullFilePath+"."+component.suffix);
+    CHECK_INPUT(readSACcomponents(ew,files,ignore_utc),
+                "Could not restore SAC receiver history for station " << m_staName << ". ");
+    CHECK_INPUT(!m_myPoint || mLastTimeStep >= beginCycle-1,
+                "SAC receiver history ends before checkpoint cycle " << beginCycle << ". ");
 
-#else // SW4 backend
-std::string filex, filey, filez;
-    if( m_mode == Displacement ) {
-      if( m_xyzcomponent ) {
-        filex = fullFilePath + ".x";
-        filey = fullFilePath + ".y";
-        filez = fullFilePath + ".z";
-      }
-      else {
-        filex = fullFilePath + ".e";
-        filey = fullFilePath + ".n";
-        filez = fullFilePath + ".u";
-      }
-    }
-    else if( m_mode == Velocity ) {
-      if( m_xyzcomponent ) {
-        filex = fullFilePath + ".xv";
-        filey = fullFilePath + ".yv";
-        filez = fullFilePath + ".zv";
-      }
-      else {
-        filex = fullFilePath + ".ev";
-        filey = fullFilePath + ".nv";
-        filez = fullFilePath + ".uv";
-      }
-    }
-    else if( m_mode == Curl ) {
-      filex = fullFilePath + ".curlx";
-      filey = fullFilePath + ".curly";
-      filez = fullFilePath + ".curlz";
-    }
-
-
-#endif // SW4 backend
-readSACfiles(ew, const_cast<char*>(filex.c_str()),
-        const_cast<char*>(filey.c_str()),
-        const_cast<char*>(filez.c_str()), ignore_utc);
   }
   else if (m_hdf5Format) {
     // Read the timeseries data in the HDF5 file from the fileio path directory
