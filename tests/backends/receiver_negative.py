@@ -15,6 +15,7 @@ from receiver_formats import read_sac
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--reader',type=Path,required=True)
+    parser.add_argument('--sw4',type=Path,help='Also verify missing station input fails before time stepping')
     parser.add_argument('--fixture',type=Path,required=True,help='Flat displacement/XYZ format case directory')
     parser.add_argument('--work-dir',type=Path,required=True)
     args=parser.parse_args()
@@ -29,6 +30,7 @@ def main():
     for name in cases:
         work=root/name;work.mkdir(exist_ok=True)
         output=work/'output';shutil.copytree(fixture/'output',output,dirs_exist_ok=True)
+        shutil.copy2(fixture/'stations.h5',work/'stations.h5')
         (work/'case.in').write_text((fixture/'case.in').read_text())
         x=output/'ascii.x'
         if name.startswith('sac-'):
@@ -112,6 +114,19 @@ def main():
             valid=valid and 'Segmentation fault' not in log
         if not valid:raise RuntimeError(f'Unexpected reader result: {work}/reader.log\n{log[-3000:]}')
         print('PASS:',name,'accepted' if positive else 'rejected',flush=True)
+
+    if args.sw4:
+        work=root/'station-missing';work.mkdir(exist_ok=True)
+        (work/'case.in').write_text((fixture/'case.in').read_text().replace(
+            'infile=stations.h5','infile=missing-stations.h5'))
+        command=['srun','--exclusive','--exact','--gres=none','-N','1','-n','2','-c','1',
+                 str(args.sw4.resolve(strict=True)),str(work/'case.in')]
+        with (work/'run.log').open('w') as log:
+            result=subprocess.run(command,cwd=work,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=120)
+        output=(work/'run.log').read_text()
+        if result.returncode==0 or 'Could not open station HDF5 file' not in output or 'Begin time stepping' in output:
+            raise RuntimeError(f'Missing station input did not fail closed: {work}/run.log')
+        print('PASS: missing station input rejected before time stepping',flush=True)
 
 
 if __name__=='__main__':main()

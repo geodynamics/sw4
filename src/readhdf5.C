@@ -460,8 +460,8 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
 
   fid = H5Fopen(inFileName.c_str(),  H5F_ACC_RDONLY, fapl);
   if (fid < 0) {
-    printf("%s Error opening file [%s]\n", __func__, inFileName.c_str());
-    return;
+    H5Pclose(fapl);
+    CHECK_INPUT(false, "Could not open station HDF5 file " << inFileName);
   }
 
   if (inFileName == outFileName) {

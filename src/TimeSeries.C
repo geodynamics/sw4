@@ -3765,9 +3765,13 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
       utc[0]<1 || utc[1]<1 || utc[1]>12 || utc[2]<1 || utc[2]>lastofmonth(utc[0],utc[1]) ||
       utc[3]<0 || utc[3]>23 || utc[4]<0 || utc[4]>59 || utc[5]<0 || utc[5]>60 ||
       utc[6]<0 || utc[6]>999999 ||
-      readAttrInt(fid,"DOWNSAMPLE",&downsample)<0 || downsample<1 || downsample!=mDownSample ||
+      readAttrInt(fid,"DOWNSAMPLE",&downsample)<0 || downsample<1 ||
       readAttrFloat(fid,"DELTA",&dt)<0 || !std::isfinite(dt) || dt<=0)
       return fail();
+   if(downsample!=mDownSample) {
+      std::cerr<<"receiver downsample mismatch for "<<m_staName<<" in "<<FileName<<std::endl;
+      return fail();
+   }
    if(H5Lexists(fid,"STARTTIME",H5P_DEFAULT)>0 && readAttrFloat(fid,"STARTTIME",&start)<0)
       return fail();
    if(!std::isfinite(start)) return fail();
