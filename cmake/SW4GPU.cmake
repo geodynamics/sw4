@@ -121,7 +121,7 @@ if(SW4_BACKEND STREQUAL CUDA)
 else()
   set_target_properties(sw4 PROPERTIES HIP_STANDARD ${SW4_GPU_CXX_STANDARD}
     HIP_STANDARD_REQUIRED ON)
-  target_compile_definitions(sw4 PRIVATE ENABLE_HIP=1 SW4_NO_ROCTRACER=1 CAMP_USE_PLATFORM_DEFAULT_STREAM=1)
+  target_compile_definitions(sw4 PRIVATE ENABLE_HIP=1 SW4_NO_ROCTRACER=1)
   # Makefile.hipcc compiles and links relocatable device code.
   target_compile_options(sw4 PRIVATE "$<$<COMPILE_LANGUAGE:HIP>:-fgpu-rdc>")
   target_link_options(sw4 PRIVATE "$<$<LINK_LANGUAGE:HIP>:-fgpu-rdc>")

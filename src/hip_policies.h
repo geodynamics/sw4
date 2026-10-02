@@ -2,6 +2,12 @@
 #define __HIP_POLICIES_H__
 #include "RAJA/RAJA.hpp"
 
+// SW4's explicit synchronization and copies use stream zero. CAMP must use
+// that same stream; overriding its installed configuration can violate ODR.
+#if !defined(CAMP_USE_PLATFORM_DEFAULT_STREAM) || !CAMP_USE_PLATFORM_DEFAULT_STREAM
+#error "Build CAMP/RAJA with CAMP_USE_PLATFORM_DEFAULT_STREAM=ON for SW4 HIP"
+#endif
+
 #define SW4_FORCEINLINE __forceinline__
 #define SYNC_DEVICE SW4_CheckDeviceError(hipDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(hipStreamSynchronize(0))

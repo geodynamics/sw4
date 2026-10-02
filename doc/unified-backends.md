@@ -133,15 +133,22 @@ cmake --build --preset hip -j 16
 
 Load the site's MPI, Fortran, BLAS/LAPACK and optional shared-library modules
 first. Select a host compiler and OpenMP runtime compatible with the ROCm
-compiler; `SW4_GPU_HOST_OPENMP=OFF` disables host OpenMP for GPU executables
-without changing native CPU or inversion targets. CMake obtains host OpenMP
+compiler. Host OpenMP defaults to `OFF` for CUDA and `ON` for HIP, matching
+their Make workflows. `SW4_GPU_HOST_OPENMP` overrides this without changing
+native CPU or inversion targets. For CUDA with host OpenMP enabled, use
+`OMP_PROC_BIND=false`: binding a single OpenMP thread to one hardware thread
+can starve CUDA progress and make Cartesian refinement appear stalled.
+CMake obtains host OpenMP
 flags from the compiler instead of assuming GCC flags. `cmake --install`
 installs the executables under `CMAKE_INSTALL_PREFIX`.
 
 The HIP setup follows `raja:Makefile.hipcc` and the Frontier configuration:
 it compiles the same GPU source manifest, links with the HIP compiler and
 uses `-fgpu-rdc` for compilation and linking, with
-`CAMP_USE_PLATFORM_DEFAULT_STREAM=1` as in the Frontier Make configuration. `SW4_GPU_MPI_BUFFERS` selects
+the platform default stream used by SW4's explicit copies and synchronization.
+Build CAMP/RAJA with `-DCAMP_USE_PLATFORM_DEFAULT_STREAM=ON`; the HIP policy
+checks the installed configuration. Modern CAMP rejects a command-line macro
+override because it can violate the one-definition rule. `SW4_GPU_MPI_BUFFERS` selects
 `STAGED` (host-staged, default for both GPU presets) or `MANAGED` (the legacy
 HIP Make setting). Staged validation uses `MPICH_GPU_SUPPORT_ENABLED=0`.
 Managed buffers require a compatible memory/MPI transport configuration; the
