@@ -1311,14 +1311,7 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *gname, const 
 	    MPI_Abort(MPI_COMM_WORLD,0);
 	 }
 
-	 il = m_irecv.m_ilow[0];
-	 jl = m_irecv.m_jlow[0];
-	 kl = m_irecv.m_klow[0];
-	 ind = il-1+nig*(jl-1)+((off_t)nig)*njg*(kl-1);
-         offset = pos0 + nc*ind;
-         roffsets[0] = il-1;
-         roffsets[1] = jl-1;
-         roffsets[2] = kl-1;
+
       }
 
       tag = 334;
@@ -1407,6 +1400,11 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *gname, const 
 	    niblock = m_irecv.m_niblock[b];
 	    njblock = m_irecv.m_njblock[b];
 	    nkblock = m_irecv.m_nkblock[b];
+            ind = il-1+nig*(jl-1)+((off_t)nig)*njg*(kl-1);
+            offset = pos0 + nc*ind;
+            roffsets[0] = il-1;
+            roffsets[1] = jl-1;
+            roffsets[2] = kl-1;
 	    for( i = 0  ; i < m_irecv.m_ncomm[b] ; i++ )
 	    {
 	       retcode = MPI_Wait( &req[i], &status );

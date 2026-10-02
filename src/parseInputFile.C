@@ -193,7 +193,7 @@ void EW::deprecatedOption(const string& command,
 bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 			 vector< vector<TimeSeries*> > & a_GlobalTimeSeries )
 {
-  char buffer[256];
+  char buffer[512];
   ifstream inputFile;
   int blockCount=0;
   int ablockCount=0;
@@ -216,7 +216,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // First process Geodyn input for restrictions of allowable grid sizes.
  while (!inputFile.eof())
  {
-    inputFile.getline(buffer, 256);
+    inputFile.getline(buffer,512);
     if( startswith("geodynbc",buffer ) )
        geodynFindFile(buffer);
  }
@@ -227,7 +227,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // these commands can enter data directly the object (this->)
   while (!inputFile.eof())
   {    
-     inputFile.getline(buffer, 256);
+     inputFile.getline(buffer,512);
      if (startswith("testrayleigh", buffer) )
      {
        m_doubly_periodic = true;
@@ -266,7 +266,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // these commands can enter data directly into the object (this->)
   while (!inputFile.eof())
   {    
-     inputFile.getline(buffer, 256);
+     inputFile.getline(buffer,512);
      if( startswith("grid", buffer) )
      {
        foundGrid = true;
@@ -450,7 +450,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   //----------------------------------------------------------
   while (!inputFile.eof())
   {
-     inputFile.getline(buffer, 256);
+     inputFile.getline(buffer,512);
 
      if (strlen(buffer) > 0) // empty lines produce this
      {
@@ -3020,11 +3020,11 @@ void EW::processGeodynbc(char* buf)
    float_sw4 srcx0, srcy0, srcz0, h, toff;
 
    bool timestepset = false, nstepsset=false, toffset=false;
-   char buffer[256];
+   char buffer[512];
    bool done = false;
    while (!geodynfile.eof() && !done )
    {
-      geodynfile.getline(buffer,256);
+      geodynfile.getline(buffer,512);
       if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
          break;
       if( startswith("begindata",buffer) )
@@ -3289,13 +3289,13 @@ void EW::geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cube
    double x0, y0, z0, elev, h;
    adjust=1;
 
-   char buffer[256];
+   char buffer[512];
    bool done = false;
    bool nxfound=false, nyfound=false, nzfound=false, x0found=false, y0found=false, z0found=false;
    bool latfound=false, lonfound=false, azfound=false, hfound=false, elevfound=false;
    while (!geodynfile.eof() && !done )
    {
-      geodynfile.getline(buffer,256);
+      geodynfile.getline(buffer,512);
       if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0" )
          break;
       if( startswith("begindata",buffer) )
@@ -7583,16 +7583,31 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 
     event = global_to_local_event(event);
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
-					topodepth, writeEvery, downSample, !nsew, event );
+					topodepth, writeEvery, downSample, !nsew, event);
 #if USE_HDF5
     if (hdf5format) {
-      if(a_GlobalTimeSeries[event].size() == 0) {
+      // Each HDF5 output file needs its own shared handle.  Receivers in the
+      // same file share a handle, but receivers in different files must not
+      // force one another's files to close and reopen during output.
+      TimeSeries* file_ts0 = NULL;
+      for (int ts = (int)a_GlobalTimeSeries[event].size() - 1; ts >= 0;
+           ts--) {
+        TimeSeries* candidate = a_GlobalTimeSeries[event][ts];
+        if (candidate->getUseHDF5() &&
+            candidate->getPath() == ts_ptr->getPath() &&
+            candidate->gethdf5FileName() ==
+                ts_ptr->gethdf5FileName()) {
+          file_ts0 = candidate->getTS0Ptr();
+          break;
+        }
+      }
+
+      if (file_ts0 == NULL) {
         ts_ptr->allocFid();
         ts_ptr->setTS0Ptr(ts_ptr);
-      }
-      else {
-        ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
-        ts_ptr->setTS0Ptr(a_GlobalTimeSeries[event][0]);
+      } else {
+        ts_ptr->setFidPtr(file_ts0->getFidPtr());
+        ts_ptr->setTS0Ptr(file_ts0);
       }
     }
 #endif
@@ -9254,7 +9269,7 @@ void EW::processEvent( char* buffer, int enr )
 //-----------------------------------------------------------------------
 int EW::findNumberOfEvents()
 {
-   char buffer[256];
+   char buffer[512];
    ifstream inputFile;
    MPI_Barrier(MPI_COMM_WORLD);
    inputFile.open(mName.c_str());
@@ -9267,7 +9282,7 @@ int EW::findNumberOfEvents()
    int events=0;
    while (!inputFile.eof())
    {
-      inputFile.getline(buffer, 256);
+      inputFile.getline(buffer,512);
       if( startswith("event",buffer ) )
       {
 	 processEvent( buffer, events );

@@ -30,6 +30,7 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
+#include <map>
 #include "EW.h"
 #include "impose_cartesian_bc.h"
 #include "cf_interface.h"
@@ -509,27 +510,54 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file with all necessary groups, attributes, and datasets
   // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-  if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
-    for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) 
+  // A single event can have several rechdf5 commands, each with its own
+  // output file.  Create each file from only the time series that belong to
+  // it; otherwise duplicate station names from different commands collide in
+  // the first output file and the remaining files are never created.
+  map<string, vector<TimeSeries*> > hdf5TimeSeries;
+  for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) {
+    if (a_TimeSeries[tsi]->getUseHDF5()) {
       a_TimeSeries[tsi]->resetHDF5file();
-    if(m_myRank == 0 && !m_check_point->do_restart()) 
-      createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
-    MPI_Barrier(m_1d_communicator);
-    hid_t fid = 0;
-    const int max_open_attempts = 10;
-    for (int attempt = 0; attempt < max_open_attempts && fid <= 0; attempt++)
-    {
-      H5E_BEGIN_TRY
-      {
-        fid = a_TimeSeries[0]->openHDF5File("", true);
-      }
-      H5E_END_TRY
-      if (fid <= 0 && attempt + 1 < max_open_attempts)
-        sleep(1);
+      string key = a_TimeSeries[tsi]->getPath() + "\n" +
+                   a_TimeSeries[tsi]->gethdf5FileName();
+      hdf5TimeSeries[key].push_back(a_TimeSeries[tsi]);
     }
-    CHECK_INPUT(fid > 0,
-                "Could not open receiver HDF5 file on rank " << m_myRank <<
-                " after " << max_open_attempts << " attempts");
+  }
+
+  if (!hdf5TimeSeries.empty()) {
+    int create_status = 0;
+    if (m_myRank == 0 && !m_check_point->do_restart()) {
+      for (map<string, vector<TimeSeries*> >::iterator it =
+               hdf5TimeSeries.begin();
+           it != hdf5TimeSeries.end(); ++it) {
+        if (createTimeSeriesHDF5File(it->second,
+                                     mNumberOfTimeSteps[event] + 1, mDt,
+                                     "") < 0)
+          create_status = -1;
+      }
+    }
+    MPI_Bcast(&create_status, 1, MPI_INT, 0, m_1d_communicator);
+    CHECK_INPUT(create_status == 0,
+                "Could not create receiver HDF5 output file(s)");
+
+    const int max_open_attempts = 10;
+    for (map<string, vector<TimeSeries*> >::iterator it =
+             hdf5TimeSeries.begin();
+         it != hdf5TimeSeries.end(); ++it) {
+      hid_t fid = 0;
+      for (int attempt = 0; attempt < max_open_attempts && fid <= 0;
+           attempt++) {
+        H5E_BEGIN_TRY {
+          fid = it->second[0]->openHDF5File("", true);
+        } H5E_END_TRY;
+        if (fid <= 0 && attempt + 1 < max_open_attempts) sleep(1);
+      }
+      CHECK_INPUT(fid > 0,
+                  "Could not open receiver HDF5 file "
+                      << it->second[0]->gethdf5FileName() << " on rank "
+                      << m_myRank << " after " << max_open_attempts
+                      << " attempts");
+    }
     MPI_Barrier(m_1d_communicator);
   }
 #endif
@@ -1017,6 +1045,34 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // Write check point, if requested (timeToWrite returns false if checkpointing is not used)
     if( m_check_point->timeToWrite( t, currentTimeStep, mDt ) )
     {
+      // Output through this cycle must be durable before the checkpoint can
+      // advertise a restart point, including a partial SSI buffer.
+      for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+        mESSI3DFiles[i3]->flush_pending(currentTimeStep);
+      double time_chkpt_timeseries = MPI_Wtime();
+      for (int ts = 0; ts < a_TimeSeries.size(); ts++)
+        a_TimeSeries[ts]->writeFile();
+#ifdef USE_HDF5
+      MPI_Barrier(m_1d_communicator);
+      for (map<string, vector<TimeSeries*> >::iterator it =
+               hdf5TimeSeries.begin();
+           it != hdf5TimeSeries.end(); ++it) {
+        hid_t* fid = it->second[0]->getFidPtr();
+        CHECK_INPUT(fid && *fid > 0 && H5Fflush(*fid, H5F_SCOPE_GLOBAL) >= 0,
+                    "Could not flush receiver HDF5 file before checkpoint: "
+                        << it->first);
+      }
+      MPI_Barrier(m_1d_communicator);
+#endif
+      double time_chkpt_timeseries_tmp = MPI_Wtime() - time_chkpt_timeseries;
+      if (m_output_detailed_timing) {
+        MPI_Allreduce(&time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1,
+                      MPI_DOUBLE, MPI_MAX, m_1d_communicator);
+        if (m_myRank == 0)
+          cout << "Wallclock time to write all checkpoint time series files "
+               << time_chkpt_timeseries << " seconds " << endl;
+      }
+
        double time_chkpt=MPI_Wtime();
 
        if (!m_check_point->useHDF5())
@@ -1036,20 +1092,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	  if( m_myRank == 0 )
 	     cout << "Wallclock time to write check point file " << time_chkpt << " seconds " << endl;
        }
-       // Force write all the TimeSeries files for restart
-       double time_chkpt_timeseries=MPI_Wtime();
-       for (int ts=0; ts<a_TimeSeries.size(); ts++)
-       {
-         a_TimeSeries[ts]->writeFile();
-       }
-	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
-       if( m_output_detailed_timing )
-       {
-	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
-	        if( m_myRank == 0 )
-	          cout << "Wallclock time to write all checkpoint time series files "
-              << time_chkpt_timeseries << " seconds " << endl;
-       }
+
    }
 
 // Energy evaluation, requires all three time levels present, do before cycle arrays.
