@@ -24,7 +24,7 @@ def main():
     env.update(OMP_NUM_THREADS='1')
     cases=('sac-missing','sac-truncated','sac-nan','sac-wrong-quantity','sac-different-dt',
            'hdf-missing','hdf-wrong-unit','hdf-nan','hdf-count-shape','hdf-short-component',
-           'hdf-long-string','hdf-wrong-basis','hdf-zero-dt','hdf-wrong-downsample',
+           'hdf-long-string','hdf-wrong-basis','hdf-zero-dt','hdf-wrong-downsample','hdf-count-exceeds-data',
            'usgs-incomplete-row','usgs-wrong-quantity','sac-big-endian','instrument13','instrument45',
            'legacy-grid','ignore-utc')
     for name in cases:
@@ -58,6 +58,7 @@ def main():
                 elif name=='hdf-wrong-basis':g['ISNSEW'][...]=1
                 elif name=='hdf-zero-dt':f['DELTA'][...]=0
                 elif name=='hdf-wrong-downsample':f['DOWNSAMPLE'][...]=3
+                elif name=='hdf-count-exceeds-data':g['NPTS'][...]=1000000000
         elif name.startswith('usgs-'):
             path=output/'ascii.txt';text=path.read_text()
             if name=='usgs-incomplete-row':

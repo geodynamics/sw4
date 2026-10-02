@@ -3789,7 +3789,8 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
    const auto components=sw4::receiver_components(m_mode,cartesian);
    if(components.size()!=static_cast<size_t>(m_nComp)) return fail();
    const int count=(npts-1)*downsample+1;
-   std::vector<std::vector<float>> data(m_nComp,std::vector<float>(npts));
+   if(mIsRestart && (count>mAllocatedSize || std::abs(dt/downsample-m_dt)>2e-7*std::abs(m_dt)))
+      return fail();
    hsize_t common_extent=0;
    for(int c=0;c<m_nComp;++c) {
       if(H5Lexists(grp,components[c].name,H5P_DEFAULT)<=0) return fail();
@@ -3803,6 +3804,10 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
       H5Dclose(dataset);
       if(!valid || (c && extent!=common_extent)) return fail();
       common_extent=extent;
+   }
+   // Validate every stored extent before trusting NPTS as an allocation size.
+   std::vector<std::vector<float>> data(m_nComp,std::vector<float>(npts));
+   for(int c=0;c<m_nComp;++c) {
       if(readHDF5Data(grp,components[c].name,npts,data[c].data())<0) return fail();
       for(float value:data[c]) if(!std::isfinite(value)) return fail();
    }
@@ -3819,9 +3824,7 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
    }
    const double determinant=m_thynrm*m_calpha+m_thxnrm*m_salpha;
    if(sw4::receiver_vector(m_mode) && !cartesian && std::abs(determinant)<1e-12) return fail();
-   if(mIsRestart) {
-      if(count>mAllocatedSize || std::abs(dt/downsample-m_dt)>2e-7*std::abs(m_dt)) return fail();
-   } else {
+   if(!mIsRestart) {
       if(!ignore_utc) {
          std::copy(utc,utc+7,m_utc);
          int reference[7]; ew->get_utc(reference,m_event);
