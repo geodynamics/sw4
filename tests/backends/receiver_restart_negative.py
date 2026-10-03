@@ -25,6 +25,8 @@ def main():
     parser.add_argument('--work-dir',type=Path,required=True)
     parser.add_argument('--tasks',type=int,default=2)
     parser.add_argument('--case',action='append')
+    parser.add_argument('--implicit-utc',action='store_true',
+                        help='Check wall-clock-default restarts with deliberately different stored epochs')
     args=parser.parse_args()
     root=args.work_dir.resolve();root.mkdir(parents=True,exist_ok=True)
     sw4=args.sw4.resolve(strict=True)
@@ -34,7 +36,7 @@ def main():
     command+=['--gres=none'] if args.backend=='OPENMP' else ['--gpus-per-task=1','--gpu-bind=single:1']
     command+=[str(sw4),'case.in']
     common='grid h=100 x=4000 y=4000 z=4000 lat=37 lon=-122 az=27\n'
-    common+='time steps=48 utcstart=10/02/2026:01:02:03.234567\nfileio path=.\nsupergrid gp=8\n'
+    common+='time steps=48'+('' if args.implicit_utc else ' utcstart=10/02/2026:01:02:03.234567')+'\nfileio path=.\nsupergrid gp=8\n'
     common+='block vp=6000 vs=3464 rho=2700\nsource x=1637 y=1643 z=1000 mxy=1e15 mxz=2e15 myy=5e14 type=Gaussian freq=10 t0=0.3\n'
     checkpoint='checkpoint cycleInterval=24 restartpath=. file=restart hdf5=yes'
     report={}
@@ -53,7 +55,8 @@ def main():
         print('PASS:',name,result,flush=True)
 
     for kind in ('text','sac','hdf1','hdf3'):
-        mutations=('short','sufficient','tail','origin','utc')+ (('nonuniform',) if kind=='text' else ())
+        mutations=(('epoch','origin') if args.implicit_utc else
+                   ('short','sufficient','tail','origin','utc')+ (('nonuniform',) if kind=='text' else ()))
         if args.case and not any(f'{kind}-{mutation}' in args.case for mutation in mutations):continue
         options={'text':'sacformat=0 usgsformat=1','sac':'sacformat=1 usgsformat=0',
                  'hdf1':'sacformat=0 usgsformat=0 hdf5format=1 hdf5file=history.h5 downSample=1',
@@ -83,6 +86,7 @@ def main():
                     if mutation=='origin':values[:,0]+=.1
                     if mutation=='nonuniform':values[2,0]+=.001
                     if mutation=='utc':header=header.replace(':03.234567',':04.234567')
+                    if args.implicit_utc:header=re.sub(r'/\d{4}:','/2000:',header)
                     with history.open('w') as stream:
                         stream.write(header);np.savetxt(stream,values,fmt='%.17g')
                 elif kind=='sac':
@@ -95,6 +99,7 @@ def main():
                         floats[6]=floats[5]+(len(samples)-1)*floats[0]
                     if mutation=='origin':floats[5:7]+=.1
                     if mutation=='utc':ints[4]+=1
+                    if args.implicit_utc:ints[0]=2000
                     history.write_bytes(floats.tobytes()+ints.tobytes()+raw[440:632]+samples.tobytes())
                 else:
                     with h5py.File(history,'r+') as stream:
@@ -109,9 +114,13 @@ def main():
                             stamp=stream.attrs['DATETIME']
                             if isinstance(stamp,bytes):stamp=stamp.decode()
                             stream.attrs.modify('DATETIME',np.bytes_(stamp.replace(':03.',':04.')))
+                        if args.implicit_utc:
+                            stamp=stream.attrs['DATETIME']
+                            if isinstance(stamp,bytes):stamp=stamp.decode()
+                            stream.attrs.modify('DATETIME',np.bytes_(re.sub(r'/\d{4}:','/2000:',stamp)))
             before={str(p.relative_to(work)):digest(p) for p in histories}
             result,path=launch(work,text.rstrip()+' restartfile=restart.cycle=24.sw4checkpoint\n','restart')
-            if mutation in ('sufficient','tail'):
+            if mutation in ('sufficient','tail','epoch'):
                 if result.returncode:raise ValueError(f'Valid restart failed: {path}')
                 check_solver_log(path)
                 wave=compare(baseline_wave,capture(work),name,True)
