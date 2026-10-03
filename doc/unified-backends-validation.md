@@ -1,5 +1,9 @@
 # Perlmutter validation, 2026-10-02
 
+This is a historical record of the initial unification. The later review fixes,
+supported receiver contracts and current qualification status are recorded in
+[the updated review corrections](unified-backends-updated-review.md).
+
 **Review correction:** the seven-case waveform comparator reported a pass for
 the small Cartesian refinement fixture even though both solvers printed severe
 interface nonconvergence. That fixture is not a valid correctness acceptance

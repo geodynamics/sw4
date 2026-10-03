@@ -1,5 +1,9 @@
 # Production review corrections
 
+This records the first review correction milestone. Its pending-run statements
+are historical; see [the updated review corrections](unified-backends-updated-review.md)
+for subsequent receiver/halo fixes and current validation evidence.
+
 The review in `review-unified-backends-62825bc7/REPORT.md` applies to commit
 `62825bc7`. Corrections below are undergoing fresh validation; the earlier
 validation record does not establish acceptance of these changes.
