@@ -1490,6 +1490,17 @@ int EW::local_to_global_event( int e ) const
 
 //-----------------------------------------------------------------------
 #endif // SW4 backend
+std::string EW::observationFilePath(int local_event, const std::string& file) const
+{
+   if(file.empty() || file[0]=='/') return file;
+#if defined(SW4_USE_RAJA)
+   const int global_event=local_event;
+#else
+   const int global_event=local_to_global_event(local_event);
+#endif
+   return mObsPath[global_event]+file;
+}
+
 void EW::printTime( int cycle, float_sw4 t, bool force ) const
 {
    if (!mQuiet && proc_zero() &&

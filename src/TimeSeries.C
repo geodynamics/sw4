@@ -1572,9 +1572,8 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc)
    if(!m_myPoint) return;
    std::string path;
    if(mIsRestart) path=ew->getPath()+"/";
-   else if(!m_fileName.empty() && m_fileName[0]!='/' && ew->getObservationPath(m_event)!="./")
-      path=ew->getObservationPath(m_event);
-   path+=m_fileName+".txt";
+   if(mIsRestart) path+=m_fileName+".txt";
+   else path=ew->observationFilePath(m_event,m_fileName+".txt");
    std::ifstream input(path);
    CHECK_INPUT(input && m_usgsFormat,"Could not open USGS receiver " << path << ". ");
    std::vector<std::vector<double>> rows;
@@ -1623,12 +1622,18 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc)
       CHECK_INPUT(rows.size()<=static_cast<size_t>(mAllocatedSize) &&
                   std::abs(dt-m_dt)<=2e-6*std::abs(m_dt) && cartesian==m_xyzcomponent,
                   "USGS history is incompatible with restart. ");
-   } else {
-      if(!ignore_utc) {
-         int utc[7],bad=0;
+   }
+   int utc[7];
+   if(!ignore_utc) {
+         int bad=0;
          std::vector<char> stamp(date.begin(),date.end()); stamp.push_back(0);
          ew->parsedate(stamp.data(),utc[0],utc[1],utc[2],utc[3],utc[4],utc[5],utc[6],bad);
          CHECK_INPUT(!date.empty() && !bad,"Invalid USGS UTC in " << path << ". ");
+   }
+   CHECK_INPUT(restartTimeMatches(start,utc,ignore_utc,2e-6),
+               "USGS receiver time origin is incompatible with restart. ");
+   if(!mIsRestart) {
+      if(!ignore_utc) {
          std::copy(utc,utc+7,m_utc);
          int reference[7]; ew->get_utc(reference,m_event);
          m_t0=utc_distance(reference,m_utc);
@@ -3505,8 +3510,7 @@ bool TimeSeries::readSACcomponents(EW* ew, const std::vector<std::string>& files
    std::vector<sw4::SACTrace> traces(files.size());
    for(size_t c=0;c<files.size();++c) {
       std::string path=files[c];
-      if(!mIsRestart && !path.empty() && path[0]!='/' && ew->getObservationPath(m_event)!="./")
-         path=ew->getObservationPath(m_event)+path;
+      if(!mIsRestart) path=ew->observationFilePath(m_event,path);
       if(!traces[c].read(path)) return fail("invalid, missing or truncated trace "+path);
    }
    const auto& first=traces[0];
@@ -3548,6 +3552,8 @@ bool TimeSeries::readSACcomponents(EW* ew, const std::vector<std::string>& files
    if(mIsRestart) {
       if(npts>mAllocatedSize || std::abs(dt-m_dt)>2e-7*std::abs(m_dt))
          return fail("history length or sampling interval incompatible with restart");
+      if(!restartTimeMatches(start,utc,ignore_utc,2*std::numeric_limits<float>::epsilon()))
+         return fail("time origin incompatible with restart");
    } else {
       if(!ignore_utc) {
          std::copy(utc,utc+7,m_utc);
@@ -3791,6 +3797,8 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
    const int count=(npts-1)*downsample+1;
    if(mIsRestart && (count>mAllocatedSize || std::abs(dt/downsample-m_dt)>2e-7*std::abs(m_dt)))
       return fail();
+   if(!restartTimeMatches(start,utc,ignore_utc,2*std::numeric_limits<float>::epsilon()))
+      return fail();
    hsize_t common_extent=0;
    for(int c=0;c<m_nComp;++c) {
       if(H5Lexists(grp,components[c].name,H5P_DEFAULT)<=0) return fail();
@@ -3855,6 +3863,21 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
 
 //-----------------------------------------------------------------------
 // Restart by reading in prior time series file
+bool TimeSeries::restartTimeMatches(double start, int utc[7], bool ignore_utc, double precision)
+{
+   if(!mIsRestart || !m_myPoint) return true;
+   double actual=start;
+   if(!ignore_utc) {
+      int reference[7];
+      m_ew->get_utc(reference,m_event);
+      actual+=utc_distance(reference,utc);
+   }
+   const double expected=m_t0+m_shift;
+   // SAC/HDF5 relative times are float32; USGS prints six significant digits.
+   const double tolerance=1e-8+precision*std::max(std::abs(start),std::abs(expected));
+   return std::isfinite(actual) && std::abs(actual-expected)<=tolerance;
+}
+
 void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle)
 {
   // Read in this TimeSeries' file
@@ -3900,6 +3923,8 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
   {
     // Read the old USGS files from the restart directory
     readFile(ew, ignore_utc);
+    CHECK_INPUT(!m_myPoint || mLastTimeStep >= beginCycle-1,
+                "USGS receiver history ends before checkpoint cycle " << beginCycle << ". ");
   }
   // Reset next time step to beginning of checkpoint
   mLastTimeStep = beginCycle-1;

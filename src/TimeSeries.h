@@ -137,6 +137,7 @@ class TimeSeries {
   void exclude_component(bool usex, bool usey, bool usez);
   // Read a complete requested quantity; false rejects invalid histories.
   bool readSACcomponents(EW* ew, const std::vector<std::string>& files, bool ignore_utc, bool grid_basis=false);
+  bool restartTimeMatches(double start, int utc[7], bool ignore_utc, double precision);
   void readSACfiles(EW* ew, const char* sac1, const char* sac2,
                     const char* sac3, bool ignore_utc, bool grid_basis=false);
   void isRestart();
@@ -401,6 +402,7 @@ void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr
 void print_windows();
 void exclude_component( bool usex, bool usey, bool usez );
 bool readSACcomponents(EW* ew, const std::vector<std::string>& files, bool ignore_utc, bool grid_basis=false);
+bool restartTimeMatches(double start, int utc[7], bool ignore_utc, double precision);
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc, bool grid_basis=false );
 void isRestart();
 void doRestart( EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle );

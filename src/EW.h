@@ -389,6 +389,8 @@ class EW {
   };  // Consider getPath instead! This function has caused grief in the past
   // const string& getObservationPath() { return mObsPath; };
   const string& getObservationPath(int event) { return mObsPath[event]; };
+  // Resolve a filename using a local event index; observation directories are global.
+  std::string observationFilePath(int local_event, const std::string& file) const;
   const string& getName() { return mName; };
   void set_global_bcs(
       boundaryConditionType bct[6]);  // assigns the global boundary conditions
@@ -2364,6 +2366,8 @@ int mkdirs(const string& path);
 void setOutputPath(const string& path);
 const string& getOutputPath(int event=0) { return mPath[event]; }; // Consider getPath instead! This function has caused grief in the past
 const string& getObservationPath(int event) { return mObsPath[event]; };
+// Resolve a filename using a local event index; observation directories are global.
+std::string observationFilePath(int local_event, const std::string& file) const;
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions
 boundaryConditionType getLocalBcType(int g, int side){return m_bcType[g][side]; };

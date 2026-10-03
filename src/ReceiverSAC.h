@@ -27,6 +27,7 @@ struct SACTrace {
       bool ok=std::fread(real.data(),4,70,file)==70 &&
               std::fread(integer.data(),4,40,file)==40 &&
               std::fread(text.data(),1,192,file)==192;
+      if(!ok) { std::fclose(file); return false; }
       bool swap=false;
       auto reverse=[](void* word) { auto p=static_cast<unsigned char*>(word); std::reverse(p,p+4); };
       if(ok && integer[6]!=6 && integer[6]!=7) {

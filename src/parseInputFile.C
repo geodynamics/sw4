@@ -38,6 +38,7 @@
 
 #endif // SW4 backend
 #include "EW.h"
+#include "ReceiverSAC.h"
 
 #if defined(SW4_USE_RAJA) // SW4 backend
 #include "Filter.h"
@@ -9918,7 +9919,6 @@ else if( startswith("windowL=",token))
 #else // SW4 backend
 if( event_is_in_proc(event) )
   {
-     int eglobal = event;
      event = global_to_local_event(event);
 
 #endif // SW4 backend
@@ -9937,61 +9937,29 @@ int l = sacfile1.length();
         else
            fileName = sacfile1;
 
-// Read sac header to figure out the position
-// Use only one of the files, more thorough checking later, in TimeSeries.readSACfile.
+// Decode the same checked SAC trace used by the waveform reader before placement.
         float_sw4 latlon[2];
         if( m_myRank == 0 )
         {
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-string fname = mObsPath[event];
-
-#else // SW4 backend
-string fname= mObsPath[eglobal];
-
-#endif // SW4 backend
-fname += sacfile1;
-           FILE* fd=fopen(fname.c_str(),"r");
-           CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
-           float float70[70];
-           size_t nr = fread(float70, sizeof(float), 70, fd );
-           CHECK_INPUT( nr == 70, "processObservation: ERROR, could not read float part of header of " << sacfile1 );
-           latlon[0] = float70[31];
-           latlon[1] = float70[32];
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-CHECK_INPUT(latlon[0] != -12345 && latlon[1] != -12345,
-                  "processObservation: ERROR, sac file does not contain "
-                  "station coordinates "
-
-#else // SW4 backend
-CHECK_INPUT( latlon[0] != -12345 && latlon[1] != -12345,
-                       "processObservation: ERROR, sac file does not contain station coordinates "
-#endif // SW4 backend
-<< sacfile1);
-           fclose(fd);
+           const string fname=observationFilePath(event,sacfile1);
+           sw4::SACTrace trace;
+           CHECK_INPUT(trace.read(fname),
+                       "processObservation: invalid SAC observation " << fname);
+           latlon[0]=trace.real[31];
+           latlon[1]=trace.real[32];
         }
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-MPI_Bcast(latlon, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-#else // SW4 backend
-MPI_Bcast( latlon, 2, MPI_DOUBLE, 0, m_1d_communicator );
-
-#endif // SW4 backend
-if( geoCoordSet && ( fabs(lat-latlon[0])<1e-10 && fabs(lon-latlon[1])<1e-10 ))
-        {
-           if( m_myRank == 0 )
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << "processObservation: WARNING station (lat,lon) on sac file do "
-                "not match input (lat,lon)"
-
-#else // SW4 backend
-cout << "processObservation: WARNING station (lat,lon) on sac file do not match input (lat,lon)"
-#endif // SW4 backend
-<< endl;
-        }
+#if defined(SW4_USE_RAJA)
+        MPI_Bcast(latlon,2,m_mpifloat,0,MPI_COMM_WORLD);
+#else
+        MPI_Bcast(latlon,2,m_mpifloat,0,m_1d_communicator);
+#endif
+        const bool valid_location=std::isfinite(latlon[0]) && std::isfinite(latlon[1]) &&
+           latlon[0]>=-90 && latlon[0]<=90 && latlon[1]>=-180 && latlon[1]<=180;
+        CHECK_INPUT(cartCoordSet || geoCoordSet || valid_location,
+                    "processObservation: invalid station coordinates in " << sacfile1);
+        if(geoCoordSet && valid_location &&
+           (fabs(lat-latlon[0])>1e-5 || fabs(lon-latlon[1])>1e-5) && m_myRank==0)
+           cout << "processObservation: WARNING station (lat,lon) on SAC file do not match input (lat,lon)" << endl;
         if( !cartCoordSet && !geoCoordSet )
         {
            geoCoordSet = true;
