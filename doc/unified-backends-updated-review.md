@@ -1,5 +1,13 @@
 # Updated production review corrections
 
+This is the historical validation record for `788f96a0`. The subsequent review
+identified observation workflow and restart-validation defects, plus a coverage
+overstatement: its 32 named propagation comparisons represent 30 unique physical
+setups and omit exact-interface force/moment propagation. See
+[the new review corrections](unified-backends-reader-workflows.md) for the fixes
+and replacement qualification record. The old numerical comparisons remain
+retained evidence; their case names alone do not establish scientific coverage.
+
 All six findings in `review-unified-backends-dec83d29/REPORT.md` were confirmed
 and their authorized root causes corrected. The existing `pytest/` and
 `pytest-sw4mopt/` suites remain unchanged. Additional regression drivers and probe
@@ -44,14 +52,14 @@ spanning MPI ownership. Its independent expectations cover forces and all nine
 first moments. All 22 cases passed on CPU and four-node CUDA.
 
 The propagation driver verifies its positions against each executed solver's
-printed grids. A final evidence audit found that ten-digit depth formatting had
-collapsed the two epsilon offsets onto the exact-interface filename. The original
-sweep therefore completed 28 distinct cases, not 32. Commit `53ff7c7c` preserves
-full depth precision and rejects duplicate case names. The four omitted cases
-passed on the final `bf983ac7` CPU/CUDA binaries, completing 32 distinct comparisons.
-The preceding 28 comparisons used `47390e78`; subsequent production edits affect
-receiver HDF5 validation and missing station input, not source/material operators.
-The validation record preserves this distinction.
+printed grids. Ten-digit formatting collapsed exact and epsilon-sided depths into
+one filename; the old `z2000` decks actually used positive epsilon. The first
+sweep completed 28 unique setups on `47390e78`. Commit `53ff7c7c` retained full
+depth precision, but the four subsequent named runs on `bf983ac7` added only two
+new physical setups: two positive-epsilon runs duplicated earlier inputs. Thus
+this historical set contains 32 named comparisons, 30 unique physical setups,
+and no exact-interface force/moment propagation. The new review record replaces
+this acceptance inventory using input-derived scientific identities.
 
 ### Receiver basis, quantities and checked ingestion
 
@@ -110,7 +118,7 @@ Build scripts and cache/binary hashes are recorded with the evidence.
 | Halo sentinel, square and both strip decompositions | 3 shapes passed | 3 shapes passed on 4 nodes, both layouts |
 | Independent interface force/moment oracle | 22 cases passed | 22 cases passed on 4 nodes |
 | General CPU/CUDA waveforms, including text/HDF5 SRFs | 7 comparisons passed | Same comparisons |
-| Source/material/event propagation, with completed epsilon coverage | 32 distinct comparisons passed | Same comparisons; build split described above |
+| Source/material/event propagation, with completed epsilon coverage | 32 named comparisons passed (30 unique physical setups) | Same comparisons; build split described above |
 | Final anisotropic isotropic-limit/reference checks | Passed | Passed |
 
 The native source-history oracle passed six filtered/unfiltered scalar, force and
