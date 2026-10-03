@@ -9932,7 +9932,7 @@ if( usgsfileset )
 // Find a name for the SAC station
 
 int l = sacfile1.length();
-        if( sacfile1.substr(l-4,4) == ".sac" )
+        if( l>=4 && sacfile1.substr(l-4,4) == ".sac" )
            fileName = sacfile1.substr(0,l-4);
         else
            fileName = sacfile1;
@@ -10024,6 +10024,11 @@ int l = sacfile1.length();
            ts_ptr->readFile( this, false );
         else
            ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), false, sac_grid_basis );
+
+        // Absolute observation paths identify inputs, not names beneath the
+        // event output directory. Preserve relative output naming conventions.
+        if(!fileName.empty() && fileName[0]=='/')
+           ts_ptr->setOutputFileName(fileName.substr(fileName.find_last_of('/')+1));
 
 // Set reference UTC to simulation UTC, for easier plotting.
         ts_ptr->set_utc_to_simulation_utc();

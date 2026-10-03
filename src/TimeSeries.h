@@ -147,6 +147,8 @@ class TimeSeries {
   void add_shift(float_sw4 shift);
   const std::string& getStationName() const { return m_staName; }
   const std::string& getFileName() const { return m_fileName; }
+  // Select a diagnostic output name after the observation has been ingested.
+  void setOutputFileName(const std::string& name) { m_fileName=name; }
   const std::string& gethdf5FileName() const { return m_hdf5Name; }
   const std::string& getPath() const { return m_path; }
   float_sw4 getDt() { return m_dt; }
@@ -411,6 +413,8 @@ float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
 std::string getFileName(){return m_fileName;}
+// Select a diagnostic output name after the observation has been ingested.
+void setOutputFileName(const std::string& name) { m_fileName=name; }
 std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
 float_sw4 getDt() {return m_dt;}
