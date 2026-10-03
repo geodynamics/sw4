@@ -803,6 +803,7 @@ class EW {
 
   void get_optmethod(int& method, int& bfgs_m);
   void get_utc(int utc[7], int event = 0) const;
+  bool hasExplicitUTC(int event) const { return m_utcExplicit[event]; }
 
   void perturb_mtrl();
   void perturb_mtrl(int peri, int perj, int perk, float_sw4 h, int grid,
@@ -2032,6 +2033,7 @@ class EW {
   // UTC time corresponding to simulation time 0.
   // bool m_utc0set, m_utc0isrefevent;
   // int m_utc0[7];
+  vector<bool> m_utcExplicit;
   vector<vector<int>> m_utc0;  // Nevent?
 
   // Error handling facility
@@ -2742,6 +2744,7 @@ void add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um,
 
 void get_optmethod( int& method, int& bfgs_m );
 void get_utc( int utc[7], int event=0 ) const;
+bool hasExplicitUTC(int event) const { return m_utcExplicit[event]; }
 
 void perturb_mtrl();
 void perturb_mtrl( int peri, int perj, int perk, float_sw4 h, int grid, int var );
@@ -3789,6 +3792,7 @@ bool m_topography_exists;
 
 // UTC time corresponding to simulation time 0.
 //bool m_utc0set, m_utc0isrefevent;
+   vector<bool> m_utcExplicit;
    vector<vector<int> > m_utc0; //Nevent?
 
 // Error handling facility

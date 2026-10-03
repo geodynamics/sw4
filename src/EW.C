@@ -1196,6 +1196,7 @@ m_epi_lat.resize(m_nevent);
   mNumberOfTimeSteps.resize(m_nevent);
   mTimeIsSet.resize(m_nevent);
   m_utc0.resize(m_nevent);
+  m_utcExplicit.assign(m_nevent,false);
   // Defaults
 
 #else // SW4 backend
@@ -1275,6 +1276,7 @@ m_nevents_specified = findNumberOfEvents();
    mNumberOfTimeSteps.resize(nLocalEvents);
    mTimeIsSet.resize(nLocalEvents);
    m_utc0.resize(nLocalEvents);
+   m_utcExplicit.assign(nLocalEvents,false);
 // Defaults
    for( int e=0 ; e < nLocalEvents ; e++ )
    {

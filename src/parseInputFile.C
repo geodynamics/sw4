@@ -3109,6 +3109,7 @@ if (t > 0.0)
      else if (steps >= 0)
         setNumberSteps(steps,event);
 
+     m_utcExplicit[event] = refdateset;
      if( refdateset )
      {
         m_utc0[event][0] = year;

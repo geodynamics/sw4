@@ -3867,7 +3867,9 @@ bool TimeSeries::restartTimeMatches(double start, int utc[7], bool ignore_utc, d
 {
    if(!mIsRestart || !m_myPoint) return true;
    double actual=start;
-   if(!ignore_utc) {
+   // Without utcstart, each invocation defaults to a different wall clock.
+   // That default cannot establish an absolute epoch for restart validation.
+   if(!ignore_utc && m_ew->hasExplicitUTC(m_event)) {
       int reference[7];
       m_ew->get_utc(reference,m_event);
       actual+=utc_distance(reference,utc);
