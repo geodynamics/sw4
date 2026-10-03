@@ -46,12 +46,12 @@ def srf(path):
     path.write_text('\n'.join(lines) + '\n')
 
 
-def run(exe, directory, text, tasks, gpu, coordinates=None):
+def run(exe, directory, text, tasks, gpu, coordinates=None, nodes=1):
     directory.mkdir(parents=True, exist_ok=True)
     stations(directory / 'stations.h5', coordinates)
     input_file = directory / 'case.in'
     input_file.write_text(text)
-    command = ['srun', '--exclusive', '--exact', '-N', '1', '-n', str(tasks), '-c', '4']
+    command = ['srun', '--exclusive', '--exact', '-N', str(nodes), '-n', str(tasks), '-c', '4']
     if gpu:
         command += ['--gpus-per-task=1', '--gpu-bind=single:1']
     else:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """On-demand receiver/PDE checkpoint equivalence, all quantities and three formats."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -130,11 +131,17 @@ def main():
             check_solver_log(work/f'{label}.log')
         launch('uninterrupted')
         baseline=capture(work);pde=state(work/'restart.cycle=48.sw4checkpoint')
+        # Keep independently replayable references before restart rewrites outputs.
+        np.savez_compressed(work/'reference-waveforms.npz',**baseline)
+        np.savez_compressed(work/'reference-state.npz',**pde)
+        references={name:hashlib.sha256((work/name).read_bytes()).hexdigest()
+                    for name in ('reference-waveforms.npz','reference-state.npz')}
         for repetition,cycle in enumerate((24,24),1):
             launch(f'restart{cycle}-{repetition}',f'restart.cycle={cycle:02d}.sw4checkpoint')
             wave_error=compare(baseline,capture(work),name,True)
             state_error=compare(pde,state(work/'restart.cycle=48.sw4checkpoint'),name,False)
-            report[f'{name}/cycle{cycle}/repeat{repetition}']={'wave_max_difference':wave_error,'state_max_difference':state_error}
+            report[f'{name}/cycle{cycle}/repeat{repetition}']={'wave_max_difference':wave_error,'state_max_difference':state_error,
+                'reference_sha256':references}
             (root/'comparison.json').write_text(json.dumps(report,indent=2)+'\n')
             print('PASS:',name,'restart',cycle,report[f'{name}/cycle{cycle}/repeat{repetition}'],flush=True)
 

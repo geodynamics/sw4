@@ -81,7 +81,16 @@ def cases(root):
 
 
 def interface_selection(name, log):
-    depth=float(name.split('-z')[1])
+    deck=(log.parent/'case.in').read_text()
+    sources=[line.split() for line in deck.splitlines() if line.startswith('source ')]
+    if len(sources)!=1:raise ValueError('Interface fixture must contain one source')
+    options=dict(token.split('=',1) for token in sources[0][1:])
+    depth=float(options['z'])
+    if depth!=float(name.split('-z')[1]):
+        raise ValueError(f'Source depth in executed input disagrees with case label: {name}')
+    kind='force' if any(key in options for key in ('fx','fy','fz')) else 'moment'
+    if not name.startswith(f'interface-{kind}-'):
+        raise ValueError(f'Source quantity in executed input disagrees with label: {name}')
     grids={int(g):(float(h),int(nz)) for g,h,nz in
            re.findall(r'^\s*(\d+)\s+(\S+)\s+\d+\s+\d+\s+(\d+)\s+\d+\s+Cartesian\s*$',log.read_text(),re.MULTILINE)}
     if set(grids)!={0,1}:raise ValueError('Unexpected actual refinement grids')
@@ -100,8 +109,11 @@ def main():
     parser.add_argument('--gpu',type=Path)
     parser.add_argument('--work-dir',type=Path,required=True)
     parser.add_argument('--tasks',type=int,default=2)
+    parser.add_argument('--gpu-nodes',type=int,default=1)
     parser.add_argument('--case',action='append',help='Run only matching case prefixes')
     args=parser.parse_args()
+    if args.gpu_nodes<1 or args.tasks<args.gpu_nodes:
+        parser.error('--tasks must be at least the positive --gpu-nodes count')
     root=args.work_dir.resolve();root.mkdir(parents=True,exist_ok=True)
     report={}
     coverage={}
@@ -114,7 +126,7 @@ def main():
         if name.startswith('interface-'):
             coverage[name]=interface_selection(name,root/name/'cpu/run.log')
         if args.gpu:
-            gpu=run(args.gpu.resolve(strict=True),root/name/'gpu',text,args.tasks,True,coordinates)
+            gpu=run(args.gpu.resolve(strict=True),root/name/'gpu',text,args.tasks,True,coordinates,args.gpu_nodes)
             if name=='event-default-paths':gpu=root/name/'gpu/receivers.h5'
             if name.startswith('interface-') and interface_selection(name,root/name/'gpu/run.log')!=coverage[name]:
                 raise ValueError('Backend source grid/stencil selections differ')
