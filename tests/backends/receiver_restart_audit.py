@@ -15,7 +15,11 @@ from receiver_restart import capture, compare, state
 
 
 def digest(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    value = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(8 * 1024 * 1024), b''):
+            value.update(block)
+    return value.hexdigest()
 
 
 def main():
@@ -50,10 +54,15 @@ def main():
             with np.load(reference / 'reference-state.npz', allow_pickle=False) as stream:
                 pde = {name: stream[name] for name in stream.files}
             work = root / folder
-            wave_error = compare(waveform, capture(work), str(work), True)
+            restored = capture(work)
+            wave_error = compare(waveform, restored, str(work), True)
             state_error = compare(pde, state(work / 'restart.cycle=48.sw4checkpoint'), str(work), False)
+            files = {name.split('/')[0] for name in restored}
+            files.add('restart.cycle=48.sw4checkpoint')
+            restored_hashes = {name: digest(work / name) for name in sorted(files)}
             audit.append({'root': str(root), 'case': folder, 'reference': str(reference),
-                          'reference_sha256': hashes, 'wave_max_difference': wave_error,
+                          'reference_sha256': hashes, 'restored_sha256': restored_hashes,
+                          'wave_max_difference': wave_error,
                           'state_max_difference': state_error})
             print('PASS:', work, 'retained references match final restored outputs', flush=True)
     args.output.write_text(json.dumps(audit, indent=2) + '\n')
