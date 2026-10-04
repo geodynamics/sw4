@@ -5,9 +5,12 @@ against current code and actual retained inputs. The user authorized fixes and
 on-demand regressions. Existing pytest suites remain unchanged.
 
 The solver corrections are committed in `62f1ca12`, `5c236501` and `95443f0e`.
-Final qualification uses clean CPU/CUDA builds from an immutable archive of
+N1–N4 qualification uses clean CPU/CUDA builds from an immutable archive of
 `95443f0e`, under `/pscratch/sd/h/houhun/sw4-review-n1-n4/release-95443f0e`.
-Later commits only add on-demand tests and documentation.
+The later mixed-output receiver restart correction is in `c28cc06d`; its
+on-demand tests are corrected in `859c2bcf`, with default-epoch coverage added in
+`d34bc62a`. Its validation is recorded separately below so the earlier N1–N4
+results retain their original source identity.
 
 - N1: a shared observation path resolver maps local event indices to global
   observation directories and preserves absolute input paths. Absolute input
@@ -36,7 +39,8 @@ replace stored default epochs with the year 2000, require successful restoration
 and still reject a shifted relative start.
 
 The approved N1–N4 validation gates pass for the configurations below.
-An additional mixed-output restart defect remains open pending scientific approval. The machine-readable
+The subsequently discovered mixed-output restart defect is corrected as described
+below. The machine-readable
 [validation record](validation/perlmutter-reader-workflows-2026-10-02.json) retains
 source/tree/archive, executable, build-cache, driver, reference and restored-output
 identities. CPU build/validation used allocation `59245457`; four-node CUDA used
@@ -143,8 +147,62 @@ parity does not establish receiver-output correctness for this combination.
 
 Evidence is retained in `/pscratch/sd/h/houhun/sw4-review-n1-n4/mixed-restart-probe`,
 using the archived `95443f0e` CPU executable and allocation `59250344`.
-The proposed correction is to restore the available full-rate text history while
-validating the requested HDF5 history and their common stored samples. This
-changes delivered receiver waveforms and awaits the user's scientific-correctness
-approval. The acceptance matrix above qualifies separate full-rate SAC/text and
-HDF5 receivers; it does not qualify this mixed receiver configuration.
+The user approved this waveform-affecting correction on October 4. When SAC is
+disabled and both USGS and HDF5 are requested, restart now validates HDF5, restores
+the dense history from text, and requires both histories to agree at stored HDF5
+sample times before the checkpoint. Text must reach every full-rate sample through
+`beginCycle-1`; HDF5 must reach the last required decimated sample. Existing time,
+quantity, component, frame and sampling checks still apply. Differences confined
+to an uncheckpointed tail are allowed and overwritten. SAC retains its existing
+priority, and HDF5-only restart retains interpolation.
+
+The shared-sample check uses `1e-12 + 2e-6 * component peak` in the output frame.
+It reproduces the HDF5 writer's float32 conversion before geographic rotation,
+avoiding false disagreement from cancellation in a small geographic component.
+Simulation equations and PDE checkpoint restoration are unchanged.
+
+`tests/backends/receiver_restart_mixed.py` is an on-demand test inside a Slurm
+allocation, with `--sw4 <executable> --backend OPENMP|CUDA|HIP --work-dir <scratch>`.
+It covers all six quantities, grid/geographic displacement and velocity, HDF5
+downsampling 1/3, and checkpoint cycles 24/25. Complete and exactly sufficient
+histories compare text, HDF5 and final PDE state against retained uninterrupted
+references. It also tests altered tails and rejection of missing, short,
+misaligned, malformed and disagreeing histories before stepping, preserving
+receiver file checksums. `receiver_restart_audit.py` independently replays these
+retained references, including the cycle-50 final state. Neither driver is
+registered in the existing pytest suites.
+
+Fresh builds from `c28cc06d` passed the following on October 4, using CPU allocation
+`59308949` and one-node CUDA allocation `59309012`. The
+[mixed-restart validation record](validation/perlmutter-mixed-restart-2026-10-04.json)
+retains source/test archives, binaries, build caches, logs and audit identities.
+
+| Check | CPU | CUDA |
+| --- | --- | --- |
+| Mixed text/HDF5, explicit UTC | 76 passed: 65 valid restores, 11 rejections | 76 passed: 65 valid restores, 11 rejections |
+| Mixed text/HDF5, default UTC | 13 passed: 4 valid restores, 9 rejections | 13 passed: 4 valid restores, 9 rejections |
+| Existing negative/default-epoch restarts | 21 + 8 passed | 21 + 8 passed |
+| Elastic/attenuating/refined and anisotropic repeated restarts | 8 + 4 passed | 8 + 4 passed |
+| SAC/text/HDF5 waveform and metadata comparisons | 24 passed | 24 passed |
+| Existing on-demand HDF5 helpers | 4 passed | 4 passed |
+| Existing level-0 solver suite | 20 passed; 5 optional cases disabled; 8 ranks x 2 OpenMP threads | 20 passed; 5 optional cases disabled; 2 GPU ranks |
+
+Mixed-restart maximum waveform differences from each backend's uninterrupted
+reference were `2.78e-17` on CPU and `5.55e-17` on CUDA; final PDE state was equal
+in every mixed case. Independent replay checked 174 final restored histories and
+1,242 restored file checksums. Cross-backend comparisons passed for 69 mixed
+receiver histories and two PDE states at the stated floating-point tolerances.
+`--implicit-utc --case displacement-geo1-ds3-cycle24` deliberately assigns text
+and HDF5 different valid calendar epochs and requires restoration on the relative
+axis; explicit-UTC mismatches remain rejections.
+
+An additional CPU refinement stall remains open. With eight MPI ranks and one
+OpenMP thread, `energy-mr-4th-1.in` stopped progressing in `MPI_Sendrecv`, with
+ranks reached through different `consintp`, `enforceIC` and solver paths. The
+pre-fix `95443f0e` executable also timed out on this configuration after 120
+seconds, so this receiver correction did not introduce the issue. Stack and log
+evidence is retained in the new record. The full CPU suite passed with the
+previously qualified eight-rank, two-thread configuration. Its root cause and
+correction are not claimed resolved. HIP, wider scaling and long production
+qualification remain separate gates; this restart-only correction did not repeat
+the historical four-node hmr3 performance measurement.

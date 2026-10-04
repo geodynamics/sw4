@@ -1,0 +1,951 @@
+{
+  "schema": "sw4-mixed-receiver-restart-qualification/v1",
+  "date": "2026-10-04",
+  "branch": "unified-backends",
+  "source_revision": "c28cc06d066a74c522e76062b31e8bd76fadce9f",
+  "source_tree": "ba67a988bf18cc9e39169ed8dac4503c544343b8",
+  "explicit_matrix_test_revision": "859c2bcffe4a70fea40c98918dcb23d328167ba2",
+  "implicit_epoch_test_revision": "d34bc62a173a9f9e24923000878ce38b9234b606",
+  "evidence_root": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d",
+  "allocations": {
+    "cpu": 59308949,
+    "cuda": 59309012
+  },
+  "gpu_hardware": [
+    "NVIDIA A100-SXM4-80GB, 580.178.04"
+  ],
+  "nodes": {
+    "cpu": 1,
+    "cuda": 1
+  },
+  "gpu_transport": "STAGED; Umpire; MPICH_GPU_SUPPORT_ENABLED=0",
+  "precision": "double",
+  "existing_pytest_unchanged_since": "788f96a0",
+  "correction": "Validate HDF5, restore full-rate USGS, and reject inconsistent precheckpoint stored knots; allow and replace uncheckpointed tails",
+  "approval": "User explicitly requested fixing the reproduced waveform-affecting mixed-output bug on 2026-10-04",
+  "results": {
+    "mixed-cpu-v2": {
+      "cases": 76,
+      "successful": 65,
+      "rejected_before_stepping": 11,
+      "wave_max_difference": 2.7755575615628914e-17,
+      "state_max_difference": 0.0
+    },
+    "mixed-implicit-cpu": {
+      "cases": 13,
+      "successful": 4,
+      "rejected_before_stepping": 9,
+      "wave_max_difference": 3.469446951953614e-18,
+      "state_max_difference": 0.0
+    },
+    "restart-negative-cpu": {
+      "cases": 21,
+      "successful": 8,
+      "rejected_before_stepping": 13,
+      "wave_max_difference": 4.656612873077393e-10,
+      "state_max_difference": 0.0
+    },
+    "restart-implicit-cpu": {
+      "cases": 8,
+      "successful": 4,
+      "rejected_before_stepping": 4,
+      "wave_max_difference": 4.656612873077393e-10,
+      "state_max_difference": 0.0
+    },
+    "restart-cpu": {
+      "cases": 8,
+      "successful": 8,
+      "rejected_before_stepping": 0,
+      "wave_max_difference": 1.818212835846822e-08,
+      "state_max_difference": 0.0
+    },
+    "aniso-restart-cpu": {
+      "cases": 4,
+      "successful": 4,
+      "rejected_before_stepping": 0,
+      "wave_max_difference": 8.959356673221563e-09,
+      "state_max_difference": 0.0
+    },
+    "formats-cpu": {
+      "cases": 24,
+      "successful": 24,
+      "rejected_before_stepping": 0,
+      "wave_max_difference": 0,
+      "state_max_difference": 0
+    },
+    "suite-cpu": {
+      "passed": 20,
+      "optional_disabled": 5,
+      "mpi_ranks": 8,
+      "openmp_threads": 2
+    },
+    "hdf5-cpu": {
+      "passed": 4
+    },
+    "mixed-cuda-v2": {
+      "cases": 76,
+      "successful": 65,
+      "rejected_before_stepping": 11,
+      "wave_max_difference": 5.551115123125783e-17,
+      "state_max_difference": 0.0
+    },
+    "mixed-implicit-cuda": {
+      "cases": 13,
+      "successful": 4,
+      "rejected_before_stepping": 9,
+      "wave_max_difference": 6.938893903907228e-18,
+      "state_max_difference": 0.0
+    },
+    "restart-negative-cuda": {
+      "cases": 21,
+      "successful": 8,
+      "rejected_before_stepping": 13,
+      "wave_max_difference": 4.656612873077393e-10,
+      "state_max_difference": 0.0
+    },
+    "restart-implicit-cuda": {
+      "cases": 8,
+      "successful": 4,
+      "rejected_before_stepping": 4,
+      "wave_max_difference": 4.656612873077393e-10,
+      "state_max_difference": 0.0
+    },
+    "restart-cuda": {
+      "cases": 8,
+      "successful": 8,
+      "rejected_before_stepping": 0,
+      "wave_max_difference": 1.8182127414778648e-08,
+      "state_max_difference": 0.0
+    },
+    "aniso-restart-cuda": {
+      "cases": 4,
+      "successful": 4,
+      "rejected_before_stepping": 0,
+      "wave_max_difference": 8.95935695077732e-09,
+      "state_max_difference": 0.0
+    },
+    "formats-cuda": {
+      "cases": 24,
+      "successful": 24,
+      "rejected_before_stepping": 0,
+      "wave_max_difference": 0,
+      "state_max_difference": 0
+    },
+    "suite-cuda": {
+      "passed": 20,
+      "optional_disabled": 5,
+      "mpi_ranks": 2,
+      "openmp_threads": 1
+    },
+    "hdf5-cuda": {
+      "passed": 4
+    }
+  },
+  "independent_audit": {
+    "successful_final_restarts": 174,
+    "restored_file_sha256_verified": 1242,
+    "scope": "Final retained outputs only; prior restart repetitions validated during execution"
+  },
+  "paired_backends": {
+    "receiver_cases": 69,
+    "pde_cases": 2,
+    "max_absolute_difference": 1.0469403122215226e-12
+  },
+  "tolerances": {
+    "receiver_storage": "1e-12 + 2e-6 * each component peak",
+    "pde_and_backend": "1e-12 + 2e-5 * each component or dataset peak"
+  },
+  "pre_fix_reproducer": {
+    "source": "95443f0ee698cc99ce7f72c0ed0fc1345e2a37a6",
+    "root": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer",
+    "text_component_error": 0.000577144076722221,
+    "tolerance": 6.395179411000571e-08
+  },
+  "excluded_attempts": [
+    "Initial mixed CPU driver inferred full-rate HDF5 capacity and could not construct the missing-component case; complete matrices use corrected 859c2bcf driver",
+    "Initial CPU standard suite at eight MPI ranks and one OpenMP thread stalled in energy-mr-4th; preserved stacks, stopped only steps 59308949.59 and .54",
+    "Old energy control first could not execute user-local env on compute; rerun uses /usr/bin/env"
+  ],
+  "additional_open_findings": {
+    "cpu_one_thread_refinement_stall": {
+      "input": "pytest/reference/energy/energy-mr-4th-1.in",
+      "ranks": 8,
+      "threads": 1,
+      "current_source": "c28cc06d066a74c522e76062b31e8bd76fadce9f",
+      "pre_fix_source": "95443f0ee698cc99ce7f72c0ed0fc1345e2a37a6",
+      "observation": "Ranks stalled in MPI_Sendrecv through differing consintp/enforceIC/solve paths; pre-fix executable also timed out at 120 seconds (exit 124)",
+      "status": "Inherited/reproduced before this patch; root cause and correction remain open",
+      "qualified_setting": "Current CPU full suite passes at eight MPI ranks and two OpenMP threads; CUDA full suite passes at two GPU ranks",
+      "equations_changed": false
+    }
+  },
+  "qualification_limits": [
+    "HIP awaits Frontier validation",
+    "One-node CPU/CUDA restart validation; no new multinode or hmr3 timing measurement for this restart-only correction",
+    "Historical four-node performance and other production limits remain in perlmutter-reader-workflows-2026-10-02.json",
+    "SAC output retains its existing priority; HDF5-only histories still use interpolation",
+    "Eight-rank single-thread CPU energy refinement stall remains open"
+  ],
+  "artifacts": [
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cpu-v2/comparison.json",
+      "size": 31945,
+      "sha256": "9ef013db70ad08146f0ea8aba2c51d258114a4ffc0e909f0c04463ea1d3025a2"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-cpu/comparison.json",
+      "size": 3081,
+      "sha256": "2c76f5842abda0f744a094c9ec681cb06ca08b3f11bbd46dbfd187f5c31e56ca"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-negative-cpu/comparison.json",
+      "size": 3552,
+      "sha256": "8456e7e5e2dabe2363fb2bfb680d82f30a3d2db402503e13f92fd8e50c8982cc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-implicit-cpu/comparison.json",
+      "size": 1541,
+      "sha256": "6f6f3656a41d1b9a8aa4fc5397443751f873d46766b3cf09aa1c7e11f2987fbe"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-cpu/comparison.json",
+      "size": 2845,
+      "sha256": "cd6b8de71b3ab33d6cca61946d7aeb6e328ee38208e9bd4bc8bda6357ca711a5"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/aniso-restart-cpu/comparison.json",
+      "size": 1431,
+      "sha256": "ff78bd987a2158585a2f5c647de98d2c5f6c8a00a249d5bd680b3927bf95e4ae"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/formats-cpu/comparison.json",
+      "size": 12925,
+      "sha256": "867b7eb8e3f08f9f40d0044bc9c66c3c853a79ba96593c9983fd07bba8ac72dd"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/suite-cpu-v2.log",
+      "size": 1275,
+      "sha256": "10b8d23290baec553d9e21ad2b59688e4b846c7bd843326e1f049c9d1ae4e7c0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/hdf5-cpu.log",
+      "size": 572,
+      "sha256": "56694653e871945b45b8d866a0e1277696b161b66ade0c98f05d89d96410a370"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-audit-cpu.json",
+      "size": 59399,
+      "sha256": "4140679ef4bb1ca3381a3102967292786e91ef91b6d1d22aa8c01458f050cfa5"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-audit-cpu.json",
+      "size": 3794,
+      "sha256": "256fc140357559ad5f2fd80b7036c16c164c4431f4d5a08c6c5755a4b9556e9d"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/regression-audit-cpu.json",
+      "size": 52719,
+      "sha256": "774bdf92ef05f47e28f976be194d38fa14ab056c22069e1250f0c9046cee0aa4"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4",
+      "size": 4355744,
+      "sha256": "828f677cd6bdbca47ace24c850ec3a43d565def215af43fdcf1758caa8e327ca"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4mopt",
+      "size": 4910040,
+      "sha256": "afdce51a8078167d5766f1b8a960f84a9f68297588b218b450ded658e2662e36"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4_halo_check",
+      "size": 4359560,
+      "sha256": "13b778c90057e4c7049eb74835f69fda42898678e91f2b7c10b3395ab03d7626"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4_interface_check",
+      "size": 4359480,
+      "sha256": "e596164f4e1fd7de2813d540ac339121ac1992db842e2fef86fa92fae1768d74"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4_receiver_check",
+      "size": 4345856,
+      "sha256": "5343cfd78e7a52bd51d2f5384c22a763296cafbe732299523ac4ab7704d339da"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4_source_check",
+      "size": 4336592,
+      "sha256": "5986d5f0098d3c0b91d3db648f3c477126f189b469b3d76f38009a0ff73ec3bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/bin/sw4_anisotropic_check",
+      "size": 4336504,
+      "sha256": "76b3d63861a205b017954ac1d9c414b8e376d163b629ea6ad703881ba98eb069"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cpu/CMakeCache.txt",
+      "size": 43253,
+      "sha256": "b5ac376860ccff1e77485d6872ea070ae4f75bb4506831002b60e0089e57e5c8"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/build-cpu.log",
+      "size": 28356,
+      "sha256": "65edbf7613d5a7f9e0e13a82fefa2ae1f51797cbc25c1cddd3ab8ebb8d3c8ae7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cuda-v2/comparison.json",
+      "size": 31937,
+      "sha256": "d79273da22810ed3e2dd1caad065a5da49318351a498ab7434e3507456e25beb"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-cuda/comparison.json",
+      "size": 3081,
+      "sha256": "6b0c074e2db91746828896682b07bf2229c7c7bc2aa6199be7252659dfc24209"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-negative-cuda/comparison.json",
+      "size": 3552,
+      "sha256": "07f99d895fc49d2d6dd70be592821bed1a1713b747e3508074b93bc19baabe1e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-implicit-cuda/comparison.json",
+      "size": 1541,
+      "sha256": "0a8356c751a793eb48d8138effbc12d39c70fe98c49fbb68cccf5440869ec423"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-cuda/comparison.json",
+      "size": 2845,
+      "sha256": "74300ae0ccabc4dbdc91779b32779073475e2b447184d94f7154a3f174d4e781"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/aniso-restart-cuda/comparison.json",
+      "size": 1429,
+      "sha256": "49c069aa6375a87e94a3492d8163a711643279843fe353c56f49b03b58d04c70"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/formats-cuda/comparison.json",
+      "size": 12915,
+      "sha256": "3d2ebbf19be26728c4365534d3d3b22fcd14fa59a552e99cb776bdd240f4195d"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/suite-cuda.log",
+      "size": 1275,
+      "sha256": "10b8d23290baec553d9e21ad2b59688e4b846c7bd843326e1f049c9d1ae4e7c0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/hdf5-cuda.log",
+      "size": 576,
+      "sha256": "1dc525a017b64824c04e713ef26965419d0673abc859da19404134cf0ae437fe"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-audit-cuda.json",
+      "size": 59521,
+      "sha256": "01232f9232fa1aaa20530610c71ce9411427e591409d66bc47ccb3e7b5c3fc22"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-audit-cuda.json",
+      "size": 3802,
+      "sha256": "1275715e5d2c2e5aeb8d54a03b318c702449bfda65c5d7ee6b2296286379d0a0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/regression-audit-cuda.json",
+      "size": 52754,
+      "sha256": "c0578f3990430c014e9157c7bec7cdec8b4c6b8239e60805b6c2a5882baa0f28"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4",
+      "size": 18715608,
+      "sha256": "a656bf53b4b0b6aaa36196a14752dd4f19d454187dcd150aa212b4cea540398e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4mopt",
+      "size": 4910040,
+      "sha256": "afdce51a8078167d5766f1b8a960f84a9f68297588b218b450ded658e2662e36"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4_halo_check",
+      "size": 18736192,
+      "sha256": "81c26c0635969dc466562b56dc045298fd064bb71fd83feb17699fa8d49a1bf0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4_interface_check",
+      "size": 18719856,
+      "sha256": "2ca8606c9b28a23f40aa32aa0a0d2e545209d2a3d845018f98bce226e32fd935"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4_receiver_check",
+      "size": 4345856,
+      "sha256": "5343cfd78e7a52bd51d2f5384c22a763296cafbe732299523ac4ab7704d339da"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4_source_check",
+      "size": 4336592,
+      "sha256": "5986d5f0098d3c0b91d3db648f3c477126f189b469b3d76f38009a0ff73ec3bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/bin/sw4_anisotropic_check",
+      "size": 4336504,
+      "sha256": "76b3d63861a205b017954ac1d9c414b8e376d163b629ea6ad703881ba98eb069"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/cuda/CMakeCache.txt",
+      "size": 68141,
+      "sha256": "fd1dffdd00e769bdae9c38bcce8bf2048477deed1c17afeafc264d5399fdda4c"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/build-cuda.log",
+      "size": 46015,
+      "sha256": "28554f57a71fbddf95e574f1d804916bdcbd2d4f21c35f8ba227f026e88f8e05"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/backend-comparison.json",
+      "size": 4963,
+      "sha256": "f083d9048e68556c3e940d1666c589c08d4ad799eebfe0276d19dd753a4fa066"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source.tar",
+      "size": 309903360,
+      "sha256": "7528c9f87cb8386836b641b7d51480a58ee40d48ade6f296d6c6129bfd21d617"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf.tar",
+      "size": 143360,
+      "sha256": "e2d8d9c3624e6a823ae1210fae3d5be3530ac79f79a262f992cb422392798cc3"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a.tar",
+      "size": 153600,
+      "sha256": "25313f4e7d45bf786c8dd7a48a977bb25597a078f1596682937867ebd5200052"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/gpu-hardware.log",
+      "size": 34,
+      "sha256": "ec8a29ce2e21a6388dc3e690d829a0c242d2d1c752374eb34a2c2e4e29f03e4f"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/energy-cpu-stack.log",
+      "size": 2110,
+      "sha256": "e2add4c3036e89df396a7723d372e4207b04cc99c79c79a56e747833aab677b5"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/energy-cpu-other-stacks.log",
+      "size": 12600,
+      "sha256": "d99ac5f7445c96f806cf3ef5a088ecb3cc4c08d59263ee5e73a5f1537f93e31f"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/native-energy-old-one-thread-rerun.log",
+      "size": 3805,
+      "sha256": "297320a0010b57fa2e7eba8e333cc6e0b599fce4bc2035a5fd9972042246aa81"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-suite-cpu.sh",
+      "size": 606,
+      "sha256": "4957d0c672758f77ed8bbe88e685bf2e3483e4e3ef095d9174bd5dbfb6ef2d15"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/regression-cpu-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-mixed-cpu-v2.sh",
+      "size": 785,
+      "sha256": "83ad517ed3d2ce02d7f775fc2eafadcdcf04654f2e18ccf93a7564eb0f07d224"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/suite-cuda-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-negative-cuda.log",
+      "size": 3233,
+      "sha256": "324455db65c970b60245238cd1f9bf3c90a2cb6ee7dbc6f0f233f02b08bb7726"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-mixed-implicit-cpu.sh",
+      "size": 879,
+      "sha256": "56ef0fa5fb6ded72c48809376160eb7e7cfde8c353285c260ec0a03500487941"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-regression-cuda.sh",
+      "size": 1830,
+      "sha256": "da73f02c86db30ab46356b013826d25fe6e4266d7d5c45156cece86529ca9415"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-negative-cpu.log",
+      "size": 3233,
+      "sha256": "6289f7a41749633aea9d155654ef354705001df1fa7177e1659c1f56c734f4f6"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-regression-cpu.sh",
+      "size": 1714,
+      "sha256": "fb0bb2268cff23cf6594aff59ebe3091c19daf4ba133f126cd3170f7d82e1d6b"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/build-cuda.sh",
+      "size": 2048,
+      "sha256": "1ca4db511f1f34bc4847b788cc4ac64e9eb4404c0fa8c36282da5f81c4fb6acf"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-mixed-cuda.sh",
+      "size": 787,
+      "sha256": "88d37347269fcc57d707f94b3c642dc9463974b3da71de780ac2351a8951900f"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cpu-v2.log",
+      "size": 29080,
+      "sha256": "8153cc0db5bc8eba90bcedc1b3e812d8f5eb6e1aedec1d3970577ce8453eb6ee"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cpu-coordinator.log",
+      "size": 92,
+      "sha256": "4b4e2378aa8c4a49d5a52349006d12129e197ad306129807dec07ca33e938c60"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-suite-cpu-v2.sh",
+      "size": 615,
+      "sha256": "f209609099f0d68d00df008a1cae7dc8e5c03720c802bdc8f07facd9eeca66ce"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-suite-cuda.sh",
+      "size": 611,
+      "sha256": "a5350a16d805610a7b3aeebb7e1429cb49cb92c094b0198267983ccaac0eb788"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/formats-cuda.log",
+      "size": 1040,
+      "sha256": "397f9cdc8f2fc57a0e53addc4b2cbf68ea7c44172fa2d06b51637954504dd676"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/regression-audit-cuda.log",
+      "size": 2770,
+      "sha256": "df80a3a08c57430a1cc64de6141730ea8a8015abf50f92a46cca784fe2a9bf59"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-implicit-cpu.log",
+      "size": 1410,
+      "sha256": "3cc13e9338eeccb800b44b5e5381a146ccd3af28028798189ecbfaf0e809646f"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-audit-cpu.log",
+      "size": 715,
+      "sha256": "d6794685c70da742fc6a983d132418cb77a273d9dd5102c90d4918ce39f6b0d4"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-cuda.log",
+      "size": 2802,
+      "sha256": "854ff243626663196c5d83894ba934d4d0777cb1fddfbd0520da26956b5cb7b3"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/suite-cpu-coordinator.log",
+      "size": 274,
+      "sha256": "7726a656d81b14321fbe643ade996da2ffe381df2b303dc40bfecb9e5c7d1a83"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cpu.log",
+      "size": 8107,
+      "sha256": "babdbeb2d710ea2ed3f95b91cdb6b6e8a648b2681c8b0f0a56b149f2f6f7ff63"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cuda-v2.log",
+      "size": 29072,
+      "sha256": "5096f1ab8b48ea2454b11cc7842c04c5ccdcaf8f0db1be3d21540ff436dd4fb9"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-cpu-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/aniso-restart-cpu.log",
+      "size": 1272,
+      "sha256": "c1daa874d63b92c1ec9771f1fa621d50096d8abdefba6f47da89dde31b560099"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/aniso-restart-cuda.log",
+      "size": 1270,
+      "sha256": "808d43c98ec5919f60433666ddd90e66113ba57e78fa10329c82826523abeb87"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/build-cpu.sh",
+      "size": 2048,
+      "sha256": "60145b3d56860fd1c38dde71b87c7653092f0ac508dfaf9d7fb5dd617e844767"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/regression-cuda-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-audit-cuda.log",
+      "size": 11074,
+      "sha256": "6b9f0a52f07985015e50e4bd440bb9a0148084c5b165685a5bfa0d8adb71677d"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-mixed-cpu.sh",
+      "size": 765,
+      "sha256": "8290b0faa95451a8367ede14ebc576e6d254338baed89c0db981ab27a099430c"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/suite-cpu-v2-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/regression-audit-cpu.log",
+      "size": 2752,
+      "sha256": "cc0c91207d9bb5e7b255dc627bb392791eb19ce5a24ca1a4767b0278c10d5add"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-cpu.log",
+      "size": 2802,
+      "sha256": "3f51908caffce86c6ca2eaa8bfa929803051ad03c30bdf478cea1886deb3c6f0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/native-energy-old-one-thread.log",
+      "size": 1802,
+      "sha256": "13407c60d0ec873a3b2e0f37c15994bc0a3ee32d593c944516bd02e5b85c5479"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cuda-v2-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-cpu.log",
+      "size": 2530,
+      "sha256": "3823c247f4cec3651ba7fdf5741eea72d8dc6ec8460d935de48cd3cbe02f01a6"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-implicit-cuda.log",
+      "size": 1410,
+      "sha256": "1337482ff47ded3c5a11ac5a62be21810b9e84944fb2eb4aa199d9af892bafa7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/formats-cpu.log",
+      "size": 1040,
+      "sha256": "397f9cdc8f2fc57a0e53addc4b2cbf68ea7c44172fa2d06b51637954504dd676"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-audit-cuda.log",
+      "size": 719,
+      "sha256": "f903c26e9c8210ce1dc2d87d006e3cfa16e383400dc1469c5b18f9dcfa7e62ee"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/suite-cpu.log",
+      "size": 83,
+      "sha256": "bcd0b1a54ed722ee5f7a186481c7d1728a8d6e91244757e3cb1ec35e0e0a60aa"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-implicit-cuda-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-cpu-v2-coordinator.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-mixed-cuda-v2.sh",
+      "size": 807,
+      "sha256": "2b85e84ac9b7d95682b6235c94692ef50e1b93fccd83605c8c9e6028d4cf6e02"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/run-mixed-implicit-cuda.sh",
+      "size": 901,
+      "sha256": "bbda807d0001edf85d2c5cbf3b4a27ef9b8cafff747d0dc324fa8a308b20ffdd"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/restart-cuda.log",
+      "size": 2530,
+      "sha256": "db4fd1303b2b50da7ae1d92a65afcf925bd1771fb0cda1fd2a2d1ddfa3c48379"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/mixed-audit-cpu.log",
+      "size": 11009,
+      "sha256": "0add6c641d22941c32b3694b1ea8aa384817b6c927f0a9df13644cb00e4b7021"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/check_acceptance.py",
+      "size": 2251,
+      "sha256": "4d6237e19ddcd9cc0842ce1a3f465aca3a1cbab1a62579e847757ef79746cc04"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/compare_waveforms.py",
+      "size": 9136,
+      "sha256": "d5ad8a23c03238b1cfa2fdb3a51e4aa49f055ef55e11c95871133daaf11ef9bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/halo_transport.py",
+      "size": 2217,
+      "sha256": "f89b429d9a51d6a9698a1e4918ecb3a4de2c3587bde6b43ec50662794b2e57e5"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/interface_coverage.py",
+      "size": 3630,
+      "sha256": "d5506753fcae40365916e0b0d7e08cc3160d0cd98dd74e31d84ad68db8ea3a7b"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/profile_hmr3.py",
+      "size": 9430,
+      "sha256": "0876326b776fd6ffa7941e9f3289a85bd8267150d40fb3b68169300c30ec3de8"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_formats.py",
+      "size": 10303,
+      "sha256": "497e36d29a6200940bbdd91df17b2e19e63689bd34255529ebd5a146965ebc05"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_negative.py",
+      "size": 7842,
+      "sha256": "1c974c2de21177c4a37d296935c62ce17090ec265f3459a5c523ecde3a033818"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_observations.py",
+      "size": 11487,
+      "sha256": "091793d494cda4e41a3c79a71cb01606f2bd5ff3fec7be9a3f8586939975ac97"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_restart.py",
+      "size": 7832,
+      "sha256": "e4a391268b60e8c5269c0a5c0dce7bff0ff2d4059db5da387c08c405b4534935"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_restart_audit.py",
+      "size": 3420,
+      "sha256": "95ad80707da333ce753f39bb68aef61f20e97684ae71135803242f636b75f58e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_restart_mixed.py",
+      "size": 9512,
+      "sha256": "272b8bfdec8e6f0ecda5dc6c05e39f69bf712c77aab1611f4d7a7cac8a6b2758"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/receiver_restart_negative.py",
+      "size": 8715,
+      "sha256": "4c8e9ab004c2e9e260898b289154abb6beb4118e2b6f84633a7b6e9f380265bf"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/review_regressions.py",
+      "size": 9067,
+      "sha256": "fee2d869ff124ac98a32ba14a446b1e5fa0991a8c41ea830a6e66dd8f0835810"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/run_hdf5.py",
+      "size": 3184,
+      "sha256": "bf4a6b4a588a543b39810b367f3ffafa86b8bbe45735ef0a22ab1d9dc06ec8bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/tests/backends/validation.py",
+      "size": 461,
+      "sha256": "8565c6849e2b55396e522ee0fc41df4985f56fa8568a31d8ad4abe9b4e0e62a7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/check_acceptance.py",
+      "size": 2251,
+      "sha256": "4d6237e19ddcd9cc0842ce1a3f465aca3a1cbab1a62579e847757ef79746cc04"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/compare_waveforms.py",
+      "size": 9136,
+      "sha256": "d5ad8a23c03238b1cfa2fdb3a51e4aa49f055ef55e11c95871133daaf11ef9bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/halo_transport.py",
+      "size": 2217,
+      "sha256": "f89b429d9a51d6a9698a1e4918ecb3a4de2c3587bde6b43ec50662794b2e57e5"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/interface_coverage.py",
+      "size": 3630,
+      "sha256": "d5506753fcae40365916e0b0d7e08cc3160d0cd98dd74e31d84ad68db8ea3a7b"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/profile_hmr3.py",
+      "size": 9430,
+      "sha256": "0876326b776fd6ffa7941e9f3289a85bd8267150d40fb3b68169300c30ec3de8"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_formats.py",
+      "size": 10303,
+      "sha256": "497e36d29a6200940bbdd91df17b2e19e63689bd34255529ebd5a146965ebc05"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_negative.py",
+      "size": 7842,
+      "sha256": "1c974c2de21177c4a37d296935c62ce17090ec265f3459a5c523ecde3a033818"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_observations.py",
+      "size": 11487,
+      "sha256": "091793d494cda4e41a3c79a71cb01606f2bd5ff3fec7be9a3f8586939975ac97"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_restart.py",
+      "size": 7832,
+      "sha256": "e4a391268b60e8c5269c0a5c0dce7bff0ff2d4059db5da387c08c405b4534935"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_restart_audit.py",
+      "size": 3420,
+      "sha256": "95ad80707da333ce753f39bb68aef61f20e97684ae71135803242f636b75f58e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_restart_mixed.py",
+      "size": 9683,
+      "sha256": "6f30edfee73fe2a6c78f6e552f0c27681b4ff3a9cbb0889094d555dc4d977996"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/receiver_restart_negative.py",
+      "size": 8715,
+      "sha256": "4c8e9ab004c2e9e260898b289154abb6beb4118e2b6f84633a7b6e9f380265bf"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/review_regressions.py",
+      "size": 9067,
+      "sha256": "fee2d869ff124ac98a32ba14a446b1e5fa0991a8c41ea830a6e66dd8f0835810"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/run_hdf5.py",
+      "size": 3184,
+      "sha256": "bf4a6b4a588a543b39810b367f3ffafa86b8bbe45735ef0a22ab1d9dc06ec8bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-859c2bcf/tests/backends/validation.py",
+      "size": 461,
+      "sha256": "8565c6849e2b55396e522ee0fc41df4985f56fa8568a31d8ad4abe9b4e0e62a7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/check_acceptance.py",
+      "size": 2251,
+      "sha256": "4d6237e19ddcd9cc0842ce1a3f465aca3a1cbab1a62579e847757ef79746cc04"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/compare_waveforms.py",
+      "size": 9136,
+      "sha256": "d5ad8a23c03238b1cfa2fdb3a51e4aa49f055ef55e11c95871133daaf11ef9bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/halo_transport.py",
+      "size": 2217,
+      "sha256": "f89b429d9a51d6a9698a1e4918ecb3a4de2c3587bde6b43ec50662794b2e57e5"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/interface_coverage.py",
+      "size": 3630,
+      "sha256": "d5506753fcae40365916e0b0d7e08cc3160d0cd98dd74e31d84ad68db8ea3a7b"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/profile_hmr3.py",
+      "size": 9430,
+      "sha256": "0876326b776fd6ffa7941e9f3289a85bd8267150d40fb3b68169300c30ec3de8"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_formats.py",
+      "size": 10303,
+      "sha256": "497e36d29a6200940bbdd91df17b2e19e63689bd34255529ebd5a146965ebc05"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_negative.py",
+      "size": 7842,
+      "sha256": "1c974c2de21177c4a37d296935c62ce17090ec265f3459a5c523ecde3a033818"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_observations.py",
+      "size": 11487,
+      "sha256": "091793d494cda4e41a3c79a71cb01606f2bd5ff3fec7be9a3f8586939975ac97"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_restart.py",
+      "size": 7832,
+      "sha256": "e4a391268b60e8c5269c0a5c0dce7bff0ff2d4059db5da387c08c405b4534935"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_restart_audit.py",
+      "size": 3420,
+      "sha256": "95ad80707da333ce753f39bb68aef61f20e97684ae71135803242f636b75f58e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_restart_mixed.py",
+      "size": 10481,
+      "sha256": "5ee834d13be723dbfff4103c989c63d4458d3f218030cc4f8a254ce1a5e91810"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/receiver_restart_negative.py",
+      "size": 8715,
+      "sha256": "4c8e9ab004c2e9e260898b289154abb6beb4118e2b6f84633a7b6e9f380265bf"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/review_regressions.py",
+      "size": 9067,
+      "sha256": "fee2d869ff124ac98a32ba14a446b1e5fa0991a8c41ea830a6e66dd8f0835810"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/run_hdf5.py",
+      "size": 3184,
+      "sha256": "bf4a6b4a588a543b39810b367f3ffafa86b8bbe45735ef0a22ab1d9dc06ec8bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/tests-d34bc62a/tests/backends/validation.py",
+      "size": 461,
+      "sha256": "8565c6849e2b55396e522ee0fc41df4985f56fa8568a31d8ad4abe9b4e0e62a7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-tail/restart.log",
+      "size": 4311,
+      "sha256": "3b949d94219ea01dd3d1c9b35fc20b26a37e06b130c0a47a0b1d9946814244fd"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-tail/uninterrupted.log",
+      "size": 4422,
+      "sha256": "03281526a34d50e203ef170af0cb1e060058e043e9edce61241b7f4100930978"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/record-validation.py",
+      "size": 10289,
+      "sha256": "ad63f00eeaf1316e7ba60fa7b483a879d3650cec2d55ff01e5436c42e62ad557"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-review-n1-n4/release-95443f0e/cpu/bin/sw4",
+      "size": 4351424,
+      "sha256": "a08574111b189d5aade4808a2195281eea5e2e890beecf7660855d5b357e216c"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-baseline/case.in",
+      "size": 489,
+      "sha256": "75a2e4e0b30b8e549a11721eae50c8cc249081c203b418ff6fa2035e3fd0c668"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-baseline/uninterrupted.log",
+      "size": 4422,
+      "sha256": "03281526a34d50e203ef170af0cb1e060058e043e9edce61241b7f4100930978"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-baseline/reference-waveforms.npz",
+      "size": 3350,
+      "sha256": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-baseline/reference-state.npz",
+      "size": 3287948,
+      "sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-baseline/history.h5",
+      "size": 11552,
+      "sha256": "3861b0180bd2ec179e7461934be2bfbe943fc8ff0425cf346e09c30976b304da"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/old-reproducer/displacement-geo1-ds3-cycle24-baseline/displacement-history.txt",
+      "size": 4816,
+      "sha256": "ddc971dee4dcc44c4b27a24997d602a9e6a1c48d124a2944933041a14020075d"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-mixed-restart-20261004/release-c28cc06d/source/pytest/reference/energy/energy-mr-4th-1.in",
+      "size": 190,
+      "sha256": "83d1353ceff52e989d092a3e8087cd29e05c39ea9329d2461011f12c8e9a6ecb"
+    }
+  ]
+}
