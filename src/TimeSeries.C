@@ -3913,6 +3913,51 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
                 "Receiver history for station " << m_staName << " in "
                     << fullFilePath << " ends before checkpoint cycle "
                     << beginCycle << ". ");
+    if (m_usgsFormat) {
+       // USGS retains every time step; HDF5 may contain only decimated knots.
+       // Keep HDF5 validation above, but restore the dense prefix from text
+       // rather than interpolating it or leaving its last samples unfilled.
+       // Compare in the output frame, using the writer's float32 conversion
+       // for text, so geographic cancellation is subject to the same rounding.
+       auto outputValue = [&](int c, int i, bool roundToFloat) -> double {
+          auto value = [&](int q) -> double {
+             return roundToFloat ? static_cast<float>(mRecordedSol[q][i]) : mRecordedSol[q][i];
+          };
+          double result = value(c);
+          if (!m_xyzcomponent && sw4::receiver_vector(m_mode)) {
+             if (c == 0) result = m_salpha*value(0) + m_calpha*value(1);
+             else if (c == 1) result = m_thynrm*value(0) - m_thxnrm*value(1);
+             else result = -value(2);
+          }
+          return roundToFloat ? static_cast<float>(result) : result;
+       };
+       const int knots = last_required_sample / mDownSample + 1;
+       std::vector<std::vector<double>> saved(m_nComp);
+       if (m_myPoint) {
+          for (int c = 0; c < m_nComp; ++c) {
+             saved[c].resize(knots);
+             for (int k = 0; k < knots; ++k)
+                saved[c][k] = outputValue(c, k*mDownSample, false);
+          }
+       }
+       readFile(ew, ignore_utc);
+       CHECK_INPUT(!m_myPoint || mLastTimeStep >= beginCycle-1,
+                   "USGS receiver history ends before checkpoint cycle " << beginCycle << ". ");
+       if (m_myPoint) {
+          for (int c = 0; c < m_nComp; ++c) {
+             double peak = 0, difference = 0;
+             for (int k = 0; k < knots; ++k) {
+                const double value = outputValue(c, k*mDownSample, true);
+                CHECK_INPUT(std::isfinite(value), "Invalid USGS receiver value for HDF5 output. ");
+                peak = std::max(peak, std::max(std::abs(value), std::abs(saved[c][k])));
+                difference = std::max(difference, std::abs(value-saved[c][k]));
+             }
+             CHECK_INPUT(difference <= 1e-12 + 2e-6*peak,
+                         "USGS and HDF5 receiver histories disagree before checkpoint for station "
+                         << m_staName << ", component " << c << ". ");
+          }
+       }
+    }
     // Receiver output can extend beyond the latest usable checkpoint.
     // Resume writing at the checkpoint, replacing that uncheckpointed tail.
     if (m_myPoint) m_nptsWritten = beginCycle / mDownSample;

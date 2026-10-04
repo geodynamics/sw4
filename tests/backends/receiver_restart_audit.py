@@ -36,16 +36,16 @@ def main():
                 continue
             folder = name.split('/')[0]
             if 'reference_sha256' in result:
-                reference = root / folder
+                reference = root / result.get('reference_directory', folder)
                 hashes = result['reference_sha256']
             else:
                 reference = root / (folder.split('-')[0] + '-baseline')
                 hashes = {'reference-waveforms.npz': result['reference_wave_sha256'],
                           'reference-state.npz': result['reference_state_sha256']}
-            cases[folder] = (reference, hashes)
+            cases[folder] = (reference, hashes, result.get('final_checkpoint', 'restart.cycle=48.sw4checkpoint'))
         if not cases:
             raise ValueError(f'No successful restarted outputs: {root}')
-        for folder, (reference, hashes) in cases.items():
+        for folder, (reference, hashes, checkpoint) in cases.items():
             for filename, expected in hashes.items():
                 if digest(reference / filename) != expected:
                     raise ValueError(f'Reference identity changed: {reference / filename}')
@@ -56,9 +56,9 @@ def main():
             work = root / folder
             restored = capture(work)
             wave_error = compare(waveform, restored, str(work), True)
-            state_error = compare(pde, state(work / 'restart.cycle=48.sw4checkpoint'), str(work), False)
+            state_error = compare(pde, state(work / checkpoint), str(work), False)
             files = {name.split('/')[0] for name in restored}
-            files.add('restart.cycle=48.sw4checkpoint')
+            files.add(checkpoint)
             restored_hashes = {name: digest(work / name) for name in sorted(files)}
             audit.append({'root': str(root), 'case': folder, 'reference': str(reference),
                           'reference_sha256': hashes, 'restored_sha256': restored_hashes,
