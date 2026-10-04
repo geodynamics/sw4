@@ -114,7 +114,10 @@ def main():
             if mutation.startswith('hdf-') or mutation in ('sufficient', 'changed-tail'):
                 with h5py.File(hdf, 'r+') as stream:
                     group = stream['station']
-                    components = [key for key in group if group[key].shape == (steps + 1,)]
+                    components = [key for key in group
+                                  if key + 'CMPAZ' in group and key + 'CMPINC' in group]
+                    if not components:
+                        raise ValueError(f'No HDF5 waveform components: {hdf}')
                     if mutation in ('sufficient', 'hdf-short'):
                         npts = (cycle - 1) // ds + 1 if mutation == 'sufficient' else 2
                         group['NPTS'][...] = npts
