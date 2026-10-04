@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -30,6 +31,8 @@ def main():
     parser.add_argument('--work-dir', type=Path, required=True)
     parser.add_argument('--tasks', type=int, default=2)
     parser.add_argument('--case', action='append', help='Select baseline name, e.g. displacement-geo1-ds3-cycle24')
+    parser.add_argument('--implicit-utc', action='store_true',
+                        help='Use the default wall clock and test differing stored epochs')
     args = parser.parse_args()
     root = args.work_dir.resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -58,7 +61,8 @@ def main():
         steps = 2 * cycle
         final_checkpoint = f'restart.cycle={steps}.sw4checkpoint'
         text = 'grid h=100 x=4000 y=4000 z=4000 lat=37 lon=-122 az=27\n'
-        text += f'time steps={steps} utcstart=10/02/2026:01:02:03.234567\nfileio path=.\nsupergrid gp=8\n'
+        text += f'time steps={steps}' + ('' if args.implicit_utc else ' utcstart=10/02/2026:01:02:03.234567')
+        text += '\nfileio path=.\nsupergrid gp=8\n'
         text += 'block vp=6000 vs=3464 rho=2700\n'
         text += 'source x=1637 y=1643 z=1000 mxy=1e15 mxz=2e15 myy=5e14 type=Gaussian freq=10 t0=0.3\n'
         text += f'rec x=1800 y=1800 z=1600 file={mode}-history sta=station variables={mode} nsew={geo} '
@@ -81,13 +85,15 @@ def main():
             mutations += ['changed-tail', 'text-short', 'text-missing', 'text-origin', 'text-utc',
                           'text-nonuniform', 'disagree', 'hdf-short', 'hdf-origin',
                           'hdf-utc', 'hdf-downsample', 'hdf-component']
+            if args.implicit_utc:
+                mutations = [m for m in mutations if m not in ('text-utc', 'hdf-utc')] + ['epoch']
         for mutation in mutations:
             label = f'{name}-{mutation}'
             work = root / label
             shutil.copytree(baseline, work)
             usgs = work / f'{mode}-history.txt'
             hdf = work / 'history.h5'
-            if mutation.startswith('text-') or mutation in ('sufficient', 'disagree', 'changed-tail'):
+            if mutation.startswith('text-') or mutation in ('sufficient', 'disagree', 'changed-tail', 'epoch'):
                 lines = usgs.read_text().splitlines()
                 header = '\n'.join(line for line in lines if line.startswith('#')) + '\n'
                 values = np.loadtxt(usgs)
@@ -105,13 +111,15 @@ def main():
                     values[18, 1] += .01
                 elif mutation == 'changed-tail':
                     values[cycle:, 1:] += .01
+                elif mutation == 'epoch':
+                    header = re.sub(r'/\d{4}:', '/2000:', header)
                 if mutation == 'text-missing':
                     usgs.unlink()
                 else:
                     with usgs.open('w') as stream:
                         stream.write(header)
                         np.savetxt(stream, values, fmt='%.17g')
-            if mutation.startswith('hdf-') or mutation in ('sufficient', 'changed-tail'):
+            if mutation.startswith('hdf-') or mutation in ('sufficient', 'changed-tail', 'epoch'):
                 with h5py.File(hdf, 'r+') as stream:
                     group = stream['station']
                     components = [key for key in group
@@ -137,11 +145,16 @@ def main():
                         stream['DOWNSAMPLE'][...] = ds + 1
                     elif mutation == 'hdf-component':
                         del group[components[0]]
+                    elif mutation == 'epoch':
+                        stamp = stream.attrs['DATETIME']
+                        if isinstance(stamp, bytes):
+                            stamp = stamp.decode()
+                        stream.attrs.modify('DATETIME', np.bytes_(re.sub(r'^\d{4}-', '2004-', stamp)))
             histories = [p for p in (usgs, hdf) if p.exists()]
             before = {p.name: digest(p) for p in histories}
             restart = text.rstrip() + f' restartfile=restart.cycle={cycle}.sw4checkpoint\n'
             result, path = launch(work, restart, 'restart')
-            if mutation in ('tail', 'sufficient', 'changed-tail'):
+            if mutation in ('tail', 'sufficient', 'changed-tail', 'epoch'):
                 if result.returncode:
                     raise ValueError(f'Valid mixed restart failed: {path}')
                 check_solver_log(path)
