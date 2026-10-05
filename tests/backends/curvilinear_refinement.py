@@ -47,6 +47,11 @@ def fixtures(repo):
                 width=width,attenuation=attenuation,gradient=True)
     energy=(repo/'pytest/reference/curvimeshrefine/energy-1.in').read_text()
     cases['energy']=energy.replace('verbose=1 path=energy-1','verbose=3 path=output')
+    for kind in ('el','att'):
+        for level in (1,2,3):
+            text=(repo/f'pytest/reference/curvimeshrefine/gausshill-{kind}-{level}.in').read_text()
+            cases[f'twilight-{kind}-{level}']=re.sub(r'^fileio .*$',
+                'fileio path=output verbose=3',text,flags=re.MULTILINE)
     cases.update({f'cap{limit}':physical(cap=limit) for limit in (1,30)})
     for label,value in (('zero','0'),('negative','-1'),('fraction','1.5'),
                         ('text','abc'),('overflow','999999999999999999999999')):
@@ -55,6 +60,18 @@ def fixtures(repo):
     # must fail collectively at the interface, not be lost by a MAX reduction.
     cases['nonfinite']=physical(moment='nan')
     return cases
+
+
+def twilight_errors(path):
+    rows=[]
+    for line in path.read_text().splitlines():
+        if len(line.split())!=3:continue
+        try:rows.append([float(value) for value in line.split()])
+        except ValueError:continue
+    values=np.asarray(rows)
+    if values.ndim!=2 or values.shape[1]!=3 or not np.all(np.isfinite(values)) or np.any(values<=0):
+        raise ValueError(f'Invalid manufactured-solution errors: {path}')
+    return values
 
 
 def residuals(log, energy=False):
@@ -141,6 +158,16 @@ def main():
                     raise ValueError(f'Curved-grid energy change per step: {step_change}')
                 record.update(energy_steps=len(values),relative_energy_drift=drift,
                               max_relative_step_change=step_change)
+            elif name.startswith('twilight-'):
+                _,kind,level=name.split('-')
+                path=work/'output/TwilightErr.txt'
+                errors=twilight_errors(path)
+                reference=twilight_errors(repo/f'pytest/reference/curvimeshrefine/gausshill-{kind}-{level}/TwilightErr.txt')
+                np.testing.assert_allclose(errors,reference,rtol=1e-5,atol=1e-10)
+                record['manufactured_errors']=errors.tolist()
+                if args.compare_to:
+                    cpu=twilight_errors(args.compare_to/name/'output/TwilightErr.txt')
+                    np.testing.assert_allclose(errors,cpu,rtol=2e-5,atol=1e-12)
             else:
                 path=work/'output/receivers.h5'
                 record['waveforms']=compare(path,path,2e-5,1e-12,arrival_after=.5)
@@ -154,6 +181,16 @@ def main():
         report[name]=record
         (root/'comparison.json').write_text(json.dumps(report,indent=2)+'\n')
         print('PASS:',name,record,flush=True)
+    for kind in ('el','att'):
+        names=[f'twilight-{kind}-{level}' for level in (1,2,3)]
+        if all(name in report for name in names):
+            errors=[np.asarray(report[name]['manufactured_errors'])[:,:2] for name in names]
+            orders=[np.log2(a/b) for a,b in zip(errors,errors[1:])]
+            if any(np.any(order<3.5) for order in orders):
+                raise ValueError(f'Insufficient spatial convergence for {kind}: {orders}')
+            report[f'spatial-convergence-{kind}']={'orders':[order.tolist() for order in orders]}
+            (root/'comparison.json').write_text(json.dumps(report,indent=2)+'\n')
+            print('PASS: fourth-order manufactured convergence',kind,orders,flush=True)
 
 
 if __name__=='__main__':main()
