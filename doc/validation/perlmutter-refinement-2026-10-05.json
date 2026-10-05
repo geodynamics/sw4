@@ -1,0 +1,998 @@
+{
+  "date": "2026-10-05",
+  "source_revision": "48407f2ac2daf5f3d41d9c27033a8cdb995d6e3b",
+  "evidence_root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005",
+  "allocations": {
+    "cpu": "59379208",
+    "cuda": "59381003"
+  },
+  "production_solver_changed": false,
+  "cartesian_stall_resolution": "Corrected single-thread rank affinity; no solver/MPI equation changes",
+  "checks": {
+    "single_thread_cartesian": {
+      "ranks": 8,
+      "threads": 1,
+      "steps": 535,
+      "relative_energy_drift": 7.392824629572277e-15
+    },
+    "standard_cpu_suite": {
+      "ranks": 8,
+      "threads": 1,
+      "passed": 20,
+      "skipped": 5,
+      "failed": 0
+    },
+    "halo_cpu": {
+      "ranks": 8,
+      "nodes": 1,
+      "shapes_passed": 3
+    },
+    "halo_cuda": {
+      "ranks": 4,
+      "nodes": 4,
+      "shapes_passed": 3,
+      "layouts": 2
+    },
+    "receiver_negative_cpu": {
+      "cases_passed": 23
+    },
+    "refined_restart_cpu": {
+      "cases_passed": 2,
+      "results": {
+        "az27-att0-ref1/cycle24/repeat1": {
+          "wave_max_difference": 7.450580596923828e-09,
+          "state_max_difference": 0.0,
+          "reference_sha256": {
+            "reference-waveforms.npz": "b06c8ad193b2139a83d62e25fce6b60bf01e810c2c3ec66dd8127cbfcd518770",
+            "reference-state.npz": "76062ef2eb87be29f6a702cb7c7789719940abb7a94af6ca0e8fd4acf1259ddf"
+          }
+        },
+        "az27-att0-ref1/cycle24/repeat2": {
+          "wave_max_difference": 8.207318713537859e-09,
+          "state_max_difference": 0.0,
+          "reference_sha256": {
+            "reference-waveforms.npz": "b06c8ad193b2139a83d62e25fce6b60bf01e810c2c3ec66dd8127cbfcd518770",
+            "reference-state.npz": "76062ef2eb87be29f6a702cb7c7789719940abb7a94af6ca0e8fd4acf1259ddf"
+          }
+        }
+      }
+    },
+    "restart_negative_cpu": {
+      "cases_passed": 21,
+      "results": {
+        "text-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "text-sufficient": {
+          "wave_max_difference": 3.469446951953614e-18,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "text-tail": {
+          "wave_max_difference": 3.469446951953614e-18,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "text-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "text-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "text-nonuniform": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "sac-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "sac-sufficient": {
+          "wave_max_difference": 4.656612873077393e-10,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "sac-tail": {
+          "wave_max_difference": 4.656612873077393e-10,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "sac-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "sac-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf1-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf1-sufficient": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "hdf1-tail": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "hdf1-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf1-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf3-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf3-sufficient": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "hdf3-tail": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+          "reference_state_sha256": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "hdf3-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf3-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        }
+      }
+    },
+    "mixed_cpu": {
+      "cases_passed": 16,
+      "results": {
+        "displacement-geo1-ds3-cycle24-tail": {
+          "wave_max_difference": 3.469446951953614e-18,
+          "state_max_difference": 0.0,
+          "reference_directory": "displacement-geo1-ds3-cycle24-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d",
+            "reference-state.npz": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+          },
+          "final_checkpoint": "restart.cycle=48.sw4checkpoint"
+        },
+        "displacement-geo1-ds3-cycle24-sufficient": {
+          "wave_max_difference": 3.469446951953614e-18,
+          "state_max_difference": 0.0,
+          "reference_directory": "displacement-geo1-ds3-cycle24-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d",
+            "reference-state.npz": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+          },
+          "final_checkpoint": "restart.cycle=48.sw4checkpoint"
+        },
+        "displacement-geo1-ds3-cycle24-changed-tail": {
+          "wave_max_difference": 3.469446951953614e-18,
+          "state_max_difference": 0.0,
+          "reference_directory": "displacement-geo1-ds3-cycle24-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d",
+            "reference-state.npz": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+          },
+          "final_checkpoint": "restart.cycle=48.sw4checkpoint"
+        },
+        "displacement-geo1-ds3-cycle24-text-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-missing": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-nonuniform": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-disagree": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-downsample": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-component": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "velocity-geo0-ds1-cycle25-tail": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_directory": "velocity-geo0-ds1-cycle25-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "74ed4babb144da215637b80ed8de88e5f4b35ff488d4a9342ed29828958113a9",
+            "reference-state.npz": "6624646305cecb7f4a87489369411deee15db2b0220e46853f1873d8d209ceb3"
+          },
+          "final_checkpoint": "restart.cycle=50.sw4checkpoint"
+        },
+        "velocity-geo0-ds1-cycle25-sufficient": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_directory": "velocity-geo0-ds1-cycle25-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "74ed4babb144da215637b80ed8de88e5f4b35ff488d4a9342ed29828958113a9",
+            "reference-state.npz": "6624646305cecb7f4a87489369411deee15db2b0220e46853f1873d8d209ceb3"
+          },
+          "final_checkpoint": "restart.cycle=50.sw4checkpoint"
+        }
+      }
+    },
+    "mixed_independent_audit_cpu": [
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks",
+        "case": "displacement-geo1-ds3-cycle24-tail",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks/displacement-geo1-ds3-cycle24-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d",
+          "reference-state.npz": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "restored_sha256": {
+          "displacement-history.txt": "f7184602f5e00195a8f1802ce0bd4f1ef803c6c0b939097aec8507495f510c39",
+          "history.h5": "04af0d0d3480d08fc51660b09a2fb55f1b7b92e896d2a9efbef1b871de742a36",
+          "restart.cycle=48.sw4checkpoint": "a1d3b78901a52535d6d760c6585adff48d52641f36d536f3fcf71248a6728674"
+        },
+        "wave_max_difference": 3.469446951953614e-18,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks",
+        "case": "displacement-geo1-ds3-cycle24-sufficient",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks/displacement-geo1-ds3-cycle24-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d",
+          "reference-state.npz": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "restored_sha256": {
+          "displacement-history.txt": "f7184602f5e00195a8f1802ce0bd4f1ef803c6c0b939097aec8507495f510c39",
+          "history.h5": "04af0d0d3480d08fc51660b09a2fb55f1b7b92e896d2a9efbef1b871de742a36",
+          "restart.cycle=48.sw4checkpoint": "44b5598f5a156f60b080726df85cae52200d5e747c7a4d653d033fd8c5d23e97"
+        },
+        "wave_max_difference": 3.469446951953614e-18,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks",
+        "case": "displacement-geo1-ds3-cycle24-changed-tail",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks/displacement-geo1-ds3-cycle24-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "dd8244679ba2b2ddcb8efc69e35fe46d44e4cb8031605c9a42f9c714a642fe5d",
+          "reference-state.npz": "049a37e299d1b01ad42f397c031dc2c6d51e36e2c291abc1ff819b8a147ec8e8"
+        },
+        "restored_sha256": {
+          "displacement-history.txt": "f7184602f5e00195a8f1802ce0bd4f1ef803c6c0b939097aec8507495f510c39",
+          "history.h5": "04af0d0d3480d08fc51660b09a2fb55f1b7b92e896d2a9efbef1b871de742a36",
+          "restart.cycle=48.sw4checkpoint": "92ab71481b4dec394c70a4d3ab698d7d7c4ce57fe60779166d21d748991260f3"
+        },
+        "wave_max_difference": 3.469446951953614e-18,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks",
+        "case": "velocity-geo0-ds1-cycle25-tail",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks/velocity-geo0-ds1-cycle25-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "74ed4babb144da215637b80ed8de88e5f4b35ff488d4a9342ed29828958113a9",
+          "reference-state.npz": "6624646305cecb7f4a87489369411deee15db2b0220e46853f1873d8d209ceb3"
+        },
+        "restored_sha256": {
+          "history.h5": "b994892a0d03677ec89f9cd298617c2ff0508c6829e816ac49ed24c89dcdbd82",
+          "restart.cycle=50.sw4checkpoint": "e0c1a344aa6c42411a7e0f832ebd202895d69e44357feb2a787171d8b82443d4",
+          "velocity-history.txt": "c96b078cfa0ea3177d5f27562fce4ef6a351ebafaa50307ff7416be1ac1efefa"
+        },
+        "wave_max_difference": 0.0,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks",
+        "case": "velocity-geo0-ds1-cycle25-sufficient",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks/velocity-geo0-ds1-cycle25-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "74ed4babb144da215637b80ed8de88e5f4b35ff488d4a9342ed29828958113a9",
+          "reference-state.npz": "6624646305cecb7f4a87489369411deee15db2b0220e46853f1873d8d209ceb3"
+        },
+        "restored_sha256": {
+          "history.h5": "b994892a0d03677ec89f9cd298617c2ff0508c6829e816ac49ed24c89dcdbd82",
+          "restart.cycle=50.sw4checkpoint": "05fc28bf402dd5a914305f54a65863549f712e9bdf1135401bfa575fede38abc",
+          "velocity-history.txt": "c96b078cfa0ea3177d5f27562fce4ef6a351ebafaa50307ff7416be1ac1efefa"
+        },
+        "wave_max_difference": 0.0,
+        "state_max_difference": 0.0
+      }
+    ],
+    "refined_restart_cuda": {
+      "cases_passed": 2,
+      "results": {
+        "az27-att0-ref1/cycle24/repeat1": {
+          "wave_max_difference": 7.450580596923828e-09,
+          "state_max_difference": 0.0,
+          "reference_sha256": {
+            "reference-waveforms.npz": "12585ce138989c13c0e9fc03d4b938d8deb9c1a7c4df13838749ec6f2e0e7b80",
+            "reference-state.npz": "91c7801e89b647fb5b94f3168134cce8ddf83c9366fe7946df55e1993ad5ccd1"
+          }
+        },
+        "az27-att0-ref1/cycle24/repeat2": {
+          "wave_max_difference": 8.207318560882193e-09,
+          "state_max_difference": 0.0,
+          "reference_sha256": {
+            "reference-waveforms.npz": "12585ce138989c13c0e9fc03d4b938d8deb9c1a7c4df13838749ec6f2e0e7b80",
+            "reference-state.npz": "91c7801e89b647fb5b94f3168134cce8ddf83c9366fe7946df55e1993ad5ccd1"
+          }
+        }
+      }
+    },
+    "restart_negative_cuda": {
+      "cases_passed": 21,
+      "results": {
+        "text-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "text-sufficient": {
+          "wave_max_difference": 6.938893903907228e-18,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "text-tail": {
+          "wave_max_difference": 6.938893903907228e-18,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "text-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "text-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "text-nonuniform": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "sac-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "sac-sufficient": {
+          "wave_max_difference": 4.656612873077393e-10,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "sac-tail": {
+          "wave_max_difference": 4.656612873077393e-10,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "sac-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "sac-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf1-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf1-sufficient": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "hdf1-tail": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "hdf1-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf1-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf3-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf3-sufficient": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "hdf3-tail": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+          "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "hdf3-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "hdf3-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        }
+      }
+    },
+    "mixed_cuda": {
+      "cases_passed": 16,
+      "results": {
+        "displacement-geo1-ds3-cycle24-tail": {
+          "wave_max_difference": 6.938893903907228e-18,
+          "state_max_difference": 0.0,
+          "reference_directory": "displacement-geo1-ds3-cycle24-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "8e1c2988967fb94863f2e607a4ff38ac33b59e9301e3770675a45fc4c1626df9",
+            "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "final_checkpoint": "restart.cycle=48.sw4checkpoint"
+        },
+        "displacement-geo1-ds3-cycle24-sufficient": {
+          "wave_max_difference": 6.938893903907228e-18,
+          "state_max_difference": 0.0,
+          "reference_directory": "displacement-geo1-ds3-cycle24-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "8e1c2988967fb94863f2e607a4ff38ac33b59e9301e3770675a45fc4c1626df9",
+            "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "final_checkpoint": "restart.cycle=48.sw4checkpoint"
+        },
+        "displacement-geo1-ds3-cycle24-changed-tail": {
+          "wave_max_difference": 6.938893903907228e-18,
+          "state_max_difference": 0.0,
+          "reference_directory": "displacement-geo1-ds3-cycle24-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "8e1c2988967fb94863f2e607a4ff38ac33b59e9301e3770675a45fc4c1626df9",
+            "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "final_checkpoint": "restart.cycle=48.sw4checkpoint"
+        },
+        "displacement-geo1-ds3-cycle24-text-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-missing": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-text-nonuniform": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-disagree": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-short": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-origin": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-utc": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-downsample": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "displacement-geo1-ds3-cycle24-hdf-component": {
+          "rejected_before_stepping": true,
+          "histories_preserved": true
+        },
+        "velocity-geo0-ds1-cycle25-tail": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_directory": "velocity-geo0-ds1-cycle25-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "228516d0aab35dd63c6a36473eb823216d00d2247737e1c84619dd858cbbc727",
+            "reference-state.npz": "034669229a825eb9a05f2bf128d1142210167dc777659b6944c7c55de4f6c052"
+          },
+          "final_checkpoint": "restart.cycle=50.sw4checkpoint"
+        },
+        "velocity-geo0-ds1-cycle25-sufficient": {
+          "wave_max_difference": 0.0,
+          "state_max_difference": 0.0,
+          "reference_directory": "velocity-geo0-ds1-cycle25-baseline",
+          "reference_sha256": {
+            "reference-waveforms.npz": "228516d0aab35dd63c6a36473eb823216d00d2247737e1c84619dd858cbbc727",
+            "reference-state.npz": "034669229a825eb9a05f2bf128d1142210167dc777659b6944c7c55de4f6c052"
+          },
+          "final_checkpoint": "restart.cycle=50.sw4checkpoint"
+        }
+      }
+    },
+    "mixed_independent_audit_cuda": [
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda",
+        "case": "displacement-geo1-ds3-cycle24-tail",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda/displacement-geo1-ds3-cycle24-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "8e1c2988967fb94863f2e607a4ff38ac33b59e9301e3770675a45fc4c1626df9",
+          "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "restored_sha256": {
+          "displacement-history.txt": "631d6f0b5599dc85639b8d41ac556d3b52370cd2dd6144415124bcd8106ae413",
+          "history.h5": "c6d90c19012cf8d55242abbd5f0c92495b9ab59d45dd9f70ed992730672bb6e0",
+          "restart.cycle=48.sw4checkpoint": "6e2390211bed8e2b80a3140348448e3d98500b4fefa705be3e20d0243ddc0dbb"
+        },
+        "wave_max_difference": 6.938893903907228e-18,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda",
+        "case": "displacement-geo1-ds3-cycle24-sufficient",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda/displacement-geo1-ds3-cycle24-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "8e1c2988967fb94863f2e607a4ff38ac33b59e9301e3770675a45fc4c1626df9",
+          "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "restored_sha256": {
+          "displacement-history.txt": "631d6f0b5599dc85639b8d41ac556d3b52370cd2dd6144415124bcd8106ae413",
+          "history.h5": "c6d90c19012cf8d55242abbd5f0c92495b9ab59d45dd9f70ed992730672bb6e0",
+          "restart.cycle=48.sw4checkpoint": "9c277f2cfd2e956fe59528a5aa58673022f778f2d9bc4c0802a72031a3cfc3bb"
+        },
+        "wave_max_difference": 6.938893903907228e-18,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda",
+        "case": "displacement-geo1-ds3-cycle24-changed-tail",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda/displacement-geo1-ds3-cycle24-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "8e1c2988967fb94863f2e607a4ff38ac33b59e9301e3770675a45fc4c1626df9",
+          "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+        },
+        "restored_sha256": {
+          "displacement-history.txt": "631d6f0b5599dc85639b8d41ac556d3b52370cd2dd6144415124bcd8106ae413",
+          "history.h5": "c6d90c19012cf8d55242abbd5f0c92495b9ab59d45dd9f70ed992730672bb6e0",
+          "restart.cycle=48.sw4checkpoint": "7c6bf1c4072ecb5b09436f62b2cf9739013f1662957a6d41746d1664954dc797"
+        },
+        "wave_max_difference": 6.938893903907228e-18,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda",
+        "case": "velocity-geo0-ds1-cycle25-tail",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda/velocity-geo0-ds1-cycle25-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "228516d0aab35dd63c6a36473eb823216d00d2247737e1c84619dd858cbbc727",
+          "reference-state.npz": "034669229a825eb9a05f2bf128d1142210167dc777659b6944c7c55de4f6c052"
+        },
+        "restored_sha256": {
+          "history.h5": "8c61f691c42c2fa05cc42a60c473a224d7f4e9531d292cae069dfb95cd1ceada",
+          "restart.cycle=50.sw4checkpoint": "05a0eaa21e1bbc9254663a82ca7a9fc6452ca9546e8da7c8ce38b95ae3b35838",
+          "velocity-history.txt": "83316f899c30821c8b7ad7ca70cbbdba6ff6103904d939f144a18a9fd447f199"
+        },
+        "wave_max_difference": 0.0,
+        "state_max_difference": 0.0
+      },
+      {
+        "root": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda",
+        "case": "velocity-geo0-ds1-cycle25-sufficient",
+        "reference": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda/velocity-geo0-ds1-cycle25-baseline",
+        "reference_sha256": {
+          "reference-waveforms.npz": "228516d0aab35dd63c6a36473eb823216d00d2247737e1c84619dd858cbbc727",
+          "reference-state.npz": "034669229a825eb9a05f2bf128d1142210167dc777659b6944c7c55de4f6c052"
+        },
+        "restored_sha256": {
+          "history.h5": "8c61f691c42c2fa05cc42a60c473a224d7f4e9531d292cae069dfb95cd1ceada",
+          "restart.cycle=50.sw4checkpoint": "700b486049adddc682454d0275da51def06655705a870ab1d9575d50a2bb36e3",
+          "velocity-history.txt": "83316f899c30821c8b7ad7ca70cbbdba6ff6103904d939f144a18a9fd447f199"
+        },
+        "wave_max_difference": 0.0,
+        "state_max_difference": 0.0
+      }
+    ]
+  },
+  "curvilinear_proposal": {
+    "solves": 832,
+    "max_iterations": 373,
+    "max_relative_residual": 9.99919974e-07,
+    "production_applied": false,
+    "negative_cases": {
+      "cap30": {
+        "exit_code": 139,
+        "expected_error": "no convergence in curvilinear interface"
+      },
+      "cap1": {
+        "exit_code": 139,
+        "expected_error": "no convergence in curvilinear interface"
+      },
+      "invalid0": {
+        "exit_code": 255,
+        "expected_error": "curvimaxit must be a positive integer"
+      },
+      "invalid-negative": {
+        "exit_code": 255,
+        "expected_error": "curvimaxit must be a positive integer"
+      },
+      "invalid-fraction": {
+        "exit_code": 255,
+        "expected_error": "curvimaxit must be a positive integer"
+      },
+      "invalid-text": {
+        "exit_code": 255,
+        "expected_error": "curvimaxit must be a positive integer"
+      },
+      "invalid-overflow": {
+        "exit_code": 255,
+        "expected_error": "curvimaxit must be a positive integer"
+      }
+    },
+    "patch": {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-convergence-proposal.patch",
+      "sha256": "c983631144a70144915230d811b0302aaee28918fa2e1527d3041a980de86a1d"
+    },
+    "production_status": "Prepared and CPU-tested privately; awaiting scientific-correctness approval",
+    "diagnostic_matrix": {
+      "curvi-extrapolate1-att0": {
+        "solves": 316,
+        "max_iterations": 365,
+        "max_relative_residual": 9.99950302e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate1-att0/cpu/run.log",
+          "sha256": "4fe9de762342e692b5522ecb0e40d32109222b3dae3680450bd81526c82f5811"
+        }
+      },
+      "curvi-extrapolate1-att1": {
+        "solves": 320,
+        "max_iterations": 365,
+        "max_relative_residual": 9.99860717e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate1-att1/cpu/run.log",
+          "sha256": "77fcb7d3c7d9f150ad45916a63df157cea8c7caa6b9a899d18626b309af43e0d"
+        }
+      },
+      "curvi-extrapolate2-att0": {
+        "solves": 316,
+        "max_iterations": 361,
+        "max_relative_residual": 9.99934269e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate2-att0/cpu/run.log",
+          "sha256": "8ffe1235108ba24025c01af704ea867a22f174b5351bb7dab4bf1af838b34eaf"
+        }
+      },
+      "curvi-extrapolate2-att1": {
+        "solves": 320,
+        "max_iterations": 361,
+        "max_relative_residual": 9.99926246e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate2-att1/cpu/run.log",
+          "sha256": "69074c0820d177e9bd422f321a23afc8ff7ed3dc9b9f40286835c8282d8ed9b0"
+        }
+      },
+      "curvi-extrapolate3-att0": {
+        "solves": 316,
+        "max_iterations": 357,
+        "max_relative_residual": 9.99922344e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate3-att0/cpu/run.log",
+          "sha256": "b59348a539ddd1117f0ed636ec4837443d5d03e2c35f6a2d9648c92d5b268741"
+        }
+      },
+      "curvi-extrapolate3-att1": {
+        "solves": 320,
+        "max_iterations": 357,
+        "max_relative_residual": 9.99804679e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate3-att1/cpu/run.log",
+          "sha256": "4e2544e58e953510241cc4650bc0bb7535f04df9e40713cd182f379f3aca001e"
+        }
+      },
+      "curvi-extrapolate4-att0": {
+        "solves": 316,
+        "max_iterations": 353,
+        "max_relative_residual": 9.99905644e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate4-att0/cpu/run.log",
+          "sha256": "63e52796eee20a3450e590e2fa5fc4b60a602fbeefd9a0620cda1bad37dc212b"
+        }
+      },
+      "curvi-extrapolate4-att1": {
+        "solves": 320,
+        "max_iterations": 354,
+        "max_relative_residual": 9.99982055e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate4-att1/cpu/run.log",
+          "sha256": "8ee29a6ade21e5d83316b7176bafc8ff274eb0735316323ab0ade2aefc7025f1"
+        }
+      },
+      "curvi-extrapolate5-att0": {
+        "solves": 314,
+        "max_iterations": 348,
+        "max_relative_residual": 9.99760484e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate5-att0/cpu/run.log",
+          "sha256": "ea8839e587092e9a276d80cb0b26cd7adbf20ae9176bc8aeaa080cdeddf7de09"
+        }
+      },
+      "curvi-extrapolate5-att1": {
+        "solves": 318,
+        "max_iterations": 350,
+        "max_relative_residual": 9.99950127e-07,
+        "log": {
+          "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/curvi-diagnostic-matrix/curvi-extrapolate5-att1/cpu/run.log",
+          "sha256": "56574783c8eff068197d46f8532efb61f0dd8c40c31fca63c1a367fea5f58a4d"
+        }
+      }
+    }
+  },
+  "identities": [
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source.tar",
+      "sha256": "5e3de329d9a6daf5715ba0c8158942a118bee81a572fd2a5983355088e215fe1"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/build-cpu.sh",
+      "sha256": "c9ac38391d650a51718b24a8aa9cb6f9d022dfdad1bd978c073fa09ef0a99326"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/build-cuda.sh",
+      "sha256": "8ef775568e6f788e1efcdcf7750270fb8e0f1c1a917de1930d9e8f3b225eeeee"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cpu/CMakeCache.txt",
+      "sha256": "4f19cf5bc1bcf59447c1d1cb7cd38b8ce1e27cca6c5b8481eecfe070892f0cd9"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cuda/CMakeCache.txt",
+      "sha256": "6f277cee090cd6ab0b7b094a2e8c4a962a047476848c9bdbb09b32d7051ecb3c"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cpu/bin/sw4",
+      "sha256": "fbdc1b370e9e20fbf28e8848b02befa60989845e0a8165dbbf0b7bbad20aaa58"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cuda/bin/sw4",
+      "sha256": "7cf7e3d05ef29fd4834be58c3e548dd79382077e0ff2dec53a38f28bdcb8c912"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cpu/bin/sw4_mpi_check",
+      "sha256": "a2343f8f306e8a74a25eecae9e7e41ce4e5cb63ddaa43f6338f6628c010d76b1"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cpu/bin/sw4_halo_check",
+      "sha256": "8cd919e36f6b70689d62a9d9bd4d63763703ddec448aadbe54f9d717ebdeb1ce"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cuda/bin/sw4_halo_check",
+      "sha256": "0ffec99975c1b4dfa41e8f08c7f308bf0f4fbbf118b2fa28041df096d8932390"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_formats.py",
+      "sha256": "497e36d29a6200940bbdd91df17b2e19e63689bd34255529ebd5a146965ebc05"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/profile_hmr3.py",
+      "sha256": "0876326b776fd6ffa7941e9f3289a85bd8267150d40fb3b68169300c30ec3de8"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/single_thread_refinement.py",
+      "sha256": "9cb37e9759b41f843df56b0f2832f75d92753252d770820bc07ffa5841bfe9b0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_observations.py",
+      "sha256": "091793d494cda4e41a3c79a71cb01606f2bd5ff3fec7be9a3f8586939975ac97"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_restart_audit.py",
+      "sha256": "95ad80707da333ce753f39bb68aef61f20e97684ae71135803242f636b75f58e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/interface_coverage.py",
+      "sha256": "d5506753fcae40365916e0b0d7e08cc3160d0cd98dd74e31d84ad68db8ea3a7b"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/validation.py",
+      "sha256": "8565c6849e2b55396e522ee0fc41df4985f56fa8568a31d8ad4abe9b4e0e62a7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/check_acceptance.py",
+      "sha256": "4d6237e19ddcd9cc0842ce1a3f465aca3a1cbab1a62579e847757ef79746cc04"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/halo_transport.py",
+      "sha256": "c716ac7bb444a6efc556d6c6cdf2a9ccbca686f5caebe447bd436e92c4ca7faa"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/compare_waveforms.py",
+      "sha256": "d5ad8a23c03238b1cfa2fdb3a51e4aa49f055ef55e11c95871133daaf11ef9bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/run_hdf5.py",
+      "sha256": "bf4a6b4a588a543b39810b367f3ffafa86b8bbe45735ef0a22ab1d9dc06ec8bc"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_negative.py",
+      "sha256": "056f516c52f3e6c343068c8df77af5197d5220c38538b6313386e501d42fa48b"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_restart.py",
+      "sha256": "fc33f65718e94d48a8c5dfdac20d05f308c5aee5f4d81472926ec3b6a86972d2"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_restart_mixed.py",
+      "sha256": "03c1b25fe17b4700e57f9a78a6d5d9192eec9fadae1b8d0de6ff116689d15918"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/review_regressions.py",
+      "sha256": "fee2d869ff124ac98a32ba14a446b1e5fa0991a8c41ea830a6e66dd8f0835810"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/receiver_restart_negative.py",
+      "sha256": "4e153aecf9da882085adcfbd7059dc14183d4be6f631762319833a9d6585e3f3"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/source/tests/backends/mpi_halo_reduction.C",
+      "sha256": "93ddd963a1e0cf6d894888c90b8a0dd3e0c8e74d86a7e20516df83b960e058a1"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-eight-ranks.log",
+      "sha256": "e63ba9958e925d8ec85c23cf3f8335230582cec677130de16a80d9d5d98b081e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/halo-four-nodes-cuda.log",
+      "sha256": "6f21f462b0fedd3e10730ada347bac0bc3e22a18055310fbc0c98fe1439a65ba"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/restart-negative-cuda.log",
+      "sha256": "324455db65c970b60245238cd1f9bf3c90a2cb6ee7dbc6f0f233f02b08bb7726"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-cuda.log",
+      "sha256": "616488e26976ace94d3a31131723a850f797758f1e609e33bae67ababbe5ed70"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/halo-eight-ranks.log",
+      "sha256": "badd65e29706837700f22dd8e34ee48cdb71725d421aade34c1f46b98c6ce0ef"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/receiver-negative-cpu-v2.log",
+      "sha256": "829e7df516f9426762950d58a68f1d1915ec0c16aff11b04ff12a3e74b8955d3"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/restart-negative-cpu.log",
+      "sha256": "1be6dd5ec6f62c104a31f2dc0ac25562385743098116e83f9a9373005b3f568f"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/build-cpu.log",
+      "sha256": "fa12c39997cd773d9dbf5a006eafffcd2095b453032cb65d725d2ce600fef3a7"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/receiver-negative-cpu.log",
+      "sha256": "2d803e20b5f7b91cd9eee461cfeac3715bf4bb05f2573c3cd650cba262954246"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/suite-cpu-coordinator.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-audit-cuda.log",
+      "sha256": "3b2c944ab7cfbf5ff20b0b36eee388d45fb949fb32c6cc5cbea11b2ba3ed9e25"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/build-mpi-check.log",
+      "sha256": "ba1aee9446716c861865f4f5c01feeb99936669058bf9deb8e879010b7704b32"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/gpu-hardware-v2.log",
+      "sha256": "4c3b1eaa8d7a6668e0f4a65342d0b20d752c064f9c45eceb33301f229c6e5fae"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/gpu-hardware.log",
+      "sha256": "8d47b335f61edb2e6ab3f987bba6bc515c9bbaed7e6e67f05711d35c6f531b1e"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/suite-cpu.log",
+      "sha256": "10b8d23290baec553d9e21ad2b59688e4b846c7bd843326e1f049c9d1ae4e7c0"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/build-cuda.log",
+      "sha256": "121c6b1a34e7340b8fb315398f4d7e40a5660cfb1d7ad3d9843c0e2c1c3ba8c8"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/restart-cuda.log",
+      "sha256": "5c762cab4f650c9cf599828b7f9bd4ee1523868ed0867169d0007ca7df1207f3"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/mixed-audit-cpu.log",
+      "sha256": "8b0d7927f8d0a092c3c1a7d1e965b2c0ae68f0087aa2e0f41773092ac1270803"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/thread-regression.log",
+      "sha256": "b9d2603ce1f1dbb227e2e2bb57b14c6786d755c7aaec4b1a4c1bc889c95ad2f0"
+    }
+  ],
+  "remaining": [
+    "Curvilinear production change awaiting explicit scientific-correctness approval",
+    "Curvilinear CUDA and performance qualification after approval",
+    "HIP validation on Frontier",
+    "Wider production qualification remains separate"
+  ],
+  "excluded_attempts": [
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/halo-four-nodes-cuda",
+      "reason": "Cancelled pending halo step while the build occupied required nodes; fresh four-node check passed after build"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/receiver-negative-cpu.log",
+      "reason": "Incorrect fixture path; corrected fixture validation passed all 23 cases"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/gpu-hardware.log",
+      "reason": "Query with --gres=none hid all devices; explicit GPU query recorded all 16 devices"
+    },
+    {
+      "path": "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/run.log",
+      "reason": "Private proposal launched from wrong working directory without an input; correctly located proposal checks passed"
+    }
+  ],
+  "production_sources_unchanged_from": "cf06e954636606a6155189fcc2490dbd1a55602d"
+}

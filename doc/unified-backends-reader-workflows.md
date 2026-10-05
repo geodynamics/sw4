@@ -196,13 +196,15 @@ receiver histories and two PDE states at the stated floating-point tolerances.
 and HDF5 different valid calendar epochs and requires restoration on the relative
 axis; explicit-UTC mismatches remain rejections.
 
-An additional CPU refinement stall remains open. With eight MPI ranks and one
+An additional CPU refinement stall was observed. With eight MPI ranks and one
 OpenMP thread, `energy-mr-4th-1.in` stopped progressing in `MPI_Sendrecv`, with
 ranks reached through different `consintp`, `enforceIC` and solver paths. The
 pre-fix `95443f0e` executable also timed out on this configuration after 120
 seconds, so this receiver correction did not introduce the issue. Stack and log
-evidence is retained in the new record. The full CPU suite passed with the
-previously qualified eight-rank, two-thread configuration. Its root cause and
-correction are not claimed resolved. HIP, wider scaling and long production
+evidence is retained in that historical record. The October 5
+[affinity diagnosis and regression](unified-backends-refinement.md) reproduced
+the stall independently of SW4 and corrected the single-thread rank binding.
+Fresh qualification now passes all 20 enabled CPU tests with eight ranks and
+one thread. HIP, wider scaling and long production
 qualification remain separate gates; this restart-only correction did not repeat
 the historical four-node hmr3 performance measurement.
