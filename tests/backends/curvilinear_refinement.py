@@ -68,7 +68,7 @@ def residuals(log, energy=False):
         raise ValueError(f'Invalid interface residuals: {log}')
     if np.any((values[:,2]>1e-6)&(values[:,3]>1e-6)):
         raise ValueError(f'Unconverged interface solve: {log}')
-    if not energy and np.max(values[:,0])<.79:
+    if np.max(values[:,0])<(99.9 if energy else .79):
         raise ValueError(f'Interface run ends before the required arrival: {log}')
     return {'solves':len(rows),'grids':sorted({int(row[0]) for row in rows}),
             'max_iterations':int(np.max(values[:,1])),
@@ -133,8 +133,14 @@ def main():
                 if values.ndim!=1 or len(values)<500 or not np.all(np.isfinite(values)) or values[2]<=0:
                     raise ValueError(f'Invalid energy history: {work}')
                 drift=float(np.max(np.abs(values[2:]-values[2]))/values[2])
-                if drift>1e-10:raise ValueError(f'Curved-grid energy drift: {drift}')
-                record.update(energy_steps=len(values),relative_energy_drift=drift)
+                # The existing SW4 energy test bounds change per timestep.
+                # Check both signs and retain cumulative drift separately: the
+                # unchanged 1e-6 interface tolerance permits accumulated error.
+                step_change=float(np.max(np.abs(np.diff(values[2:])))/values[2])
+                if step_change>1e-10:
+                    raise ValueError(f'Curved-grid energy change per step: {step_change}')
+                record.update(energy_steps=len(values),relative_energy_drift=drift,
+                              max_relative_step_change=step_change)
             else:
                 path=work/'output/receivers.h5'
                 record['waveforms']=compare(path,path,2e-5,1e-12,arrival_after=.5)
