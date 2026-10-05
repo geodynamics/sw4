@@ -99,7 +99,7 @@ def main():
                 data[440+17*8:440+18*8]=b' '*8
                 data[57*4:59*4]=np.asarray([az,inc],dtype='<f4').tobytes()
                 data[632:]=np.asarray(signal,dtype='<f4').tobytes();path.write_bytes(data)
-        command=['srun','--exclusive','--exact','--gres=none','-N','1','-n','2','-c','1',
+        command=['srun','--exclusive','--exact','--cpu-bind=threads','--gres=none','-N','1','-n','2','-c','1',
                  str(args.reader.resolve(strict=True)),str(work/'case.in'),str(output),'displacement','0']
         if name in ('legacy-grid','ignore-utc'):
             command+=['1','grid' if name=='legacy-grid' else 'ignore-utc']
@@ -120,7 +120,7 @@ def main():
         work=root/'station-missing';work.mkdir(exist_ok=True)
         (work/'case.in').write_text((fixture/'case.in').read_text().replace(
             'infile=stations.h5','infile=missing-stations.h5'))
-        command=['srun','--exclusive','--exact','--gres=none','-N','1','-n','2','-c','1',
+        command=['srun','--exclusive','--exact','--cpu-bind=threads','--gres=none','-N','1','-n','2','-c','1',
                  str(args.sw4.resolve(strict=True)),str(work/'case.in')]
         with (work/'run.log').open('w') as log:
             result=subprocess.run(command,cwd=work,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=120)

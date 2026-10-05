@@ -23,7 +23,7 @@ def main():
         (work/'case.in').write_text(f'grid h=100 x={x} y={y} z=4000\n'
             'time steps=2\nfileio path=output\nsupergrid gp=8\n'
             'refinement zmax=2000\nblock vp=6000 vs=3464 rho=2700\n')
-        command=['srun','--exclusive','--exact','-N',str(args.nodes),'-n',str(args.tasks),'-c','1']
+        command=['srun','--exclusive','--exact','--cpu-bind=threads','-N',str(args.nodes),'-n',str(args.tasks),'-c','1']
         command+=['--gres=none'] if args.backend=='OPENMP' else ['--gpus-per-task=1','--gpu-bind=single:1']
         with (work/'run.log').open('w') as log:
             result=subprocess.run(command+[probe,'case.in'],cwd=work,env=env,

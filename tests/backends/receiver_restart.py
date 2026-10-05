@@ -100,7 +100,7 @@ def main():
     root=args.work_dir.resolve();root.mkdir(parents=True,exist_ok=True)
     env={k:v for k,v in os.environ.items() if not k.startswith('SLURM_') or k=='SLURM_JOB_ID'}
     env.update(OMP_NUM_THREADS='1',MPICH_GPU_SUPPORT_ENABLED='0')
-    command=['srun','--exclusive','--exact','-N','1','-n',str(args.tasks),'-c','1']
+    command=['srun','--exclusive','--exact','--cpu-bind=threads','-N','1','-n',str(args.tasks),'-c','1']
     command+=['--gres=none'] if args.backend=='OPENMP' else ['--gpus-per-task=1','--gpu-bind=single:1']
     command += [str(args.sw4.resolve(strict=True))]
     report={}

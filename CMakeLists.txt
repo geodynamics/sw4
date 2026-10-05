@@ -189,6 +189,8 @@ endif()
 
 # Source-history checks link the real native solver and run only on request.
 if(SW4_BACKEND STREQUAL OPENMP)
+  add_executable(sw4_mpi_check EXCLUDE_FROM_ALL tests/backends/mpi_halo_reduction.C)
+  target_link_libraries(sw4_mpi_check PRIVATE MPI::MPI_CXX OpenMP::OpenMP_CXX)
   add_executable(sw4_halo_check EXCLUDE_FROM_ALL src/main.C)
   target_compile_definitions(sw4_halo_check PRIVATE SW4_HALO_CHECK=1)
   target_link_libraries(sw4_halo_check PRIVATE sw4_native)
