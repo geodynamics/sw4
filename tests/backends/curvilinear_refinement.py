@@ -24,7 +24,9 @@ def physical(h=100, duration=.8, extra=False, width=1, attenuation=False,
     text+='developer cfl='+('0.8' if gradient else '0.3')
     if cap is not None:text+=f' curvimaxit={cap}'
     text+='\ntopography input=gaussian zmax=2000 order=4 gaussianAmp=100 gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500\n'
-    text+='refinement zmax=800'+(' zmax=1400' if extra else '')+'\n'
+    # Keep at least twelve vertical points in each curved layer for the SBP
+    # closures, including the coarse layer below the deeper curved interface.
+    text+='refinement '+('zmax=300 zmax=900' if extra else 'zmax=800')+'\n'
     if attenuation:text+='attenuation nmech=1\n'
     text+='block vp=6000 vs=3464 rho=2700'
     if gradient:text+=' vpgrad=0.1 vsgrad=0.05 rhograd=0.02'
@@ -64,8 +66,7 @@ def residuals(log, energy=False):
                        for _,t,it,relative,scaled in rows])
     if not np.all(np.isfinite(values)) or np.any(values[:,1]>500):
         raise ValueError(f'Invalid interface residuals: {log}')
-    # Printed residuals have six significant digits; allow only their rounding.
-    if np.any((values[:,2]>1.00001e-6)&(values[:,3]>1.00001e-6)):
+    if np.any((values[:,2]>1e-6)&(values[:,3]>1e-6)):
         raise ValueError(f'Unconverged interface solve: {log}')
     if not energy and np.max(values[:,0])<.79:
         raise ValueError(f'Interface run ends before the required arrival: {log}')
