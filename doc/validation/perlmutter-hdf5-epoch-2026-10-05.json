@@ -1,0 +1,945 @@
+{
+  "date": "2026-10-05",
+  "finding": "F2/P3 in review-unified-backends-3296c3cd",
+  "driver_revision": "9aa87956",
+  "build_revision": "48407f2ac2daf5f3d41d9c27033a8cdb995d6e3b",
+  "production_solver_changed": false,
+  "evidence_root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005",
+  "allocations": {
+    "cpu": "59386108",
+    "cuda": "59386114"
+  },
+  "historical_evidence_limit": "Standalone HDF5 implicit-UTC epoch substitutions before 9aa87956 were no-ops; mixed-output ISO substitutions were valid. Historical artifacts are preserved unchanged.",
+  "checks": {
+    "cpu": {
+      "implicit": {
+        "passed": 8,
+        "results": {
+          "text-epoch": {
+            "wave_max_difference": 3.469446951953614e-18,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "text-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-epoch": {
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "1cb18dd24ea3cad0d315b1c3b55020e93b77b0d846e5f34e2a463f826340f9ba",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "sac-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-epoch": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01",
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:04:43.000000",
+                "after": "2000-10-05T19:04:43.000000"
+              }
+            }
+          },
+          "hdf1-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:04:43.000000",
+                "after": "2000-10-05T19:04:43.000000"
+              }
+            }
+          },
+          "hdf3-epoch": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01",
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:04:51.000000",
+                "after": "2000-10-05T19:04:51.000000"
+              }
+            }
+          },
+          "hdf3-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:04:51.000000",
+                "after": "2000-10-05T19:04:51.000000"
+              }
+            }
+          }
+        }
+      },
+      "explicit": {
+        "passed": 23,
+        "results": {
+          "text-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "text-sufficient": {
+            "wave_max_difference": 3.469446951953614e-18,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "text-tail": {
+            "wave_max_difference": 3.469446951953614e-18,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "text-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "text-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "text-nonuniform": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-sufficient": {
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "sac-tail": {
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "sac-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-sufficient": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "hdf1-tail": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "hdf1-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-epoch": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-02T01:02:03.234567",
+                "after": "2000-10-02T01:02:03.234567"
+              }
+            }
+          },
+          "hdf3-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf3-sufficient": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "hdf3-tail": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+            "reference_state_sha256": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+          },
+          "hdf3-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf3-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf3-epoch": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-02T01:02:03.234567",
+                "after": "2000-10-02T01:02:03.234567"
+              }
+            }
+          }
+        }
+      },
+      "independent_replay": {
+        "passed": 12,
+        "results": [
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit",
+            "case": "text-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/text-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "displacement-history.txt": "e3bb47d8953f67e8e196bbd381984799b7b472f314d604d4bbc249d347eaeaac",
+              "restart.cycle=48.sw4checkpoint": "c2b6d2042b877e09bb72ea83556398a956b4983c8c678d9ca265f1cdcd60bbef"
+            },
+            "wave_max_difference": 3.469446951953614e-18,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit",
+            "case": "sac-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/sac-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "1cb18dd24ea3cad0d315b1c3b55020e93b77b0d846e5f34e2a463f826340f9ba",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "displacement-history.e": "50357510cf87934f7b8acf299c9853ae96590598d71e03278f2db21cceddd72b",
+              "displacement-history.n": "6b054fbddae8ea63727e4faafcef5521698d6ddcfb3143f963cd20a39199a53f",
+              "displacement-history.u": "052a97c382b3397ccb597e1023d1871916b8e6aba704558fc57a603299755ed8",
+              "restart.cycle=48.sw4checkpoint": "1f1fc75844de521b5096c54d241439c86053ab8e746ecdfc0521bbb3b95eaa70"
+            },
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit",
+            "case": "hdf1-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf1-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "history.h5": "72c10f4371e39be88fa6640a2e420cf3911d870a15ee751dcae0843998a61a62",
+              "restart.cycle=48.sw4checkpoint": "163334d04800b252c02be7bed02fd87806bd84c01e682b774af548dc7ccf7325"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit",
+            "case": "hdf3-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf3-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "history.h5": "29a2954260901fa45310666c1aca715b41c89823f673095a906cafeaa26c4792",
+              "restart.cycle=48.sw4checkpoint": "91dc0a21eb5b3b10bf8dbf1078bded4c22ee1d3242a8061206fd9f92085ba8b0"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "text-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "displacement-history.txt": "f7184602f5e00195a8f1802ce0bd4f1ef803c6c0b939097aec8507495f510c39",
+              "restart.cycle=48.sw4checkpoint": "462ea0cc1a04a429c569043206d41936b754fd2ed9c4e24345d74849666fa3f1"
+            },
+            "wave_max_difference": 3.469446951953614e-18,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "text-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "a28ba1583000d6c86cf9cf1da80a8271f503d69522915276b556d8959708463d",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "displacement-history.txt": "f7184602f5e00195a8f1802ce0bd4f1ef803c6c0b939097aec8507495f510c39",
+              "restart.cycle=48.sw4checkpoint": "7701289c23e5d0b491019c51250c4ac89fe0e705b9355dd494a6c3bfecdf3f29"
+            },
+            "wave_max_difference": 3.469446951953614e-18,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "sac-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "displacement-history.e": "43a1c02c5463d497ee6358dfdfef0634523ad51c09bd49acd40af9f8cb21f5e2",
+              "displacement-history.n": "20e5ed62ab590a81a8176c12e0b036c03a09f03d7dbb4a273732fed146b33ca5",
+              "displacement-history.u": "9a64916ac943aa689a8bbbc8a24b72b91e242468d67a1fe69d183ced6a67224b",
+              "restart.cycle=48.sw4checkpoint": "db5e9712cd02811757aee3b4db8f3d80ab910a6a991ddf999b6d86d744d4eb90"
+            },
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "sac-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "displacement-history.e": "43a1c02c5463d497ee6358dfdfef0634523ad51c09bd49acd40af9f8cb21f5e2",
+              "displacement-history.n": "20e5ed62ab590a81a8176c12e0b036c03a09f03d7dbb4a273732fed146b33ca5",
+              "displacement-history.u": "9a64916ac943aa689a8bbbc8a24b72b91e242468d67a1fe69d183ced6a67224b",
+              "restart.cycle=48.sw4checkpoint": "d8f4776b1d4eca580e5f80617ca5087f1f84f7dd536c358788b089a0ea362b4f"
+            },
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "hdf1-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "history.h5": "bf9374358781966942a65cd84447437352bbb921cb9a4bf30b254473378e1f71",
+              "restart.cycle=48.sw4checkpoint": "f74757bcab7b5bc434d4c57ce9ea55e5fd31591da5598c4d7c8f726a77a81e2a"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "hdf1-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "history.h5": "b5842875d48c16af92ec10976e08a1dca5887957f6b3bce21fafe3b8cdbf8f9b",
+              "restart.cycle=48.sw4checkpoint": "984241c72d70d90741d85261ce579b0248f8f35fed7fd18b79b2d728dcab7ddd"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "hdf3-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "history.h5": "1642e2472cfcaff8affd620b1bda7e247966971feccb52beb1a98110d13d818e",
+              "restart.cycle=48.sw4checkpoint": "f849b40943984b97ac53749dec910512b4f9e38486be70df4accd2b9acd92079"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit",
+            "case": "hdf3-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+              "reference-state.npz": "3de162a6d6fe3a8cd691cf2dd380310235d305f5ba8285719c69870522645a01"
+            },
+            "restored_sha256": {
+              "history.h5": "fe7f02539418f16caae8dcf6bbbcad418e96cd42ace44fa043b041b24f0b2707",
+              "restart.cycle=48.sw4checkpoint": "80ceb85768c02478b304b2fd8fa569251239fd9285b0aec44f4f02caed846d15"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          }
+        ]
+      }
+    },
+    "cuda": {
+      "implicit": {
+        "passed": 8,
+        "results": {
+          "text-epoch": {
+            "wave_max_difference": 6.938893903907228e-18,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "text-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-epoch": {
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "1cb18dd24ea3cad0d315b1c3b55020e93b77b0d846e5f34e2a463f826340f9ba",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "sac-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-epoch": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83",
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:05:10.000000",
+                "after": "2000-10-05T19:05:10.000000"
+              }
+            }
+          },
+          "hdf1-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:05:10.000000",
+                "after": "2000-10-05T19:05:10.000000"
+              }
+            }
+          },
+          "hdf3-epoch": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83",
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:05:32.000000",
+                "after": "2000-10-05T19:05:32.000000"
+              }
+            }
+          },
+          "hdf3-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-05T19:05:32.000000",
+                "after": "2000-10-05T19:05:32.000000"
+              }
+            }
+          }
+        }
+      },
+      "explicit": {
+        "passed": 23,
+        "results": {
+          "text-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "text-sufficient": {
+            "wave_max_difference": 6.938893903907228e-18,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "text-tail": {
+            "wave_max_difference": 6.938893903907228e-18,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "text-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "text-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "text-nonuniform": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-sufficient": {
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "sac-tail": {
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "sac-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "sac-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-sufficient": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "hdf1-tail": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "hdf1-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf1-epoch": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-02T01:02:03.234567",
+                "after": "2000-10-02T01:02:03.234567"
+              }
+            }
+          },
+          "hdf3-short": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf3-sufficient": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "hdf3-tail": {
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0,
+            "reference_wave_sha256": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+            "reference_state_sha256": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+          },
+          "hdf3-origin": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf3-utc": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true
+          },
+          "hdf3-epoch": {
+            "rejected_before_stepping": true,
+            "histories_preserved": true,
+            "epoch_mutations": {
+              "history.h5": {
+                "before": "2026-10-02T01:02:03.234567",
+                "after": "2000-10-02T01:02:03.234567"
+              }
+            }
+          }
+        }
+      },
+      "independent_replay": {
+        "passed": 12,
+        "results": [
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit",
+            "case": "text-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/text-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "displacement-history.txt": "edb7f1ed706438666ee411b7f71785ad44e48ea2ef20dddbe0ab7b55a2b258a3",
+              "restart.cycle=48.sw4checkpoint": "33237759d96979ddedcb8de18b06878e4e870d2e7c17eabfcaea3e5d53d2f8a5"
+            },
+            "wave_max_difference": 6.938893903907228e-18,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit",
+            "case": "sac-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/sac-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "1cb18dd24ea3cad0d315b1c3b55020e93b77b0d846e5f34e2a463f826340f9ba",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "displacement-history.e": "468190b985610f6dfaa0bec9e315cc2b2e9581384c72f221b577fe7e6cb0a177",
+              "displacement-history.n": "5f557f94966069ce6d414c1a77f2b6596e9de663ad49a99a05bda37d4accf7fb",
+              "displacement-history.u": "19e324dbc5402c1f1ad2e0de7bcd7f7b51d1322084e2ed9bc0806e5f022c9a35",
+              "restart.cycle=48.sw4checkpoint": "9fda63f58595b8db0cd95e7d5efdd5d632003bf51c2cff387da53eee9fe3764a"
+            },
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit",
+            "case": "hdf1-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf1-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "history.h5": "e719e815ac9b33e6575215f21297fbb102e78d4b56ba76e6540675f75e370f6d",
+              "restart.cycle=48.sw4checkpoint": "74c97c4c6033a6932ab6f58ecbac1bca70aa366d33e86ebf9eacb7a4a01a4598"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit",
+            "case": "hdf3-epoch",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf3-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "history.h5": "53159e6fbcb8bfe5c8205564ac9da2faee9341b9f93306de56aa225bc633132b",
+              "restart.cycle=48.sw4checkpoint": "7d380c1f3c16d00838419ddbfc3bebac965aad4393cad10815f547a4b34467d9"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "text-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "displacement-history.txt": "631d6f0b5599dc85639b8d41ac556d3b52370cd2dd6144415124bcd8106ae413",
+              "restart.cycle=48.sw4checkpoint": "cf596dbce64a0dcc2edbedbf5c4e832d9d6f1512b82ff7a90b0d234ee7ac73ed"
+            },
+            "wave_max_difference": 6.938893903907228e-18,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "text-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "b7327e4f47066419a03287b97cfd0a08b3fb0f92a1f848ef3ee0d5b2bb8a47f9",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "displacement-history.txt": "631d6f0b5599dc85639b8d41ac556d3b52370cd2dd6144415124bcd8106ae413",
+              "restart.cycle=48.sw4checkpoint": "33237759d96979ddedcb8de18b06878e4e870d2e7c17eabfcaea3e5d53d2f8a5"
+            },
+            "wave_max_difference": 6.938893903907228e-18,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "sac-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "displacement-history.e": "43a1c02c5463d497ee6358dfdfef0634523ad51c09bd49acd40af9f8cb21f5e2",
+              "displacement-history.n": "20e5ed62ab590a81a8176c12e0b036c03a09f03d7dbb4a273732fed146b33ca5",
+              "displacement-history.u": "9a64916ac943aa689a8bbbc8a24b72b91e242468d67a1fe69d183ced6a67224b",
+              "restart.cycle=48.sw4checkpoint": "a7a0e4ea83f56bbb1ff7dd68f0ca200b3368bc62c9a27af8190a52dfb06317ab"
+            },
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "sac-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "dceb86c6733ae9c837f2950d168740f1b8a041cbc198c97a61839b941d2b12fd",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "displacement-history.e": "43a1c02c5463d497ee6358dfdfef0634523ad51c09bd49acd40af9f8cb21f5e2",
+              "displacement-history.n": "20e5ed62ab590a81a8176c12e0b036c03a09f03d7dbb4a273732fed146b33ca5",
+              "displacement-history.u": "9a64916ac943aa689a8bbbc8a24b72b91e242468d67a1fe69d183ced6a67224b",
+              "restart.cycle=48.sw4checkpoint": "5b47ce977eed9b3118b0b4596a5bc47e5acfaecd4fe6d40b96c44767769dcdf5"
+            },
+            "wave_max_difference": 4.656612873077393e-10,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "hdf1-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "history.h5": "731630f549bbce4c9b1064905ef92088482a33e466d6a1135bc5d670e3d13249",
+              "restart.cycle=48.sw4checkpoint": "322ce6a007528d95c65a8bb657779b8ef0feca277591f1322ed7adc46f8dd49c"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "hdf1-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "6dde4021543617c421fee09d8b8bf7fb71fba707d761c33a30ff976219bfbc21",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "history.h5": "78866be1270b1693a793b249f920a1646bdb6eb2688fcdd03c590043fa950fb3",
+              "restart.cycle=48.sw4checkpoint": "38fd5d227dda25febafa149f2ea959bd3e70f1642eb4de8f62a10a46149c70c5"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "hdf3-sufficient",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "history.h5": "d1e7be63527ef49d705a762f13e99507410cb5cbd937ab9643613b71ecf6b5d8",
+              "restart.cycle=48.sw4checkpoint": "fd4aeb1c89394fa6c465d5fb1f802adf60f86228b59aaa88cd3f71b253d199d1"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          },
+          {
+            "root": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit",
+            "case": "hdf3-tail",
+            "reference": "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-baseline",
+            "reference_sha256": {
+              "reference-waveforms.npz": "d36c82c85e6f3275384ea54696fad1b038e1e49f181c67913ba0a307c45624bb",
+              "reference-state.npz": "630612ed8c98e99659dc11f2630012e7f1dd87230f72bc68c9666059ccc3bd83"
+            },
+            "restored_sha256": {
+              "history.h5": "b82af1034b59188a56c6eabbd0e42e1ee7084498015b4365fd88f4e56ce0c8c8",
+              "restart.cycle=48.sw4checkpoint": "142936b9d95a2e4bfb8aa9ea59e4d1173b8a2f609dbc21fba25f08a1f38bbd5d"
+            },
+            "wave_max_difference": 0.0,
+            "state_max_difference": 0.0
+          }
+        ]
+      }
+    }
+  },
+  "artifact_sha256": {
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/comparison.json": "ced23f9f4e16c30a7fedff625fa54912295b7af542e92435f84bad570d33d735",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/text-epoch/case.in": "53a5752160783a9ebe7b92f28c9c83e9f27db2585e1974619176d5ee818b88a0",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/text-origin/case.in": "53a5752160783a9ebe7b92f28c9c83e9f27db2585e1974619176d5ee818b88a0",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/sac-epoch/case.in": "a54cb9116f0fee7d8d607da872b4baf62f43b828bf1998a382832c57c07a2667",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/sac-origin/case.in": "a54cb9116f0fee7d8d607da872b4baf62f43b828bf1998a382832c57c07a2667",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf1-epoch/case.in": "e15537bf5feca91579cfa95362e6437a292357cc5c4a2d6d9bdd42f100bdd80c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf1-origin/case.in": "e15537bf5feca91579cfa95362e6437a292357cc5c4a2d6d9bdd42f100bdd80c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf3-epoch/case.in": "332eab016f0444b38dc1a059c6212c787f0817ef1fec5cdc57158c6a5ac948aa",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf3-origin/case.in": "332eab016f0444b38dc1a059c6212c787f0817ef1fec5cdc57158c6a5ac948aa",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/text-epoch/restart.log": "f39fbb7884370481c427f16d26f707078f313679b4d32a31b0373f091ada8ce3",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/text-origin/restart.log": "5c9e3bd78c68e6e0dc3f9b88c008d1624a68c4115d8c40554057bd4a288a6c09",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/sac-epoch/restart.log": "fe9085efe7cbd624e4bc423b0a76eb0161bc1eea39bc9154539b8420c900c10b",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/sac-origin/restart.log": "fdaa382d7eaa3226e8c979a1d5b56b76c49e22c0fa1f0d971031bef6c647ae16",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf1-epoch/restart.log": "5b101a905fc88fb6405652aff5290d7e9ac1cef15e378901c42e3d0d97b9a8fa",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf1-origin/restart.log": "6077a0705ba5a513442ce01c67ee53e74c1cc9485581ff99beeed44cfa047a7c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf3-epoch/restart.log": "06699bcf5c77e39b323f90c109115849dbd0b336dffe3ad6c9d90c382c0d2920",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit/hdf3-origin/restart.log": "3622b877e2537da9609111f173a1c3c068dd32c0ed278d93082700d8872eac02",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/comparison.json": "bef3f095f42f77d7d61367e0628e3241fe4e23fcb55a8f7c0404d3e65521b95a",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-short/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-sufficient/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-tail/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-origin/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-utc/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-nonuniform/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-short/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-sufficient/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-tail/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-origin/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-utc/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-short/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-sufficient/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-tail/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-origin/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-utc/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-epoch/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-short/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-sufficient/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-tail/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-origin/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-utc/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-epoch/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-short/restart.log": "f8a1b438ded94e9a98bb05622bf604c94610e31ef75b71141bcf73fdd7c9fd1d",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-sufficient/restart.log": "dbab7acec5101e704423a760e65f0bb089b01461f3a068905d733c30dc3c6c94",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-tail/restart.log": "0a27aa09bf9f991ac4fccc258d7dc5508bcd2d15bf354f861ef6a6f50547695d",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-origin/restart.log": "820176578b8455705e5ad73d534eb98700886a817119808e789f3991fbc21d60",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-utc/restart.log": "0e2439ee8a052b62a23dac81d5399d53c22bdf22637453be89c740b309981dbe",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/text-nonuniform/restart.log": "8a6d6eb929bdf959d4076626a2e0230c33c20e95d33767bed7cd0173310bd216",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-short/restart.log": "7faa9f92e87ede2e98d05ce99e5b5ae1150b478c06af5f7219efa2afdbd41a17",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-sufficient/restart.log": "7e47861ed8c97b6104d1d9de6d2c031f87b98796d2501b81045f365604de3558",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-tail/restart.log": "1308a0649bf360c193df74a0719a44226b9ea148ac899af1e6bd9c027f062b14",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-origin/restart.log": "283be033f5e3e5eae05ad6e9395f3904a4ebb45049c818975e283de5ae5857f6",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/sac-utc/restart.log": "b129226a09d9b5e18d61de2297604aecff9e04c29331f52832d0899afb2c9b4a",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-short/restart.log": "cfc39ab2f0a52e2954b7fb07cccfb50ca420646903c4dc564f2041cb079eb2fc",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-sufficient/restart.log": "eacafc5038c2dcd6a649abeb67a2c4305da6eb56471dc16cdb3343fd01769bdf",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-tail/restart.log": "3759d3d95ba1b35b259452a0f308977839c6eccbedd657f839620dc06dc59d4e",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-origin/restart.log": "2779e05fd50f76d811d28ece4d2782744946fdae3d1ae1e508f075171e17934e",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-utc/restart.log": "43d3a70140f4af8902875196f45120bf00fe792dede35219b55fff8250853bcb",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf1-epoch/restart.log": "8e88757ec87956a4e283841eeb9de9c72ad6ed4dca8b8addde5a31621afa0054",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-short/restart.log": "97bb8f53e40c285981850e4d2119270fc240244753f30282a17c9780933115b3",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-sufficient/restart.log": "d436cd8e3d0e6a06c6f1ed17e35f0d455385084c9ba1be92dd22e6a8c5b2f844",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-tail/restart.log": "1c4e657ba4fc52d46bb9b921f8bc8ee74e150760792fc260352473df3d2e1685",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-origin/restart.log": "7f55330637806fa92d6b3cc088e55bea1f5200997a8767051e134b99fdfc297c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-utc/restart.log": "559d85322a821874ed7cc117329cc8884824e8ce7d2f03d27af94426f1c05cbe",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit/hdf3-epoch/restart.log": "3009d2ad584f5181d8cc67a9efbee53be022314dbdbd6fde8668891da5332ae5",
+    "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cpu/bin/sw4": "fbdc1b370e9e20fbf28e8848b02befa60989845e0a8165dbbf0b7bbad20aaa58",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-audit.json": "9e3851ba9eca969e612679a621bd949289916ca916e06ece3eb87fffe4b616c0",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-audit.log": "f9700a9599983eca07f9407407bbc7c43ae37e953b30902b0c60762086d14db1",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-explicit.log": "82c2fc0e8456ab58a704ad7e286c5cab7fb602bbdeb91708454aa71ec7110a5c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cpu-implicit.log": "e48bdae665b84c8330a7cd0298adf33e0c613fc2f4b34b0e46d167a7c09cfe89",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/comparison.json": "bd3437a14c806403eb0da584dccc8ec0c0928e130e2c7c566a68d0bd0be5fc9c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/text-epoch/case.in": "53a5752160783a9ebe7b92f28c9c83e9f27db2585e1974619176d5ee818b88a0",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/text-origin/case.in": "53a5752160783a9ebe7b92f28c9c83e9f27db2585e1974619176d5ee818b88a0",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/sac-epoch/case.in": "a54cb9116f0fee7d8d607da872b4baf62f43b828bf1998a382832c57c07a2667",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/sac-origin/case.in": "a54cb9116f0fee7d8d607da872b4baf62f43b828bf1998a382832c57c07a2667",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf1-epoch/case.in": "e15537bf5feca91579cfa95362e6437a292357cc5c4a2d6d9bdd42f100bdd80c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf1-origin/case.in": "e15537bf5feca91579cfa95362e6437a292357cc5c4a2d6d9bdd42f100bdd80c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf3-epoch/case.in": "332eab016f0444b38dc1a059c6212c787f0817ef1fec5cdc57158c6a5ac948aa",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf3-origin/case.in": "332eab016f0444b38dc1a059c6212c787f0817ef1fec5cdc57158c6a5ac948aa",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/text-epoch/restart.log": "1529fb1a60541fe5869c397ffa93da42ee3dd54a176334e6b93d5d348762c419",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/text-origin/restart.log": "494b3fd434dbf967934bed248347d8a34b88c67b5833450900f33f15cfcf3694",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/sac-epoch/restart.log": "b6c525eb9ccd29da5a8c2a20719f4bd167c658ad613e5b2361bd88e2bb5c7fd6",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/sac-origin/restart.log": "6f418f4908c1100b5d0b8b40754d3f697179f2f33dd63aa576d0c9512a6716d2",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf1-epoch/restart.log": "d1c68440ab7d6f9a529512c25ed8e4a2f68f95f59d1c9321f5b430c63daa4405",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf1-origin/restart.log": "01f9e56c6796cf7dd124c3c2c03f208875846ad1b7e6ed2b829d070dafe36dda",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf3-epoch/restart.log": "11fd1b7d8088cab434e816aa96d99d07808eaf565e0c8b9038b119d8a038ddfe",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit/hdf3-origin/restart.log": "6cfbf4749bbc5a1c30bc4ee3bd965d3b45e3272c42fff4bc3e98b9b196d4b09b",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/comparison.json": "a4a75d729d7be6b70bf59d41e79aa418f65cdc1098a4a1cdf96b76c3845875f6",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-short/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-sufficient/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-tail/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-origin/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-utc/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-nonuniform/case.in": "ed69e145ba6e4df68257e7493994f62db21d579ff406dd27b320b86dac0fb2cd",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-short/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-sufficient/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-tail/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-origin/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-utc/case.in": "27588ea6a25788e12c21634561c7da243e78ee5cc93506610918e91f5cd1f937",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-short/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-sufficient/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-tail/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-origin/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-utc/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-epoch/case.in": "9c3465cba5e0c872e1ec7a9534586b5c5e1a8313c09354de5c93b06c9802a566",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-short/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-sufficient/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-tail/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-origin/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-utc/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-epoch/case.in": "e9e54b7379a08d6297ebbc6b2eef435abc39049b48616333998b73df3f1dba56",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-short/restart.log": "c8ac8607a40cac3972de7b8321f48fb5aae9e5baa061c0b6700087c4d3f40b68",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-sufficient/restart.log": "00192efb42e627952e495f448ad3fabb7fc7943ad09bac06ad7068d8b11b53a3",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-tail/restart.log": "30099f4e4cf04728a9f42eba89bcb4861bda489b7df4ef2ac95a5d2e0e6e120c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-origin/restart.log": "1afc7ec920deec33c8253b36d6e64eb9ab683df26e0ba7af5da2846bedf74c22",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-utc/restart.log": "02a85956c231861f325c232d23533850179674d0cb044c881e9085fe5b86c991",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/text-nonuniform/restart.log": "a976b6e7021f1c4278a48e400f2c49cd08d2731e329c059bde785699beed68fb",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-short/restart.log": "ef87a7cb7fccfef09842011bb3d40352cf99df358e436cbd432009dcaa46261c",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-sufficient/restart.log": "a43a765a9e5c22e4ec78e4aa9658cc0f6c919baac218f996a550dfda28f2f656",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-tail/restart.log": "ebd532d41902f38f887573c4109846cf6d8500eecd02acd499f907fb5a8401b0",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-origin/restart.log": "68dec677a185e44086cf5b89b9ccc632f15aecac80971e2dc5ebd491febfd8a9",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/sac-utc/restart.log": "bce77cde3f09ff4276292d4bc5b45c6e5a70002026f87bd0da38a16ca92a9a8a",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-short/restart.log": "1f1c20f018ab93a998c619fd394d8bb970214323266d9961b4a23e03a132911e",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-sufficient/restart.log": "e5b1bcb0de990f821794bf4fb1ac1329eda5b57192ac112f9b5805f6bf45e9d5",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-tail/restart.log": "21119073e4ae9a305739a6ec3fb556eeec68ee78d4d9c62f504f7cfc1338084a",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-origin/restart.log": "fb3f76fb146a14489ac260558b26f261c14259c360ae70f57456e2d403d09171",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-utc/restart.log": "2e750c1451132792c7a22037c6d77ccb95e1a16c90b0ec463ec19ffbc277dca2",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf1-epoch/restart.log": "db3f549d5654c3d931d88933f81dea72e0870bd8e54e6adaac1f2cb3b7bd641d",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-short/restart.log": "88d0c3b72bf0e53b39998614e43c7280f8f21387477f7a93de32fa5056b547c6",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-sufficient/restart.log": "e7059a4137b153f57ffa7b549ab4f45f95d8454fc046482ad7ae0a4f07ba4b99",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-tail/restart.log": "6bc4faf483e524ec827c0293a136ee31ec7b0ed2568b9fa3bdad5ab7fa58654b",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-origin/restart.log": "573f34dd8fc46d355fbf4f6610e4c216201c69e4eee60a1def9cd83954379950",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-utc/restart.log": "833cc2f56521b4f681bc866bc959919e6cd55c54cc1a04ab5d862f895ad217f6",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit/hdf3-epoch/restart.log": "8d0cf2d5fc1991f517da70f5793df190c44950238b362a10d2301df2b3ea369c",
+    "/pscratch/sd/h/houhun/sw4-interface-fixes-20261005/release-48407f2a/cuda/bin/sw4": "7cf7e3d05ef29fd4834be58c3e548dd79382077e0ff2dec53a38f28bdcb8c912",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-audit.json": "62c9691169c706fe1bea60b5d3355d1780e2500cfda683298f81131bb2428787",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-audit.log": "6b425d4f3baabc910388704c8fcf89cfe48573f74066c2b338fc009c5e00a27e",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-explicit.log": "061bd9e87f9141f2bab87146a392ac2e903f581e09c3dc463ce3bc88124e1a34",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/cuda-implicit.log": "a76d1348d33970cc367beb2434928adf0b4b0d53b53aadbc2febbe2f71c5d50d",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/tests/backends/receiver_restart_negative.py": "a0d8405150ceff4e244149c48117fdac699557d25306a5cf73740edabb85b37a",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/tests/backends/receiver_restart_audit.py": "95ad80707da333ce753f39bb68aef61f20e97684ae71135803242f636b75f58e",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/tests/backends/receiver_restart.py": "fc33f65718e94d48a8c5dfdac20d05f308c5aee5f4d81472926ec3b6a86972d2",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/tests/backends/validation.py": "8565c6849e2b55396e522ee0fc41df4985f56fa8568a31d8ad4abe9b4e0e62a7",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/mutation-check.json": "99ac84202e05bd648f1a7376414a4bf4f5e46545b9c2f4a2d1fd2552a4991d91",
+    "/pscratch/sd/h/houhun/sw4-hdf-epoch-review-20261005/mutation-check.h5": "c90a7bbb14157dd4116c4bd9b195c6edf04665f7daaf6b3231816f99ba8c1bbd"
+  },
+  "epoch_mutation_boundary_check": {
+    "2026-10-05T01:02:03.234567": {
+      "before": "2026-10-05T01:02:03.234567",
+      "after": "2000-10-05T01:02:03.234567"
+    },
+    "2000-02-29T23:59:59.999999": {
+      "before": "2000-02-29T23:59:59.999999",
+      "after": "2004-02-29T23:59:59.999999"
+    }
+  }
+}

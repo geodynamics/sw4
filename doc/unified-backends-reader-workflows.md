@@ -38,6 +38,21 @@ explicit epoch; `95443f0e` corrects that regression. Additional tests deliberate
 replace stored default epochs with the year 2000, require successful restoration,
 and still reject a shifted relative start.
 
+Review `3296c3cd` found that the original standalone HDF5 default-epoch
+mutation was a no-op: its USGS date pattern did not match ISO `DATETIME`.
+Historical eight-case results below therefore qualify only the SAC/text epoch
+mutations; the HDF5 cases did not demonstrate deliberately changed epochs.
+The mixed-output driver's ISO mutation was correct and its evidence remains valid.
+Test correction `9aa87956` replaces the ISO year, checks attribute readback,
+and records both values. Fresh standalone CPU/CUDA runs each pass eight
+implicit-UTC and 23 explicit-UTC cases, including HDF5 downsampling 1/3:
+changed default epochs are accepted, shifted relative origins are rejected,
+and changed absolute epochs with explicit `utcstart` are rejected. Rejections
+occur before stepping and preserve receiver histories. Independent replay
+checks all 24 final successful restores against retained waveform/PDE references.
+The [epoch validation record](validation/perlmutter-hdf5-epoch-2026-10-05.json)
+pins drivers, retained executables, inputs, results and audited outputs.
+
 The approved N1–N4 validation gates pass for the configurations below.
 The subsequently discovered mixed-output restart defect is corrected as described
 below. The machine-readable
@@ -55,7 +70,7 @@ build are retained separately and excluded from acceptance.
 | Real observation parser, serial/parallel paths, objective and scaled gradient | 9 groups passed | 9 groups passed, native solver |
 | SAC/USGS/rechdf5 samples and metadata | 24 cases passed | 24 cases passed |
 | Short, sufficient, extra-tail and misaligned receiver histories | 21 cases passed | 21 cases passed |
-| Default-epoch restoration and shifted-relative-origin rejection | 8 cases passed | 8 cases passed |
+| Historical default-epoch restoration / origin checks | 8 passed; HDF5 epoch mutation was a no-op | 8 passed; HDF5 epoch mutation was a no-op |
 | Elastic/attenuating/refined restart comparisons | 8 passed | 8 passed |
 | Coupled anisotropic flat/topographic restart comparisons | 4 passed | 4 passed |
 | Existing HDF5 helpers, including SSI/ZFP lifetime | 4 passed | 4 passed |
@@ -84,7 +99,7 @@ unchanged from `788f96a0`.
 | `5c236501` | Absolute observation diagnostics and short SAC names | Relative/absolute paths and short-name parser cases |
 | `8f3f4fb8` | On-demand observation/restart/input-coverage regressions | Both native inversion trees and CPU/CUDA forward runs |
 | `95443f0e` | Explicit versus wall-clock-default UTC handling | Existing HDF5 restart and default-epoch cases |
-| `564d3378` | Deterministic implicit-UTC regressions | All four receiver storage modes |
+| `564d3378` | Implicit-UTC regressions | SAC/text mutations valid; HDF5 mutation corrected in `9aa87956` |
 | `9df9de3e` | Independent retained-reference replay | Final restarted waveforms and PDE checkpoints |
 | `587906d4` | Restored artifact identities | SHA-256 of the independently audited outputs |
 
@@ -181,7 +196,7 @@ retains source/test archives, binaries, build caches, logs and audit identities.
 | --- | --- | --- |
 | Mixed text/HDF5, explicit UTC | 76 passed: 65 valid restores, 11 rejections | 76 passed: 65 valid restores, 11 rejections |
 | Mixed text/HDF5, default UTC | 13 passed: 4 valid restores, 9 rejections | 13 passed: 4 valid restores, 9 rejections |
-| Existing negative/default-epoch restarts | 21 + 8 passed | 21 + 8 passed |
+| Historical negative/default-epoch restarts | 21 + 8 passed; standalone HDF5 epoch mutation was a no-op | 21 + 8 passed; standalone HDF5 epoch mutation was a no-op |
 | Elastic/attenuating/refined and anisotropic repeated restarts | 8 + 4 passed | 8 + 4 passed |
 | SAC/text/HDF5 waveform and metadata comparisons | 24 passed | 24 passed |
 | Existing on-demand HDF5 helpers | 4 passed | 4 passed |
