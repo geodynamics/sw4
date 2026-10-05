@@ -8,6 +8,7 @@
 #include "EW.h"
 #include <cmath>
 #include <limits>
+#include <sstream>
 #if defined(SW4_USE_RAJA) // SW4 backend
 #else // SW4 backend
 #include "CurvilinearInterface2.h"
@@ -1399,10 +1400,17 @@ MPI_Allreduce( &maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX, m_ew->m_cartes
       MPI_Abort(m_ew->m_cartesian_communicator, 1);
    }
    if( m_ew->getRank() == 0 && m_ew->getVerbosity() >= 3 )
-      std::cout << "Curvilinear interface: grid=" << m_gc << " time=" << t
-                << " iterations=" << iter << " relative_residual="
-                << (maxres0 > 0 ? maxres/maxres0 : 0)
-                << " scaled_residual=" << scalef*maxres << std::endl;
+   {
+      // GPU setup leaves cout in fixed, low-precision mode. Preserve enough
+      // digits to audit the tolerances without changing the caller's formatting.
+      std::ostringstream diagnostics;
+      diagnostics.precision(17);
+      diagnostics << "Curvilinear interface: grid=" << m_gc << " time=" << t
+                  << " iterations=" << iter << " relative_residual="
+                  << (maxres0 > 0 ? maxres/maxres0 : 0)
+                  << " scaled_residual=" << scalef*maxres << '\n';
+      std::cout << diagnostics.str();
+   }
    //   convhist.push_back(maxres0);
    //   convhist.push_back(maxres);
    //   convhist.push_back(it);
