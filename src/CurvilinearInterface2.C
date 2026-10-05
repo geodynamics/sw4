@@ -6,6 +6,8 @@
 #include "Sarray.h"
 #endif // SW4 backend
 #include "EW.h"
+#include <cmath>
+#include <limits>
 #if defined(SW4_USE_RAJA) // SW4 backend
 #else // SW4 backend
 #include "CurvilinearInterface2.h"
@@ -42,7 +44,7 @@ void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, flo
                          float_sw4*, float_sw4*, float_sw4*, int, char );
 
 //-----------------------------------------------------------------------
-CurvilinearInterface2::CurvilinearInterface2( int a_gc, EW* a_ew )
+CurvilinearInterface2::CurvilinearInterface2( int a_gc, EW* a_ew, int max_iterations )
 {
 
 #if defined(SW4_USE_RAJA) // SW4 backend
@@ -63,7 +65,7 @@ SW4_MARK_FUNCTION;
 #endif // SW4 backend
 m_reltol= 1e-6;
    m_abstol= 1e-6;
-   m_maxit = 30;
+   m_maxit = max_iterations;
    m_gc = a_gc;
    m_gf = a_gc+1;
    m_ew = a_ew;
@@ -1066,6 +1068,9 @@ interface_lhs( lhs, U_c );
 
    // Initial residual
    float_sw4 maxresloc=0;
+   // Map NaNs to infinity before MAX: ordinary comparisons can silently discard
+   // a nonfinite value on one rank or device thread.
+   const float_sw4 nonfinite_residual = std::numeric_limits<float_sw4>::infinity();
 
 #if defined(SW4_USE_RAJA) // SW4 backend
 RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax(0);
@@ -1078,7 +1083,8 @@ RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax(0);
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
         for (int c = 1; c <= 3; c++) {
           residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
-          rmax.max(fabs(residualV(c, i, j, 1)));
+          const float_sw4 value = residualV(c, i, j, 1);
+          rmax.max(value == value ? fabs(value) : nonfinite_residual);
 
 #else // SW4 backend
 for( int c=1 ; c <= 3 ;c++)
@@ -1086,8 +1092,10 @@ for( int c=1 ; c <= 3 ;c++)
        for( int i=lhs.m_ib+5 ; i <= lhs.m_ie-5 ; i++ )
          {
            residual(c,i,j,1) = lhs(c,i,j,1)+rhs(c,i,j,1);
-           if( abs(residual(c,i,j,1)) > maxresloc )
-             maxresloc = abs(residual(c,i,j,1));
+           const float_sw4 value = residual(c,i,j,1);
+           const float_sw4 magnitude = value == value ? abs(value) : nonfinite_residual;
+           if( magnitude > maxresloc )
+             maxresloc = magnitude;
 
 #endif // SW4 backend
 }
@@ -1149,7 +1157,8 @@ int nimb = m_Mass_block.m_ie-m_Mass_block.m_ib+1;
 
 #else // SW4 backend
 #endif // SW4 backend
-while( maxres > m_reltol*maxres0 && scalef*maxres > m_abstol && iter <= m_maxit )
+while( std::isfinite(maxres) && maxres > m_reltol*maxres0 &&
+       scalef*maxres > m_abstol && iter < m_maxit )
    {
       iter++;
       //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
@@ -1350,7 +1359,8 @@ RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> raja_maxresloc(0);
         RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           for (int c = 1; c <= 3; c++) {
             residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
-            raja_maxresloc.max(fabs(residualV(c, i, j, 1)));
+            const float_sw4 value = residualV(c, i, j, 1);
+            raja_maxresloc.max(value == value ? fabs(value) : nonfinite_residual);
             // if (abs(residual(c, i, j, 1)) > maxresloc)
             //   maxresloc = abs(residual(c, i, j, 1));
 
@@ -1360,8 +1370,10 @@ for( int c=1 ; c <= 3 ;c++)
              for( int i=lhs.m_ib+5 ; i <= lhs.m_ie-5 ; i++ )
              {
                 residual(c,i,j,1) = lhs(c,i,j,1)+rhs(c,i,j,1);
-                if( abs(residual(c,i,j,1)) > maxresloc )
-                   maxresloc = abs(residual(c,i,j,1));
+                const float_sw4 value = residual(c,i,j,1);
+                const float_sw4 magnitude = value == value ? abs(value) : nonfinite_residual;
+                if( magnitude > maxresloc )
+                   maxresloc = magnitude;
 
 #endif // SW4 backend
 }
@@ -1374,6 +1386,23 @@ for( int c=1 ; c <= 3 ;c++)
 #endif // SW4 backend
 MPI_Allreduce( &maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX, m_ew->m_cartesian_communicator);
    }
+   // Never copy an unconverged interface into the next simulation state.
+   if( !std::isfinite(maxres) ||
+       (maxres > m_reltol*maxres0 && scalef*maxres > m_abstol) )
+   {
+      if( m_ew->getRank() == 0 )
+         std::cerr << "ERROR: no convergence in curvilinear interface at time " << t
+                   << " after " << iter << " iterations; residual=" << maxres
+                   << " initial=" << maxres0 << " relative tolerance=" << m_reltol
+                   << " scaled residual=" << scalef*maxres
+                   << " absolute tolerance=" << m_abstol << std::endl;
+      MPI_Abort(m_ew->m_cartesian_communicator, 1);
+   }
+   if( m_ew->getRank() == 0 && m_ew->getVerbosity() >= 3 )
+      std::cout << "Curvilinear interface: grid=" << m_gc << " time=" << t
+                << " iterations=" << iter << " relative_residual="
+                << (maxres0 > 0 ? maxres/maxres0 : 0)
+                << " scaled_residual=" << scalef*maxres << std::endl;
    //   convhist.push_back(maxres0);
    //   convhist.push_back(maxres);
    //   convhist.push_back(it);
@@ -1385,13 +1414,6 @@ SW4_MARK_END("IMPOSE_IC_JACOBI");
   //   convhist.push_back(maxres0);
   //   convhist.push_back(maxres);
   //   convhist.push_back(it);
-  if (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol) {
-    std::cerr << "WARNING, no convergence in curvilinear interface, res = "
-              << maxres << " reltol= " << m_reltol
-              << " initial res = " << maxres0 << std::endl;
-    std::cerr << "     scaled res = " << scalef * maxres
-              << " abstol= " << m_abstol << std::endl;
-  }
 #ifdef SW4_NORM_TRACE
   //int myRank = 0;
   //MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -1444,14 +1466,6 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
 #endif // SW4 backend
 #if defined(SW4_USE_RAJA) // SW4 backend
 #else // SW4 backend
-if( (maxres > m_reltol*maxres0 && scalef*maxres > m_abstol) && m_ew->getRank()==0 )
-   {
-      std::cout << "WARNING, no convergence in curvilinear interface, res = "
-                << maxres << " reltol= " << m_reltol << " initial res = " << maxres0
-                << std::endl;
-      std::cout << "     scaled res = " << scalef*maxres << " abstol= " << m_abstol
-                << std::endl;
-   }
 // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
 
 #endif // SW4 backend

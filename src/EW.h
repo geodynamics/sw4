@@ -1887,6 +1887,7 @@ class EW {
   bool m_matrices_decomposed;
   float_sw4 m_citol, m_cirelfact;
   int m_cimaxiter;
+  int m_curvimaxiter;
 
   vector<float_sw4*> m_cimat1;
   vector<float_sw4*> m_cimat2;
@@ -3690,6 +3691,7 @@ bool m_mesh_refinements;
 bool m_matrices_decomposed;
 float_sw4 m_citol, m_cirelfact;
 int m_cimaxiter;
+  int m_curvimaxiter;
 
 vector<float_sw4*> m_cimat1;
 vector<float_sw4*> m_cimat2;

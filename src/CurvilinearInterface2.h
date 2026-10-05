@@ -94,7 +94,7 @@ class CurvilinearInterface2 {
   void allocate_mpi_buffers();
 
  public:
-  CurvilinearInterface2(int a_gc, EW* a_ew);
+  CurvilinearInterface2(int a_gc, EW* a_ew, int max_iterations);
   CurvilinearInterface2() {}
   ~CurvilinearInterface2();
   void init_arrays(std::vector<float_sw4*>& a_strx,
@@ -198,7 +198,7 @@ class CurvilinearInterface2
    void communicate_array( Sarray& u, bool allkplanes=true, int kplane=0 );
    void init_arrays_att();
 public:
-   CurvilinearInterface2( int a_gc, EW* a_ew );
+   CurvilinearInterface2( int a_gc, EW* a_ew, int max_iterations );
    CurvilinearInterface2() {}
    void init_arrays( std::vector<float_sw4*>& a_strx, std::vector<float_sw4*>& a_stry,
                      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,

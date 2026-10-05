@@ -38,6 +38,8 @@
 
 #endif // SW4 backend
 #include "EW.h"
+#include <cerrno>
+#include <climits>
 #include "ReceiverSAC.h"
 
 #if defined(SW4_USE_RAJA) // SW4 backend
@@ -2429,6 +2431,17 @@ CHECK_INPUT( false, "WARNING: developer opttest option does not apply to forward
      {
        token += 7;
        m_cimaxiter = atoi(token);
+     }
+     else if (startswith("curvimaxit=", token))
+     {
+       token += 11;
+       char* end = 0;
+       errno = 0;
+       const long limit = strtol(token, &end, 10);
+       CHECK_INPUT(token[0] != '\0' && *end == '\0' && errno != ERANGE &&
+                   limit > 0 && limit <= INT_MAX,
+                   "developer curvimaxit must be a positive integer" << endl);
+       m_curvimaxiter = static_cast<int>(limit);
      }
      else if (startswith("crelax=", token))
      {

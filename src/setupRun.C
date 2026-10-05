@@ -501,7 +501,7 @@ if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
      m_cli2.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
      {
-        m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this );
+        m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this, m_curvimaxiter );
      }
   }
 
