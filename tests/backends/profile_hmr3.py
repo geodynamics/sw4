@@ -157,13 +157,19 @@ def main():
                            args.rtol, args.atol) for i in range(args.repeats)]
     medians = {key: statistics.median(records[f'{key}-{i}']['solver_seconds'] for i in range(args.repeats))
                for key in executables}
+    wall_medians = {key: statistics.median(records[f'{key}-{i}']['wall_seconds'] for i in range(args.repeats))
+                    for key in executables}
     slowdown = medians['candidate'] / medians['baseline'] - 1
+    wall_slowdown = wall_medians['candidate'] / wall_medians['baseline'] - 1
     passed = slowdown <= args.max_slowdown
     report = {'runs': records, 'waveform_comparisons': comparisons, 'rtol': args.rtol, 'atol': args.atol,
-              'median_solver_seconds': medians, 'slowdown': slowdown, 'max_slowdown': args.max_slowdown,
+              'median_solver_seconds': medians, 'median_wall_seconds': wall_medians,
+              'slowdown': slowdown, 'wall_slowdown': wall_slowdown, 'max_slowdown': args.max_slowdown,
               'performance_passed': passed}
     (work/'comparison.json').write_text(json.dumps(report, indent=2)+'\n')
     print(f'Waveforms PASS; candidate slowdown {slowdown:.2%}; performance {"PASS" if passed else "FAIL"}', flush=True)
+    print(f'End-to-end median wall time: baseline {wall_medians["baseline"]:.2f}s, '
+          f'candidate {wall_medians["candidate"]:.2f}s, change {wall_slowdown:+.2%}', flush=True)
     if not passed:
         raise SystemExit(1)
 

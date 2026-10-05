@@ -1128,7 +1128,16 @@ SW4_MARK_BEGIN("IMPOSE_IC_JACOBI");
 
 #else // SW4 backend
 #endif // SW4 backend
-float_sw4 scalef=(m_ew->m_global_nx[m_gc]-1)*(m_ew->m_global_ny[m_gc]-1); //scale residual to be size O(1).
+   // Convert before multiplication: global interface areas can exceed INT_MAX.
+   const float_sw4 scalef=static_cast<float_sw4>(m_ew->m_global_nx[m_gc]-1)*
+                         (m_ew->m_global_ny[m_gc]-1); //scale residual to be size O(1).
+   if( !std::isfinite(scalef) || scalef <= 0 )
+   {
+      if( m_ew->getRank() == 0 )
+         std::cerr << "ERROR: invalid curvilinear interface residual scale=" << scalef
+                   << " for grid=" << m_gc << std::endl;
+      MPI_Abort(m_ew->m_cartesian_communicator, 1);
+   }
    //   int maxit = 30;
    //   float_sw4 reltol=1e-6, abstol=1e-6;
    int iter = 0;
