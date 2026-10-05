@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """On-demand checkpoint tests for shortened and misaligned receiver histories."""
 import argparse
+from datetime import datetime
 import hashlib
 import json
 import os
@@ -16,6 +17,23 @@ from validation import check_solver_log
 
 
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def change_hdf5_epoch(stream):
+    before=stream.attrs['DATETIME']
+    if isinstance(before,bytes):before=before.decode()
+    utc=datetime.fromisoformat(before)
+    if not before.startswith(f'{utc.year:04d}-'):
+        raise ValueError(f'Expected ISO HDF5 DATETIME: {before!r}')
+    # Both replacement years are leap years, preserving valid February 29 dates.
+    year=2000 if utc.year!=2000 else 2004
+    changed=f'{year:04d}'+before[4:]
+    stream.attrs.modify('DATETIME',np.bytes_(changed))
+    after=stream.attrs['DATETIME']
+    if isinstance(after,bytes):after=after.decode()
+    if after!=changed or after==before:
+        raise ValueError('HDF5 default-epoch fixture did not change DATETIME')
+    return {'before':before,'after':after}
 
 
 def main():
@@ -57,6 +75,8 @@ def main():
     for kind in ('text','sac','hdf1','hdf3'):
         mutations=(('epoch','origin') if args.implicit_utc else
                    ('short','sufficient','tail','origin','utc')+ (('nonuniform',) if kind=='text' else ()))
+        if not args.implicit_utc and kind.startswith('hdf'):
+            mutations+=('epoch',)
         if args.case and not any(f'{kind}-{mutation}' in args.case for mutation in mutations):continue
         options={'text':'sacformat=0 usgsformat=1','sac':'sacformat=1 usgsformat=0',
                  'hdf1':'sacformat=0 usgsformat=0 hdf5format=1 hdf5file=history.h5 downSample=1',
@@ -77,6 +97,7 @@ def main():
             histories=[work/'displacement-history.txt'] if kind=='text' else (
                 [work/f'displacement-history.{suffix}' for suffix in ('e','n','u')] if kind=='sac' else [work/'history.h5'])
             npts=2 if mutation=='short' else (24 if kind!='hdf3' else 8)
+            epoch_mutations={}
             for history in histories:
                 if kind=='text':
                     lines=history.read_text().splitlines()
@@ -114,31 +135,31 @@ def main():
                             stamp=stream.attrs['DATETIME']
                             if isinstance(stamp,bytes):stamp=stamp.decode()
                             stream.attrs.modify('DATETIME',np.bytes_(stamp.replace(':03.',':04.')))
-                        if args.implicit_utc:
-                            stamp=stream.attrs['DATETIME']
-                            if isinstance(stamp,bytes):stamp=stamp.decode()
-                            stream.attrs.modify('DATETIME',np.bytes_(re.sub(r'/\d{4}:','/2000:',stamp)))
+                        if args.implicit_utc or mutation=='epoch':
+                            epoch_mutations[history.name]=change_hdf5_epoch(stream)
             before={str(p.relative_to(work)):digest(p) for p in histories}
             result,path=launch(work,text.rstrip()+' restartfile=restart.cycle=24.sw4checkpoint\n','restart')
-            if mutation in ('sufficient','tail','epoch'):
+            if mutation in ('sufficient','tail') or (mutation=='epoch' and args.implicit_utc):
                 if result.returncode:raise ValueError(f'Valid restart failed: {path}')
                 check_solver_log(path)
                 wave=compare(baseline_wave,capture(work),name,True)
                 pde=compare(baseline_pde,state(work/'restart.cycle=48.sw4checkpoint'),name,False)
                 record(name,{'wave_max_difference':wave,'state_max_difference':pde,
                              'reference_wave_sha256':digest(baseline/'reference-waveforms.npz'),
-                             'reference_state_sha256':digest(baseline/'reference-state.npz')})
+                             'reference_state_sha256':digest(baseline/'reference-state.npz'),
+                             **({'epoch_mutations':epoch_mutations} if epoch_mutations else {})})
             else:
                 log=path.read_text()
                 messages={'short':'ends before checkpoint cycle','origin':'time origin',
-                          'utc':'time origin','nonuniform':'Nonuniform USGS'}
+                          'utc':'time origin','epoch':'time origin','nonuniform':'Nonuniform USGS'}
                 expected=messages[mutation]
-                if kind.startswith('hdf') and mutation in ('origin','utc'):expected='Could not restore receiver history'
+                if kind.startswith('hdf') and mutation in ('origin','utc','epoch'):expected='Could not restore receiver history'
                 if result.returncode==0 or expected not in log or 'Begin time stepping' in log:
                     raise ValueError(f'Expected rejection before stepping: {path}, diagnostic={expected}')
                 after={str(p.relative_to(work)):digest(p) for p in histories}
                 if before!=after:raise ValueError(f'Failed restart rewrote receiver history: {work}')
-                record(name,{'rejected_before_stepping':True,'histories_preserved':True})
+                record(name,{'rejected_before_stepping':True,'histories_preserved':True,
+                             **({'epoch_mutations':epoch_mutations} if epoch_mutations else {})})
 
 
 if __name__=='__main__':main()
