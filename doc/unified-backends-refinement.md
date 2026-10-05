@@ -73,14 +73,14 @@ peak, with receiver tolerance `1e-12 + 2e-6 * peak` and PDE tolerance
 `1e-12 + 2e-5 * peak`. No floating-point byte identity is required. The CUDA
 allocation was `59381003`, containing three nodes of A100-SXM4-40GB devices and
 one node of A100-SXM4-80GB devices. The halo oracle uses one GPU per node.
-The current milestone changes no production hot path; hmr3 performance was not
+The `48407f2a` milestone changes no production hot path; hmr3 performance was not
 remeasured for these test-launch changes.
 
-## Curvilinear convergence proposal awaiting approval
+## Curvilinear convergence correction
 
-The physical-source Gaussian-topography case still fails in the production
-solver: its independent curvilinear block Jacobi loop stops after 31 iterations
-and copies an unconverged interface into the simulation. Cartesian `cmaxit`
+Before `a4504307`, the physical-source Gaussian-topography case exhausted the
+production solver's 31-iteration curvilinear block Jacobi allowance and copied
+an unconverged interface into the simulation. Cartesian `cmaxit`
 does not configure this loop. A private diagnostic build retaining the equations,
 relaxation and `1e-6` tolerances converged all 832 interface solves of the retained
 0.8-second constant-material case, using at most 373 iterations. Its first solve
@@ -103,7 +103,101 @@ requested, and rejected zero, negative, fractional, nonnumeric and overflowing
 limits during parsing. The patch and private results are retained in the evidence
 root as `curvi-convergence-proposal.patch` and `proposal-*-results.json`.
 
-This solver change awaits the user's required scientific-correctness approval.
-It can change runs that previously continued unconverged. It has not been applied
-to the production branch, committed as solver code, or qualified on CUDA/HIP.
-CUDA numerical and hmr3 performance checks remain required after approval.
+The user approved the correction after review `3296c3cd`. Commit `a4504307`
+applies it to both OpenMP and RAJA backends, preserving the operator, relaxation
+and `1e-6` relative/absolute tolerances. `developer curvimaxit=<positive integer>`
+sets an exact maximum number of Jacobi updates; the default is 500. This is a
+limit, not a convergence guarantee. If neither existing residual criterion is
+satisfied at the limit, the run fails collectively before copying interface
+planes or attenuation state into the evolving solution. A nonfinite residual
+also causes collective failure. Local NaNs are mapped to infinity before device
+and MPI maximum reductions so another finite residual cannot hide them.
+
+Use `fileio verbose=3` to retain each solve's grid, time, update count and residual
+ratios. Commit `9e3bb035` preserves 17 significant digits in these diagnostics
+even when GPU initialization changes global output formatting. Equations,
+scientific precision and stopping tolerances are unchanged. Runs that previously
+continued after nonconvergence can now converge with additional iterations or
+terminate with an error; partial receiver output from a failed run is not an
+accepted simulation.
+
+The explicitly invoked driver `tests/backends/curvilinear_refinement.py` covers
+physical interface arrivals, gradient materials with attenuation on/off and
+extrapolation widths 1–5, several resolutions, multiple curved interfaces,
+longer propagation, curved-grid energy, exact small-limit failures, invalid
+limits and localized nonfinite source input. `--compare-to <reference run>`
+compares every receiver component with `1e-12 + 2e-5 * reference_peak`; successful
+solves must satisfy the original residual criteria. It is not registered with
+pytest or CTest. Existing suites remain unchanged.
+
+The energy check uses the existing SW4 bound of `1e-10` relative change per
+timestep, strengthened to check both signs, and records cumulative drift
+separately. In the four-rank curved fixture, a pre-fix `48407f2a` run reproduces
+the corrected CPU energy history exactly: maximum timestep change `7.41e-11`,
+cumulative drift `7.80e-9` over 768 samples. The initial cumulative `1e-10`
+validation bound was inappropriate for this unchanged interface tolerance;
+the failed check and baseline comparison are retained. This is evidence about
+that fixture, not a long-duration energy guarantee or permission to loosen the
+solver's scientific tolerances. HIP execution remains deferred to Frontier.
+
+The follow-up audit also found a separate inherited overflow in the residual
+scale: `(global_nx-1)*(global_ny-1)` multiplies 32-bit integers before conversion
+to `float_sw4`. The extracted production expression triggers signed-overflow
+sanitization for a 50,001-by-50,001 interface. A negative wrapped scale can falsely
+satisfy the absolute stopping criterion. Evaluating the same formula in floating
+point avoids this overflow; that additional correction is prepared privately and
+awaits separate scientific approval. Interfaces whose horizontal interval product
+exceeds `INT_MAX` remain outside the qualified scope. The proposed patch and
+arithmetic checks are retained as `scale-correction-proposal.*` in the new evidence
+root `/pscratch/sd/h/houhun/sw4-curvi-review-20261005`.
+
+## Validation of the approved correction
+
+Clean CPU and CUDA builds pin production source `9e3bb035`; later commits change
+only on-demand tests and documentation. The source/CMake file manifest verifies
+that the tested production files match the branch. Qualification drivers pin
+`6eb6f15e`, with the earlier driver identities retained for individual runs.
+
+| Check | OpenMP | CUDA |
+| --- | --- | --- |
+| Physical-source constant/gradient material, attenuation, extrapolation, resolution and curved-level configurations | 15 passed | 15 passed against converged CPU references |
+| Curved-grid energy, 768 samples | Timestep change `7.41e-11`; total drift `7.80e-9`, unchanged from pre-fix CPU | Passed timestep criterion |
+| Manufactured elastic/attenuating solutions, three resolutions each | 6 passed; orders `3.93–4.03` | 6 passed; same error norms and convergence orders |
+| Exact caps 1/30, five malformed limits, localized NaN | 8 expected failures | 8 expected failures |
+| Physical source across decompositions | 1/4/8 ranks; multi-interface and heterogeneous attenuation also checked at 8 | 1/4/8 ranks; 8-rank physical, multi-interface and heterogeneous attenuation run on 4 nodes |
+| Existing enabled solver tests | 20 passed; 5 optional cases disabled | 20 passed; 5 optional cases disabled |
+| Production halo sentinels, square/X-strip/Y-strip | 3 shapes, 8 ranks | 3 shapes, 4 nodes, both layouts |
+
+The physical-source case converges all 832 solves with at most 373 updates.
+The two-curved-interface case converges 3,320 solves with at most 380 updates;
+the 1.6-second case converges 1,660 solves. Every accepted solve's finite residuals
+meet at least one of the unchanged relative/scaled absolute criteria. Component
+waveforms require meaningful late arrivals and backend error at most
+`1e-12 + 2e-5 * reference_peak`. The manufactured solutions also reproduce the
+repository's independent exact-solution error references; halving spacing gives
+approximately sixteenfold error reduction, including attenuation state.
+
+Fresh `performance/large/hmr3.in` runs alternate three RAJA/unified pairs on the
+same four nodes and sixteen GPUs, after compilation completes. RAJA solver times
+are 82.58, 82.64 and 82.18 seconds; unified times are 79.43, 79.09 and 79.06 seconds.
+The medians, 82.58 and 79.09 seconds, give 4.23% lower solver time for unified.
+All three waveform comparisons pass. The allocation contains two nodes of 40 GB
+A100s and two nodes of 80 GB A100s. This is a scoped workload result, not a general
+speedup or proof that previously unconverged cases cost no additional iterations.
+
+The [qualification record](validation/perlmutter-curvilinear-2026-10-05.json)
+retains builds, caches, driver/source archives, every input and residual log,
+receiver and energy artifacts, replay results, hardware and performance
+identities. Failed preparation trials and the stopped low-precision CUDA trial
+are excluded and retained separately. Additional checks remain on demand and
+existing pytest suites are unchanged.
+
+| Commit | Change | Retained validation |
+| --- | --- | --- |
+| `9aa87956` | Actual HDF5 ISO epoch mutation and explicit-epoch rejection | 62 CPU/CUDA cases and 24 restored-output replays |
+| `a4504307` | Approved finite/converged interface gate and configurable exact cap | Physical arrivals, exact-limit failures, NaN rejection; final build below |
+| `4c09211b` | Epoch evidence and initial curved regression driver | Epoch qualification; later driver corrections below |
+| `9e3bb035` | Full-precision convergence diagnostics | Clean CPU/CUDA builds, 22 configurations each, rank/halo/energy/performance replay |
+| `9d5f18fa` | Valid multi-interface layers and exact residual gates | Two interfaces, 3,320 converged solves on CPU/CUDA and multiple decompositions |
+| `a64c40ce` | Established energy timestep criterion, both signs | Identical pre-fix CPU history and passing CPU/CUDA energy checks |
+| `6eb6f15e` | Three-resolution manufactured-solution regression | Elastic/displacement/attenuation error orders `3.93–4.03` on both backends |

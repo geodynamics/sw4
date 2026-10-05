@@ -141,8 +141,10 @@ tolerance. Floating-point byte identity is not required.
 
 Qualification remains limited to the tested configurations and short regressions.
 HIP requires Frontier compilation, device linking, execution and performance
-checks. Physical-source curvilinear refinement still encounters the inherited
-iteration cap in the excluded trial fixtures. Geographic curl USGS and geographic
+checks. The approved [curvilinear convergence correction](unified-backends-refinement.md)
+raises the configurable iteration limit and makes nonconvergence fatal;
+production-specific convergence and long-duration checks remain required.
+Geographic curl USGS and geographic
 tensor text output remain unsupported; velocity adjoint/inversion is not qualified.
 Receiver HDF5 restart retains the originally planned storage duration and cannot
 extend it. Parallel-event observation routing is tested, but multi-event

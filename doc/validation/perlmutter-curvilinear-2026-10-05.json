@@ -1,0 +1,4153 @@
+{
+  "date": "2026-10-05",
+  "source_revision": "9e3bb0352ab9f50bc551ccf7e795fb112220050e",
+  "qualification_driver_revision": "6eb6f15e5137becb9e4786d0445bfe3d01fe11a3",
+  "evidence_root": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005",
+  "allocations": {
+    "cpu": "59386497",
+    "cuda_multinode": "59386341",
+    "cuda_single_node": "59386114"
+  },
+  "scientific_approval": "Explicit user approval for cap-500 configurable exact iteration limit and collective failure on nonconvergence or nonfinite residuals; equations and 1e-6 tolerances preserved.",
+  "precision": "double",
+  "transport": "staged; MPICH_GPU_SUPPORT_ENABLED=0",
+  "checks": {
+    "existing_suite_cpu": {
+      "passed": 20,
+      "skipped": 5,
+      "failed": 0
+    },
+    "halo_cpu": {
+      "shapes": 3,
+      "ranks": 8,
+      "nodes": 1
+    },
+    "existing_suite_cuda": {
+      "passed": 20,
+      "skipped": 5,
+      "failed": 0
+    },
+    "halo_cuda": {
+      "shapes": 3,
+      "ranks": 4,
+      "nodes": 4
+    },
+    "cpu_cases": {
+      "energy": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-energy/energy",
+        "results": {
+          "solves": 1538,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 5.003659410537233e-07,
+          "max_scaled_residual": 0.028656465012044663,
+          "energy_steps": 768,
+          "relative_energy_drift": 7.797148115882445e-09,
+          "max_relative_step_change": 7.412843160203972e-11
+        }
+      },
+      "gradient-extrap1-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 365,
+          "max_relative_residual": 9.999503018159896e-07,
+          "max_scaled_residual": 656935067.7734375,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04412255063652992
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04506891220808029
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04177785664796829
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017040733247995377
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01855725795030594
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01949286460876465
+            }
+          }
+        }
+      },
+      "gradient-extrap1-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 365,
+          "max_relative_residual": 9.998607168266923e-07,
+          "max_scaled_residual": 649552667.96875,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353932663798332
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04429024085402489
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04088855907320976
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016772188246250153
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017865248024463654
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018236428499221802
+            }
+          }
+        }
+      },
+      "gradient-extrap2-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 361,
+          "max_relative_residual": 9.999342694963806e-07,
+          "max_scaled_residual": 651397931.4453125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04411306232213974
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045052576810121536
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041707102209329605
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705135963857174
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01860714703798294
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019460564479231834
+            }
+          }
+        }
+      },
+      "gradient-extrap2-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 361,
+          "max_relative_residual": 9.999262460301153e-07,
+          "max_scaled_residual": 644086981.25,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043525855988264084
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04427807405591011
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04081914946436882
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016779787838459015
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017909614369273186
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01821276731789112
+            }
+          }
+        }
+      },
+      "gradient-extrap3-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 357,
+          "max_relative_residual": 9.999223437996169e-07,
+          "max_scaled_residual": 645803900.390625,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044124070554971695
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045037902891635895
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04163062572479248
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705610565841198
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01867172122001648
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01938805542886257
+            }
+          }
+        }
+      },
+      "gradient-extrap3-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 357,
+          "max_relative_residual": 9.998046785102e-07,
+          "max_scaled_residual": 638564735.4492188,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043515756726264954
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426755756139755
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074355587363243
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016774127259850502
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017960181459784508
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018161922693252563
+            }
+          }
+        }
+      },
+      "gradient-extrap4-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 353,
+          "max_relative_residual": 9.999056441448188e-07,
+          "max_scaled_residual": 640267143.8476562,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04416152834892273
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04505259916186333
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04156399890780449
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017044246196746826
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018721692264080048
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019263267517089844
+            }
+          }
+        }
+      },
+      "gradient-extrap4-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 354,
+          "max_relative_residual": 9.99982055326761e-07,
+          "max_scaled_residual": 633099035.15625,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353394731879234
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04428543150424957
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.040683355182409286
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016742050647735596
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017982112243771553
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01807243376970291
+            }
+          }
+        }
+      },
+      "gradient-extrap5-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att0",
+        "results": {
+          "solves": 314,
+          "grids": [
+            1
+          ],
+          "max_iterations": 348,
+          "max_relative_residual": 9.9976048425322e-07,
+          "max_scaled_residual": 642941468.2617188,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044446200132369995
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04494687542319298
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041618578135967255
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017042357474565506
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018755871802568436
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019128508865833282
+            }
+          }
+        }
+      },
+      "gradient-extrap5-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att1",
+        "results": {
+          "solves": 318,
+          "grids": [
+            1
+          ],
+          "max_iterations": 350,
+          "max_relative_residual": 9.999501268305504e-07,
+          "max_scaled_residual": 635649987.6953125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04343535378575325
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426439851522446
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074696823954582
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01665581949055195
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017942111939191818
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017958015203475952
+            }
+          }
+        }
+      },
+      "long-duration": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-long-duration/long-duration",
+        "results": {
+          "solves": 1660,
+          "grids": [
+            1
+          ],
+          "max_iterations": 373,
+          "max_relative_residual": 9.999768848117214e-07,
+          "max_scaled_residual": 81717907.8125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024288982152938843
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024213194847106934
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021059857681393623
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009726928547024727
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010901350528001785
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007292335852980614
+            }
+          }
+        }
+      },
+      "multiple-levels": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-multiple/multiple-levels",
+        "results": {
+          "solves": 3320,
+          "grids": [
+            1,
+            2
+          ],
+          "max_iterations": 380,
+          "max_relative_residual": 9.999674951350536e-07,
+          "max_scaled_residual": 20315803.3203125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03235747292637825
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03200725093483925
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021796099841594696
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010573003441095352
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.011531681753695011
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0071913693100214005
+            }
+          }
+        }
+      },
+      "physical": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r4/physical",
+        "results": {
+          "solves": 832,
+          "grids": [
+            1
+          ],
+          "max_iterations": 373,
+          "max_relative_residual": 9.999199736234496e-07,
+          "max_scaled_residual": 56318289.251708984,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024298422038555145
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024202629923820496
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.02105778641998768
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009732134640216827
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010892140679061413
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007293115835636854
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024298422038555145
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024202629923820496
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.02105778641998768
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009732134640216827
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010892140679061413
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007293115835636854
+            }
+          }
+        }
+      },
+      "resolution66": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution66/resolution66",
+        "results": {
+          "solves": 1246,
+          "grids": [
+            1
+          ],
+          "max_iterations": 376,
+          "max_relative_residual": 9.999785181727074e-07,
+          "max_scaled_residual": 114449431.97021484,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045709025114774704
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.046722132712602615
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04971321299672127
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016723478212952614
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01741926372051239
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016435617581009865
+            }
+          }
+        }
+      },
+      "resolution80": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution80/resolution80",
+        "results": {
+          "solves": 1038,
+          "grids": [
+            1
+          ],
+          "max_iterations": 377,
+          "max_relative_residual": 9.99935686389634e-07,
+          "max_scaled_residual": 126223612.97607422,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0705559179186821
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07139916718006134
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07582449913024902
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.023246269673109055
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017771674320101738
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01510231290012598
+            }
+          }
+        }
+      },
+      "twilight-att-1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-1",
+        "results": {
+          "solves": 100,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 2.007790478741615e-05,
+          "max_scaled_residual": 9.489672714302344e-07,
+          "manufactured_errors": [
+            [
+              0.0086772048,
+              0.012492235,
+              0.99838503
+            ],
+            [
+              0.0077475837,
+              0.011664131,
+              0.998576
+            ]
+          ]
+        }
+      },
+      "twilight-att-2": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-2",
+        "results": {
+          "solves": 204,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.00020863991998061748,
+          "max_scaled_residual": 9.915483101252676e-07,
+          "manufactured_errors": [
+            [
+              0.00056850521,
+              0.00078627524,
+              0.99992568
+            ],
+            [
+              0.00050276979,
+              0.00073439657,
+              0.99970141
+            ]
+          ]
+        }
+      },
+      "twilight-att-3": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-3",
+        "results": {
+          "solves": 406,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.0017826270785045787,
+          "max_scaled_residual": 9.352412178031955e-07,
+          "manufactured_errors": [
+            [
+              3.6156899e-05,
+              4.8438204e-05,
+              0.99997576
+            ],
+            [
+              3.1941281e-05,
+              4.5183982e-05,
+              0.99998785
+            ]
+          ]
+        }
+      },
+      "twilight-el-1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-1",
+        "results": {
+          "solves": 84,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 1.7088592460483593e-05,
+          "max_scaled_residual": 1.0470049494060163e-06,
+          "manufactured_errors": [
+            [
+              0.0074742058,
+              0.0076956781,
+              0.99838503
+            ]
+          ]
+        }
+      },
+      "twilight-el-2": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-2",
+        "results": {
+          "solves": 172,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.0001998208653636889,
+          "max_scaled_residual": 9.904438602603705e-07,
+          "manufactured_errors": [
+            [
+              0.00046919473,
+              0.00047612238,
+              0.99992568
+            ]
+          ]
+        }
+      },
+      "twilight-el-3": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-3",
+        "results": {
+          "solves": 342,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.0017711962869000094,
+          "max_scaled_residual": 9.867869854573996e-07,
+          "manufactured_errors": [
+            [
+              2.9847727e-05,
+              2.9212835e-05,
+              0.99997576
+            ]
+          ]
+        }
+      }
+    },
+    "cuda_cases": {
+      "physical": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/physical",
+        "results": {
+          "solves": 832,
+          "grids": [
+            1
+          ],
+          "max_iterations": 373,
+          "max_relative_residual": 9.999199957764386e-07,
+          "max_scaled_residual": 56318289.2578125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024298422038555145
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024202629923820496
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.02105778641998768
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009732134640216827
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010892140679061413
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007293115835636854
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024298422038555145
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024202629923820496
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.02105778641998768
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009732134640216827
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010892140679061413
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007293115835636854
+            }
+          }
+        },
+        "replay": {
+          "solves": 832,
+          "grids": [
+            1
+          ],
+          "max_iterations": 373,
+          "max_relative_residual": 9.999199957764386e-07,
+          "max_scaled_residual": 56318289.2578125,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024298422038555145
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024202629923820496
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.02105778641998768
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009732134640216827
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010892140679061413
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007293115835636854
+            }
+          }
+        }
+      },
+      "long-duration": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/long-duration",
+        "results": {
+          "solves": 1660,
+          "grids": [
+            1
+          ],
+          "max_iterations": 373,
+          "max_relative_residual": 9.999769233364432e-07,
+          "max_scaled_residual": 81717906.4453125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024288982152938843
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024213194847106934
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021059857681393623
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009726928547024727
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010901350528001785
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007292335852980614
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024288982152938843
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024213194847106934
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021059857681393623
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009726928547024727
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010901350528001785
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007292335852980614
+            }
+          }
+        },
+        "replay": {
+          "solves": 1660,
+          "grids": [
+            1
+          ],
+          "max_iterations": 373,
+          "max_relative_residual": 9.999769233364432e-07,
+          "max_scaled_residual": 81717906.4453125,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024288982152938843
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.024213194847106934
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021059857681393623
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.009726928547024727
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010901350528001785
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.007292335852980614
+            }
+          }
+        }
+      },
+      "resolution80": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution80",
+        "results": {
+          "solves": 1038,
+          "grids": [
+            1
+          ],
+          "max_iterations": 377,
+          "max_relative_residual": 9.999356799106926e-07,
+          "max_scaled_residual": 126223612.97607422,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0705559179186821
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07139916718006134
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07582449913024902
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.023246269673109055
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017771674320101738
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01510231290012598
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0705559179186821
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07139916718006134
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07582449913024902
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.023246269673109055
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017771674320101738
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01510231290012598
+            }
+          }
+        },
+        "replay": {
+          "solves": 1038,
+          "grids": [
+            1
+          ],
+          "max_iterations": 377,
+          "max_relative_residual": 9.999356799106926e-07,
+          "max_scaled_residual": 126223612.97607422,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0705559179186821
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07139916718006134
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.07582449913024902
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.023246269673109055
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017771674320101738
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01510231290012598
+            }
+          }
+        }
+      },
+      "resolution66": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution66",
+        "results": {
+          "solves": 1246,
+          "grids": [
+            1
+          ],
+          "max_iterations": 376,
+          "max_relative_residual": 9.999784944464036e-07,
+          "max_scaled_residual": 114449434.38720703,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045709025114774704
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.046722132712602615
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04971321299672127
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016723478212952614
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01741926372051239
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016435617581009865
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045709025114774704
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.046722132712602615
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04971321299672127
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016723478212952614
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01741926372051239
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016435617581009865
+            }
+          }
+        },
+        "replay": {
+          "solves": 1246,
+          "grids": [
+            1
+          ],
+          "max_iterations": 376,
+          "max_relative_residual": 9.999784944464036e-07,
+          "max_scaled_residual": 114449434.38720703,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045709025114774704
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.046722132712602615
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04971321299672127
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016723478212952614
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01741926372051239
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016435617581009865
+            }
+          }
+        }
+      },
+      "multiple-levels": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/multiple-levels",
+        "results": {
+          "solves": 3320,
+          "grids": [
+            1,
+            2
+          ],
+          "max_iterations": 380,
+          "max_relative_residual": 9.9996749517575e-07,
+          "max_scaled_residual": 20315803.02734375,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03235747292637825
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03200725093483925
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021796099841594696
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010573003441095352
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.011531681753695011
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0071913693100214005
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03235747292637825
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03200725093483925
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021796099841594696
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010573003441095352
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.011531681753695011
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0071913693100214005
+            }
+          }
+        },
+        "replay": {
+          "solves": 3320,
+          "grids": [
+            1,
+            2
+          ],
+          "max_iterations": 380,
+          "max_relative_residual": 9.9996749517575e-07,
+          "max_scaled_residual": 20315803.02734375,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03235747292637825
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.03200725093483925
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.021796099841594696
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.010573003441095352
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.011531681753695011
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.0071913693100214005
+            }
+          }
+        }
+      },
+      "gradient-extrap1-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap1-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 365,
+          "max_relative_residual": 9.999502911502899e-07,
+          "max_scaled_residual": 656935067.7734375,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04412255063652992
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04506891220808029
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04177785664796829
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017040733247995377
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01855725795030594
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01949286460876465
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04412255063652992
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04506891220808029
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04177785664796829
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017040733247995377
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01855725795030594
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01949286460876465
+            }
+          }
+        },
+        "replay": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 365,
+          "max_relative_residual": 9.999502911502899e-07,
+          "max_scaled_residual": 656935067.7734375,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04412255063652992
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04506891220808029
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04177785664796829
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017040733247995377
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01855725795030594
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01949286460876465
+            }
+          }
+        }
+      },
+      "gradient-extrap2-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap2-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 361,
+          "max_relative_residual": 9.999342682402215e-07,
+          "max_scaled_residual": 651397931.3476562,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04411306232213974
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045052576810121536
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041707102209329605
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705135963857174
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01860714703798294
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019460564479231834
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04411306232213974
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045052576810121536
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041707102209329605
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705135963857174
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01860714703798294
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019460564479231834
+            }
+          }
+        },
+        "replay": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 361,
+          "max_relative_residual": 9.999342682402215e-07,
+          "max_scaled_residual": 651397931.3476562,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04411306232213974
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045052576810121536
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041707102209329605
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705135963857174
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01860714703798294
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019460564479231834
+            }
+          }
+        }
+      },
+      "gradient-extrap3-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap3-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 357,
+          "max_relative_residual": 9.9992235636173e-07,
+          "max_scaled_residual": 645803900.1953125,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044124070554971695
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045037902891635895
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04163062572479248
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705610565841198
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01867172122001648
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01938805542886257
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044124070554971695
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045037902891635895
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04163062572479248
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705610565841198
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01867172122001648
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01938805542886257
+            }
+          }
+        },
+        "replay": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 357,
+          "max_relative_residual": 9.9992235636173e-07,
+          "max_scaled_residual": 645803900.1953125,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044124070554971695
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.045037902891635895
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04163062572479248
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01705610565841198
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01867172122001648
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01938805542886257
+            }
+          }
+        }
+      },
+      "gradient-extrap4-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap4-att0",
+        "results": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 353,
+          "max_relative_residual": 9.999056441448285e-07,
+          "max_scaled_residual": 640267143.6523438,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04416152834892273
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04505259916186333
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04156399890780449
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017044246196746826
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018721692264080048
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019263267517089844
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04416152834892273
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04505259916186333
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04156399890780449
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017044246196746826
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018721692264080048
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019263267517089844
+            }
+          }
+        },
+        "replay": {
+          "solves": 316,
+          "grids": [
+            1
+          ],
+          "max_iterations": 353,
+          "max_relative_residual": 9.999056441448285e-07,
+          "max_scaled_residual": 640267143.6523438,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04416152834892273
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04505259916186333
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04156399890780449
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017044246196746826
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018721692264080048
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019263267517089844
+            }
+          }
+        }
+      },
+      "gradient-extrap5-att0": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap5-att0",
+        "results": {
+          "solves": 314,
+          "grids": [
+            1
+          ],
+          "max_iterations": 348,
+          "max_relative_residual": 9.99760482698308e-07,
+          "max_scaled_residual": 642941468.2617188,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044446200132369995
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04494687542319298
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041618578135967255
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017042357474565506
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018755871802568436
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019128508865833282
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044446200132369995
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04494687542319298
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041618578135967255
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017042357474565506
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018755871802568436
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019128508865833282
+            }
+          }
+        },
+        "replay": {
+          "solves": 314,
+          "grids": [
+            1
+          ],
+          "max_iterations": 348,
+          "max_relative_residual": 9.99760482698308e-07,
+          "max_scaled_residual": 642941468.2617188,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.044446200132369995
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04494687542319298
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.041618578135967255
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017042357474565506
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018755871802568436
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.019128508865833282
+            }
+          }
+        }
+      },
+      "energy": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/energy",
+        "results": {
+          "solves": 1538,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 5.003659409689539e-07,
+          "max_scaled_residual": 0.02865646501148955,
+          "energy_steps": 768,
+          "relative_energy_drift": 7.797149776519309e-09,
+          "max_relative_step_change": 7.413119933017203e-11
+        },
+        "replay": {
+          "solves": 1538,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 5.003659409689539e-07,
+          "max_scaled_residual": 0.02865646501148955
+        }
+      },
+      "gradient-extrap1-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap1-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 365,
+          "max_relative_residual": 9.998607241139405e-07,
+          "max_scaled_residual": 649552667.96875,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353932663798332
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04429024085402489
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04088855907320976
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016772188246250153
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017865248024463654
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018236428499221802
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353932663798332
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04429024085402489
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04088855907320976
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016772188246250153
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017865248024463654
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018236428499221802
+            }
+          }
+        },
+        "replay": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 365,
+          "max_relative_residual": 9.998607241139405e-07,
+          "max_scaled_residual": 649552667.96875,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353932663798332
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04429024085402489
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04088855907320976
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016772188246250153
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017865248024463654
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018236428499221802
+            }
+          }
+        }
+      },
+      "gradient-extrap2-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap2-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 361,
+          "max_relative_residual": 9.99926223395069e-07,
+          "max_scaled_residual": 644086981.1523438,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043525855988264084
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04427807405591011
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04081914946436882
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016779787838459015
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017909614369273186
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01821276731789112
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043525855988264084
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04427807405591011
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04081914946436882
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016779787838459015
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017909614369273186
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01821276731789112
+            }
+          }
+        },
+        "replay": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 361,
+          "max_relative_residual": 9.99926223395069e-07,
+          "max_scaled_residual": 644086981.1523438,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043525855988264084
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04427807405591011
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04081914946436882
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016779787838459015
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017909614369273186
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01821276731789112
+            }
+          }
+        }
+      },
+      "gradient-extrap3-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap3-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 357,
+          "max_relative_residual": 9.998046788454308e-07,
+          "max_scaled_residual": 638564735.2539062,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043515756726264954
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426755756139755
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074355587363243
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016774127259850502
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017960181459784508
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018161922693252563
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043515756726264954
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426755756139755
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074355587363243
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016774127259850502
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017960181459784508
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018161922693252563
+            }
+          }
+        },
+        "replay": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 357,
+          "max_relative_residual": 9.998046788454308e-07,
+          "max_scaled_residual": 638564735.2539062,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.043515756726264954
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426755756139755
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074355587363243
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016774127259850502
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017960181459784508
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.018161922693252563
+            }
+          }
+        }
+      },
+      "gradient-extrap4-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap4-att1",
+        "results": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 354,
+          "max_relative_residual": 9.999820872033373e-07,
+          "max_scaled_residual": 633099035.0585938,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353394731879234
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04428543150424957
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.040683355182409286
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016742050647735596
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017982112243771553
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01807243376970291
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353394731879234
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04428543150424957
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.040683355182409286
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016742050647735596
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017982112243771553
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01807243376970291
+            }
+          }
+        },
+        "replay": {
+          "solves": 320,
+          "grids": [
+            1
+          ],
+          "max_iterations": 354,
+          "max_relative_residual": 9.999820872033373e-07,
+          "max_scaled_residual": 633099035.0585938,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04353394731879234
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04428543150424957
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.040683355182409286
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.016742050647735596
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017982112243771553
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01807243376970291
+            }
+          }
+        }
+      },
+      "gradient-extrap5-att1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap5-att1",
+        "results": {
+          "solves": 318,
+          "grids": [
+            1
+          ],
+          "max_iterations": 350,
+          "max_relative_residual": 9.999501202042631e-07,
+          "max_scaled_residual": 635649987.5976562,
+          "waveforms": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04343535378575325
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426439851522446
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074696823954582
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01665581949055195
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017942111939191818
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017958015203475952
+            }
+          },
+          "reference_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04343535378575325
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426439851522446
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074696823954582
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01665581949055195
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017942111939191818
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017958015203475952
+            }
+          }
+        },
+        "replay": {
+          "solves": 318,
+          "grids": [
+            1
+          ],
+          "max_iterations": 350,
+          "max_relative_residual": 9.999501202042631e-07,
+          "max_scaled_residual": 635649987.5976562,
+          "waveform_comparison": {
+            "station/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04343535378575325
+            },
+            "station/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04426439851522446
+            },
+            "station/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.04074696823954582
+            },
+            "edge/X": {
+              "max_difference": 0.0,
+              "reference_peak": 0.01665581949055195
+            },
+            "edge/Y": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017942111939191818
+            },
+            "edge/Z": {
+              "max_difference": 0.0,
+              "reference_peak": 0.017958015203475952
+            }
+          }
+        }
+      },
+      "twilight-el-1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-1",
+        "results": {
+          "solves": 84,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 1.7088592166009424e-05,
+          "max_scaled_residual": 1.0470048827926348e-06,
+          "manufactured_errors": [
+            [
+              0.0074742058,
+              0.0076956781,
+              0.99838503
+            ]
+          ]
+        },
+        "replay": {
+          "solves": 84,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 1.7088592166009424e-05,
+          "max_scaled_residual": 1.0470048827926348e-06
+        }
+      },
+      "twilight-el-2": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-2",
+        "results": {
+          "solves": 172,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.00019982084690298315,
+          "max_scaled_residual": 9.90443926873752e-07,
+          "manufactured_errors": [
+            [
+              0.00046919473,
+              0.00047612238,
+              0.99992568
+            ]
+          ]
+        },
+        "replay": {
+          "solves": 172,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.00019982084690298315,
+          "max_scaled_residual": 9.90443926873752e-07
+        }
+      },
+      "twilight-el-3": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-3",
+        "results": {
+          "solves": 342,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.001771195723560509,
+          "max_scaled_residual": 9.86787052070781e-07,
+          "manufactured_errors": [
+            [
+              2.9847727e-05,
+              2.9212835e-05,
+              0.99997576
+            ]
+          ]
+        },
+        "replay": {
+          "solves": 342,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.001771195723560509,
+          "max_scaled_residual": 9.86787052070781e-07
+        }
+      },
+      "twilight-att-1": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-1",
+        "results": {
+          "solves": 100,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 2.0077904787517726e-05,
+          "max_scaled_residual": 9.48967254776889e-07,
+          "manufactured_errors": [
+            [
+              0.0086772048,
+              0.012492235,
+              0.99838503
+            ],
+            [
+              0.0077475837,
+              0.011664131,
+              0.998576
+            ]
+          ]
+        },
+        "replay": {
+          "solves": 100,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 2.0077904787517726e-05,
+          "max_scaled_residual": 9.48967254776889e-07
+        }
+      },
+      "twilight-att-2": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-2",
+        "results": {
+          "solves": 204,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.00020863992004743604,
+          "max_scaled_residual": 9.915484433520305e-07,
+          "manufactured_errors": [
+            [
+              0.00056850521,
+              0.00078627524,
+              0.99992568
+            ],
+            [
+              0.00050276979,
+              0.00073439657,
+              0.99970141
+            ]
+          ]
+        },
+        "replay": {
+          "solves": 204,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.00020863992004743604,
+          "max_scaled_residual": 9.915484433520305e-07
+        }
+      },
+      "twilight-att-3": {
+        "evidence": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-3",
+        "results": {
+          "solves": 406,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.001782627078885266,
+          "max_scaled_residual": 9.352412178031955e-07,
+          "manufactured_errors": [
+            [
+              3.6156899e-05,
+              4.8438204e-05,
+              0.99997576
+            ],
+            [
+              3.1941281e-05,
+              4.5183982e-05,
+              0.99998785
+            ]
+          ]
+        },
+        "replay": {
+          "solves": 406,
+          "grids": [
+            1
+          ],
+          "max_iterations": 7,
+          "max_relative_residual": 0.001782627078885266,
+          "max_scaled_residual": 9.352412178031955e-07
+        }
+      }
+    },
+    "cpu_negative": {
+      "cap1": {
+        "failed_collectively": true,
+        "iterations": 1,
+        "failure_residual": "1.93478e+09"
+      },
+      "cap30": {
+        "failed_collectively": true,
+        "iterations": 30,
+        "failure_residual": "113.046"
+      },
+      "invalid-zero": {
+        "rejected_before_stepping": true
+      },
+      "invalid-negative": {
+        "rejected_before_stepping": true
+      },
+      "invalid-fraction": {
+        "rejected_before_stepping": true
+      },
+      "invalid-text": {
+        "rejected_before_stepping": true
+      },
+      "invalid-overflow": {
+        "rejected_before_stepping": true
+      },
+      "nonfinite": {
+        "failed_collectively": true,
+        "iterations": 0,
+        "failure_residual": "inf"
+      }
+    },
+    "cuda_negative": {
+      "cap1": {
+        "failed_collectively": true,
+        "iterations": 1,
+        "failure_residual": "1.93478e+09"
+      },
+      "cap30": {
+        "failed_collectively": true,
+        "iterations": 30,
+        "failure_residual": "1.1e+02"
+      },
+      "invalid-zero": {
+        "rejected_before_stepping": true
+      },
+      "invalid-negative": {
+        "rejected_before_stepping": true
+      },
+      "invalid-fraction": {
+        "rejected_before_stepping": true
+      },
+      "invalid-text": {
+        "rejected_before_stepping": true
+      },
+      "invalid-overflow": {
+        "rejected_before_stepping": true
+      },
+      "nonfinite": {
+        "failed_collectively": true,
+        "iterations": 0,
+        "failure_residual": "inf"
+      }
+    },
+    "cpu-final-r1": {
+      "physical": {
+        "solves": 832,
+        "grids": [
+          1
+        ],
+        "max_iterations": 373,
+        "max_relative_residual": 9.999199736234496e-07,
+        "max_scaled_residual": 56318289.251708984,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        }
+      }
+    },
+    "cpu-final-r4": {
+      "physical": {
+        "solves": 832,
+        "grids": [
+          1
+        ],
+        "max_iterations": 373,
+        "max_relative_residual": 9.999199736234496e-07,
+        "max_scaled_residual": 56318289.251708984,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        }
+      }
+    },
+    "cpu-final-r8": {
+      "physical": {
+        "solves": 832,
+        "grids": [
+          1
+        ],
+        "max_iterations": 373,
+        "max_relative_residual": 9.999199736234496e-07,
+        "max_scaled_residual": 56318289.251708984,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        }
+      }
+    },
+    "cpu-r8-additional": {
+      "multiple-levels": {
+        "solves": 3320,
+        "grids": [
+          1,
+          2
+        ],
+        "max_iterations": 380,
+        "max_relative_residual": 9.999674951350536e-07,
+        "max_scaled_residual": 20315803.3203125,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03235747292637825
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03200725093483925
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.021796099841594696
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010573003441095352
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.011531681753695011
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.0071913693100214005
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03235747292637825
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03200725093483925
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.021796099841594696
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010573003441095352
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.011531681753695011
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.0071913693100214005
+          }
+        }
+      },
+      "gradient-extrap5-att1": {
+        "solves": 318,
+        "grids": [
+          1
+        ],
+        "max_iterations": 350,
+        "max_relative_residual": 9.999501268305504e-07,
+        "max_scaled_residual": 635649987.6953125,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04343535378575325
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04426439851522446
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04074696823954582
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.01665581949055195
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017942111939191818
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017958015203475952
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04343535378575325
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04426439851522446
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04074696823954582
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.01665581949055195
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017942111939191818
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017958015203475952
+          }
+        }
+      }
+    },
+    "cpu-r1-attenuating": {
+      "gradient-extrap1-att1": {
+        "solves": 320,
+        "grids": [
+          1
+        ],
+        "max_iterations": 365,
+        "max_relative_residual": 9.998607168266923e-07,
+        "max_scaled_residual": 649552667.96875,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04353932663798332
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04429024085402489
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04088855907320976
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.016772188246250153
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017865248024463654
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.018236428499221802
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04353932663798332
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04429024085402489
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04088855907320976
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.016772188246250153
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017865248024463654
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.018236428499221802
+          }
+        }
+      }
+    },
+    "cuda-final-r1": {
+      "physical": {
+        "solves": 832,
+        "grids": [
+          1
+        ],
+        "max_iterations": 373,
+        "max_relative_residual": 9.999199957764386e-07,
+        "max_scaled_residual": 56318289.2578125,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        }
+      }
+    },
+    "cuda-final-r8": {
+      "physical": {
+        "solves": 832,
+        "grids": [
+          1
+        ],
+        "max_iterations": 373,
+        "max_relative_residual": 9.999199957764386e-07,
+        "max_scaled_residual": 56318289.2578125,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024298422038555145
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.024202629923820496
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.02105778641998768
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.009732134640216827
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010892140679061413
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.007293115835636854
+          }
+        }
+      },
+      "multiple-levels": {
+        "solves": 3320,
+        "grids": [
+          1,
+          2
+        ],
+        "max_iterations": 380,
+        "max_relative_residual": 9.9996749517575e-07,
+        "max_scaled_residual": 20315803.02734375,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03235747292637825
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03200725093483925
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.021796099841594696
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010573003441095352
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.011531681753695011
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.0071913693100214005
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03235747292637825
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.03200725093483925
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.021796099841594696
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.010573003441095352
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.011531681753695011
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.0071913693100214005
+          }
+        }
+      },
+      "gradient-extrap5-att1": {
+        "solves": 318,
+        "grids": [
+          1
+        ],
+        "max_iterations": 350,
+        "max_relative_residual": 9.999501202042631e-07,
+        "max_scaled_residual": 635649987.5976562,
+        "waveforms": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04343535378575325
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04426439851522446
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04074696823954582
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.01665581949055195
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017942111939191818
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017958015203475952
+          }
+        },
+        "reference_comparison": {
+          "station/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04343535378575325
+          },
+          "station/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04426439851522446
+          },
+          "station/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.04074696823954582
+          },
+          "edge/X": {
+            "max_difference": 0.0,
+            "reference_peak": 0.01665581949055195
+          },
+          "edge/Y": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017942111939191818
+          },
+          "edge/Z": {
+            "max_difference": 0.0,
+            "reference_peak": 0.017958015203475952
+          }
+        }
+      }
+    },
+    "cpu-manufactured-el": [
+      [
+        [
+          3.9936615742332924,
+          4.014644105271719
+        ]
+      ],
+      [
+        [
+          3.974493834153837,
+          4.026658165556475
+        ]
+      ]
+    ],
+    "cpu-manufactured-att": [
+      [
+        [
+          3.931984904453332,
+          3.9898533797445777
+        ],
+        [
+          3.9457765658086315,
+          3.98937569691045
+        ]
+      ],
+      [
+        [
+          3.974830715300032,
+          4.020817145638934
+        ],
+        [
+          3.9764038868628147,
+          4.022675996552421
+        ]
+      ]
+    ],
+    "cuda-manufactured-el": [
+      [
+        [
+          3.9936615742332924,
+          4.014644105271719
+        ]
+      ],
+      [
+        [
+          3.974493834153837,
+          4.026658165556475
+        ]
+      ]
+    ],
+    "cuda-manufactured-att": [
+      [
+        [
+          3.931984904453332,
+          3.9898533797445777
+        ],
+        [
+          3.9457765658086315,
+          3.98937569691045
+        ]
+      ],
+      [
+        [
+          3.974830715300032,
+          4.020817145638934
+        ],
+        [
+          3.9764038868628147,
+          4.022675996552421
+        ]
+      ]
+    ],
+    "energy_baseline": {
+      "samples": 768,
+      "baseline_drift": 7.797148115882445e-09,
+      "candidate_drift": 7.797148115882445e-09,
+      "max_difference": 0.0,
+      "max_relative_step_change": 7.412843160203972e-11
+    }
+  },
+  "artifact_sha256": {
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-energy/comparison.json": "c387ea95bf5e81c4b139d75ba45f00352df9337de0b76271c1c76adc00d0eaa0",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-energy/energy/case.in": "33d142f07d47047f4d9d5598b44a3315d4ee15ee905f431fa1f7b1f29353db4c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-energy/energy/output/energy.log": "3e8bfed30c9128476de765dcf1d2a0031179c80a7bb7aeccfc5fb3afc74c8698",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-energy/energy/run.log": "02554f0bedca1ae4df7a571834d52dd71d4e1af8280fccc84381c2e5849a793f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-long-duration/comparison.json": "d38622beb4b06a39d36637abaff6638c9f2fca77bfda85251c2edac356293161",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-long-duration/long-duration/case.in": "60ed5145660b8331c3ad2261a53a2152ed5ecec29f57f835afb571e8c31fcde2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-long-duration/long-duration/output/receivers.h5": "928cad201b009f8a04ccd2692686f941fe48be5ea594791a6bbf0e7cc0c2c168",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-long-duration/long-duration/run.log": "3c8a2e1c2ebbd16c62c51c4e77b911fcab95bcb043b833716cb66e7e0cf759e9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/cap1/case.in": "4da9a23284ba293bf0be68eb742e5a60de28fa0d8b7e0abedf1e7d8a490637a5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/cap1/run.log": "10c6e986a1f3b3a6f555b990d4d1a9e730236d3f8c6d582218dc5ba27739cf19",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/cap30/case.in": "f7a89adf76da6bb4ac4b912aa28ca3c48dd49958aa3196b96fb53615584aa748",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/cap30/run.log": "91a4be0712619b9df190b57a6d7a455488ef6e56d4a63bad6fd5e34f91a028f3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/comparison.json": "d5f00601a3ca64d5cda197c0990daf6a168809c299dab150c1ef836e78cadff8",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-fraction/case.in": "0a4f845a290cc688ef4b1249f24c971b77177e249e8ac985a22dee7ae872fab1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-fraction/run.log": "54aada9faeabbdeb86d99ed005ae6a7cbf68c44bd1edaa05b72c668faeb2e3c3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-negative/case.in": "f9b1e0c7df382e8968d977101f7e51a13a2baa8ad96234bb52489ab6049a2684",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-negative/run.log": "cf783b971d359f54e08445aa422aa294c04a9b7b0dc5dfb1f0c2016a616d63a8",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-overflow/case.in": "b6946ee6383dbf7cb7ecab97fba0760d598e5539c850ca484be17426c8b5810d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-overflow/run.log": "43c855f2dc7be7043de60caf232786100529bdc75b1d8e962ed3fbc310d92892",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-text/case.in": "ddc104e679e9b1e617a78c28287eb741e32c6d9b8417b492ba33fbdf961aa973",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-text/run.log": "c8a13268b870620ced23fb458d10c29cebc7deccdacf5fb27489b9eba2548d63",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-zero/case.in": "8cafbf28555e7a0e33a1b51d0ad4ac258774a3505912c0308b76a01674136566",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/invalid-zero/run.log": "98ea08ed140707fd546a4031f29500da798aca687b3b80206cecc47c8c72d2fe",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/nonfinite/case.in": "b6a7f507d02bd134217e604017ae0fbde8b41e0584e5b839ffdfbb33c62c3dfb",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-negative/nonfinite/run.log": "a590a4fb16aada0ec0f7a71a6d1948a79dc7a9782822b81d357d2a80e52f403f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r1/comparison.json": "ebf21fd95f2890efc80f775f254885e18ded8e6cfff576677b3fc53a0753fcab",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r1/physical/case.in": "7e1e6a7fdffd414c40009dede8bc3202888e0762b9431e0f33d5cbb6131436f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r1/physical/output/receivers.h5": "d3a43b939b37827079bd2da8944e666ef45092137b6a5fadfd927ac57af2482b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r1/physical/run.log": "9b886dc615c859172a828488ec73ec6dfa12d9c11a652562d6075e079b962a44",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r4/comparison.json": "ebf21fd95f2890efc80f775f254885e18ded8e6cfff576677b3fc53a0753fcab",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r4/physical/case.in": "7e1e6a7fdffd414c40009dede8bc3202888e0762b9431e0f33d5cbb6131436f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r4/physical/output/receivers.h5": "166a4a232237474270c3dd3eabfff5e99f7e89188905553c418bf4119427bc53",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r4/physical/run.log": "1560c182a134c1e288480c1b6154584b6462d75d46f87ba8e3df2e6a15b23f16",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r8/comparison.json": "ebf21fd95f2890efc80f775f254885e18ded8e6cfff576677b3fc53a0753fcab",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r8/physical/case.in": "7e1e6a7fdffd414c40009dede8bc3202888e0762b9431e0f33d5cbb6131436f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r8/physical/output/receivers.h5": "d3a43b939b37827079bd2da8944e666ef45092137b6a5fadfd927ac57af2482b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-r8/physical/run.log": "46585d6a1e487df248ffa6e40484a78b7e258c545151467c6f7b205b2884df11",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution66/comparison.json": "78d3b393e040f2add1177ef33d2c9357fd317908f938ccd818543adef5240b08",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution66/resolution66/case.in": "f1fefd1ee6c97c5b4e9829d03a05e138540969d3a2ed4fcbea2b84909257a254",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution66/resolution66/output/receivers.h5": "07f8b8c26ec3c71911db3668cb2d5045586536df283d16f7cef68eeef8c75abe",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution66/resolution66/run.log": "09f7e77e1a4cb9cf2ab26fdea22a5650abbb99458d6f1790630f3023665b5268",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution80/comparison.json": "e9ffe69b71883241982cde80bfb71c814e044e64da58d73d4bbf126726f1967b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution80/resolution80/case.in": "8c395636f25a65c52be99e4b73404feca871cd842300971c500a5eb95edb4848",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution80/resolution80/output/receivers.h5": "e6aea6e447a7cf02629ef6a40148cb1388aa3722bce14f430d34761cfa6b96bc",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-final-resolution80/resolution80/run.log": "26f2666b1e573172b4109946db4530d5c104bfd5537773bddb49173b2ebac44b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/comparison.json": "55a3616dbd21e463c89adabce4a5c9bd8cb3076247fd8014e8c3ac1a402b1c36",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-1/case.in": "e16c73e287e782bf144c957645e8f35c800ae8fa5f7ff38871b2509fd876694c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-1/output/TwilightErr.txt": "59689b7d44ddf2636cb642bc534987c20a54a547b09d0db03e8a991c64720e61",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-1/run.log": "3da0684e9820f80598894b0b8cf247f52bb01f1dbc772404ae811e270f8f01c5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-2/case.in": "0ace6b4bc0aa859d26335eb5630c3bf5c41dfd9e6afe813837aaa8e38a4a0ed2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-2/output/TwilightErr.txt": "986037dd3a47b6ac194950b38e20fbb6387d9c7522ede5a21cf27ceada8f8270",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-2/run.log": "1e85ad33e186a086ffa6d4e705c71779a1280fe280e5508281f31273f002525b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-3/case.in": "d6b66c1d96402ac175cc318b776ec52e892a08399b711186bca61599e7c2f8a4",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-3/output/TwilightErr.txt": "6137cf33f533eef44f6724c02cf7cbe980b7e54cf76f07f2b35513f45a754f99",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-att-3/run.log": "957689c97eb8843a09e5085de72b2a8f7b704b6e1b0580b3ff692de5747ad561",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-1/case.in": "d712903bbf39ace634ed659d6bc406532053a40f16b71bd9876b208cc867e8e2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-1/output/TwilightErr.txt": "5c275408956cac21b526b5a202e90a2d5b908910c05dfac4f31c1adae4b578e1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-1/run.log": "15b0afbb92f6a362a8544407dd5133522d38fd00b7e935d5e064f90aa57a4de3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-2/case.in": "585c7963250a2b6101bcb765a70370fdac2a37c1db353decec32dbe9067c1f80",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-2/output/TwilightErr.txt": "7370044cdcbab88d078fcaa0774519b306c18c8274f888143cd5f8c99956ea25",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-2/run.log": "9159655053828f94d9096cc1d6b391f2e2a3bf3cbf8da37772153fb0f360555d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-3/case.in": "dfdbcc7f0f22bae8b6a972b17a48e151205c8db3676e1c36b5fbe3b97b290074",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-3/output/TwilightErr.txt": "22a6adceda7e7c5ae8c766216c468061d12c61bf74b5a4506a43d39c87acdac9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-manufactured/twilight-el-3/run.log": "3f7d2af4abacbdf5c4801df14088f1053139e25158dca1153e5f61b7ca335bee",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/comparison.json": "767fdad14cd4d43949820aaf776f7f51097f5e45427cb7344dbf45b354dee38b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att0/case.in": "4195bdb81e360ad4ac94dfb3031db9f636fbaae87668cd27f75222f172aaa997",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att0/output/receivers.h5": "d51491908aae292dbc9122de46ce80dccd8b3b60fe2a70c6476be4f0f0c745a2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att0/run.log": "816c8795baeceae9aa82ba1721877a319bf375a3b310c6da7271f43084e49f50",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att1/case.in": "9b9b0280bdbdfddd1163ac0d537437408bb5074371d2e1465b27eb71f2c471b9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att1/output/receivers.h5": "2318561fcbb27b43ead2d2a2edde5329393b8cdff8d043355717d037d6b34481",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap1-att1/run.log": "e13961299625b75d77bf8e64b950b760bd1f5de2fdd95f683c2cd8cfb8496ced",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att0/case.in": "2f5892da488db8bc0b735bd4b46f3bdc1170e2efc6a841c1a8050565a0b961f7",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att0/output/receivers.h5": "fdef19b0bcc825cf7d66ab9d0f270e1ce89ecc645ff446bec3aeed5b060cf227",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att0/run.log": "45a0335b1ac661ebcb921c0d8e6c558dde49b1c1f33c8cda69588d8d811e48ea",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att1/case.in": "290b1e5c39116121e9cd1a8215896ad15912ef5767081845b9eacf2a29d6ec8e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att1/output/receivers.h5": "60c5566e81d3b730cea1ea25f1fd6459f091b26f8dc32f4ba4ce60dca2846114",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap2-att1/run.log": "7c4a51fb0dedc9bc949292c4a2ff090b63ec3b5a4b1d22ca4b1e31420f004b70",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att0/case.in": "b51cdc7b7e05118d0c3546ae09b06a706156e7fece941efd8731e53beae9a89e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att0/output/receivers.h5": "92c63990f6cd06e5754461f045f14a669a29f8c1efd6e0f62631aff01a009552",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att0/run.log": "1a85e612eae72ceda5e7bc039b3e30373582397af1d56121b60d2503e0a36ead",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att1/case.in": "c8931901f51753394e55f3c9c4dbd82ee96d7fba682e389e077e2e7aef014608",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att1/output/receivers.h5": "f5ae4c1e11bd693401afe231d39c8c0ae12498bc5aaaff5d4fd4b190251abb9b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap3-att1/run.log": "7b47ae5f778c5f2f8ac91b117e8cef249708cd480f10b0b728a5aa1d88058a0d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att0/case.in": "311674346b86281dcf5453b3ee764ca4eddace0a739e67298f57798362fe453b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att0/output/receivers.h5": "3815a0d3d066fe3122ef0e94099c38554f7dfe2f9b5c0f1ce11b53429e633aa4",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att0/run.log": "a8c2c9a12ceb034b35812aa48eee91da4e51985663f8d529cd432a0285da2711",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att1/case.in": "c320670f898ee7d9a59cc97eb3c0081ebd5391e446000fdad2fdf72f89cf5f0e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att1/output/receivers.h5": "65606d189f94e35f7489a3b9a6c3c1578077cb84ce755fbd58b323c1cfc6ee83",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap4-att1/run.log": "4fbba021b7369c87df75bb6ae2e045a9891f9d02210a4e2c2ab8a8d03fa80416",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att0/case.in": "604bddcdd388b1a783dce1b15b7a50e30e1696d38c9bfdae8838fd4d5ee2e69e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att0/output/receivers.h5": "abfb58e009ecfba28e2fcdf1e33f99e23e7e01f94940c1d05b7baa07ee444b08",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att0/run.log": "ab0595b190a5cae8fa9194007894d191ea2cc21e82d9e0a52925cce1896c592a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att1/case.in": "af1328d86424d0ad0d1e73fd60921e0fd831cf12f0efca8471c301e87a7ad7da",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att1/output/receivers.h5": "2b4c3890cef2f1f02c16a1eb0572c2d9e9bd17808f80ca38caa0e108c1d8663a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-matrix/gradient-extrap5-att1/run.log": "4e09f084aebe1e919794e1efd2e441a791e8601af55aadabea23223c238da7a1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-multiple/comparison.json": "a78c5c0d9c47a4fb196254abe6d882b23cd2e4b06841d6b288baa8dc1bf03cd6",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-multiple/multiple-levels/case.in": "0b07b6684ae32bc13fcff717081dc5c3001aab11af5692c6f5e3bdceefd28173",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-multiple/multiple-levels/output/receivers.h5": "e65db5327be0ffe10e5fc49311321157613d01cf6a2051f9949ba9d170c99e54",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-multiple/multiple-levels/run.log": "f4544fd9c29206c12c4e63beda3b700dfaea38f289992fd3c8d043dc732e5a86",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r1-attenuating/comparison.json": "179648d64ed0b55c16907764ffa4607945ded87e6e4cafee725d2d70e0fed484",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r1-attenuating/gradient-extrap1-att1/case.in": "9b9b0280bdbdfddd1163ac0d537437408bb5074371d2e1465b27eb71f2c471b9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r1-attenuating/gradient-extrap1-att1/output/receivers.h5": "bfc2d4b442fd97b5c5f730738dea3e6789d1cd293afaf438335799868d50ca29",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r1-attenuating/gradient-extrap1-att1/run.log": "d8fe437c414a2de321d90e8941e94458c203c66cb091745a3789993450db671c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/comparison.json": "3adb3565e80391010e9efda08ee5d7cebe4fbc3820fb285633b952e4d374878f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/gradient-extrap5-att1/case.in": "af1328d86424d0ad0d1e73fd60921e0fd831cf12f0efca8471c301e87a7ad7da",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/gradient-extrap5-att1/output/receivers.h5": "6a2217c689c1dc93ea975431768af4a063fcf65af2614776e42cb703de6419fc",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/gradient-extrap5-att1/run.log": "d95a917e9bb6e684ed770590b1368810c489491b8a655cda3db617aa19a82852",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/multiple-levels/case.in": "0b07b6684ae32bc13fcff717081dc5c3001aab11af5692c6f5e3bdceefd28173",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/multiple-levels/output/receivers.h5": "4c9cdf038adcfa0157d2d582099b83555ac020e4ca9ef22b0f9e898505c8d097",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cpu-r8-additional/multiple-levels/run.log": "1bc304eb7a668f26ac625a82ad7f94a418957b5328f72def26c7fc681965b25e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/cap1/case.in": "4da9a23284ba293bf0be68eb742e5a60de28fa0d8b7e0abedf1e7d8a490637a5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/cap1/run.log": "ab69c9cce94bb5b726ac631a91beebe50975014f9dc86cfa0cad77f2e37be193",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/cap30/case.in": "f7a89adf76da6bb4ac4b912aa28ca3c48dd49958aa3196b96fb53615584aa748",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/cap30/run.log": "d2dd5b209b0278f25b153902d4df47999b2c2c2d5d4a65cd9bc7943b8a6910f9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/comparison.json": "d5437da03f496e376d8e52c062c9766582e6c465f9d9deccb7576d04a9ed63d5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-fraction/case.in": "0a4f845a290cc688ef4b1249f24c971b77177e249e8ac985a22dee7ae872fab1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-fraction/run.log": "4e178126d8aa84b9c05634a830b33ecfd4fab12e445eddb912cd8695b9d61924",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-negative/case.in": "f9b1e0c7df382e8968d977101f7e51a13a2baa8ad96234bb52489ab6049a2684",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-negative/run.log": "8f8e862cb387ab7556c5f3f11a4cf4482b82d15580911ead6589b9953ba39c0c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-overflow/case.in": "b6946ee6383dbf7cb7ecab97fba0760d598e5539c850ca484be17426c8b5810d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-overflow/run.log": "6fbd7cefd4e8a61f1f671959a4a3cbd53ac404cfe6ce34782f3a67862ccf2c33",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-text/case.in": "ddc104e679e9b1e617a78c28287eb741e32c6d9b8417b492ba33fbdf961aa973",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-text/run.log": "f0b309529ae25827b1b1dcc5a3e82e4aafd89f24bacd1b549f20ae82f9d6eeac",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-zero/case.in": "8cafbf28555e7a0e33a1b51d0ad4ac258774a3505912c0308b76a01674136566",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/invalid-zero/run.log": "bfed2b56de3e8d79723fa8de012654d441d7d72f0b3b15fefde00be7fb3e61d2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/nonfinite/case.in": "b6a7f507d02bd134217e604017ae0fbde8b41e0584e5b839ffdfbb33c62c3dfb",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-negative/nonfinite/run.log": "dee0c9ca5de496c127446546e8ced9afff8dcb09e9eaf818583593aa27f18172",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r1/comparison.json": "0330a8370d1f20244df81bbebe353c05759c28c4719c8ffdaef31b2946929c13",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r1/physical/case.in": "7e1e6a7fdffd414c40009dede8bc3202888e0762b9431e0f33d5cbb6131436f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r1/physical/output/receivers.h5": "22b6913ee27379ecff79703d36e3e0be4be25fecb21aa001d04105fd08f7ab94",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r1/physical/run.log": "f2b7133ab3bbe3be753eb70b1f3dc9264cf52b053801c76ac6c3a4d74961c7e1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/comparison.json": "2fdbea1c02deba5ede8dbdee53d6e270fee3171b22305a64a2d43cfce4a42e51",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/gradient-extrap5-att1/case.in": "af1328d86424d0ad0d1e73fd60921e0fd831cf12f0efca8471c301e87a7ad7da",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/gradient-extrap5-att1/output/receivers.h5": "377e21360beb277493483b1ee1c4d4098b10a5f6170f8635cc6883066223c54a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/gradient-extrap5-att1/run.log": "efd02361920aa170e5665c215aeec54c3bbd74020fe1e8b0d43b1b500ac2cb6d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/multiple-levels/case.in": "0b07b6684ae32bc13fcff717081dc5c3001aab11af5692c6f5e3bdceefd28173",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/multiple-levels/output/receivers.h5": "3cfbe66e3f3b52cc20b70d965d725f4e0af918310e64cc985ec4baedb6ef209b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/multiple-levels/run.log": "49008023054d93671e59bb50d68770b000186385aa8623eddb1ee38ec2414fb5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/physical/case.in": "7e1e6a7fdffd414c40009dede8bc3202888e0762b9431e0f33d5cbb6131436f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/physical/output/receivers.h5": "210f47e1715d668d28eff41d2de8107b74aea4c79c547424950e83514eb547b3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-final-r8/physical/run.log": "4cbd61ba248eaafbb2b47a01b828d28059c18f04068fc19d8c9a71dd8bf40ac6",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/comparison.json": "acfb159367314a9631f970515489af03697796b8794a5a4d9969c99e63e7a59a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/long-duration/case.in": "60ed5145660b8331c3ad2261a53a2152ed5ecec29f57f835afb571e8c31fcde2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/long-duration/output/receivers.h5": "4d22058900e4e7d485f3dfb730c2d1233cd727864f09756eb1706729f410d5b2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/long-duration/run.log": "dadbb167a04587ee33016c7474e4c61a5545ff81869533dd9f9ba8fff804127d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/physical/case.in": "7e1e6a7fdffd414c40009dede8bc3202888e0762b9431e0f33d5cbb6131436f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/physical/output/receivers.h5": "fd1c80fa394eadf6bc13e2c08275f407a2d7ed49546c897bbdc7e9beb87bd58f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-a/physical/run.log": "53a4c70eb603cb64f7d5d482cfda778b27c26b327e61648cd5ca05c4b3a279fa",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/comparison.json": "11c3ea574c3bf39ac5ca40f79c4fc5c3560447e6525575436656a8da3203ba71",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/multiple-levels/case.in": "0b07b6684ae32bc13fcff717081dc5c3001aab11af5692c6f5e3bdceefd28173",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/multiple-levels/output/receivers.h5": "9f742e543f88b5eacf865856b2a22dc15119e5ed420233c74c8694b2918d875f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/multiple-levels/run.log": "dfb7444e08e17889238bfd4ec5b668a004cdc37d42c85e7fe2f49f4d066224b7",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution66/case.in": "f1fefd1ee6c97c5b4e9829d03a05e138540969d3a2ed4fcbea2b84909257a254",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution66/output/receivers.h5": "ef1a20fc9b8655c3e4000be1714f08b034bb5bd53adfeca8a2f33af03da166d9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution66/run.log": "0b86a34ffc0ae638c8d51a3c2e0b4a5508a09de33bf8ecbd548d222360bad480",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution80/case.in": "8c395636f25a65c52be99e4b73404feca871cd842300971c500a5eb95edb4848",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution80/output/receivers.h5": "53def2d78f90bead62d07cbfdf8e1bb31fccbbc7249fbbf8d562fd4d15339f18",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-b/resolution80/run.log": "fb2d8a974e3371e6e49511081d1d50148f0f107438f7e9920d1f00e7283f8e9a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/comparison.json": "452745433c6ed8827ef42c5e0ad7890c6412873b351b7f32c30c243bfeba14ef",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/energy/case.in": "33d142f07d47047f4d9d5598b44a3315d4ee15ee905f431fa1f7b1f29353db4c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/energy/output/energy.log": "6dd6d6fcd2c100dd4b047563d9b737110ece37df7588ad89d73dc8fb855e1a07",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/energy/run.log": "228a8a7061edfda4867bfaaa1f596ab3daf9cb32105f75183c360d5da5dafec1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap1-att0/case.in": "4195bdb81e360ad4ac94dfb3031db9f636fbaae87668cd27f75222f172aaa997",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap1-att0/output/receivers.h5": "6a53291a5a92d8cf72d15c266540d70c2305f4b3b38305580f56679efb5a66f9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap1-att0/run.log": "095801dc7fb86edc2d161ea836f9ee5b2fcb4d01c16ed6550f97cd89bfa6de6f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap2-att0/case.in": "2f5892da488db8bc0b735bd4b46f3bdc1170e2efc6a841c1a8050565a0b961f7",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap2-att0/output/receivers.h5": "64c7eaedc36bb5438ef7965cb442276662f165c75c49f9226fefd145c7d95cf3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap2-att0/run.log": "d5b4474b5903ffe95613aea9bda906bc5a12b99e43b8d0b96b77c7491dd250f1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap3-att0/case.in": "b51cdc7b7e05118d0c3546ae09b06a706156e7fece941efd8731e53beae9a89e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap3-att0/output/receivers.h5": "190266de576fb182316ee28f6f2867e36e679ccf5274eab36628026697dad358",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap3-att0/run.log": "cf29b7348ddf49c862e6922d3a37e1979dbb54b0c82ca435ed5f9a7923ae6182",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap4-att0/case.in": "311674346b86281dcf5453b3ee764ca4eddace0a739e67298f57798362fe453b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap4-att0/output/receivers.h5": "6fbed227aa7dd78f86eaf82b0c812c355c4e64ff2c71a4b46e5e7fac41fd5630",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap4-att0/run.log": "36a520ebcecff0793e18753728ac26c185790903d421294d416e2709647a061d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap5-att0/case.in": "604bddcdd388b1a783dce1b15b7a50e30e1696d38c9bfdae8838fd4d5ee2e69e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap5-att0/output/receivers.h5": "e6980f9842f16d47cc10492d7fa53afa3d817a8edca2f25c8c80acb26b5dcbbb",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-c/gradient-extrap5-att0/run.log": "89ce9a32d4be84099dd9a4377b789e65299636b3172f914c5ff914970754404c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/comparison.json": "47993fa723c040576d06a3a9792d45c60b033ad32d508003dee940b7789b8723",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap1-att1/case.in": "9b9b0280bdbdfddd1163ac0d537437408bb5074371d2e1465b27eb71f2c471b9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap1-att1/output/receivers.h5": "4d33d942ab9123a57699d54a3e026575273b459762284732393a7d1b992d4be1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap1-att1/run.log": "f8b036fb0562a4a19e6cc0452016313c6ca70163d3bb0bba098a9023e181149f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap2-att1/case.in": "290b1e5c39116121e9cd1a8215896ad15912ef5767081845b9eacf2a29d6ec8e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap2-att1/output/receivers.h5": "ac8422749b84b29cee3aabe4c41af482ce3772fd5cc207ede41e193cbfecdbbc",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap2-att1/run.log": "2beab807b0cbd17c7efd127e44302468427cc1c571d36ce84a52b7c24918563c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap3-att1/case.in": "c8931901f51753394e55f3c9c4dbd82ee96d7fba682e389e077e2e7aef014608",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap3-att1/output/receivers.h5": "7e5c13e2ace3e2407ca3f680f95e8589e485ba39ed00189c2c8e8a112654707a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap3-att1/run.log": "4bc5daebd4f1c06d855ba38e6e8c546d8eba203dc2aaa12db6ea32fbf0200e43",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap4-att1/case.in": "c320670f898ee7d9a59cc97eb3c0081ebd5391e446000fdad2fdf72f89cf5f0e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap4-att1/output/receivers.h5": "48e5357e0303109666d9d7b5b556917d46e3a31bfc4fd25295d91b94cadc5339",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap4-att1/run.log": "8e388721c29980c118b82fd230c4b2d3b97a92d26cdc41e4e82b760acd5ffca2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap5-att1/case.in": "af1328d86424d0ad0d1e73fd60921e0fd831cf12f0efca8471c301e87a7ad7da",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap5-att1/output/receivers.h5": "89bad361fd4e514460b359c049e45d82cfdbefec0ad424a8fe5725cdb733f495",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-group-d/gradient-extrap5-att1/run.log": "75b8a2eb5553e437e12a7b55414a0595e0200df9684847f42f551ab5e39a0c6d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/comparison.json": "843b47e2bcbc11c80b7fbf0cef6aedfa13fb6d7ff211e0cb35f156ab1ccd7e27",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-1/case.in": "e16c73e287e782bf144c957645e8f35c800ae8fa5f7ff38871b2509fd876694c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-1/output/TwilightErr.txt": "d07dc3c1be7d2816544f2bcdb35202647415037cc5d99f1361666596fa464a20",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-1/run.log": "8407f0476dfc3f238924c8607c9b21df2b2b59323535482252024b2ec118af74",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-2/case.in": "0ace6b4bc0aa859d26335eb5630c3bf5c41dfd9e6afe813837aaa8e38a4a0ed2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-2/output/TwilightErr.txt": "52a381bcaa94b74924efd52cf7039ed16be5562a5a9ce6210d7db5294f84cd23",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-2/run.log": "072eb6bb5261f005688ecd684f9e88e69903c62dc110c969dd2b017e87b81812",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-3/case.in": "d6b66c1d96402ac175cc318b776ec52e892a08399b711186bca61599e7c2f8a4",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-3/output/TwilightErr.txt": "1beb20d85f5bb03cc105839fac8b748d1f28503bb7d222a0001938541110ff60",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-att-3/run.log": "aa3da415c83064328acbc4e76e159a57f4dcc7e37821c08992ebc9a70074882b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-1/case.in": "d712903bbf39ace634ed659d6bc406532053a40f16b71bd9876b208cc867e8e2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-1/output/TwilightErr.txt": "5c275408956cac21b526b5a202e90a2d5b908910c05dfac4f31c1adae4b578e1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-1/run.log": "1902628ef102f10b5f2c73a1886cbb773ebf31b2f02d3b529616eebeaaad238d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-2/case.in": "585c7963250a2b6101bcb765a70370fdac2a37c1db353decec32dbe9067c1f80",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-2/output/TwilightErr.txt": "7370044cdcbab88d078fcaa0774519b306c18c8274f888143cd5f8c99956ea25",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-2/run.log": "e896edaca2d510f8bd5f42282a03323b15cad852c6700e845da73608aaac1a75",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-3/case.in": "dfdbcc7f0f22bae8b6a972b17a48e151205c8db3676e1c36b5fbe3b97b290074",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-3/output/TwilightErr.txt": "22a6adceda7e7c5ae8c766216c468061d12c61bf74b5a4506a43d39c87acdac9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/cuda-manufactured/twilight-el-3/run.log": "fc631d33dce175439f983d8d93fe129b9b5376f878b6f3c6e22c7a91e20554a9",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/driver-final.tar": "442564bcde04ee300450ba5ab70f55ad403d4bb03eb515b56c1a6251bbe2c852",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/driver-qualified.tar": "c7d06b68e6c2d78ac71f1a709b4ef663bb68d2d8d8c5396ba3362348340fdf72",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/driver-v2.tar": "fa4a569a3711d0d78fdf31ef0eda92ef69edd94b94aaef7e5998a285b00bb854",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/drivers-final/tests/backends/curvilinear_refinement.py": "d34cd22ec1be7bc2a9b0f18219900b2b770fb21cf95ecf13eff6a464f92bc352",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/drivers-qualified/tests/backends/curvilinear_refinement.py": "bdf580bca63a2eaed80f8bf192e8f57a779dba30ef215759418ed4abbceb2ac4",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/drivers-v2/tests/backends/curvilinear_refinement.py": "6f899b5c3370ee524d0c45449659be9b66747455064d3616363523886160cb1d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/energy-baseline-48407f2a/case.in": "33d142f07d47047f4d9d5598b44a3315d4ee15ee905f431fa1f7b1f29353db4c",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/energy-baseline-48407f2a/output/energy.log": "3e8bfed30c9128476de765dcf1d2a0031179c80a7bb7aeccfc5fb3afc74c8698",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/energy-baseline-48407f2a/run.log": "ec9b820272fa919529e8c22602b66db4a5f422dbb6747ce392a61b7ecde1a2e7",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/energy-baseline-comparison.json": "06786aee99f9c5ebda6f844c52ddaa473a014d9475e651f0e9b299df92e7dae4",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/gpu-curvi-final.sh": "a6ffcc7fce2b7c641b8dcd9703b844355549a37dda705ac5a03a3c76dfb0e8f2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/gpu-hardware.log": "fb097f99c76da73cbcef18d6c8c1bae6d24772eb69c6c06a2e931589a2398feb",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/gpu-manufactured.sh": "5de37a6fa97f0360de7863a8a168efa60dd8845e26e04c00063df5d94a946bbe",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/gpu-transport-performance.sh": "8905738bd96d0df4c3265b543b3bf5a2972d1d36e9c48c620b98bb346157c273",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cpu/square-uneven/case.in": "0885fd0e89995209703beb9c95e5628c344b35356b8470c06608b678b7f1d2b3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cpu/square-uneven/run.log": "df7ef101b0d8eb504c6f87f379dc830a7923b32919e8da8cdf7e6e050f9c3694",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cpu/x-strip/case.in": "a5f297a3e096539dd9c4697c7e2994387e69392e7d46aebcb76012985b5e98b0",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cpu/x-strip/run.log": "d4c6c8a796b1edb127bfdcf10a8088453a4556b866a829744ab3155ccbcb97fc",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cpu/y-strip/case.in": "6a7703fad464570979e6fb9a997a8bc431a3e18228ce4ec08db047bb78d57325",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cpu/y-strip/run.log": "41d594f8f55cd62b82ca58d9848ff295fea0b8fee0f83874bf0331bf2d98e068",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cuda/square-uneven/case.in": "0885fd0e89995209703beb9c95e5628c344b35356b8470c06608b678b7f1d2b3",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cuda/square-uneven/run.log": "a727fce9863e1cc9869ec8e624b739757700c5880874ca859a3806a4816d9abe",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cuda/x-strip/case.in": "a5f297a3e096539dd9c4697c7e2994387e69392e7d46aebcb76012985b5e98b0",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cuda/x-strip/run.log": "a881776fd5f9987553ea3ccaa87895800cd6f7007c10fb339bb418254c727456",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cuda/y-strip/case.in": "6a7703fad464570979e6fb9a997a8bc431a3e18228ce4ec08db047bb78d57325",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/halo-final-cuda/y-strip/run.log": "de5fa5d0f6a7e45aff27d63a0675254a4b2a6b00ffdd0b8ea626803028e84134",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-0/hmr3.in": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-0/output/sta1.txt": "967a493efa964e5b9da378adff0441b685bc4e42abb930b6201ef20959431a8e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-0/result.json": "1f496793ee367ee5fdcb8cdadb2fec50d42b46bdb4322ada69d5e504e7b8964a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-0/run.log": "cfd5827d775371892c1b6308ec8f1246a96ce91539908f392616b1e4c48051d5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-1/hmr3.in": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-1/output/sta1.txt": "cc29ffc47f4f2bfece4c986f4613aa539b2f53ecf46ab014ce8b236691d3d8b5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-1/result.json": "6a1dfacc7d865f7e47f34ad7c8ed105019f8054a8dd6489a3a5864541cbaa5f6",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-1/run.log": "6ab8c7a0fde89dd67a25c742efd4c096523e3ce9dc48cd21151daa3942ec24fe",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-2/hmr3.in": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-2/output/sta1.txt": "d800d4680bac4105e48c460076a0b0ab9962ef301e4d5dcbdf5ebc4dcb2f5d19",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-2/result.json": "c0cc65dc26ad16c64c894294010b1a3a74e13114aa4c01d0f9f5480e4db91361",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-2/run.log": "c59b5b6b01f620e74cdd12885968efe6cc7e0d734e8d389121ae0033a157c6b6",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-0/hmr3.in": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-0/output/sta1.txt": "bfb94986e3026a280570ed3bdc9d5e22bac3a7d214bbbbe11fabf6688b1c2ef7",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-0/result.json": "01c7950f9c1b96e4d7fd027c94de265efc5014a3db157442f62a992879978dfb",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-0/run.log": "a05fa17d5e80339aaf6b69bd59337fdc06edf1e4b86ac55af1a3f68174d182eb",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-1/hmr3.in": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-1/output/sta1.txt": "f27e0b46dda9699ab993f08871ecd4f5bd3386b4da4330570cde53e29d431279",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-1/result.json": "14afe3e1a3390fda5cebc40bd5e185a95567652ebb36a9eb01c7c5ac8b9bd73f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-1/run.log": "047607173313a1006e67cfafa01471be05c1c6d153e2430d2bd69f147deb6113",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-2/hmr3.in": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-2/output/sta1.txt": "5e7d3cdfe61e13b56cd25f269683858704963efada7383951572337ceea61182",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-2/result.json": "c245c22a4880a0aec358defc38cee6eb589401733581dac7a02d34f15f9a32c2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-2/run.log": "6186076a37367d9aaf3df3dc78ab417a56ac421c9b12e2fd3deb878a27808911",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/comparison.json": "b96a9457c3e07dd90072f6faf7cc90f6691a0f50c4162abc8774d2d8efa9631e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final.log": "9ddeb6a907cb6a0a98e738ba40ea95cfbda8ea5dfd0906136d6395084b79adab",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/qualify.py": "b8d16db96d6b7e557d43af07329b8d163b9d799f0cafd982188794273b34832a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/build-cpu.log": "007590adde531b9e5e0313b43b680e7b539b63061a62acb84ea8aeb867c79975",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/build-cpu.sh": "3909b9d375423405f6382a4d2fbdec93e8032dd72df78168c593892350e9fef8",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/build-cuda.log": "0c85af2350275a732790b6d5326736d2f5bcb6f4e034ea404835414dffd1b7ab",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/build-cuda.sh": "c268ed824690902575b5fc2ab1707db5931dce91d4561fb594a0c0ccc4cd2d62",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cpu/CMakeCache.txt": "fc4f602f51f9593efc48d24d81f957f935227c832defe4023feb308cbecd8ee2",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cpu/bin/sw4": "66a1b0aa3c199c2fc0f26f9269079d14f986b74e58f56962e82e0454684a8c0b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cpu/bin/sw4_halo_check": "f828b686beb3b2ae0fabf2557edbe167caf814136dccc143d72dac61550d521f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cpu/bin/sw4_interface_check": "7ee31a66e985e640175c18efb4654e167fde7ccb1f7a218a6d8fda205bbdcac1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cpu/bin/sw4mopt": "74411cbd0b7cfaa66eaa2714b38471c2cec6db5c0309353505cfe09521cefa77",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/CMakeCache.txt": "c05f83d0b91d6843c061bb8f1b37ff02bb0ff9cd732cc2d9c2e12630e2378eff",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4": "908f560d07d68ab694e5c7fe7d6ea034c43bd5a0fa724d5f035d23fd5acf356e",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4_halo_check": "f98754e1215e33e9a12ba28901f042c9b40dee60ab0a77a8fcda4583556c09e7",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4_interface_check": "69256a0144a5653e78f80262326c9c78c03cf5a168e27013571f1293c50de165",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4mopt": "84d2827af6561cf80094d167a2c61311ffb2db9fa8c4bac3b6f9d853dfda492a",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/run-suite-cpu.sh": "a2c5ad8389198937399855a813b526128936c732fba092d42a4f1fa1a321608b",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/run-suite-gpu.sh": "380a51e790a9ba6becf1785ea5a82602b1eaa828f5e487f67673a637e1b97854",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/source.tar": "1b4eb19863c5efeb4d10c237da6326de0add25d32671b4a70e204fb379299906",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/suite-cpu.log": "10b8d23290baec553d9e21ad2b59688e4b846c7bd843326e1f049c9d1ae4e7c0",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/suite-gpu.log": "10b8d23290baec553d9e21ad2b59688e4b846c7bd843326e1f049c9d1ae4e7c0",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/revisions.txt": "92c232ea9cd222b3566da48967c6e29cf3854b3b74a52964bac841d9999753f5",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/scale-corrected-probe.C": "2301cac048fb78025cff96f1435d13d009e77de93c9bebc47fbe1c68d0bd593f",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/scale-correction-proposal.json": "9eb6e9453dad33b088cc3dcb6f649ae107148ecc5dad2191f159aa75cec30902",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/scale-correction-proposal.patch": "02f4ed3ffb68e1b0746b3b12f679a3485fa45901b0a2c0d5f795050380934a99",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/scale-overflow.C": "8560b3128f08c8e62c5d0a5028e0981a0cd31a47c77b6adf7679c1be877debf1",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/scale-overflow.json": "8c9ce66fe7caac030fe4f6543b24dd833b51b8259aa914998222c585bbe8ae5d",
+    "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/source-files.list": "f9055aeb558fb8c742c09565e927bfab46bfd7582133ae51c9125433219aec57"
+  },
+  "source_file_sha256": {
+    "CMakeLists.txt": "9d0527b14f3cd1a0889844db0695f2bc1c12e66591af786736596f91b0e2af0a",
+    "cmake/SW4GPU.cmake": "8a888e544e8ad0b1c021448dd26073a0fd820b9b74b11e9e9ad0b20353933736",
+    "cmake/SW4Sources.cmake": "935865277bce6278710a601b0bb9d147dce45a3e0d9ba5da0180df9445f0d00e",
+    "cmake/SW4Tests.cmake": "a8b0442d676c4d0027c814e9d06fd1ad848a5c34117afb07f5ecf47e429266c3",
+    "src/AllDims.C": "ff7abb50f81ebd0cb1d977a004389c4c3886e4694ae7cd0388e194333d92f658",
+    "src/AllDims.h": "ef835743727348b3b30dfcb7d839b5eacadb020fa772232fe5f2be874e1bbfb6",
+    "src/AnisotropicMaterial.h": "e377f37e3eee3b7a7e961426a1b7ded6cea794ad4c736270d13f0bb1428d9332",
+    "src/AnisotropicMaterialBlock.C": "19e57a5e20c2e7d3d1082dfc2b7d70a8c0b2717f5a5641d9b593baca14472b56",
+    "src/AnisotropicMaterialBlock.h": "7ba344f8e78ea78ba9ca6fcc4535bd07768afdb8a88d5aee3906ae0db57f43d8",
+    "src/Byteswapper.h": "04377349bed18e567b128e6feeb15862f3bb0295974cfa10b3189c22c288b238",
+    "src/CheckPoint.C": "f4bfb9fd81483699e250fb3b0b3db6f91c4b0c073e087db4016712fd79e1170d",
+    "src/CheckPoint.h": "6b76a3ec616b526ac19fa0c5ef487d5e5d7e4c857c40339872fa25628e707f87",
+    "src/ConvParOutput.C": "fce39ae13bdbf562c24423c9c49549beb8bf20a102f5d7dc20dad061b6e67c25",
+    "src/ConvParOutput.h": "903bd30ac68480d9aa46c9d5465e030e89e7155b55d84da5bd619c1f32a1a5e6",
+    "src/CudaCompat.h": "8a0cd28c387b6d8b72cc0fb31f581ff0627994003b0f35462df2944bab62f8bf",
+    "src/CurvilinearInterface2.C": "58c4f78f62d99a2137900df8abe52357f39207d485406dc920e372c1b1d74ad3",
+    "src/CurvilinearInterface2.h": "ee2431b8bea092cc676fb0e3e81759ea8f30ef74f29e8275466fde94cffbc941",
+    "src/DataPatches.C": "4d212f0e44b3e34a9e243e99eb074de87ed2b67245cb2347ded4e46b30ccda0f",
+    "src/DataPatches.h": "79d79f3c133f9707f1e422a6b21007b901fda84f498646b067fe607530e56896",
+    "src/ESSI3D.C": "deb6f6935d74fa3a3744138b6206342968a5b04bf1a01628ac29fb0f80675bba",
+    "src/ESSI3D.h": "623cad9a975eab8161bf058fbe58f7f22a96655aaed6453e46807970c32ad968",
+    "src/ESSI3DHDF5.C": "27ccb67cfeb33c9c0b6a1e0ef6f213229de0f5e81701a00991c48c8db4c8cd3b",
+    "src/ESSI3DHDF5.h": "fcbf297538d465273466065f9c1c34020b9ae38428c6f7b33680ae9fbb133b41",
+    "src/EW.C": "e1076735a3029b50521614123a2abe61cf729988287ef7e9406765fc87923341",
+    "src/EW.h": "b03aaa63cbe34a22c97a5409a68a314f11f1f29052cfebf4b2b5128c97ccdc11",
+    "src/F77_FUNC.h": "e564a2d6ce0e57715d3354be09f44bbca1f1e27a46dce82161acf1f5d0228c75",
+    "src/Farray.h": "c3de9804cbe1fb39958b131800d370ed1310920bf8151aeb212a6cb2fa96f1b2",
+    "src/Filter.C": "0becb0a1e058fc9a89401ce2de01b8dee734d0c1e021001256681b962afa27df",
+    "src/Filter.h": "8b81a14133e5d1946a901b2125e91395a9a527bc94602017be4d18250aa990ac",
+    "src/ForcingTwilight.C": "7b28fa847e34cd62c8bc3356e2905c39f11db9334fea0c063fd3a3d4285ff105",
+    "src/ForcingTwilight.h": "ddd02415086c3c1dee01677ad82887f3458e5766ed87448c4147e10ddf45174c",
+    "src/GMGHDF5Helpers.h": "e515c990dcb85b256ae30a00dde8b589684fb9e4f0922b354d63c1d39e07dfa3",
+    "src/GeographicProjection.C": "2572f106a2c2adf91bc4272889695250fbeb4a904ad5f2752027ca30bab2d641",
+    "src/GeographicProjection.h": "0c5b6c5f20cdc746c9ed67ff1f7f2aa44e6ccdcbf5b0bcfef432a73cce15dc92",
+    "src/GridGenerator.C": "529100d6cd1cb96424dc9da21d0bafb58ce92e6b15eb350c56c42eed1f472b83",
+    "src/GridGenerator.h": "401a816c17a4c1b279fb0b729c6302356c77916b6a815c98914c0ffd1f087339",
+    "src/GridGeneratorGaussianHill.C": "7e2fb27142f2b88cf8cf8ea6972cbf7f0f7a3f933cda56d8aaebc23434096e6c",
+    "src/GridGeneratorGaussianHill.h": "dfb7b73fb83814d30a0c8f1cb448f5c60998f249a71e21ac497d00f4e0f7b019",
+    "src/GridGeneratorGeneral.C": "d1ed54988c0cb69dc45e5601c59e108642fc0671d9d69eebbe25b13becc26d91",
+    "src/GridGeneratorGeneral.h": "703451f7bc4fe6adb27f8fbda413edcfc851f2ce3b1b2153abe909282803cceb",
+    "src/GridPointSource.C": "93ac12b7dd629a267659d593f7f71b0c1eea07a3006b5e02dce107657f64b826",
+    "src/GridPointSource.h": "e83a11d23bce24325c971e6b7bc97546339a690411acccac83cffa3b04e8eab1",
+    "src/Image.C": "f63da95402bb731d93d2c0dc637df5741006c2ab4307cd4959be03b76ac2fa55",
+    "src/Image.h": "e6edc8d1772e311dbf0eca1420db1513d321de9f2d1c264f2516e039e4e7624c",
+    "src/Image3D.C": "8423eba9e1d93ad231c42af29880fb9309847d3273a5caeb36a59d09c22302ee",
+    "src/Image3D.h": "c6cfed1f3e72c4cc277c1a964c39af24db6688f7489ce7d49a4a6b562f9eeade",
+    "src/InterpolateMaterial.C": "305ce720e3530f76f5c10089b2709ee8506419b406b22377d883d8a2ca70f8ba",
+    "src/MParGridFile.C": "0d744d943e49b375d0dbb34606cf667cf96479b65a7131dd6c442f4dc0057c6c",
+    "src/MParGridFile.h": "30144eb6a141e07ecdc559db4f2c32c25689d787819aa6a17b960db7187f61b6",
+    "src/MaterialBlock.C": "d0ed027bbaa34563cb0c112868d9cf86d3a59cec992dda5414e04bd37f02ad3f",
+    "src/MaterialBlock.h": "ff6f011a5d2ec9edf4fdc8495cd54591d8a02db03e121d4dbde1d6b407ff7662",
+    "src/MaterialData.C": "5000ed4b110fd869a1396d406a6c811f3b4b8d1c1db269f2574db1995375d72d",
+    "src/MaterialData.h": "fd1a9139ce70d877f65ddd1b8fe64d0babb56356cca7133792b09ed513fff2bc",
+    "src/MaterialGMG.C": "70c29365159ed8a75296e74c36488859c65a10fd22868ccc234e240f7ec35f77",
+    "src/MaterialGMG.h": "c91963210afc5e8731cd56d47b224e701851547a55602a108f8d019e4b3a1c69",
+    "src/MaterialIfile.C": "87f64549d680411ad29c1e0bd371a910abc07c73c0909b36b166183e7d85f522",
+    "src/MaterialIfile.h": "d13ca76e604788cc7e667df9c7eca54830b8ec182998194f1a93add70bb49deb",
+    "src/MaterialInvtest.C": "d209ddc104e1e3faf45231f74b1eb76cc9d4fceac95e5d6d7b0b5e3bb07da4ce",
+    "src/MaterialInvtest.h": "0dddcd7c8828a06ad50dadbff6d2829330728c3344525b5ef52c097466070c09",
+    "src/MaterialParAllpts.C": "aeda6d439dde25cac80e26460171bc8fc3ab1f2905d8bed0159d25c1ec5f79ad",
+    "src/MaterialParAllpts.h": "aa06c1e0437cd44b590d97e34da8dd364d864303d3409d5581c811d7d7d7a600",
+    "src/MaterialParCart.C": "592f1c002a0352662e07478a85d320470b93aeaa9631099e009427563cb9cae6",
+    "src/MaterialParCart.h": "c91ca7e3c1fe54079f7b91c70d0ba019475f96ffbfbd8d06a25870de2460a9d3",
+    "src/MaterialParCartesian.C": "d44f597927c43986cddfbccf2fb427a84b0317e88be9258edf141a61735591a7",
+    "src/MaterialParCartesian.h": "bb5741d961139599ca8163cc0269df30835b276efe07f6c078bb3890b29b040e",
+    "src/MaterialParCartesianVels.C": "6f58d0e94f52f31010625873f765dee0677aa8b5eac2b21332587dceff1bbd78",
+    "src/MaterialParCartesianVels.h": "6ab424eda1e1c9802e198806be25962ec98119d98633ca8fad9e9326b5a830f8",
+    "src/MaterialParCartesianVp.C": "88c33e0c91977526f49d36021ac44c24d3bf977ac4d72af4309c5bfb3ae8e4c2",
+    "src/MaterialParCartesianVp.h": "6c0add14f5d15cec26b24777c7290fb7103864619e8350972a484b0e1baf0f4e",
+    "src/MaterialParCartesianVsVp.C": "4c6566ad667d81302f66617b468067c0c60168993989855db589fe78bd48d96a",
+    "src/MaterialParCartesianVsVp.h": "fccb2460a2c459bca577b8f5595fb8609787ddcb56a4be5a3fbb9a3104171b9b",
+    "src/MaterialParCurv.C": "42f624fcfcd5adc50c0fc4a7a733a24fd7a933eea168bce5dac51d6ff9b4dbf6",
+    "src/MaterialParCurv.h": "bc86e76b1722029345afb93957dc7e23f16d6fba0464ddac8eaf55b11210bf25",
+    "src/MaterialParameterization.C": "e3a4900217d7bd5721249f61b06b2a4a9c3158d08acbee04ef4944b0f92c310f",
+    "src/MaterialParameterization.h": "d128c36eedd4ea34c382b08c9ebfbb6cd74dfe5fc9e1d9c357598595bba798c6",
+    "src/MaterialPfile.C": "7e6811cd8ace41f9c0b1d4b17e6a0c7cbbf2aaa220d838a487eb749b74e1e412",
+    "src/MaterialPfile.h": "98f6ad8d841147fa16e5d4506671cc82cdb34dd56e8b8e3d123e23c58c95656a",
+    "src/MaterialProperty.C": "93fcbccb768b574798e56f90df5a942a26f451756b70f8b14a9894079efd85ef",
+    "src/MaterialProperty.h": "719f234f96d7ebcce5185823c1a6e61288dd0b65f4eefb850f244eed1c8c1f9b",
+    "src/MaterialRfile.C": "ddc00d70fd5e68fc2d8339ca2d90e9e4010992d774cd6c8b2a1cd24a834fbba2",
+    "src/MaterialRfile.h": "68cfe80904e94a18569c325b4b7fd0664e8cf53ba05cf8b83d72c43d4761c6e7",
+    "src/MaterialSfile.C": "18da43a14d08771be727b0313eabde1f905fb2371efa0f603f3b4ae568840b7c",
+    "src/MaterialSfile.h": "7271993126ee8c82d22eccd5301dd03dbf6a949fe0e28fdaeecacc68ab5676b1",
+    "src/MaterialVolimagefile.C": "9440e8ce20a77409fdd6af41177bf29485fa0235fe07cd69bf97e8c70df8bfd6",
+    "src/MaterialVolimagefile.h": "b603fe8f6efcdc250718b715a4acaa8fed319e3e39f65a9a81ce18f6c0259ce8",
+    "src/Mopt.C": "d73f69cbf137089c2f19b5d46ae22e87f1f02c2d54c74204db1f0bcd79fc6c82",
+    "src/Mopt.h": "035a963fd002f6951419c861d0f5fd6c1559ea043c2fbaf71289d3a53a1b3420",
+    "src/Mspace.C": "0ecb9c753765970c6a553eee58ad3a8f7d732bfca364d3bcb417f468590bf069",
+    "src/Mspace.h": "003ba435b82eb6944e23d62063119d1d8ece63518b2928a23bb053a6139c9f8f",
+    "src/Parallel_IO.C": "6575694ba75c1956b8befb73dd5ccc59cbeefd9db263f18eff94c58031bb36a9",
+    "src/Parallel_IO.h": "bcd0cbfd76aa69a9a88c1cd39dde113c699bee8aa72a6790b0a149a31bb796b8",
+    "src/Patch.C": "1d78a3a72322e58c68276fb174c33820bec8eaf0a3c84e7e0ec0ef543b42eb90",
+    "src/Patch.h": "70ae1ab750eb2419fc74fd6f5ed869de1fea866ad53e9690d819b74561f711b0",
+    "src/Policies.C": "6eb3421830b78b160fe839fba5a8f8dd657207d130378dd98bc0aaec00241077",
+    "src/Policies.h": "3c33a9067b1eeb035dbf6dd9705378603f3654bdb5e705c240e41a6c777b0b8a",
+    "src/Polynomial.C": "8c7f83d74752c15abae7fdf5493a62dbb7689ab265849c24adf8259fd7424e37",
+    "src/Polynomial.h": "cfd492d4689b2df3505408cff05993918704f5f50bffdbef31353c5dd2654d1b",
+    "src/ProjectMtrl.C": "cbe024a8f81ca7e4dec91122790cdcc52a06ad7543c3a4a7ca70e6cd185848f1",
+    "src/Qspline.C": "238b08b9dbb985faa005be3c88c56be8ffb34c2cee0d12ef37a2c1c39476f355",
+    "src/Qspline.h": "7a97c7f5a53566c3218ed1aef1c5a82df5a92b1401c3bc49964d988e13a5400e",
+    "src/RHS43DEV.C": "4f9ad1a5ecc797358b0aff43844bddf63a0faf6bf15a1a2c4b193d660f1f463f",
+    "src/RandomizedMaterial.C": "93644e224869eb06264adfaa87d6a79922f18ed7b43f74adf13493b5b4c8a6dc",
+    "src/RandomizedMaterial.h": "c6dbdfc29bf0b1097c01860cdcf6d3eca18cdaaf385e586341fe077de61cd718",
+    "src/ReceiverComponents.h": "4c8ef3755ed133bffa4cce1ec7a8dedda71014987a086f2a8265870dd1e056c0",
+    "src/ReceiverSAC.h": "5c03675c40d97d9e9160a3718b9ec06568fefc271dac814b0adb2f5148318a59",
+    "src/Require.h": "ddefb4cd1eeb12a42227e90535d440b54117adb6ae7431e4356333a37c7436c9",
+    "src/Sarray.C": "b1e56f83234a23fdb9de5c414d38805d906dced3b25c31eb89e4d2929d7e1fa9",
+    "src/Sarray.h": "9acaed5d637fd2dd40e3aa01cea2ccc43ac5b53b2b4254986fdcc098216fc6d0",
+    "src/SecondOrderSection.C": "2e93bf4baeb755fd81a952802578f759c754109cf4fee9db6a036e9d3ea4ec5a",
+    "src/SecondOrderSection.h": "d88ebbcb6412b8302908813d0490ec7cbdffa0628093bb22eeadd7c01c4b53be",
+    "src/SfileOutput.C": "05a0f9ed8bfc409b0ab6d7b6d1f7eabc45f4b71bc09e568e59caa645396bcfa4",
+    "src/SfileOutput.h": "39b4c7d2c705d2bfb1d64955105b0f798b19f181ed257483e7c78f6dad00c492",
+    "src/Source.C": "d1259c4f3f17e4129f252a5f673d6c43c6c76c3ac05156005ee6a9168ffa3d57",
+    "src/Source.h": "785afd56b97209d113a2228fad2dc1bbd15c3ce6a70fd5fa77d61ab3f9376130",
+    "src/StatMachine.h": "6d1992115ca992400313d8da823776bb4e597f9eb61683b443e0ea119c387276",
+    "src/SuperGrid.C": "98e76fa08a7487081814a5c01bc2c5924d7fdfd7536d4c8940e89a756fd65c5b",
+    "src/SuperGrid.h": "503771653f9baa4f9aa1b39b5c72bee39bfcbe24cc669b33f497d783843875cb",
+    "src/TestEcons.C": "9f3f381387b496207210adbccb4bc3efad5f2ad3f36d3e900c39d93fad6fe671",
+    "src/TestEcons.h": "2a787c49ef875f38e87b9cf2231fae931f9361b598535fb967a9b18ac7f93922",
+    "src/TestEnergy.h": "f6a94e8ed501a455478c257fd584a129b25b3a7a74348ffad38098b88675d41e",
+    "src/TestGrid.C": "1a4150c0ecea28bbd20d11135a278364d9aefecdf50a7eca6925cd783d76dd78",
+    "src/TestGrid.h": "de2780ad78eacc13c525f511d129dff9445f7d6d829a490162da61179fa9d7d7",
+    "src/TestLamb.h": "e1e73d4260af76ec169805036b9b2fe12ecaec5e5213224d7ea119ab4a95fb27",
+    "src/TestPointSource.C": "48cd4f941854609f2f64eda1c7e89e46fd9f3f10f0a73b31bf89dc593403bd9b",
+    "src/TestPointSource.h": "84ce8224b7aa65353f7f43a8246995cee3780096e867a992d9f8d08dcc1cc2c7",
+    "src/TestRayleighWave.C": "85508133adc698fda120ce9c83fce4af7f46165229440d7af75a43f7ba22dfd4",
+    "src/TestRayleighWave.h": "1a4cfa5488a80ad6daaef57c263cd21ad65dc1c9f7849fcefa515950a4f2c51e",
+    "src/TestTwilight.C": "9f1cde07f922523c37e749112d1946591210d960ee0326fdc7bf3cd9d44abd36",
+    "src/TestTwilight.h": "161d02a62aa977c45e5dd7388b8cd19954f085e00c5f02f81a6ce6b5e962ffaf",
+    "src/TimeDep.h": "409577bcb69e83bf848b4c95738a7ca5eacf5cec4166ec2107ef958e2b83d5e4",
+    "src/TimeSeries.C": "0bbe0320f3fb73de2accc4a710d2c92991b282b8a603813db5082a8befc476a8",
+    "src/TimeSeries.h": "2ddf7391209f5bcd0a8ffd2b032a189d695510b22db67b97c3e8498f3c1f1a32",
+    "src/addmemvarforcing2.C": "2e7bd2a2bbfb67e47afb4e0fe68667f21d1b5b4063d5ea6796f118cd442a1358",
+    "src/addsg4wind.f90": "45e1fe98d637f61fbe155adb7757bdb2a97cfbf98ba6b1c114f8500a299a7058",
+    "src/addsg4windc.C": "240ff18cdd0228a5c76fb656be5641aa610d687d59ce63fa5f22c3b2b79300e3",
+    "src/addsgd.f": "496d99262ecbb62345bf18805e2a33083ab5149dc8c20c334227da1b65c30de1",
+    "src/addsgdc.C": "acbf748a9fa50709f1a5244899bfef23c4524ca6f79193e976ea48d5c799cf1c",
+    "src/anisomtrltocurvilinear.f": "f22041bf511a17ef51f69c77cb344e7058b79e1f5edd32520fe330b7a5b5618a",
+    "src/anisomtrltocurvilinearc.C": "b8b14419ee8f130150ba0f4b24e6afdd9d069faaa0764bd86448fe0a2c74bc12",
+    "src/bcfort.f": "67ea7fcc7f86f895f07ddc0b84d30cef68809c0891331891dabe1118003978d1",
+    "src/bcfortanisg.f": "93fbb136e903e95e8b1c6548217cdc3765aaec9f7b354b170b51f7c3120f4435",
+    "src/bcfortanisgc.C": "19c46eedaba89265cb8c88e8d922c7a2e63f9226a1c64469be25be13bca7f6b1",
+    "src/bcfortc.C": "79df20e1c1e11bc275ee6685cc9d87b6e4fb573de87d4f7b2ff339472e545a7f",
+    "src/bcfreesurfcurvani.f": "7809d2f421d41c3cc47b178058b142f50cd948593e2db571c46b42bbe65d453f",
+    "src/bcfreesurfcurvanic.C": "1cf02739c4fae5fd686be20d2f7969d00076c44ecbe5cc6136a0a5e949deda18",
+    "src/bndryOpNoGhost.f90": "de6a8687cf2f170d5683aa56a995970d65d05f4b7e4dd286f3609dc672d0fc35",
+    "src/bndryOpNoGhostc.C": "419fd02b04709565ca3a65b881e63f1808a295baf0a9877902d79b4cd15c0559",
+    "src/boundaryConditionTypes.h": "ea84ce1c95470fe05dc57ab8cf17b5e23635179ac5badced0f88ed83919e2eac",
+    "src/boundaryOp.f": "da40964969ab7e1923c0bba55c13203a1ef32c09bc59106e68f02baf9f193056",
+    "src/boundaryOpc.C": "f445b6bdb4abd2495baa20987c3a58e583ab87a1100ae6e75c6fade31337b719",
+    "src/caliper.h": "640cd484d02148c451d7747a6027e319f64a485eda4e2c4e2b5ce08f5fe41f39",
+    "src/cf_interface.h": "a804d72ef6d7174807b17fceddac2ddb4f69280ad32021f659702562907a964c",
+    "src/checkanisomtrl.f": "c0fe5dc72e677f32a938bf9960c6775455eb05169fce804d54443eb3b621d772",
+    "src/checkanisomtrlc.C": "e24152d37344cdd96a9ca504c0e4c471609865b2da500336e6c14d4bb9df014a",
+    "src/compute_f.h": "138e95d7c0bf18dba03f119d7a9a0adf4adc4f7572bc3098b3fa87ba09da839d",
+    "src/computedtaniso.f": "21dcb7480afce0b59a94d45345356b5634175359f9978a5f689d1a02d488a395",
+    "src/computedtanisoc.C": "c673921d91f85eb9e6221a69c9f583b5e963d33a517944fa9593f0c9b7cfa3b9",
+    "src/consintp-orig.C": "338a521160e98e44b02b4170e612b8359caf71b7553c331690b878bff432ec5e",
+    "src/consintp-stretch1.C": "52e0bee059ed8cb9719f72423e7deeba95adbce6e234ac5191e4ae827c920008",
+    "src/consintp.C": "9783d2b0485e7ce13e43e88e5c717a09398f2c4acc2f0a32929e38a144f41a24",
+    "src/csstime.h": "ac8907f05928521d2a893286a3e3c7c547845fc66edd65de90aeec222ec098c2",
+    "src/cuda_foralls.h": "c03d23b8ac406e727b51bc152d9a65b70ae5003d38d7bb8bb5e9dc99c90978b3",
+    "src/cuda_policies.h": "8a01f4443dffaa5f22489f5ff5cf93bfcf9ec358b835cdf07acdb9d2135b141c",
+    "src/cuda_policies12.h": "78ff10c7132c243328ec130ad9f59a211243bb74f3ac314f5a0e6c4ba709c5a0",
+    "src/curvilinear4.f": "3e46315e7d31b7e58d701744dcf2cb344678a94510d085af421414fe6980dd42",
+    "src/curvilinear4sg.f": "06649fc7113e4a1f42e2c9c16de4b1664777b2668cf223f9043356c48666b38f",
+    "src/curvilinear4sgc.C": "94c4349898e46b395d688488059734f12c9e58ed58b32e7fa34cc670fd1d07ee",
+    "src/curvilinear4sgc.h": "49aac0b7b611a8ad08df3b99c98534978c7d61afd1b9c19ed4562eab7bd78040",
+    "src/curvilinear4sgcSF.C": "0097f9c5b3cdb36a7a1e6957e6de2ebda84ed16e1ef4274571942b2be688ebb0",
+    "src/curvilinear4sgcX1.C": "4550bcb249da43c50ecf8aba62b818fc2378345b6344273287ae771d056af42d",
+    "src/curvilinear4sgcX2.C": "e5155b22fba686686b280b01ca27aefcb03ad2b732a03b4f298b470278d95f1c",
+    "src/curvilinear4sgcX3.h": "1760cc5a30e33b5aa59a2244e7b99319b73c6304f9f4668a33ed670fc55299c3",
+    "src/curvilinear4sgwind.C": "d54029e2f7a5de7a86d749f922263e5248142973741afb76d2c79248892a3bac",
+    "src/curvilinearGrid.C": "a2d0ae9bd0a53e070ac633e58c33709f216b063ed5d0888b059284ec1c410450",
+    "src/double/sw4.h": "c71a65c05d0b038fcea4cb96bd4806bb7a1c4679f78fab2e4a4acd726b27d2b1",
+    "src/energy4.f": "adf2969d7a7debeee054264f97a9aaa466af71b063fd9e788d1feeb304cdc9fd",
+    "src/energy4c.C": "c4862b85db99082caaca5ecc68140615ebd5c8b222faf02f6d5e57c6beb0e922",
+    "src/evenIevenJinterp.C": "17363c79eb213ecfdf76516ea1b30d5b0cfd52578c2f9956db59233260372aab",
+    "src/evenIoddJinterp.C": "859a32e38d3de880ef26b89b2b57879df63313c7c94e8a2b4303c896045a1e47",
+    "src/f_interface.h": "baa0e83d3efc6e5b2c1cfff582155f0822977d0d60911303d76c20ee0dfb1542",
+    "src/fastmarching.C": "77285bf919f400377d375d77b72e7b353235dbe52a64caf92b76298d44d77e3a",
+    "src/float/sw4.h": "ee645c1a202045dd3db51765681fd6957cba83e7d5bcc537b54bef92f2a814f9",
+    "src/foralls.h": "cb89b161975592ebd540db950786b83001502d9a5f97989cb183815d3edb2b61",
+    "src/forallsdecl.h": "d6b4a05f7cc8fa45c5fd486e94a11a9983d56c354583130980927f7a2fd22d2b",
+    "src/geodyn.C": "5e8b8c157c73566617357bd0cb85eb8a1cce22867234421c94e2e4333cc79196",
+    "src/gradients.f": "44b7a5cc2a058607e2de3be9a54d96526f621301355007c4cc7c9406d7bacedc",
+    "src/gradientsc.C": "fc8587c3c75ceebbd445d1618ba301bc4c2467e382c684b7369d97cc49335d06",
+    "src/hip_foralls.h": "d5b79d22b091a21c4386b9eb6c68e6da7f37dc84550d53cd9237204f974b90a5",
+    "src/hip_policies.h": "ab68d67d04a2be210cd0c237f842e0364d020c9af6352d36bcfb50903ac10bcc",
+    "src/ilanisocurv.f": "31d362b291a885fae3d46a04145de7f13beaecebf848d42804356943ddf8730a",
+    "src/ilanisocurvc.C": "d589344a81c11f8d6526329659896cf300d30e93a8ce23b66d78a15071e7726a",
+    "src/impose_cartesian_bc.h": "da1ef8c5b0610c7dd4c4a51bd5f3891ec43352d3bc83c55530f4f16bf42d61ab",
+    "src/innerloop-ani-sgstr-vc.f": "b392d49102e2219847f0881b4fd98578d23c78aefca55534fa20a55f853cb567",
+    "src/innerloop-ani-sgstr-vcc.C": "68dc3c2beee26260f75eee18db3820def5e2bdbad7f40b3678cccd80eabaaa9b",
+    "src/lamb_exact_numquad.f": "da6c3977c4d69e768063f2158cb7d6f20417e47ce2416b932c4dac3bb5336961",
+    "src/lbfgs.C": "06c35efd3f3b7d3f1e1b62b068d2d120e58a7460259ca80348029d083c69c881",
+    "src/main.C": "33eefd47c7d85f5ae379ddd68ccc04dcd0cc38e98567690ab90509eb909fe7b0",
+    "src/material.C": "4fd5681f78f3eb8a675861b8ea904fd4286cdb42b494a11243efc9ec0d515587",
+    "src/moptmain.C": "43dca66f820ead84df82fd487b8b83d74ba28c45a010c23c927b3da68298d9d9",
+    "src/nearlyEqual.h": "e3f7f3b274d7386012a12b0b19a27d7c55f5e3cd3723e88ca67affd8d4346c68",
+    "src/nlcg.C": "72dae88a9e0ff90da84c2858d0dcc1ba83b122d15f5895f93edde61f5f20994d",
+    "src/oddIevenJinterp.C": "a50aebdcc0ed4815fe07f4e3a7bfac3368d7a8a4fce1df13381a9baccfc6cc4a",
+    "src/oddIoddJinterp.C": "8ddb2b3efcb5833edf1bd01552b32c4030246eb0d751e5287a88a815f48e211c",
+    "src/omp_policies.h": "51595dd61cda84c1bf10ec4b846ca3d0ce354f2a987b2e769474c6163392a941",
+    "src/optimizedcuda.h": "4353623abc7557c3c3612d50944f5dfb7e769b5647472f6f1f97e3180c2d35d4",
+    "src/parallelStuff.C": "24fd34890baa96bbe48f2b4e72d2e3788a332b634b7711feefb98eb73e019a2b",
+    "src/parseInputFile.C": "63aec458507ea2fe163ff19e32ebdda2d8a2c7fe664e857dd6685ac5b6e174fe",
+    "src/policies.h": "0e9b937396de470e3ca6d52f8fe39fa81df8b115562e270e5381dffe8be05a69",
+    "src/pseudohess.C": "1ff51b6d0ec2e3b725e483c2e3ebc7efb5b0cae9570b7b81a88b71e544bebb0a",
+    "src/quadpack/d1mach.f": "4284086126220923bcee0b6cfda533c7d60094fdfa8dd5a7e211158d19b0a13a",
+    "src/quadpack/dqags.f": "aae85548f27b934c026babaa73ffa5cefafef5d7920402f6642b741530b06c18",
+    "src/quadpack/dqagse.f": "6d1c3ae36964cfd904a5bc5282f4c87431ed2a1fa4531dc25be9ae8041aaecac",
+    "src/quadpack/dqaws.f": "1517e122a73d9d7ea1f213dbd7baddda35e8ae61c76ff33011c553aed045c977",
+    "src/quadpack/dqawse.f": "b0b93b1be93723d0ca49f0a27dee6475ffff642ac8b28f27013abecabc2cde8d",
+    "src/quadpack/dqc25s.f": "46fabca20a1a5a317c6d0a058e71687956c44a0d5582baa6084ee64a4be59820",
+    "src/quadpack/dqcheb.f": "458429c0d98495cda32897ce02b3e48bf09e54728615659e221c9f9439138ae6",
+    "src/quadpack/dqelg.f": "1a0cdbaed8ab0b95c56e50e8359ee48282030b178330819b8907f021819923c4",
+    "src/quadpack/dqk15w.f": "cd2201e54a746216a833a43bbefbc58062cdf2d6ed02840bcfe3997c4416c624",
+    "src/quadpack/dqk21.f": "4f89799878f42504549e952bf999d5e80e5253096a77dfe074f6353a92cceed7",
+    "src/quadpack/dqmomo.f": "2f16f8261d01380a87dfe8aef9b80af9ff3aab69f38e7c3c9088391375c80477",
+    "src/quadpack/dqpsrt.f": "5ca2446ce3cfedd1f222fed695c4985cfd034d0586f55da7da2d7342c7fcfcd4",
+    "src/quadpack/dqwgts.f": "fcdb0a63e566f140bb13b3d4c52db37439901164ffcfcc02843e482d1bbab358",
+    "src/quadpack/qaws.f": "b6d33468eecc50c422e538f7fc4894ea2880799a175cbd1340d549421c1505b0",
+    "src/quadpack/qawse.f": "e6761850158dccd9b9f9a4b94053bd2e01758b13989cbe6df9a7084b583b74ca",
+    "src/quadpack/qc25s.f": "ed799eb8715dc2f3d00f8d0bad6b6e8442e467e29babe1525c2ed86edf5a1598",
+    "src/quadpack/qcheb.f": "af3fe889fa8b48a9e98e19f675a69221a6de3df9adb8686c3e5d5eabe2b5299d",
+    "src/quadpack/qk15w.f": "1ede0692df09f0c78266d988aec2044bd9da4ee7001311551510b4d17bd1632d",
+    "src/quadpack/qmomo.f": "cfa288732576a2f363e77e65fb075861eb893ccc01c0ad133349132c5bd506e5",
+    "src/quadpack/qpsrt.f": "1e0fbd6c2a4f1c25ee5e16fe64f5cfb6751f99642934ecb488ad605d33b7643d",
+    "src/quadpack/qwgts.f": "253f4f18aca55affff57c1e12491a4f7ab353ab4db156061c1956b741fb452bd",
+    "src/quadpack/r1mach.f": "977710d821d86d75159b35a9c389568b4ab3eab0b333c27e02a66a3de815c436",
+    "src/quadpack/xerror.f": "e6bdb5c3d4eec7bbdb8b4b895516a2935a5d76bb892945c2e2ecd5a7d4b5cc43",
+    "src/randomfield3d.f": "104fb8f4f80b506e3a9d0d30a7d80ed59cae2886e8227105ec26daea21ecd07e",
+    "src/randomfield3dc.C": "239548cd762d5cc78e13c89880ccc7be1f9836495db927b291ad548f06c290e2",
+    "src/rayleighfort.f": "28182451450fd83507a25de8af1e3cb5dded32ff4ac5db422e121369011b4a3d",
+    "src/readhdf5.C": "5a2e5e18d87174c222667002026278fa016b4671277c3583988c50ab5a5d30ae",
+    "src/readhdf5.h": "bf32d8de54be12be096489cd885f0dd58cd6a2c1e4676b4a6719aec9695ced52",
+    "src/rhs4curvilinear.f": "3d1b3ff466fb9b252226addd6b52884f9a7df05adaeb3e269713d33c8852ec04",
+    "src/rhs4curvilinearc.C": "d7101a3ecd8ca9beb77999e1d63b93b373d44def8c331fc2375317cdbd5c2b17",
+    "src/rhs4curvilinearsg.f": "a23191f29c780351c6e4c72e04ace80f5e75fbbaff7c1b3876a39dd2b6380341",
+    "src/rhs4curvilinearsgc.C": "9a07c7b38f9492e9fffa0968e1c8cf4684ddbed78cfe04a687b8901516e38170",
+    "src/rhs4th3fort.f": "e6b3618af8aa105d1365c9299e9013877109a9695de94a2c7e08992df1b1fdc4",
+    "src/rhs4th3fortc.C": "466e980e91964b2566d891f7e784a4d1b629fde776180c2009fb3363417f59bb",
+    "src/rhs4th3point.C": "09eb53b27f049cf71730c9f447e88e027d26c3d7ad2e212d6c2a99a6c0a0c52c",
+    "src/rhs4th3windc.C": "3b5b23c8dcdbd518b6a23345e3b3a66f24ba02d5f65435badf2878c7eee34007",
+    "src/rhs4th3windc2.C": "f11e53215331edbaedb0a23be0189f5c4e05eb3fa28f01c359f6de8e2379866d",
+    "src/rhs4th3windfort.f": "c7d704f04ead0b50545bab231e39318ffff6173870cd07403d2d9db1ca7f8a4c",
+    "src/sachdf5.C": "4a6ef86dcf970971c2f0dd108bdd6f84be87fe421f783c954bf6e976f1280ecf",
+    "src/sachdf5.h": "914306301ebaeb0206d450376d508db4bb5b01b07ebb5db72d7ede6a9fbb8dfc",
+    "src/sacsubc.C": "4f6ae90ec22a32adfceeadb455086383d9ae8d4a1365f23c19156ffa92b141c4",
+    "src/sacsubc.h": "66bdf44cf23e3831947b7b6f9471eee2862abecc783e004066080229f3ba005a",
+    "src/sacutils.C": "53032bb6cc06b4947e3a68e14deed44112d9e912e89803973b682214b6779bb2",
+    "src/sacutils.h": "fbb8a0789d6fe660592b6e04e1e0856941676ea3d6416c8dc77dbfd91dbe0be6",
+    "src/scalar_prod.f90": "35568874c1590d3079b14f3f36e858bb3b9d5a2bcfb54083e5407b661899afe0",
+    "src/scalar_prodc.C": "1373da99989bdb3012b971c3662011851f08831ff15dda025851e9ea79d04d21",
+    "src/setupRun.C": "02b1b77d5488c7153b86fd3d194f7f6e69c60c63253a9b5b9ebd23b4b9738046",
+    "src/solerr3.f": "705743b832bbeb9c9cab007a188600219eb31e6534f5ed64aa7f08db06b6bd71",
+    "src/solerr3c.C": "5684afcee4aa33cea9c527bcac1c73ebd24e78ceb14a3e1eff9ee5aaf1c6e98b",
+    "src/solve-backward-allpars.C": "c4ec0572b4f92ee8edb8969dd643adbdd5094d1f15584301549f3f0ed8e31d38",
+    "src/solve-backward.C": "759bd16ebcf3574f86eaa0b33e4513b757ce137850863971b78b236d5894fb6a",
+    "src/solve-dudp.C": "e0b0a1823a8ff6ee9a30d1b14467b55cd9afbfdb9cf10a9c2749bd6781718d2f",
+    "src/solve.C": "37d1bfbf4f1363a1936b040e6002df7fa862d187c029cb901f9d0a049e172ea0",
+    "src/solveTT.C": "b5574e34a019351626e62d2d1a355c285c7cb8e607db352a4cab147d88bc1021",
+    "src/startEnd.h": "2164356a0c3760964c5099db7e9d1a27c9da3564f1841e3a302a69ee299542df",
+    "src/sw4-prof.C": "6e02ee25c24f650be4e8068e3eb1d2040eb901b46098f9c651e77c07cad8443e",
+    "src/sw4-prof.h": "73c009e3117d90fc72fae0415919d6e2c651559b5ab7149060461e16db30a545",
+    "src/testsrc.f": "20a0d8d25a297c6c466e8f5425335c0ba68a67cbe828120c38e8eb1a0962ca8c",
+    "src/testsrcc.C": "27f95ebdb571fa5de2b60e3d6f11731448bbc312ebe1f0f7c512f0e0e766430d",
+    "src/time_functions.C": "e5998fca7ac0ccfd17df8d51868fcc0727869bcbe34511c07d7ed878b770c3b3",
+    "src/time_functions.h": "5b9aa877560b577308c587edc3121769ed0d401b951aea577987d6e1fc8937a4",
+    "src/tw_ani_stiff.f90": "c37b4493f852ab89ce71ae667ef434ee12ca720afdf1c05951468e785f421d56",
+    "src/tw_ani_stiffc.C": "5928b9a265e87d4cb45e8d8feed304c540fd4c5c8eb1ac5653c34f65bf1fc3e4",
+    "src/tw_aniso_force.f": "ea33d23f0a1237ad39033dd9fa6b904fbe15bb8023baa1f41cb413313a5aefc2",
+    "src/tw_aniso_force_tt.f": "645efcc65e3830b539f50d35a282c4ae0353e83e88500d82afb20dfcb70e02c5",
+    "src/tw_aniso_force_ttc.C": "2d2d44bef045705ca02c1a05bb0f6e90e00f46a9f63cf233ec5d13296374d58b",
+    "src/tw_aniso_forcec.C": "b0c637c044e50297578f496ec8e1844980ce8bf711a03d4f2676d84c2a63f221",
+    "src/twilightfort.f": "e8aa3532f716fb217328553d2c859086467e653b9890be2b9766ac295b3c06b6",
+    "src/twilightfortc.C": "cbf61b44708ac78500c4ca15bc40d24c97427a310acfdd36cfc9c5e2075b2cd0",
+    "src/twilightsgfort.f": "f7a22873d0dced6d96c761254c472ec20a56097bc1be31e79f05615d29dc15b0",
+    "src/twilightsgfortc.C": "5192330346f6233224302846cb29296e0e177b3a93c526177ff7a3c347c5e2e2",
+    "src/updatememvar.f90": "f271a3fdd1aeacd2fde81298339ad9bb222548950c5b1218dc3d22ba571820c6",
+    "src/updatememvarc.C": "f3c35efc995ee450e936a7630cbe66630c7844c0950f15b6c1ac6c9b31a445d6",
+    "src/velsum.f": "3a1625949203483519e95d0ebdd5fe865cbff6a27facd2f432b13975c64b3e7c",
+    "src/velsumc.C": "f9b60436eaef33fda6d1bc29ee48a597c57d0f260660ee7ba17e775816071742",
+    "src/version.C": "28531a0a68d7cbc73cf2d5ea84a70629c982a24b4864eb1811f804c965bfcbb6",
+    "src/version.h": "410cb3f3c4a96a45c1c12743bf699e6b7320f1c6897038ee5f52839060446877"
+  },
+  "performance": {
+    "runs": {
+      "baseline-0": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "model_sha256": "b61f1d5ea1ec5a65e13c11bef37eab5986c285b21fc4939f5fdd5a48212c16e4",
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "executable_sha256": "8a32e3e83094bf46a2fb59370397f61f27060e58a823806c9af2b812327e20de"
+        },
+        "job_id": "59386341",
+        "allocation_node_list": "nid[003593,003832,008372,200288]",
+        "node_list": "nid[003593,003832,008372,200288]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-0/hmr3.in"
+        ],
+        "wall_seconds": 141.46637378702872,
+        "solver_seconds": 82.58,
+        "waveform_sha256": "967a493efa964e5b9da378adff0441b685bc4e42abb930b6201ef20959431a8e"
+      },
+      "candidate-0": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "model_sha256": "b61f1d5ea1ec5a65e13c11bef37eab5986c285b21fc4939f5fdd5a48212c16e4",
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4",
+          "executable_sha256": "908f560d07d68ab694e5c7fe7d6ea034c43bd5a0fa724d5f035d23fd5acf356e"
+        },
+        "job_id": "59386341",
+        "allocation_node_list": "nid[003593,003832,008372,200288]",
+        "node_list": "nid[003593,003832,008372,200288]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-0/hmr3.in"
+        ],
+        "wall_seconds": 154.1637175490614,
+        "solver_seconds": 79.43,
+        "waveform_sha256": "bfb94986e3026a280570ed3bdc9d5e22bac3a7d214bbbbe11fabf6688b1c2ef7"
+      },
+      "candidate-1": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "model_sha256": "b61f1d5ea1ec5a65e13c11bef37eab5986c285b21fc4939f5fdd5a48212c16e4",
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4",
+          "executable_sha256": "908f560d07d68ab694e5c7fe7d6ea034c43bd5a0fa724d5f035d23fd5acf356e"
+        },
+        "job_id": "59386341",
+        "allocation_node_list": "nid[003593,003832,008372,200288]",
+        "node_list": "nid[003593,003832,008372,200288]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-1/hmr3.in"
+        ],
+        "wall_seconds": 142.23668841598555,
+        "solver_seconds": 79.09,
+        "waveform_sha256": "f27e0b46dda9699ab993f08871ecd4f5bd3386b4da4330570cde53e29d431279"
+      },
+      "baseline-1": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "model_sha256": "b61f1d5ea1ec5a65e13c11bef37eab5986c285b21fc4939f5fdd5a48212c16e4",
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "executable_sha256": "8a32e3e83094bf46a2fb59370397f61f27060e58a823806c9af2b812327e20de"
+        },
+        "job_id": "59386341",
+        "allocation_node_list": "nid[003593,003832,008372,200288]",
+        "node_list": "nid[003593,003832,008372,200288]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-1/hmr3.in"
+        ],
+        "wall_seconds": 142.85566237801686,
+        "solver_seconds": 82.64,
+        "waveform_sha256": "cc29ffc47f4f2bfece4c986f4613aa539b2f53ecf46ab014ce8b236691d3d8b5"
+      },
+      "baseline-2": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "model_sha256": "b61f1d5ea1ec5a65e13c11bef37eab5986c285b21fc4939f5fdd5a48212c16e4",
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "executable_sha256": "8a32e3e83094bf46a2fb59370397f61f27060e58a823806c9af2b812327e20de"
+        },
+        "job_id": "59386341",
+        "allocation_node_list": "nid[003593,003832,008372,200288]",
+        "node_list": "nid[003593,003832,008372,200288]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-unified.4MtlHr/raja-baseline/optimize/sw4",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/baseline-2/hmr3.in"
+        ],
+        "wall_seconds": 161.9964900589548,
+        "solver_seconds": 82.18,
+        "waveform_sha256": "d800d4680bac4105e48c460076a0b0ab9962ef301e4d5dcbdf5ebc4dcb2f5d19"
+      },
+      "candidate-2": {
+        "identity": {
+          "source_input_sha256": "abd742949d2349e82efff0aded7eaaefdecf01a06d2500606dc230a3f5fe0d85",
+          "relocated_input_sha256": "3f063daed9754916761c703c562a5b7f9b3f0a64f1818798b77e057ce6b59c00",
+          "model": "/global/cfs/cdirs/m3354/USGSBayAreaVM-08.3.0-corder.rfile",
+          "model_size": 7596899465,
+          "model_mtime_ns": 1552069611352532530,
+          "model_sha256": "b61f1d5ea1ec5a65e13c11bef37eab5986c285b21fc4939f5fdd5a48212c16e4",
+          "nodes": 4,
+          "tasks": 16,
+          "tasks_per_node": 4,
+          "cpus_per_task": 4,
+          "gpus_per_task": 1,
+          "omp_threads": 1,
+          "mpi_gpu_support": 0,
+          "omp_proc_bind": "spread",
+          "omp_places": "threads",
+          "executable": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4",
+          "executable_sha256": "908f560d07d68ab694e5c7fe7d6ea034c43bd5a0fa724d5f035d23fd5acf356e"
+        },
+        "job_id": "59386341",
+        "allocation_node_list": "nid[003593,003832,008372,200288]",
+        "node_list": "nid[003593,003832,008372,200288]",
+        "command": [
+          "srun",
+          "--exclusive",
+          "--exact",
+          "-N",
+          "4",
+          "-n",
+          "16",
+          "--ntasks-per-node=4",
+          "-c",
+          "4",
+          "--gpus-per-task=1",
+          "--gpu-bind=single:1",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/release-9e3bb035/cuda/bin/sw4",
+          "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/hmr3-final/candidate-2/hmr3.in"
+        ],
+        "wall_seconds": 145.63352701393887,
+        "solver_seconds": 79.06,
+        "waveform_sha256": "5e7d3cdfe61e13b56cd25f269683858704963efada7383951572337ceea61182"
+      }
+    },
+    "waveform_comparisons": [
+      {
+        "max_difference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_peak": [
+          0.010414740749608258,
+          0.017414508763719125,
+          0.00800837108477504
+        ]
+      },
+      {
+        "max_difference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_peak": [
+          0.010414740749608258,
+          0.017414508763719125,
+          0.00800837108477504
+        ]
+      },
+      {
+        "max_difference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_peak": [
+          0.010414740749608258,
+          0.017414508763719125,
+          0.00800837108477504
+        ]
+      }
+    ],
+    "rtol": 2e-05,
+    "atol": 1e-12,
+    "median_solver_seconds": {
+      "baseline": 82.58,
+      "candidate": 79.09
+    },
+    "slowdown": -0.042262048922257156,
+    "max_slowdown": 0.05,
+    "performance_passed": true
+  },
+  "excluded_trials": [
+    "Initial source-a4504307 builds with short revision failed configuration; corrected before compiling.",
+    "CUDA a4504307 physical trial stopped to preserve full residual precision; no accepted result.",
+    "Initial two-interface fixture had only seven points in one curved layer and failed setup; corrected in 9d5f18fa.",
+    "Initial cumulative energy bound 1e-10 failed; identical pre-fix baseline establishes unchanged drift. Final test uses the established timestep criterion in both directions.",
+    "a4504307 preliminary hmr3 timings shared host resources with compilation; final 9e3bb035 timings follow completed builds.",
+    "Waiting GPU coordinator was replaced before numerical tests began to separate manufactured-reference dependencies."
+  ],
+  "qualification_limits": [
+    "HIP execution deferred to Frontier.",
+    "Double precision, staged MPI and tested material/topography/receiver configurations only.",
+    "A default iteration cap of 500 does not guarantee convergence for arbitrary models.",
+    "Long production-duration and workload-specific mesh/energy convergence remain required."
+  ],
+  "additional_open_finding": {
+    "issue": "Integer overflow in curvilinear residual grid-size scaling above INT_MAX horizontal intervals.",
+    "scientific_approval": "Pending separate user confirmation; production unchanged.",
+    "proposal": "/pscratch/sd/h/houhun/sw4-curvi-review-20261005/scale-correction-proposal.patch"
+  }
+}
