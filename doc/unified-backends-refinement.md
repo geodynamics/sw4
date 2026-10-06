@@ -140,23 +140,39 @@ the failed check and baseline comparison are retained. This is evidence about
 that fixture, not a long-duration energy guarantee or permission to loosen the
 solver's scientific tolerances. HIP execution remains deferred to Frontier.
 
-The follow-up audit also found a separate inherited overflow in the residual
-scale: `(global_nx-1)*(global_ny-1)` multiplies 32-bit integers before conversion
-to `float_sw4`. The extracted production expression triggers signed-overflow
-sanitization for a 50,001-by-50,001 interface. A negative wrapped scale can falsely
-satisfy the absolute stopping criterion. Evaluating the same formula in floating
-point avoids this overflow; that additional correction is prepared privately and
-awaits separate scientific approval. Interfaces whose horizontal interval product
-exceeds `INT_MAX` remain outside the qualified scope. The proposed patch and
-arithmetic checks are retained as `scale-correction-proposal.*` in the new evidence
-root `/pscratch/sd/h/houhun/sw4-curvi-review-20261005`.
+The follow-up audit found a separate inherited overflow in the residual scale:
+`(global_nx-1)*(global_ny-1)` multiplied 32-bit integers before conversion to
+`float_sw4`. A negative or zero wrapped scale could falsely satisfy the absolute
+stopping criterion; positive wrapped values could weaken it. Review `5830cf1d`
+independently reproduced the failure at the first overflowing square,
+46,342-by-46,342 points, and at rectangular and zero-wrap dimensions.
+
+After separate scientific approval, commit `3a098b0a` converts an operand before
+multiplication and rejects a nonfinite or nonpositive scale collectively before
+iteration. It preserves the scaling formula and both `1e-6` tolerances. This
+removes the residual scale's signed-32-bit area restriction; it does not qualify
+the memory cost or physical waveforms of a huge mesh.
+
+The on-demand regression compiles the production expression, scale guard and
+convergence checks with undefined-behavior sanitization. It covers ordinary
+dimensions, both sides of `INT_MAX`, rectangular/zero wrapping and the largest
+positive integer axes, plus invalid scales and nonfinite residuals. Restoring the
+old multiplication makes this regression fail. Both float and double arithmetic
+are checked; this supplies no additional single-precision PDE qualification.
+
+```sh
+/global/cfs/cdirs/m3354/perl/conda_eqsim/bin/python \
+  tests/backends/curvilinear_scale.py --work-dir <new-scratch-directory>
+```
 
 ## Validation of the approved correction
 
-Clean CPU and CUDA builds pin production source `9e3bb035`; later commits change
-only on-demand tests and documentation. The source/CMake file manifest verifies
-that the tested production files match the branch. Qualification drivers pin
-`6eb6f15e`, with the earlier driver identities retained for individual runs.
+The cap/nonfinite qualification reviewed at `5830cf1d` uses clean CPU and CUDA
+builds pinned to production source `9e3bb035`. Commits through that reviewed head
+changed only on-demand tests and documentation. Its source/CMake manifest pins
+the tested files; the subsequent scaling correction is qualified separately
+below. Qualification drivers pin `6eb6f15e`, with the earlier driver identities
+retained for individual runs.
 
 | Check | OpenMP | CUDA |
 | --- | --- | --- |
@@ -181,6 +197,8 @@ Fresh `performance/large/hmr3.in` runs alternate three RAJA/unified pairs on the
 same four nodes and sixteen GPUs, after compilation completes. RAJA solver times
 are 82.58, 82.64 and 82.18 seconds; unified times are 79.43, 79.09 and 79.06 seconds.
 The medians, 82.58 and 79.09 seconds, give 4.23% lower solver time for unified.
+Median end-to-end wall time is 145.63 seconds for unified versus 142.86 seconds
+for RAJA, 1.94% higher; the solver improvement is not a total-runtime improvement.
 All three waveform comparisons pass. The allocation contains two nodes of 40 GB
 A100s and two nodes of 80 GB A100s. This is a scoped workload result, not a general
 speedup or proof that previously unconverged cases cost no additional iterations.
@@ -201,3 +219,69 @@ existing pytest suites are unchanged.
 | `9d5f18fa` | Valid multi-interface layers and exact residual gates | Two interfaces, 3,320 converged solves on CPU/CUDA and multiple decompositions |
 | `a64c40ce` | Established energy timestep criterion, both signs | Identical pre-fix CPU history and passing CPU/CUDA energy checks |
 | `6eb6f15e` | Three-resolution manufactured-solution regression | Elastic/displacement/attenuation error orders `3.93–4.03` on both backends |
+| `3a098b0a` | Approved overflow-safe residual scale, invalid-scale gate and arithmetic regression | Fresh CPU/CUDA matrix, failures, decompositions, energy, manufactured solutions, halo and four-node timing |
+
+## Qualification of the residual scaling correction
+
+Clean OpenMP and CUDA builds pin `3a098b0a`, including native `sw4mopt` and the
+explicitly built backend probes. New evidence is retained under
+`/pscratch/sd/h/houhun/sw4-curvi-scale-20261005`. Only
+`src/CurvilinearInterface2.C` changes among the production source/build files
+relative to the preceding qualification; the on-demand arithmetic and timing
+drivers are included in the new source archive. Existing pytest suites remain
+unchanged.
+
+The [new qualification record](validation/perlmutter-curvilinear-scale-2026-10-05.json)
+retains 309 artifact hashes and 286 production source/build-file hashes, inputs,
+residual histories, replay results and build/timing identities. Every source/build
+entry matches the current branch's production files. CPU allocation `59397057`
+and four-node GPU allocation `59397056` completed the following checks:
+
+| Check | OpenMP | CUDA |
+| --- | --- | --- |
+| Main curved matrix: physical propagation, gradient materials, attenuation, extrapolation, resolutions, multiple interfaces, energy and manufactured solutions | 22 configurations passed | 22 configurations passed against new CPU references |
+| Accepted interface solves | 14,118; at most 380 updates | 14,118; at most 380 updates |
+| Caps 1/30, five malformed limits and localized NaN | 8 expected failures | 8 expected failures |
+| Decomposition comparisons | Physical at 1/4/8 ranks; multiple interfaces and attenuation at 8 ranks | Same checks; 8-rank follow-ups run on four nodes |
+| Existing solver suite | 20 passed; 5 optional skips | 20 passed; 5 optional skips |
+| Halo sentinels, square/X-strip/Y-strip and both array layouts | 3 shapes; 8 ranks | 3 shapes; 4 nodes |
+
+All accepted solves meet at least one unchanged residual criterion. Physical
+receivers pass componentwise `1e-12 + 2e-5 * reference_peak` comparisons against
+the preceding qualified CPU run and, for CUDA, the newly built CPU. Manufactured
+solutions match independent references and retain fourth-order convergence.
+The 768-sample CPU energy history is unchanged from the preceding qualification;
+both backends pass the established `1e-10` per-step criterion. Floating-point
+waveform and energy comparisons use tolerances, rather than byte identity.
+
+The sanitized arithmetic test passes nine dimension pairs for each floating
+type, including both sides of the first overflowing square, rectangular and
+zero wraps and the largest positive `int` axes. It verifies rejection of an
+unconverged residual of one, acceptance of a sufficiently small residual,
+the scale guard's abort path for four invalid scales, and rejection of nonfinite
+residuals. MPI is stubbed in this small arithmetic probe; the cap/nonfinite
+simulation tests exercise actual collective failure. Restoring the original
+integer multiplication fails under UBSan.
+
+The fresh full nine-second `raja:performance/large/hmr3.in` measurement uses
+three alternating pairs on the same four nodes and sixteen A100 GPUs, after
+all compilation completes. This allocation contains one 40 GB and three 80 GB
+A100 nodes. All three paired waveform comparisons pass at the existing
+componentwise tolerance.
+
+| Pair | RAJA solver seconds | Unified solver seconds | RAJA wall seconds | Unified wall seconds |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 81.68 | 78.74 | 142.80 | 158.17 |
+| 1 | 82.12 | 78.71 | 141.36 | 136.00 |
+| 2 | 81.76 | 78.66 | 138.34 | 135.39 |
+| Median | **81.76** | **78.71** | **141.36** | **136.00** |
+
+Median solver time is **3.73% lower** and end-to-end median wall time is
+**3.79% lower** for unified. The first candidate's larger wall time illustrates
+startup variability; three pairs do not establish a confidence interval or a
+general speedup. The timing driver records solver and wall medians separately.
+
+This closes the reviewed residual-scaling overflow within the arithmetic and
+CPU/CUDA solver scope above. Huge physical meshes were not allocated. Long
+production durations, curved restart/inversion, memory and scaling qualification
+remain workload-specific gates. HIP execution remains deferred to Frontier.
