@@ -180,7 +180,8 @@ units. Observation component masks apply independently, and interpolation edge
 stencils fit zero-based sample storage. GPU paths retain the CPU observation
 support rule, iteration limit and zero-curvature adjoint-source fallback. If a Newton
 step has zero curvature or a nonfinite result, the search keeps its best
-sampled shift. Correlation trials outside observation support contribute zero.
+sampled shift and identifies the station in the log. Correlation trials
+outside observation support contribute zero.
 
 ```sh
 : "${EQSIM_PYTHON:?select the supported scientific Python}"

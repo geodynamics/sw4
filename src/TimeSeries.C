@@ -1914,10 +1914,12 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
     if (dbg) cout << m_event << " 2. Newton iteration" << endl;
     while (it < maxit && err > tol) {
       shiftfunc(observed, t1, f, df, ddf);
-      // Keep the best sampled shift when Newton cannot take a step.
-      if (ddf == 0) return tmax;
-      float_sw4 tnew = t1 - df / ddf;
-      if (!std::isfinite(tnew)) return tmax;
+      float_sw4 tnew = ddf == 0 ? t1 : t1 - df / ddf;
+      if (ddf == 0 || !std::isfinite(tnew)) {
+        cout << m_staName << " WARNING: compute_maxshift: using sampled shift "
+             << tmax << " after an undefined Newton step" << endl;
+        return tmax;
+      }
       err = abs(tnew - t1);
       t1 = tnew;
       it++;

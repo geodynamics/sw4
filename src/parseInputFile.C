@@ -7119,7 +7119,7 @@ void EW::processObservationHDF5(
   int writeEvery = 0;
   int downSample = 1;
   TimeSeries::receiverMode mode = TimeSeries::Displacement;
-  float_sw4 winl, winr;
+  float_sw4 winl = 0, winr = 0;
   bool winlset = false, winrset = false;
   char exclstr[4] = {'\0', '\0', '\0', '\0'};
   bool usex = true, usey = true, usez = true;
