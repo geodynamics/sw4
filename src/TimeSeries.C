@@ -2218,143 +2218,105 @@ if( compute_difference && m_hdf5Format )
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
+float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
 {
-   bool dbg =false;
-   if( m_myPoint )
-   {
-      //      dbg = m_staName == "FAKE.1";
-      // 1. Evaluate correlation at some time shifts around zero
-      int noptpt = 40;
-      float_sw4 tlim = 2, fmax = -1e38, tmax=0;
-      float_sw4 f, df, ddf;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (dbg)
-      cout << m_event << "Compute maxshift \n 1. scan through time points "
-           << endl;
-
-#else // SW4 backend
-if( dbg )
-      {
-         cout << m_staName << " : " << m_global_event << "Compute maxshift \n 1. scan through time points " << endl;
-      }
-
-#endif // SW4 backend
-for( int n=0 ; n < noptpt ; n++ )
-      {
-         float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
-         shiftfunc( observed, tshift, f, df, ddf );
-         if( f > fmax )
-         {
-            fmax = f;
-            tmax = tshift;
-         }
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (dbg) cout << m_event << "ts= " << tshift << " f= " << f << endl;
-
-#else // SW4 backend
-if( dbg )
-            cout << m_staName<< " : " << m_global_event << "ts= " << tshift << " f= " << f << endl;
-
-#endif // SW4 backend
-}
-      // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-int maxit = 15, it = 0;
-
-#else // SW4 backend
-int maxit=15, it=0;
-
-#endif // SW4 backend
-float_sw4 tol=1e-12;
-      float_sw4 err=tol+1;
-      float_sw4 t1 = tmax;
-      //      t1 = 0;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (dbg) cout << m_event << " 2. Newton iteration" << endl;
-
-#else // SW4 backend
-if( dbg )
-        cout << m_global_event << " 2. Newton iteration" << endl;
-
-#endif // SW4 backend
-while( it < maxit && err > tol )
-      {
-         shiftfunc( observed, t1, f, df, ddf );
-         float_sw4 tnew = ddf == 0 ? t1 : t1 - df / ddf;
-         if (ddf == 0 || !std::isfinite(tnew)) {
-           cout << m_staName << " WARNING: compute_maxshift: using sampled shift "
-                << tmax << " after an undefined Newton step" << endl;
-           return tmax;
-         }
-         err = abs(tnew-t1);
-         t1=tnew;
-         it++;
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-if (dbg) cout << m_event << " it " << it << " err " << err << endl;
-
-#else // SW4 backend
-if( dbg )
-            cout << m_staName << " : " << m_global_event << " it " << it << " err " << err << endl;
-
-#endif // SW4 backend
-}
-      //      if( err < tol )
-
-if( f > fmax ) // && ( -tlim <= t1 && t1 <= tlim ) )
-      {
-
-tmax = t1;
-         if( err > tol )
-         {
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << "ERROR: No convergence in compute_maxshift, err= " << err
-
-#else // SW4 backend
-cout << m_staName << " ERROR: No convergence in compute_maxshift, err= " << err
-#endif // SW4 backend
-<< endl;
-         }
-         if( ddf >= 0 )
-         {
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << "ERROR: compute_maxshift found a minimum,  f'' = " << ddf
-
-#else // SW4 backend
-cout << m_staName << " ERROR: compute_maxshift found a minimum,  f'' = " << ddf
-#endif // SW4 backend
-<< endl;
-         }
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-}
-
-#else // SW4 backend
-}
-      else
-         cout << m_staName << " WARNING: compute_maxshift:  max shift not determined by f'=0" << endl;
-
-#endif // SW4 backend
-if( dbg )
-
-#if defined(SW4_USE_RAJA) // SW4 backend
-cout << m_event << " Found optimal time shift = " << tmax << " df= " << df
-
-#else // SW4 backend
-cout << m_staName << " : " << m_global_event << " Found optimal time shift = " << tmax << " df= " << df
-#endif // SW4 backend
-<< " f= " << f << " fmax= " << fmax << endl;
-      return tmax;
-   }
-   else
+   resolved = false;
+   if (!m_myPoint)
       return 0;
+
+   // Keep the reference lag range and coarse samples. Refine only inside
+   // a bracket with a rising left side and a falling right side.
+   constexpr int n = 40;
+   const float_sw4 limit = 2, spacing = 2 * limit / (n - 1);
+   float_sw4 lags[n], scores[n], slopes[n], scale = 0;
+   int best = 0;
+   auto unresolved = [&](const char* reason, float_sw4 lag) {
+      cout << "Unresolved travel-time window " << m_staName << ": " << reason
+           << ", sampled shift " << lag << endl;
+      return lag;
+   };
+   if (observed.mLastTimeStep < 5 || mLastTimeStep < 0 ||
+       !(observed.m_dt > 0) || !std::isfinite(observed.m_dt))
+      return unresolved("insufficient observation samples", 0);
+
+   for (int i = 0; i < n; ++i)
+   {
+      lags[i] = -limit + i * 2 * limit / (n - 1);
+      float_sw4 curvature;
+      shiftfunc(observed, lags[i], scores[i], slopes[i], curvature);
+      if (!std::isfinite(scores[i]) || !std::isfinite(slopes[i]))
+         return unresolved("nonfinite correlation", i == 0 ? 0 : lags[best]);
+      scale = std::max(scale, std::abs(scores[i]));
+      if (scores[i] > scores[best])
+         best = i;
+   }
+   const float_sw4 sampled = lags[best];
+   if (!(scores[best] > 0))
+      return unresolved("no positive correlation peak", sampled);
+
+   const float_sw4 roundoff = 32 * std::numeric_limits<float_sw4>::epsilon();
+   const float_sw4 score_tol = roundoff * scale;
+   const float_sw4 lag_tol = std::max(float_sw4(1e-12), roundoff * limit);
+   // Scaling both traces changes C and C'' together. Test relative resolution
+   // so a small but identifiable peak retains the same lag.
+   const float_sw4 curvature_tol = (score_tol / spacing) / spacing;
+
+   auto refine = [&](int i, float_sw4& lag, float_sw4& score) {
+      const int left = std::max(0, i - 1), right = std::min(n - 1, i + 1);
+      if (!(slopes[left] > 0 && slopes[right] < 0))
+         return false;
+      float_sw4 lo = lags[left], hi = lags[right];
+      lag = lags[i];
+      for (int it = 0; it < 64; ++it)
+      {
+         float_sw4 slope, curvature;
+         shiftfunc(observed, lag, score, slope, curvature);
+         if (!std::isfinite(score) || !std::isfinite(slope) || !std::isfinite(curvature))
+            return false;
+         const bool maximum = curvature < -curvature_tol &&
+                              std::isfinite(float_sw4(1) / curvature);
+         if (maximum && std::abs(slope) <= lag_tol * -curvature &&
+             lag > -limit && lag < limit && score + score_tol >= scores[i])
+            return true;
+         if (slope > 0)
+            lo = lag;
+         else if (slope < 0)
+            hi = lag;
+         else
+            return false;
+         const float_sw4 trial = maximum ? lag - slope / curvature : lo;
+         const float_sw4 next = trial > lo && trial < hi ? trial : lo + (hi - lo) / 2;
+         if (next == lag || next == lo || next == hi)
+            return false;
+         lag = next;
+      }
+      return false;
+   };
+
+   float_sw4 lag, score;
+   if (!refine(best, lag, score))
+      return unresolved("no resolved interior maximum", sampled);
+
+   // Distinct local maxima can tie even when their sampled heights differ.
+   // Check the refined heights before interpreting one lag as the arrival.
+   for (int i = 0; i < n; ++i)
+   {
+      if (std::abs(i - best) <= 1 || !(scores[i] > 0))
+         continue;
+      if ((i > 0 && scores[i] < scores[i - 1]) ||
+          (i + 1 < n && scores[i] < scores[i + 1]))
+         continue;
+      float_sw4 other_lag, other_score;
+      if (refine(i, other_lag, other_score))
+      {
+         if (std::abs(other_lag - lag) > lag_tol && other_score >= score - score_tol)
+            return unresolved("competing correlation peaks", sampled);
+      }
+      else if (scores[i] >= score - score_tol)
+         return unresolved("competing unresolved peak", sampled);
+   }
+   resolved = true;
+   return lag;
 }
 
 //-----------------------------------------------------------------------
@@ -2694,21 +2656,7 @@ ddmf[0] += ddwgh[m-mmin]*obs_windowed[0][m]*idtfr2;
    if( compute_adjsrc )
    {
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-float_sw4 iddf = ddfunc == 0 ? 1 : 1 / ddfunc;
-
-#else // SW4 backend
-float_sw4 iddf;
-      if( ddfunc == 0 )
-      {
-         std::cout <<"TimeSeries::shiftfunc: WARNING ddf = 0 " << std::endl;
-         iddf = 1;
-      }
-      else
-         iddf=1/ddfunc;
-
-
-#endif // SW4 backend
+      const float_sw4 iddf = 1 / ddfunc;
 for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
          adjsrc[0][i] *= iddf;
@@ -2733,16 +2681,12 @@ for( int i= 0 ; i <= mLastTimeStep ; i++ )
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
+float_sw4 TimeSeries::misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved)
 {
-   // Computes  travel time (correlation) misfit.
-   //  if diff !=NULL, also computes diff := this - observed
-   //       where 'diff' has the same grid points as 'this'. 'observed' is
-   //       interpolated to this grid, and is set to zero outside its interval
-   //       of definition.
-   float_sw4 misfit = 0;
-   if( m_myPoint )
-   {
+   if (resolved)
+      *resolved = false;
+   if (!m_myPoint)
+      return 0;
 
 #if defined(SW4_USE_RAJA) // SW4 backend
 if (abs(m_t0 + m_shift - (observed.m_t0 + observed.m_shift)) > 100)
@@ -2769,37 +2713,28 @@ cout << "station utc = " << m_utc[0] << " " << m_utc[1] << " " << m_utc[2]
          cout << "Observation t0 = " <<observed.m_t0 << " shift= " << observed.m_shift << endl;
          cout << " station  t0 = " << m_t0 << " shift= " << m_shift << endl;
       }
-      // DEBUG
-      //      if( m_myPoint && m_staName=="GS.CN181" )
-      //      {
-      //         cout << "station GS.CN181, window lims "
-      //              << m_winL << " " << m_winR  << " "
-      //              << m_winL2 << " " << m_winR2 << endl;
-      //      }
 
 #endif // SW4 backend
-float_sw4 ms=compute_maxshift( observed );
-      misfit = 0.5*ms*ms;
 
-      if( diff != NULL )
+   bool valid;
+   const float_sw4 lag = compute_maxshift(observed, valid);
+   if (resolved)
+      *resolved = valid;
+   if (diff)
+   {
+      if (diff->mLastTimeStep < mLastTimeStep)
+         diff->allocateRecordingArrays(mLastTimeStep, m_t0 + m_shift, m_dt);
+      float_sw4** source = diff->getRecordingArray();
+      if (valid)
       {
-         float_sw4 f, df, ddf;
-         float_sw4** misfitsource;
-         if( diff->mLastTimeStep < mLastTimeStep )
-            diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
-         misfitsource = diff->getRecordingArray();
-         shiftfunc( observed, ms, f, df, ddf, misfitsource );
-         // DBG
-         //         cout << m_staName << " shift = " << ms << " f= " << f << " df= " << df << " ddf= " << ddf <<endl;
-         //         float_sw4 h=1e-6, fp, dfp, ddfp, fm, dfm, ddfm;
-         //	 shiftfunc( observed, ms+h, fp, dfp, ddfp );
-         //	 shiftfunc( observed, ms-h, fm, dfm, ddfm );
-         //         cout << m_staName << " num df= " << (fp-fm)/(2*h) << " num ddf= " << (dfp-dfm)/(2*h) << endl;
-         // end DBG
-
-}
+         float_sw4 score, slope, curvature;
+         shiftfunc(observed, lag, score, slope, curvature, source);
+      }
+      else
+         for (int q = 0; q < 3; ++q)
+            std::fill_n(source[q], mLastTimeStep + 1, 0);
    }
-   return misfit;
+   return valid ? 0.5 * lag * lag : 0;
 }
 
 //-----------------------------------------------------------------------

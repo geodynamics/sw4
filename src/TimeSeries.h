@@ -114,7 +114,7 @@ class TimeSeries {
 
   float_sw4 misfit(TimeSeries& observed, TimeSeries* diff, float_sw4& dshift,
                    float_sw4& ddshift, float_sw4& dd1shift);
-  float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff);
+  float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved = nullptr);
 
   void interpolate(TimeSeries& intpfrom);
 
@@ -203,7 +203,7 @@ class TimeSeries {
   void getwgh5(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6],
                float_sw4 ddwgh[6]);
 
-  float_sw4 compute_maxshift(TimeSeries& observed);
+  float_sw4 compute_maxshift(TimeSeries& observed, bool& resolved);
   void shiftfunc(TimeSeries& observed, float_sw4 tshift, float_sw4& func,
                  float_sw4& dfunc, float_sw4& ddfunc,
                  float_sw4** adjsrc = NULL);
@@ -383,7 +383,7 @@ float_sw4 arrival_time( float_sw4 lod );
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
 float_sw4 misfit( TimeSeries& observed, TimeSeries* diff, float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift );
-float_sw4 misfit2( TimeSeries& observed, TimeSeries* diff );
+float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved = nullptr);
 
 void interpolate( TimeSeries& intpfrom );
 
@@ -477,7 +477,7 @@ void getwgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[
 void getwgh5( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 
 
-float_sw4 compute_maxshift( TimeSeries& observed );
+float_sw4 compute_maxshift(TimeSeries& observed, bool& resolved);
 void shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
                 float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc=NULL );
 

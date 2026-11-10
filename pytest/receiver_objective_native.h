@@ -72,7 +72,13 @@ static void receiver_objective_checks(EW& ew) {
       double tt=0,ttdot=0;
       // Travel-time derivative checks require an interior, isolated maximum.
       if(mode!=6 && mode!=7) {
-        tt=u.misfit2(o,&d);
+        bool resolved = false;
+        tt = u.misfit2(o, &d, &resolved);
+        if (resolved != (mode != 8)) {
+          std::cout << "NUMERIC_FAIL " << storage << " " << mode
+                    << " unexpected travel-time measurement status" << std::endl;
+          ++errors;
+        }
         for(int q=0;q<3;++q)for(int i=0;i<n;++i)
           ttdot+=d.getRecordingArray()[q][i]*std::sin(.13*i+.7*q);
         objective_fill(u,n,start,.01,step,false);jp=u.misfit2(o,nullptr);
