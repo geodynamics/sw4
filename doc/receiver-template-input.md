@@ -15,10 +15,11 @@ five-sample tanh tapers where they overlap. The second interval is active
 when at least one of its bounds is positive.
 
 The normalized L2 time-shift derivatives include the shift dependence of the
-observation energy. When Newton refinement fails, SW4 logs the station and
-uses the best sampled shift. Travel-time adjoint checks apply to isolated
-correlation peaks. Review sampled fallbacks before using their sources in
-inversion.
+observation energy. A travel-time measurement requires a resolved interior
+correlation peak. Unresolved windows contribute zero score and zero adjoint
+forcing. SW4 logs the reason and sampled lag. Native CPU inversion fixes
+the accepted set at the first evaluation and rejects trial models that lose
+an accepted window. Restart with reviewed windows if no trial is admissible.
 
 Run the receiver checks with the repository's scientific Python. Each mode
 lists its inputs in `--help`.
@@ -32,4 +33,5 @@ lists its inputs in `--help`.
 Use a native CPU baseline for metadata parity. Run `groups`, `startup`,
 `depth`, and the native objective executable inside an authorized allocation.
 For native objectives, use a flat uniform-material deck with (1800, 1800, 0)
-inside the grid.
+inside the grid. The Taylor mode checks the material gradient with the
+native CPU sw4 and sw4mopt executables in an allocation.

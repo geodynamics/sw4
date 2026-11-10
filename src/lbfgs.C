@@ -35,7 +35,7 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 //-----------------------------------------------------------------------   
 
 {
-   double beta=0.9, lambdaprev, fpprev, maxlambda;
+   double beta=0.9, lambdaprev=0, fpprev=f, maxlambda;
    int ns = nspar+nmpars;
    compute_f_and_df( simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, fnew, dfsnew, dfmnew, myRank, mopt );
@@ -100,7 +100,8 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 }
 	 do
 	 {
-	    double lambdaincr = -slope*lambdadiff*lambdadiff/(2*(fhi-(flo+slope*lambdadiff)));
+	    double lambdaincr = std::isfinite(fhi) ?
+                -slope*lambdadiff*lambdadiff/(2*(fhi-(flo+slope*lambdadiff))) : 0.5*lambdadiff;
 	    if( lambdaincr < 0.2*lambdadiff )
 	       lambdaincr = 0.2*lambdadiff;
 	    lambda = lambdalo + lambdaincr;
@@ -379,6 +380,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    }
    
    bool lambdaprevdefined = false;
+   bool invalid_trial = false;
    while( retcode == 2 )
    {
       for( int i=0; i < ns ; i++ )
@@ -392,6 +394,19 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
             if( myRank == 0 )
             	 cout << "Evaluate at lambda = " << lambda << " gives f = " << fnew << " (initslope = "
             	      << initslope << ") " << endl;
+
+      if (std::isinf(fnew) && fnew > 0)
+      {
+         invalid_trial = true;
+         if (lambda <= minlambda)
+         {
+            if (myRank == 0)
+               cerr << "Line search cannot retain the selected travel-time windows" << endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+         }
+         lambda *= 0.5;
+         continue;
+      }
 
       lambdasave.push_back(lambda);
       fcnsave.push_back(fnew);
@@ -448,6 +463,12 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	       //	       for( int i=0 ; i < n ; i++ )
 	       //		  cout << " " << x[i] << endl;
 	 }
+         if (invalid_trial)
+         {
+            if (myRank == 0)
+               cerr << "Line search could not find a step with the selected travel-time windows" << endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+         }
 	 retcode = 1;
 	    // Take a full step
 	 for( int i=0 ; i < ns ; i++ )
@@ -464,6 +485,12 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    //	    }
 	 compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources,
 		    GlobalTimeSeries, GlobalObservations, fnew, mopt );
+         if (std::isinf(fnew) && fnew > 0)
+         {
+            if (myRank == 0)
+               cerr << "Fallback step lost a selected travel-time window" << endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+         }
 	 return;
       } // end if ( Could not find satisfactory step )      
       else

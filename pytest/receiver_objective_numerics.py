@@ -53,6 +53,7 @@ STUB=r'''
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -71,8 +72,8 @@ public:
  void allocateRecordingArrays(int last,double start,double dt){mLastTimeStep=last;mAllocatedSize=last+1;m_shift=start-m_t0;m_dt=dt;data.assign(3,vector<double>(last+1,0));fdata.assign(3,vector<float>(last+1,0));for(int q=0;q<3;++q){mRecordedSol[q]=data[q].data();mRecordedFloats[q]=fdata[q].data();}}
  double** getRecordingArray(){return mRecordedSol;}float** getRecordingArrayFloats(){return mRecordedFloats;}
  void set_window(double,double);void set_window(double,double,double,double);double window_weight(double)const;
- double misfit(TimeSeries&,TimeSeries*,double&,double&,double&);double misfit2(TimeSeries&,TimeSeries*);
- double compute_maxshift(TimeSeries&);
+ double misfit(TimeSeries&,TimeSeries*,double&,double&,double&);double misfit2(TimeSeries&,TimeSeries*,bool* = nullptr);
+ double compute_maxshift(TimeSeries&,bool&);
  void shiftfunc(TimeSeries&,double,double&,double&,double&,double** =nullptr);
  void getwgh(double,double[6],double[6],double[6]);void getwgh5(double,double[6],double[6],double[6]);
  void put(int q,int i,double value){data[q][i]=value;fdata[q][i]=value;}
@@ -101,7 +102,9 @@ int main(){cout<<setprecision(17);
   double adjfd=(a-b)/(2*pe);
   double f,df,ddf,fp,dfp,ddfp,fm,dfm,ddfm;
   u.shiftfunc(o,.137,f,df,ddf);u.shiftfunc(o,.137+e,fp,dfp,ddfp);u.shiftfunc(o,.137-e,fm,dfm,ddfm);
-  double tt=u.misfit2(o,&d),ttadj=0;
+  bool valid=false;
+  double tt=u.misfit2(o,&d,&valid),ttadj=0;
+  if(!valid) throw runtime_error("isolated matrix peak was excluded");
   for(int q=0;q<3;++q)for(int i=0;i<=u.mLastTimeStep;++i)ttadj+=d.data[q][i]*sin(.13*i+.7*q);
   for(int q=0;q<3;++q)for(int i=0;i<=u.mLastTimeStep;++i)u.put(q,i,u.get(q,i)+pe*sin(.13*i+.7*q));
   a=u.misfit2(o,nullptr);
@@ -146,14 +149,43 @@ int main(){cout<<setprecision(17);
   u.shiftfunc(o,2,f,df,ddf);
   if(abs(df-3/dt)>1e-9 || abs(ddf)>1e-9)
     throw runtime_error("invalid linear correlation fixture");
-  double score=u.misfit2(o,&d);
-  if(score!=2)
-    throw runtime_error("undefined Newton step did not retain the sampled shift");
+  bool resolved=true;
+  for(int q=0;q<3;++q) for(int i=0;i<=u.mLastTimeStep;++i) d.put(q,i,1);
+  double score=u.misfit2(o,&d,&resolved);
+  if(resolved || score!=0)
+    throw runtime_error("unresolved window contributed to the objective");
   for(int q=0;q<3;++q)
     for(int i=0;i<=u.mLastTimeStep;++i)
-      if(!isfinite(d.data[q][i])) throw runtime_error("nonfinite fallback source");
+      if(d.data[q][i]!=0) throw runtime_error("unresolved window left adjoint forcing");
  }
- cout<<"PASS nonzero-slope, zero and near-zero curvature Newton fallback\n";
+ cout<<"PASS exclusion of zero and near-zero curvature windows\n";
+ // Analytic weak peak: its curvature scales with amplitude, its lag does not.
+ for(int exponent : {-10,-50}) {
+  TimeSeries u(41,4,.125),o(97,0,.125),d(41,4,.125);
+  u.m_use_y = u.m_use_z = false;
+  u.put(0,0,1);
+  for(int i=0;i<=o.mLastTimeStep;++i) {
+   double x=i-(4+.1875)/.125;
+   o.put(0,i,ldexp(1.,exponent)*(64-x*x));
+  }
+  bool valid=false;
+  double score=u.misfit2(o,&d,&valid);
+  if(!valid || abs(score-.5*.1875*.1875)>1e-12 || abs(d.data[0][1]+.1875*.125)>1e-12)
+    throw runtime_error("resolvable weak peak disagrees with analytic objective/adjoint");
+ }
+ {TimeSeries u(41,4,.125),o(97,0,.125),d(41,4,.125);
+  u.m_use_y=u.m_use_z=false;
+  u.put(0,0,1);
+  for(int i=0;i<=o.mLastTimeStep;++i) {
+    const double periodic[4]={1,1,-1,-1};
+    o.put(0,i,periodic[i%4]);
+  }
+  bool valid=true;
+  double score=u.misfit2(o,&d,&valid);
+  if(valid || score!=0) throw runtime_error("ambiguous periodic peaks were accepted");
+ }
+ cout<<"PASS weak isolated peak and competing peak controls\n";
+
 }
 '''
 
@@ -389,6 +421,100 @@ def run_native_build(args):
                        args.make_optdir, revision))
 
 
+def run_taylor(args):
+    """Exercise the actual SW4 forward solve, material adjoint and objective."""
+    import os
+    import struct
+    from receiver_template_startup import launch
+
+    work = args.work_dir.resolve()
+    work.mkdir(parents=True, exist_ok=False)
+    sw4 = args.sw4.resolve(strict=True)
+    mopt = args.sw4mopt.resolve(strict=True)
+    deck = """grid h=200 x=6000 y=6000 z=4000
+time t=2.8 utcstart=01/01/2100:00:00:00.000
+supergrid gp=6
+developer cfl=0.7
+block vp=6000 vs=3464 rho=2700
+source x=2600 y=2800 z=800 Mzz=1 m0=1e16 t0=0.75 type=Ricker freq=2
+"""
+    station = "x=4000 y=3400 z=0"
+
+    def execute_case(name, binary, inputs):
+        root = work / name
+        root.mkdir()
+        input_path = root / "case.in"
+        input_path.write_text(inputs)
+        command = [args.launcher, "--exact", "--nodes=1", f"--ntasks={args.tasks}",
+                   "--cpus-per-task=1", "--cpu-bind=cores", str(binary), str(input_path)]
+        code, _ = launch(command, root, dict(os.environ, OMP_NUM_THREADS="1"), timeout=180)
+        log = (root / "sw4.log").read_text()
+        assert code == 0, log[-8000:]
+        return root, log
+
+    forward, _ = execute_case(
+        "observed", sw4, deck + "fileio path=.\n" +
+        f"rec {station} file=arrival usgsformat=1 sacformat=0 nsew=0\n")
+    data = (forward / "arrival.txt").read_text().splitlines()
+    assert len(data) > 20
+    (forward / "zero.txt").write_text("\n".join(
+        line if line.startswith("#") or not line.strip()
+        else line.split()[0] + " 0 0 0" for line in data) + "\n")
+    base = deck + f"""fileio path=run obspath={forward} temppath=tmp pfs=0
+mparcart nx=1 ny=1 nz=1 type=vponly init=0
+mscalefactors vp=6000
+observation {station} file=arrival shift=0.08
+"""
+    invalid = "observation x=3200 y=4200 z=0 file=zero\n"
+
+    def measure(label, receivers, excluded):
+        run = base + receivers
+        grad, grad_log = execute_case(
+            label + "-gradient", mopt, run +
+            "mrun task=gradtest misfit=crosscorr tsoutput=off savesteps=250\n")
+        # The shipped gradient test independently computes a centered difference.
+        text = (grad / "run/GradientTest.txt").read_text()
+        rows = [[float(x) for x in line.split()] for line in text.splitlines() if line.strip()]
+        assert len(rows) == 1 and len(rows[0]) >= 5, text
+        index, _, _, adjoint, centered = rows[0][:5]
+        assert index == 0 and math.isfinite(adjoint) and abs(adjoint) > 1e-10, rows
+        assert abs(adjoint - centered) <= 2e-3 * abs(adjoint), rows
+
+        assert grad_log.count(f"Travel-time window selection: 1 accepted, {excluded} excluded") == 1
+        assert "Model lost " not in grad_log
+        base_score = re.search(r"Unperturbed objective function f=(\S+)", grad_log)
+        assert base_score
+        return float(base_score[1]), rows[0]
+
+    good = measure("resolved-only", "", 0)
+    mixed = measure("mixed", invalid, 1)
+    assert good == mixed, (good, mixed)
+    base_score, (_, _, _, adjoint, centered, *_) = mixed
+
+    # mfsurf's legacy var=rho maps to index 0, the sole Vp coefficient here.
+    curve, curve_log = execute_case(
+        "mixed-curve", mopt, base + invalid +
+        "mrun task=func1d misfit=crosscorr tsoutput=off\n"
+        "mfsurf i=1 j=1 k=1 var=rho pmin=0 pmax=40 npts=5\n")
+    assert curve_log.count("Travel-time window selection: 1 accepted, 1 excluded") == 1
+    assert "Model lost " not in curve_log
+    payload = (curve / "run/fsurf.bin").read_bytes()
+    ndim, count, lo, hi = struct.unpack_from("=iidd", payload)
+    assert (ndim, count, lo, hi) == (1, 5, 0, 40)
+    scores = struct.unpack_from(f"={count}d", payload, struct.calcsize("=iidd"))
+    assert all(math.isfinite(value) for value in scores) and scores[0] > 0
+    assert math.isclose(scores[0], base_score, rel_tol=1e-6)
+    steps = (40, 20, 10)
+    remainder = [abs(scores[h // 10] - scores[0] - h * adjoint) for h in steps]
+    orders = [math.log(a / b, 2) for a, b in zip(remainder, remainder[1:])]
+    assert all(1.7 <= order <= 2.3 for order in orders), (steps, remainder, orders)
+    mixed = dict(adjoint=adjoint, centered=centered, scores=scores, steps=steps,
+                 remainder=remainder, orders=orders)
+    (work / "taylor-results.json").write_text(json.dumps(mixed, indent=2) + "\n")
+    print("PASS model-level Taylor test and zero contribution from unresolved window")
+    print("Taylor orders:", *mixed["orders"])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_subparsers(dest="mode", required=True)
@@ -418,6 +544,15 @@ def main():
     build.add_argument("--make-optdir", help="Existing standalone RAJA Make output directory")
     native.add_argument("--revision", help="Version for an archived RAJA source tree")
     native.set_defaults(check=run_native_build)
+
+
+    taylor = modes.add_parser("taylor", help="Run a native CPU sw4mopt material-gradient Taylor test")
+    taylor.add_argument("--work-dir", type=Path, required=True)
+    taylor.add_argument("--sw4", type=Path, required=True, help="HDF5-enabled native CPU forward solver")
+    taylor.add_argument("--sw4mopt", type=Path, required=True, help="Matching native CPU inversion solver")
+    taylor.add_argument("--launcher", default="srun")
+    taylor.add_argument("--tasks", type=int, default=2)
+    taylor.set_defaults(check=run_taylor)
 
     args = parser.parse_args()
     args.check(args)
