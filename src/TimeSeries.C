@@ -1806,6 +1806,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 // Interpolate data to this object
 //      int order = 4;
       float_sw4 scale_factor=0;
+      float_sw4 dscale_factor = 0, ddscale_factor = 0;
 
       float_sw4 mf[3], dmf[3], ddmf[3];
       float_sw4 dtfr  = observed.m_dt;
@@ -1967,7 +1968,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       getwgh5( ai, wgh, dwgh, ddwgh );
             
 	    }
-	    else if( ie > nfrsteps-3 )
+	    else if( ie > nfrsteps - 4 )
 	    {
 	       mmin = nfrsteps-5;
 	       mmax = nfrsteps-1;
@@ -2072,6 +2073,12 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    }
 	 }
 	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
+      // The observation energy changes when its time shift changes.
+      dscale_factor -= 2 * (wghx * mf[0] * dmf[0] +
+                            wghy * mf[1] * dmf[1] + wghz * mf[2] * dmf[2]);
+      ddscale_factor += 2 * (wghx * (dmf[0] * dmf[0] + mf[0] * ddmf[0]) +
+                             wghy * (dmf[1] * dmf[1] + mf[1] * ddmf[1]) +
+                             wghz * (dmf[2] * dmf[2] + mf[2] * ddmf[2]));
       }
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
@@ -2084,8 +2091,17 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
                " t0 = " << m_t0 << " shift= " << m_shift << endl;
 
 	    scale_factor=1;
+         dscale_factor = ddscale_factor = 0;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
+      // Apply the quotient rule to the same normalized objective we return.
+      float_sw4 normalized_misfit = 0.5 * misfit * iscale;
+      float_sw4 normalized_dshift =
+          (dshift - normalized_misfit * dscale_factor) * iscale;
+      ddshift = (ddshift - normalized_misfit * ddscale_factor -
+                 2 * normalized_dshift * dscale_factor) * iscale;
+      dshift = normalized_dshift;
+      dd1shift *= iscale;
 	 misfit *= iscale;
 	 if( compute_difference )
 	    for( int i=0 ; i <= mLastTimeStep ; i++ )
@@ -2272,8 +2288,8 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       //      if( !compute_adjsrc ) 
       {
          obs_windowed[0][i] *= wghxobs;
-         obs_windowed[1][i] *= wghxobs;
-         obs_windowed[2][i] *= wghxobs;     
+         obs_windowed[1][i] *= wghyobs;
+         obs_windowed[2][i] *= wghzobs;
       }
    }
    for( int i= 0 ; i <= mLastTimeStep ; i++ )
@@ -2344,7 +2360,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }
-	 else if( ie > nfrsteps-3 )
+	 else if( ie > nfrsteps - 4 )
 	 {
 	    mmin = nfrsteps-5;
 	    mmax = nfrsteps-1;
