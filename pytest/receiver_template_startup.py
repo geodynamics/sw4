@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import subprocess
 import time
-import threading
+import signal
 
 import h5py
 import numpy as np
@@ -42,9 +42,51 @@ def template(path, count, malformed=False):
                 # Both coordinate representations must retain Cartesian priority.
                 group["STLA,STLO,STDP"] = np.asarray([31, -117, 0], dtype=np.float64)
             group["USEZVALUE"] = np.asarray([1], dtype=np.int32)
+            if index % 11 == 0:
+                group["WINDOWS"] = np.asarray([0.1, 0.2, 0.3, 0.4])
         if malformed:
             group = stream.create_group("z_bad")
             group["STX,STY,STZ"] = np.asarray([b"x", b"y", b"z"], dtype="S1")
+
+
+def launch(command, destination, environment, timeout=120, grace=5):
+    """Retain output without blocking on a pipe held by a surviving child."""
+    start = time.monotonic()
+    deadline = start + timeout
+    first_step = None
+    path = destination / "sw4.log"
+    with path.open("w") as log, path.open("r") as observed:
+        process = subprocess.Popen(command, cwd=destination, env=environment,
+                                   stdout=log, stderr=subprocess.STDOUT,
+                                   start_new_session=True)
+        try:
+            while True:
+                if first_step is None:
+                    observed.seek(0)
+                    if re.search(r"Time step\s+(?:=\s*)?1\b", observed.read()):
+                        first_step = time.monotonic() - start
+                try:
+                    code = process.wait(timeout=max(0, min(0.1, deadline - time.monotonic())))
+                    if first_step is None:
+                        observed.seek(0)
+                        if re.search(r"Time step\s+(?:=\s*)?1\b", observed.read()):
+                            first_step = time.monotonic() - start
+                    return code, first_step
+                except subprocess.TimeoutExpired:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError("SW4 regression exceeded {} seconds".format(timeout))
+        except BaseException:
+            # The launcher and local descendants have a task-owned process group.
+            for sig in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.killpg(process.pid, sig)
+                except ProcessLookupError:
+                    pass
+                try:
+                    process.wait(timeout=grace)
+                except subprocess.TimeoutExpired:
+                    pass
+            raise
 
 
 def run(args, binary, fixture, destination, expect_failure=False, second=False):
@@ -60,33 +102,7 @@ def run(args, binary, fixture, destination, expect_failure=False, second=False):
     command.extend([str(binary), str(destination / "case.in")])
     environment = dict(os.environ, OMP_NUM_THREADS="1")
     start = time.monotonic()
-    first_step = None
-    with (destination / "sw4.log").open("w") as log:
-        process = subprocess.Popen(command, cwd=destination, env=environment,
-                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                   text=True)
-        timed_out = threading.Event()
-        def terminate():
-            timed_out.set()
-            process.terminate()
-        timer = threading.Timer(120, terminate)
-        timer.daemon = True
-        timer.start()
-        try:
-            # SW4 output can be buffered; this observed timestamp includes that.
-            for line in process.stdout:
-                log.write(line)
-                if first_step is None and re.search(r"Time step\s+(?:=\s*)?1\b", line):
-                    first_step = time.monotonic() - start
-            code = process.wait(timeout=120)
-        except BaseException:
-            process.kill()
-            process.wait()
-            raise
-        finally:
-            timer.cancel()
-        if timed_out.is_set():
-            raise TimeoutError("SW4 regression exceeded 120 seconds")
+    code, first_step = launch(command, destination, environment)
     output = (destination / "sw4.log").read_text()
     stepped = re.search(r"(?i)(?:\btime step\s*(?:=\s*)?\d+|\bbegin time stepping|\btime stepping finished)", output)
     if expect_failure:
@@ -157,10 +173,16 @@ def main():
                                args.work_dir / ("candidate-" + str(count)) / filename, count)
                 print("PASS:", count, filename, "metadata and motion match; peak", peak)
         for name, count, malformed in (("missing", 0, False), ("bad", 0, True),
-                                       ("bad-after-batch", 1024, True)):
+                                       ("bad-after-batch", 1024, True),
+                                       ("bad-size", 0, False), ("bad-size-after-batch", 1024, False)):
             fixture = args.work_dir / (name + ".h5")
             if name != "missing":
                 template(fixture, count, malformed)
+                if name.startswith("bad-size"):
+                    with h5py.File(fixture, "a") as stream:
+                        group = stream.create_group("z_bad")
+                        group["STX,STY,STZ"] = np.asarray([800, 800, 0], dtype=np.float64)
+                        group["WINDOWS"] = np.ones(5)
             results[name] = run(args, args.candidate_sw4, fixture,
                                 args.work_dir / name, expect_failure=True)
             print("PASS:", name, "fails before time stepping")
