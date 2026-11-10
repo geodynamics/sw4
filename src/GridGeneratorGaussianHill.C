@@ -385,7 +385,7 @@ int GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
   //   float_sw4 y = (r-1)*h;
   z = -m_amp *
       exp(-(x - m_xc) * (x - m_xc) * m_ixl2 - (y - m_yc) * (y - m_yc) * m_iyl2);
-  return -1;
+  return 1;
 }
 
 //-----------------------------------------------------------------------

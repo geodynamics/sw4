@@ -111,6 +111,10 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       mBinaryMode(true),
       //  m_utc_set(false),
       //  m_utc_offset_computed(false),
+      m_winL(-1e38),
+      m_winR(1e38),
+      m_winL2(-1e38),
+      m_winR2(-1e38),
       m_use_win(false),
       m_use_x(true),
       m_use_y(true),
@@ -1643,11 +1647,6 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
     bool compute_difference = (diff != NULL);
     float_sw4** misfitsource;
-    float_sw4 aw, bw;
-    if (m_use_win) {
-      aw = M_PI / (m_winR - m_winL);
-      bw = -aw * 0.5 * (m_winR + m_winL);
-    }
     if (compute_difference) {
       if (diff->mLastTimeStep < mLastTimeStep)
         diff->allocateRecordingArrays(mLastTimeStep, m_t0 + m_shift, m_dt);
@@ -1712,10 +1711,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
       float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
       if (m_use_win) {
-        if (t < m_winL || t > m_winR)
-          wghx = wghy = wghz = 0;
-        else
-          wghx = wghy = wghz = pow(cos(aw * t + bw), 10.0) * wghv;
+        wghx = wghy = wghz = window_weight(t);
       }
       if (!m_use_x) wghx = 0;
       if (!m_use_y) wghy = 0;
@@ -1949,11 +1945,6 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
   bool compute_adjsrc = adjsrc != NULL;
   //   float_sw4 scale_factor=0;
 
-  float_sw4 aw, bw;
-  if (m_use_win) {
-    aw = M_PI / (m_winR - m_winL);
-    bw = -aw * 0.5 * (m_winR + m_winL);
-  }
 
   // Weight to ramp down the end of misfit.
   float_sw4 wghv;
@@ -1986,13 +1977,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     // Windowing and component selection
     float_sw4 wghx, wghy, wghz;
     wghx = wghy = wghz = wghv;
-    if (m_use_win) {
-      // Window data in this object w(t_n)
-      if (t - tshift < m_winL || t - tshift > m_winR)
-        wghx = wghy = wghz = 0;
-      else
-        wghx = wghy = wghz = pow(cos(aw * (t - tshift) + bw), 5.0) * wghv;
-    }
+    if (m_use_win) wghx = wghy = wghz = window_weight(t - tshift);
     if (!m_use_x) wghx = 0;
     if (!m_use_y) wghy = 0;
     if (!m_use_z) wghz = 0;
@@ -2023,12 +2008,8 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
         float_sw4 wghxobs, wghyobs, wghzobs;
         wghxobs = wghyobs = wghzobs = 1;
         if (m_use_win) {
-          double tobs = m * dtfr + t0fr;  // t_n+tshift in Observation time
-          // Window data in this object w(t_n+tshift)
-          if (tobs < m_winL || tobs > m_winR)
-            wghxobs = wghyobs = wghzobs = 0;
-          else
-            wghxobs = wghyobs = wghzobs = pow(cos(aw * (tobs) + bw), 5.0);
+          double tobs = m * dtfr + t0fr;
+          wghxobs = wghyobs = wghzobs = window_weight(tobs);
         }
 
         if (observed.m_usgsFormat) {
@@ -2183,6 +2164,8 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
   retval->m_use_win = m_use_win;
   retval->m_winL = m_winL;
   retval->m_winR = m_winR;
+  retval->m_winL2 = m_winL2;
+  retval->m_winR2 = m_winR2;
   retval->m_use_x = m_use_x;
   retval->m_use_y = m_use_y;
   retval->m_use_z = m_use_z;
@@ -2324,7 +2307,7 @@ float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
       float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
       float_sw4 t = m_t0 + i * m_dt;
-      if (m_use_win && (t < m_winL || t > m_winR)) wghx = wghy = wghz = 0;
+      if (m_use_win) wghx = wghy = wghz = window_weight(t);
       if (!m_use_x) wghx = 0;
       if (!m_use_y) wghy = 0;
       if (!m_use_z) wghz = 0;
@@ -2598,6 +2581,30 @@ void TimeSeries::set_window(float_sw4 winl, float_sw4 winr) {
   m_use_win = true;
   m_winL = winl;
   m_winR = winr;
+  m_winL2 = m_winR2 = -1e38;
+}
+
+void TimeSeries::set_window(float_sw4 winl, float_sw4 winr,
+                            float_sw4 winl2, float_sw4 winr2) {
+  m_use_win = true;
+  m_winL = winl;
+  m_winR = winr;
+  m_winL2 = winl2;
+  m_winR2 = winr2;
+}
+
+float_sw4 TimeSeries::window_weight(float_sw4 t) const {
+  // Match the native CPU observation windows: a five-sample tanh taper,
+  // with the maximum weight when P- and S-wave intervals overlap.
+  float_sw4 inverse_width = 1 / (5 * m_dt);
+  float_sw4 weight = 0.5 * (tanh((t - m_winL) * inverse_width) -
+                            tanh((t - m_winR) * inverse_width));
+  if (m_winL2 > 0 || m_winR2 > 0) {
+    float_sw4 second = 0.5 * (tanh((t - m_winL2) * inverse_width) -
+                              tanh((t - m_winR2) * inverse_width));
+    weight = weight >= second ? weight : second;
+  }
+  return weight;
 }
 
 //-----------------------------------------------------------------------
