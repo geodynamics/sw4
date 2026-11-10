@@ -136,7 +136,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       m_event(event) {
 
   // 1. Adjust z if depth below topography is given
-  if (m_zRelativeToTopography && a_ew->topographyExists()) {
+  if (a_ew->topographyExists()) {
     float_sw4 zTopoLocal;
     if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, zTopoLocal,
                                                       a_ew->mTopoGridExt) < 0)
@@ -144,9 +144,9 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
     MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
                   MPI_COMM_WORLD);
 
-    mZ += m_zTopo;
   } else
     m_zTopo = 0;
+  if (m_zRelativeToTopography) mZ += m_zTopo;
   m_zRelativeToTopography = false;
   // 2. Find nearest grid point and its grid.
   m_myPoint =

@@ -1,5 +1,7 @@
 # Receiver-template input
 
+This checkout targets `raja`. The shared input contract below applies to all three companion changes: [native CPU (#251)](https://github.com/geodynamics/sw4/pull/251), [standalone RAJA (#252)](https://github.com/geodynamics/sw4/pull/252), and [unified CPU/GPU (#253)](https://github.com/geodynamics/sw4/pull/253). Branch-specific sections describe those companion implementations; they do not add another backend to this checkout.
+
 `rechdf5` and `sachdf5` metadata are read once by rank zero of each participating simulation MPI group. SW4 distributes
 ordered station records in batches of up to 1,024, then performs the existing
 coordinate conversion, domain filtering, and receiver construction on every
@@ -78,7 +80,7 @@ the second interval is disabled initially and when switching back from two
 intervals. This fixes the formerly unbounded default second window on native
 CPU, which could override a requested single window.
 
-RAJA now uses this weighting instead of its previous cosine taper. Its retained weighted-product helper uses the same window
+The standalone RAJA and unified GPU changes use this weighting instead of their previous cosine tapers. Its retained weighted-product helper uses the same window
 weight as its misfit and cross-correlation paths. These are deliberate changes to windowed
 misfit calculations; forward waveform comparisons alone do not establish
 inversion equivalence. The production setters and misfit weighting blocks are
@@ -88,15 +90,15 @@ exercised with single intervals, disjoint/overlapping pairs, and mode changes:
 "$EQSIM_PYTHON" pytest/receiver_windows.py
 ```
 
-For the RAJA metadata regression, use a native CPU baseline revision to check
+For the standalone RAJA metadata regression, use a native CPU baseline revision to check
 new `USEZVALUE` and `WINDOWS` support. Its previous RAJA baseline intentionally
-lacks these fields. The native startup regression compares matched backend
+lacks these fields; native CPU and unified already supported them. The native startup regression compares matched backend
 builds and exercises input, output, sampling, and failure behavior separately.
 
 ## Absolute and surface-relative depth control
 
 `pytest/receiver_template_depth.py` compares template receivers with inline
-absolute and surface-relative receivers over Gaussian topography. Its fixture
+absolute and surface-relative receivers over Gaussian topography. Its positive-depth fixture
 requires the two placements to produce different waveforms, so a test cannot
 pass merely because both requested depths sample the same grid point.
 
@@ -105,7 +107,7 @@ pass merely because both requested depths sample the same grid point.
   --work-dir "$SCRATCH/receiver-depth-regression"
 ```
 
-Use `--gpu` for CUDA execution. RAJA also corrects the Gaussian interpolator's
+Use `--gpu` for CUDA execution. The standalone RAJA change also corrects the Gaussian interpolator's
 success status: computing a valid analytical height must not report failure.
 The optional `--unsupported-baseline /path/to/old/sw4` control records the old
 RAJA failure or absolute-depth mismatch while retaining a valid flat-terrain inline control.
@@ -138,3 +140,24 @@ preprocesses the selected implementation (including inline header methods), so
 the GPU checks cannot accidentally exercise the native CPU window code.
 Smoke startup timestamps begin at `srun` and exclude module setup/allocation
 wait; they do not establish representative-scale performance.
+
+Metadata dataset element counts are checked before fixed-buffer reads: one for
+scalar flags/bounds, three for coordinates, and four for `WINDOWS`. Scalar and
+one-element-array representations remain accepted. Invalid counts use the same
+metadata-failure path, including after a complete batch.
+
+The local runner controls need no allocation:
+
+```sh
+"$EQSIM_PYTHON" pytest/test_receiver_template_startup_timeout.py
+```
+
+They cover normal exit, a launcher ignoring SIGTERM, and a surviving descendant
+holding output open. Native runs retain output in a file and terminate the
+launcher's process group with a bounded grace period on timeout. First-step
+observation polls at 0.1-second intervals and includes solver output buffering.
+
+The depth regression also requires an absolute receiver at
+`z=-50 m` and its equivalent `depth=50 m` receiver beneath the Gaussian summit
+at `z=-100 m` to exist and produce identical nonzero motion. Absolute receivers
+use the actual terrain for validity checks without adding it to their z value.

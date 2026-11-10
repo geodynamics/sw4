@@ -243,6 +243,11 @@ def main():
             depth.create_dataset("USEZVALUE", data=np.array([1], dtype=np.int32))
             depth.create_dataset("WINDOWS", data=[1., 2., 3., 4.])
             station(stream, "k_after_windows", [8, 9, 10])
+            scalar = station(stream, "l_scalar_fields", [9, 10, 11])
+            scalar["ISNSEW"] = np.int32(0)
+            scalar["USEZVALUE"] = np.int32(1)
+            scalar["WindowL"] = np.float64(1)
+            scalar["WindowR"] = np.float64(4)
         fixtures.append(mixed)
         for count in (0, 1024, 2053):
             path = work / ("count-" + str(count) + ".h5")
@@ -287,7 +292,27 @@ def main():
                 station(stream, "a{:04d}".format(index), [1, 2, 3])
             group = stream.create_group("z_bad")
             group.create_dataset("STX,STY,STZ", data=[b"a", b"b", b"c"])
-        for path in (work / "missing.h5", malformed, partial):
+        invalid_sizes = []
+        fields = (("ISNSEW", 1), ("USEZVALUE", 1), ("WindowL", 1),
+                  ("WindowR", 1), ("STX,STY,STZ", 3),
+                  ("STLA,STLO,STDP", 3), ("WINDOWS", 4))
+        for field, expected in fields:
+            for count in (expected - 1, expected + 1):
+                path = work / (field.replace(",", "-") + "-size-" + str(count) + ".h5")
+                with h5py.File(path, "w") as stream:
+                    group = stream.create_group("station")
+                    if not field.startswith("ST"):
+                        group["STX,STY,STZ"] = [1., 2., 3.]
+                    group[field] = np.ones(count, dtype=np.float64)
+                invalid_sizes.append(path)
+        partial_size = work / "bad-size-after-full-batch.h5"
+        with h5py.File(partial_size, "w") as stream:
+            for index in range(1024):
+                station(stream, "a{:04d}".format(index), [1, 2, 3])
+            group = station(stream, "z_bad", [1, 2, 3])
+            group["WINDOWS"] = np.ones(5)
+        invalid_sizes.append(partial_size)
+        for path in [work / "missing.h5", malformed, partial] + invalid_sizes:
             subprocess.run([str(programs["candidate"]), str(path),
                             str(work / "failure"), "failure", "0"],
                            check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

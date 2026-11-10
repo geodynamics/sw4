@@ -81,6 +81,31 @@ def check(root, unsupported=False):
             assert peak>0
 
 
+def elevated_absolute(args, binary):
+    """Both representations must retain a receiver below terrain at negative z."""
+    template = args.work_dir / 'elevated-stations.h5'
+    with h5py.File(template, 'w') as stream:
+        for name, z, use_z in [('s_absolute', -50, 1), ('s_relative', 50, 0)]:
+            group = stream.create_group(name)
+            group['STX,STY,STZ'] = np.asarray([2000, 2000, z], dtype=np.float64)
+            group['ISNSEW'] = np.asarray([0], dtype=np.int32)
+            group['USEZVALUE'] = np.asarray([use_z], dtype=np.int32)
+    deck = INPUT.replace('x=1800 y=1800 z=300', 'x=2000 y=2000 z=-50')
+    deck = deck.replace('x=1800 y=1800 depth=300', 'x=2000 y=2000 depth=50')
+    root = run(args, binary, args.work_dir/'elevated', template, input_text=deck)
+    with h5py.File(root/'inline.h5', 'r') as inline, h5py.File(root/'receiver.h5', 'r') as receivers:
+        for name in ('s_absolute', 's_relative'):
+            assert name in inline and name in receivers, 'Valid elevated receiver omitted: ' + name
+            station_equal(inline[name], receivers[name])
+        for component in 'XYZ':
+            absolute = receivers['s_absolute'][component][...]
+            relative = receivers['s_relative'][component][...]
+            assert np.all(np.isfinite(absolute))
+            np.testing.assert_allclose(absolute, relative, rtol=2e-12, atol=1e-15)
+        assert any(np.max(np.abs(receivers['s_absolute'][component][...])) > 0 for component in 'XYZ')
+    print('PASS: absolute z=-50 and relative depth=50 retain identical nonzero motion below terrain z=-100')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sw4',required=True,type=Path)
@@ -112,6 +137,7 @@ def main():
         print('PASS: baseline reproduces unsupported depth behavior; flat absolute inline control works')
     check(run(args,args.sw4.resolve(strict=True),args.work_dir/'candidate',template))
     print('PASS: template absolute/relative depths match inline receivers over Gaussian topography')
+    elevated_absolute(args, args.sw4.resolve(strict=True))
 
 
 if __name__=='__main__':
