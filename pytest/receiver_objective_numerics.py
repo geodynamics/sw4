@@ -117,6 +117,25 @@ int main(){cout<<setprecision(17);
  // Exact-size endpoint buffers expose both float and double stencil overreads.
  for(int floats=0;floats<2;++floats){TimeSeries u(301,5.505,.01,floats),o(801,0,.01,floats),d(301,5.505,.01);double g,h,h1,f,df,ddf;u.set_window(5,9);u.misfit(o,&d,g,h,h1);u.shiftfunc(o,.003,f,df,ddf);double tt=u.misfit2(o,&d);for(int q=0;q<3;++q)for(int i=0;i<=u.mLastTimeStep;++i)if(!isfinite(d.data[q][i]))throw runtime_error("zero-curvature travel-time source is nonfinite");if(!isfinite(tt))throw runtime_error("zero-data travel-time score is nonfinite");}
  cout<<"PASS endpoint storage and zero-curvature controls\n";
+ // A linear observation has nonzero slope and zero or near-zero curvature.
+ for(double dt : {.125,.1}) {
+  double start=dt==.125 ? 3 : 3.017;
+  TimeSeries u(25,start,dt),o(97,0,dt),d(25,start,dt);
+  u.m_use_y = u.m_use_z = false;
+  u.put(0,0,1);
+  for(int i=0;i<=o.mLastTimeStep;++i)o.put(0,i,3*(i-40));
+  double f,df,ddf;
+  u.shiftfunc(o,2,f,df,ddf);
+  if(abs(df-3/dt)>1e-9 || abs(ddf)>1e-9)
+    throw runtime_error("invalid linear correlation fixture");
+  double score=u.misfit2(o,&d);
+  if(score!=2)
+    throw runtime_error("undefined Newton step did not retain the sampled shift");
+  for(int q=0;q<3;++q)
+    for(int i=0;i<=u.mLastTimeStep;++i)
+      if(!isfinite(d.data[q][i])) throw runtime_error("nonfinite fallback source");
+ }
+ cout<<"PASS nonzero-slope, zero and near-zero curvature Newton fallback\n";
 }
 '''
 
@@ -125,7 +144,8 @@ def run(root, gpu, work, compiler, asan):
     methods=selected(root,gpu,compiler)
     unit=work/'objectives.cpp';unit.write_text(STUB+methods+MAIN)
     command=[compiler,'-std=c++11','-O1',str(unit),'-o',str(work/'objectives')]
-    if asan:command+=['-fsanitize=address','-fno-omit-frame-pointer']
+    if asan:command+=['-fsanitize=address,float-cast-overflow',
+                      '-fno-sanitize-recover=float-cast-overflow','-fno-omit-frame-pointer']
     subprocess.run(command,check=True)
     result=subprocess.run([str(work/'objectives')],capture_output=True,text=True)
     (work/'stdout.log').write_text(result.stdout);(work/'stderr.log').write_text(result.stderr)

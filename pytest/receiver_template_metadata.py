@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
       for (int set = 0; set < (failure ? 1 : 3); ++set)
         readStationHDF5(&ew, argv[1], set == 1 ? "second.h5" : "first.h5",
                        137 + set, 3 + set, TimeSeries::Velocity, 0, &stations,
-                       100, 100, true, false, false, 0, 0,
+                       100, 100, true, set == 1, set == 1, 1, 12,
                        true, false, true, 1.25, true, 2.5);
     } catch (const aborted &) { failed = true; }
     if (failed != failure) throw runtime_error("inconsistent read failure");
@@ -259,6 +259,18 @@ def main():
                             left=2.0 if index == 1023 else None,
                             right=9.0 if index == 1024 else None)
             fixtures.append(path)
+        # The baseline carries scalar bounds between stations. Check these
+        # fields against the fixture contract instead of inheriting that result.
+        # Each pair gives the result with no command bounds and with [1, 12].
+        window_cases = {
+            "a_cartesian": ((1, 2, 1e38), (1, 2, 12)),
+            "c_geographic": ((1, -1, 6), (1, 1, 6)),
+            "g_long_" + "s" * 250: ((1, 4, 9), (1, 4, 9)),
+            "l_scalar_fields": ((1, 1, 4), (1, 1, 4)),
+            "s001023": ((1, 2, 1e38), (1, 2, 12)),
+            "s001024": ((1, -1, 9), (1, 1, 9)),
+        }
+        defaults = ((0, 0, 0), (1, 1, 12))
         for path in fixtures:
             for label, program in programs.items():
                 subprocess.run([str(program), str(path), str(work / label),
@@ -268,20 +280,26 @@ def main():
                 suffix = "." + str(rank)
                 left = (work / ("baseline" + suffix)).read_text().splitlines()
                 right = (work / ("candidate" + suffix)).read_text().splitlines()
-                if args.single_precision:
-                    assert len(left) == len(right), (path, rank)
-                    for a, b in zip(left, right):
-                        a, b = a.split(), b.split()
-                        assert len(a) == len(b), (path, rank)
-                        for x, y in zip(a, b):
-                            if x != y:
-                                np.testing.assert_allclose(float(x), float(y),
-                                                           rtol=1e-6, atol=1e-7,
-                                                           err_msg=str((path, rank)))
-                else:
-                    assert left == right, (path, rank)
-            print("PASS:", path.name, "matches baseline on three replayed ranks;",
-                  "only candidate root opens/traverses the template")
+                assert len(left) == len(right), (path, rank)
+                for a, b in zip(left, right):
+                    a, b = a.split(" "), b.split(" ")
+                    expected = (0, 0, 0)
+                    if b[12] == "1":  # Observation metadata is set on the owner.
+                        expected = window_cases.get(b[0], defaults)[b[1] == "second.h5"]
+                    np.testing.assert_allclose(
+                        [float(value) for value in b[14:17]], expected,
+                        rtol=1e-6 if args.single_precision else 0, atol=0,
+                        err_msg=str((path, rank, b[0], b[1])))
+                    a, b = a[:14] + a[17:], b[:14] + b[17:]
+                    assert len(a) == len(b), (path, rank)
+                    for x, y in zip(a, b):
+                        if x != y:
+                            assert args.single_precision, (path, rank, a, b)
+                            np.testing.assert_allclose(float(x), float(y),
+                                                       rtol=1e-6, atol=1e-7,
+                                                       err_msg=str((path, rank)))
+            print("PASS:", path.name, "station-local scalar windows and baseline metadata",
+                  "on three replayed ranks; only candidate root opens/traverses the template")
         malformed = work / "bad.h5"
         with h5py.File(malformed, "w") as stream:
             group = stream.create_group("station")
