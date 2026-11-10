@@ -161,3 +161,54 @@ The depth regression also requires an absolute receiver at
 `z=-50 m` and its equivalent `depth=50 m` receiver beneath the Gaussian summit
 at `z=-100 m` to exist and produce identical nonzero motion. Absolute receivers
 use the actual terrain for validity checks without adding it to their z value.
+
+## Receiver-objective numerical checks
+
+Use the CPU-only implementation as the behavioral reference. CPU corrections in
+this change have independent evidence: a closed-form linear-waveform case for
+normalized L2 derivatives, an exactly known Y-only correlation with X excluded,
+and an AddressSanitizer endpoint overread. The L2 objective definition and CPU
+window taper are retained. Its shift derivatives now differentiate the returned
+normalized score, including the shift-dependent observation-energy denominator.
+The positive derivative-squared curvature term `dd1shift` has the same normalized
+units. Observation component masks apply independently, and interpolation edge
+stencils fit zero-based sample storage. GPU paths retain the CPU observation
+support rule, iteration limit and zero-curvature adjoint-source fallback.
+
+```sh
+: "${EQSIM_PYTHON:?select the supported scientific Python}"
+"$EQSIM_PYTHON" pytest/receiver_objective_numerics.py \
+  --work-dir /new/path/objective-check --asan \
+  --cpu-reference /path/to/cpu-checkout
+```
+
+Add `--raja` to select the unified GPU preprocessor path. The harness compiles the
+complete production misfit, cross-correlation, maximum search, adjoint-source
+and interpolation methods with controlled construction/storage. It checks both
+normalization modes and sample representations, single/two/overlapping windows,
+component exclusion, finite-difference first/second derivatives, and the dot
+product of the returned data-adjoint source with a synthetic-data perturbation.
+Analytic controls and exact-size endpoint buffers provide independent checks.
+
+For native validation, first build the selected HDF5-enabled backend normally.
+Within an authorized allocation, with that build's compiler environment, create
+a separate executable linked against its actual production objects:
+
+```sh
+"$EQSIM_PYTHON" pytest/receiver_objective_native_build.py \
+  --build-dir /path/to/existing-cmake-build --work-dir /new/path/native-check
+```
+
+For standalone RAJA's Make build, use `--make-optdir optimize` instead of
+`--build-dir` (or the actual output-directory name). The builder prints compiler
+and link commands and generates a main that runs the receiver tests after normal
+SW4 setup. Launch `objectives-native` with the normal backend MPI/GPU resource
+shape and a small valid uniform-material input. Two MPI ranks were tested.
+Native checks use real EW/TimeSeries objects, double and HDF5-float sample storage,
+window/component cases, unequal sampling, endpoint data and zero observations.
+
+These are receiver-objective and data-adjoint directional checks. Travel-time
+finite differences require an isolated interior correlation maximum; zero-data
+controls check finite CPU-compatible fallback behavior. Full wave-equation
+adjoint propagation, complete model inversion, HIP execution and representative
+startup-performance benchmarking are separate validation scopes.
