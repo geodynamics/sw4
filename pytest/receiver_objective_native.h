@@ -24,9 +24,10 @@ static void objective_fill(TimeSeries& ts, int n, double start, double dt,
   }
 }
 static void receiver_objective_checks(EW& ew) {
-  int errors=0;
-  for (int storage=0; storage<2; ++storage) {
-    for (int mode=0; mode<10; ++mode) {
+  constexpr int storage_modes = 2, cases_per_storage = 10;
+  int errors = 0, cases = 0;
+  for (int storage=0; storage<storage_modes; ++storage) {
+    for (int mode=0; mode<cases_per_storage; ++mode) {
       const int n=301, no=801;
       double start = mode==6 ? .005 : mode==7 ? 5.505 : 1.5;
       TimeSeries u(&ew,"test-u","test-u",TimeSeries::Velocity,false,!storage,
@@ -44,6 +45,7 @@ static void receiver_objective_checks(EW& ew) {
       objective_fill(o,no,0,mode==9?.0125:.01,0,true,mode==8);
       objective_fill(d,n,start,.01,0,true,true);
       if (!u.myPoint()) continue;
+      ++cases;
       int before=errors;
       auto close=[&](double a,double b,double tolerance,const char* name) {
         if (!std::isfinite(a) || !std::isfinite(b) ||
@@ -83,9 +85,16 @@ static void receiver_objective_checks(EW& ew) {
                <<" "<<(errors-before)<<std::endl;
     }
   }
-  int total=0;
-  MPI_Allreduce(&errors,&total,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-  if(total) MPI_Abort(MPI_COMM_WORLD,91);
-  int rank=0;MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  int counts[2] = {errors, cases};
+  int totals[2] = {};
+  MPI_Allreduce(counts, totals, 2, MPI_INT, MPI_SUM, ew.m_1d_communicator);
+  int rank = 0;
+  MPI_Comm_rank(ew.m_1d_communicator, &rank);
+  if (totals[1] != storage_modes * cases_per_storage) {
+    if (rank == 0) std::cerr << "Expected all receiver objective cases, ran "
+                             << totals[1] << std::endl;
+    MPI_Abort(MPI_COMM_WORLD, 91);
+  }
+  if (totals[0]) MPI_Abort(MPI_COMM_WORLD, 91);
   if(rank==0)std::cout<<"PASS native receiver objectives and data-adjoint checks"<<std::endl;
 }

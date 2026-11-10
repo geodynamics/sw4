@@ -81,13 +81,9 @@ struct traverse_data_t {
   bool is_obs;
   bool winlset;
   bool winrset;
-  // H5T_NATIVE_DOUBLE needs double storage even in single-precision builds.
+  // Command defaults. Each station starts with its own copy.
   double winl;
   double winr;
-  float_sw4 win1;
-  float_sw4 win2;
-  float_sw4 win3;
-  float_sw4 win4;
   bool usex;
   bool usey;
   bool usez;
@@ -416,7 +412,6 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   double lon, lat, x, y, z;
   bool geoCoordSet = true, topodepth = true, nsew = true;
   int isnsew = 1, usezvalue;
-  bool foundwins=false;
 
   ASSERT(operator_data != NULL);
 
@@ -444,6 +439,32 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
 
+    // ISNSEW describes component orientation, not coordinate representation.
+    // Prefer Cartesian coordinates when both supported representations exist.
+    htri_t has_xyz =
+        station_dataset_exists(grp, grp_name, "STX,STY,STZ");
+    if (has_xyz < 0) {
+      H5Gclose(grp);
+      return -1;
+    }
+    htri_t has_geographic = 0;
+    if (has_xyz == 0) {
+      has_geographic =
+          station_dataset_exists(grp, grp_name, "STLA,STLO,STDP");
+      if (has_geographic < 0) {
+        H5Gclose(grp);
+        return -1;
+      }
+    }
+    if (has_xyz == 0 && has_geographic == 0)
+      return H5Gclose(grp);  // This group is not a station.
+
+    station_metadata_t station{};
+    station.winlset = op_data->winlset;
+    station.winrset = op_data->winrset;
+    station.winl = op_data->winl;
+    station.winr = op_data->winr;
+
     htri_t exists = station_dataset_exists(grp, grp_name, "ISNSEW");
     if (exists < 0) {
       H5Gclose(grp);
@@ -464,9 +485,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
     if (exists > 0) {
-      op_data->winlset = true;
+      station.winlset = true;
       if (read_station_dataset(grp, grp_name, "WindowL", H5T_NATIVE_DOUBLE,
-                               &op_data->winl, 1) < 0) {
+                               &station.winl, 1) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -478,9 +499,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
     if (exists > 0) {
-      op_data->winrset = true;
+      station.winrset = true;
       if (read_station_dataset(grp, grp_name, "WindowR", H5T_NATIVE_DOUBLE,
-                               &op_data->winr, 1) < 0) {
+                               &station.winr, 1) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -503,30 +524,13 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
     if (exists > 0) {
-      op_data->win1 = data[0];
-      op_data->win2 = data[1];
-      op_data->win3 = data[2];
-      op_data->win4 = data[3];
-      foundwins = true;
+      station.win1 = data[0];
+      station.win2 = data[1];
+      station.win3 = data[2];
+      station.win4 = data[3];
+      station.foundwins = true;
     }
 
-    // ISNSEW describes component orientation, not coordinate representation.
-    // Prefer Cartesian coordinates when both supported representations exist.
-    htri_t has_xyz =
-        station_dataset_exists(grp, grp_name, "STX,STY,STZ");
-    if (has_xyz < 0) {
-      H5Gclose(grp);
-      return -1;
-    }
-    htri_t has_geographic = 0;
-    if (has_xyz == 0) {
-      has_geographic =
-          station_dataset_exists(grp, grp_name, "STLA,STLO,STDP");
-      if (has_geographic < 0) {
-        H5Gclose(grp);
-        return -1;
-      }
-    }
     if (has_xyz > 0) {
       // X, Y, Z
       if (read_station_dataset(grp, grp_name, "STX,STY,STZ",
@@ -538,7 +542,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       y = data[1];
       z = data[2];
       geoCoordSet = false;
-    } else if (has_geographic > 0) {
+    } else {
       // STLA,STLO,STDP
       if (read_station_dataset(grp, grp_name, "STLA,STLO,STDP",
                                H5T_NATIVE_DOUBLE, data, 3) < 0) {
@@ -548,13 +552,8 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       lat = data[0];
       lon = data[1];
       z = data[2];
-    } else {
-      // Not a station group, ignore
-      H5Gclose(grp);
-      return 0;
     }
 
-    station_metadata_t station;
     station.name = grp_name;
     // For geographic records x/y carry longitude/latitude until construction.
     station.x = geoCoordSet ? lon : x;
@@ -562,16 +561,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     station.z = z;
     station.geographic = geoCoordSet;
     station.nsew = nsew;
-    station.winlset = op_data->winlset;
-    station.winrset = op_data->winrset;
-    station.winl = op_data->winl;
-    station.winr = op_data->winr;
     station.topodepth = topodepth;
-    station.foundwins = foundwins;
-    station.win1 = foundwins ? op_data->win1 : 0;
-    station.win2 = foundwins ? op_data->win2 : 0;
-    station.win3 = foundwins ? op_data->win3 : 0;
-    station.win4 = foundwins ? op_data->win4 : 0;
     op_data->stations.push_back(station);
 
 

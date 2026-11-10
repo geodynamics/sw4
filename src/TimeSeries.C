@@ -2285,7 +2285,10 @@ if( dbg )
 while( it < maxit && err > tol )
       {
          shiftfunc( observed, t1, f, df, ddf );
+         // Keep the best sampled shift when Newton cannot take a step.
+         if (ddf == 0) return tmax;
          float_sw4 tnew = t1 - df/ddf;
+         if (!std::isfinite(tnew)) return tmax;
          err = abs(tnew-t1);
          t1=tnew;
          it++;
@@ -2482,7 +2485,10 @@ for( int i= 0 ; i <= mLastTimeStep ; i++ )
       // Here t is t_n+tshift, t_n is time in this object.
       //   ir is grid point index in observed object that correspond to t_n+tshift
       //  need to evaluate the observed data at this grid point.
-      int ie   = static_cast<int>(ir);
+      // Test observation support before converting a Newton trial to an index.
+      int ie = 0;
+      if (ir >= 1 && ir < static_cast<double>(nfrsteps) + 1)
+         ie = static_cast<int>(ir);
       int mmin = ie-2;
       int mmax = ie+3;
       if( mmax-mmin+1 > nfrsteps )

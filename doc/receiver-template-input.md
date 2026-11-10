@@ -36,7 +36,8 @@ Use the repository's supported Python environment with h5py and NumPy. This
 harness compiles the actual reader against real HDF5 with a replayed MPI stream
 and a receiver-construction stub. It compares station records against a supplied
 baseline revision, checks that only root opens/traverses the candidate template,
-and checks failure propagation. It does not validate real MPI progress or SW4
+and checks failure propagation. Scalar window bounds are checked against the
+station and command inputs. The harness does not validate real MPI progress or SW4
 numerical outputs.
 
 ```sh
@@ -63,7 +64,8 @@ regression preserves logs and a JSON result file. It compares receiver metadata
 and finite, nonzero waveforms for 8 and 2,053 stations, exercises repeated station
 names in separate output files, crosses batch boundaries, and checks missing or
 malformed inputs before and after a full batch. Tests use the existing step-zero
-and downsampling contract. The numerical comparison tolerance is `rtol=2e-12`,
+and downsampling contract. Negative cases require the expected SW4 metadata error
+before time stepping. The numerical comparison tolerance is `rtol=2e-12`,
 `atol=1e-15` for matched builds; it is not a cross-backend acceptance threshold.
 
 Startup timestamps observed from solver output include output buffering. These
@@ -74,7 +76,10 @@ with matched receiver geometry, rank layout, inputs, and cache conditions.
 
 Observation windows use the native CPU five-sample tanh taper. Four-value
 `WINDOWS` selects two intervals and takes their maximum weight where they
-overlap. The second interval follows the existing native CPU activation rule
+overlap. Scalar `WindowL` and `WindowR` values override the command bounds only for
+the station that supplies them. A station's four-value `WINDOWS` takes
+precedence over its scalar bounds.
+The second interval follows the existing native CPU activation rule
 (at least one bound is positive). `WindowL`/`WindowR` selects one interval;
 the second interval is disabled initially and when switching back from two
 intervals. This fixes the formerly unbounded default second window on native
@@ -173,7 +178,9 @@ normalized score, including the shift-dependent observation-energy denominator.
 The positive derivative-squared curvature term `dd1shift` has the same normalized
 units. Observation component masks apply independently, and interpolation edge
 stencils fit zero-based sample storage. GPU paths retain the CPU observation
-support rule, iteration limit and zero-curvature adjoint-source fallback.
+support rule, iteration limit and zero-curvature adjoint-source fallback. If a Newton
+step has zero curvature or a nonfinite result, the search keeps its best
+sampled shift. Correlation trials outside observation support contribute zero.
 
 ```sh
 : "${EQSIM_PYTHON:?select the supported scientific Python}"
@@ -203,7 +210,8 @@ For standalone RAJA's Make build, use `--make-optdir optimize` instead of
 `--build-dir` (or the actual output-directory name). The builder prints compiler
 and link commands and generates a main that runs the receiver tests after normal
 SW4 setup. Launch `objectives-native` with the normal backend MPI/GPU resource
-shape and a small valid uniform-material input. Two MPI ranks were tested.
+shape and a small, flat uniform-material input with (1800, 1800, 0) inside the grid.
+The harness requires all 20 cases to run. Two MPI ranks were tested.
 Native checks use real EW/TimeSeries objects, double and HDF5-float sample storage,
 window/component cases, unequal sampling, endpoint data and zero observations.
 

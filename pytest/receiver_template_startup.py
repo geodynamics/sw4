@@ -89,7 +89,7 @@ def launch(command, destination, environment, timeout=120, grace=5):
             raise
 
 
-def run(args, binary, fixture, destination, expect_failure=False, second=False):
+def run(args, binary, fixture, destination, expected_error=None, second=False):
     destination.mkdir()
     deck = INPUT.format(template=fixture)
     if second:
@@ -105,8 +105,9 @@ def run(args, binary, fixture, destination, expect_failure=False, second=False):
     code, first_step = launch(command, destination, environment)
     output = (destination / "sw4.log").read_text()
     stepped = re.search(r"(?i)(?:\btime step\s*(?:=\s*)?\d+|\bbegin time stepping|\btime stepping finished)", output)
-    if expect_failure:
-        assert code != 0 and not stepped, output[-8000:]
+    if expected_error is not None:
+        assert code != 0 and not stepped and expected_error in output, (
+            f"Expected solver error {expected_error!r} before stepping:\n" + output[-8000:])
     else:
         assert code == 0 and "HDF5-DIAG" not in output, output[-8000:]
         assert stepped, output[-8000:]
@@ -183,8 +184,14 @@ def main():
                         group = stream.create_group("z_bad")
                         group["STX,STY,STZ"] = np.asarray([800, 800, 0], dtype=np.float64)
                         group["WINDOWS"] = np.ones(5)
+            if name == "missing":
+                expected_error = f"Error opening file [{fixture}]"
+            elif malformed:
+                expected_error = "Error reading rechdf5 station z_bad dataset STX,STY,STZ"
+            else:
+                expected_error = "Invalid rechdf5 station z_bad dataset WINDOWS: expected 4 elements, found 5"
             results[name] = run(args, args.candidate_sw4, fixture,
-                                args.work_dir / name, expect_failure=True)
+                                args.work_dir / name, expected_error=expected_error)
             print("PASS:", name, "fails before time stepping")
     finally:
         (args.work_dir / "results.json").write_text(json.dumps(results, indent=2) + "\n")
