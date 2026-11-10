@@ -115,7 +115,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_winL(-1e38),
   m_winR(1e38),
   m_winL2(-1e38),
-  m_winR2(1e38),
+  m_winR2(-1e38),
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
@@ -3074,6 +3074,7 @@ void TimeSeries::set_window( float_sw4 winl, float_sw4 winr )
    m_use_win = true;
    m_winL = winl;
    m_winR = winr;
+   m_winL2 = m_winR2 = -1e38;
 }
 
 //-----------------------------------------------------------------------

@@ -75,3 +75,7 @@ License
 SW4 is published under [GPL v2 or newer](LICENSE.txt).
 
 
+
+Receiver HDF5 templates use a single-reader metadata broadcast. See
+[receiver-template input](doc/receiver-template-input.md)
+for the input contract and regression commands.
