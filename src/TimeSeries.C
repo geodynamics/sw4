@@ -1639,6 +1639,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
     // Interpolate data to this object
     //      int order = 4;
     float_sw4 scale_factor = 0;
+      float_sw4 dscale_factor = 0, ddscale_factor = 0;
 
     float_sw4 mf[3], dmf[3], ddmf[3];
     float_sw4 dtfr = observed.m_dt;
@@ -1719,7 +1720,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
       // If too far past the end of observed, set to zero.
       //	 if( ie > nfrsteps + order/2 )
-      if (ie > nfrsteps + 1) {
+      if (ie > nfrsteps - 1) {
         mf[0] = mf[1] = mf[2] = 0;
         dmf[0] = dmf[1] = dmf[2] = 0;
         ddmf[0] = ddmf[1] = ddmf[2] = 0;
@@ -1748,14 +1749,14 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
         float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
         if (ie < 3) {
-          mmin = 1;
-          mmax = 5;
+          mmin = 0;
+          mmax = 4;
           ai = ir - (mmin + 2);
           getwgh5(ai, wgh, dwgh, ddwgh);
 
-        } else if (ie > nfrsteps - 3) {
-          mmin = nfrsteps - 4;
-          mmax = nfrsteps;
+        } else if (ie > nfrsteps - 4) {
+          mmin = nfrsteps - 5;
+          mmax = nfrsteps - 1;
           ai = ir - (mmin + 2);
           getwgh5(ai, wgh, dwgh, ddwgh);
         } else {
@@ -1847,14 +1848,29 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
       }
       scale_factor +=
           wghx * mf[0] * mf[0] + wghy * mf[1] * mf[1] + wghz * mf[2] * mf[2];
+      // The observation energy changes when its time shift changes.
+      dscale_factor -= 2 * (wghx * mf[0] * dmf[0] +
+                            wghy * mf[1] * dmf[1] + wghz * mf[2] * dmf[2]);
+      ddscale_factor += 2 * (wghx * (dmf[0] * dmf[0] + mf[0] * ddmf[0]) +
+                             wghy * (dmf[1] * dmf[1] + mf[1] * ddmf[1]) +
+                             wghz * (dmf[2] * dmf[2] + mf[2] * ddmf[2]));
     }
     //  scale misfit and diff-source
     if (m_misfit_scaling == 1) {
       if (scale_factor == 0) {
         cout << "WARNING: Observation contains zero data" << endl;
         scale_factor = 1;
+         dscale_factor = ddscale_factor = 0;
       }
       float_sw4 iscale = 1 / scale_factor;
+      // Apply the quotient rule to the same normalized objective we return.
+      float_sw4 normalized_misfit = 0.5 * misfit * iscale;
+      float_sw4 normalized_dshift =
+          (dshift - normalized_misfit * dscale_factor) * iscale;
+      ddshift = (ddshift - normalized_misfit * ddscale_factor -
+                 2 * normalized_dshift * dscale_factor) * iscale;
+      dshift = normalized_dshift;
+      dd1shift *= iscale;
       misfit *= iscale;
       if (compute_difference)
         for (int i = 0; i <= mLastTimeStep; i++) {
@@ -1891,7 +1907,7 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
     }
     // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) =
     // 0
-    int maxit = 10, it = 0;
+    int maxit = 15, it = 0;
     float_sw4 tol = 1e-12;
     float_sw4 err = tol + 1;
     float_sw4 t1 = tmax;
@@ -1990,13 +2006,13 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     if (1 <= ie && ie <= nfrsteps) {
       float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
       if (ie < 3) {
-        mmin = 1;
-        mmax = 5;
+        mmin = 0;
+        mmax = 4;
         ai = ir - (mmin + 2);
         getwgh5(ai, wgh, dwgh, ddwgh);
-      } else if (ie > nfrsteps - 3) {
-        mmin = nfrsteps - 4;
-        mmax = nfrsteps;
+      } else if (ie > nfrsteps - 4) {
+        mmin = nfrsteps - 5;
+        mmax = nfrsteps - 1;
         ai = ir - (mmin + 2);
         getwgh5(ai, wgh, dwgh, ddwgh);
       } else {
@@ -2082,7 +2098,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     }
   }
   if (compute_adjsrc) {
-    float_sw4 iddf = 1 / ddfunc;
+    float_sw4 iddf = ddfunc == 0 ? 1 : 1 / ddfunc;
     for (int i = 0; i <= mLastTimeStep; i++) {
       adjsrc[0][i] *= iddf;
       adjsrc[1][i] *= iddf;
