@@ -1,33 +1,51 @@
 #!/usr/bin/env python3
-"""Check complete production receiver objectives against numerical/analytic oracles.
+"""Check receiver windows, objectives and data adjoints.
 
-Only construction/storage and EW diagnostic access are replaced. The full selected
-misfit, shift correlation, maximum search, adjoint-source and interpolant methods
-are compiled unchanged. This checks receiver data operators, not the PDE adjoint.
-Use --emit-native-main to exercise real TimeSeries objects with native backend
-objects and allocators; run that generated executable in an authorized allocation.
+Run windows and numerics locally against extracted production methods.
+Use native-build with an existing HDF5-enabled SW4 build and the same
+compiler environment to link a driver against its production objects.
+Run the resulting objectives-native binary in an authorized allocation.
 """
 from pathlib import Path
-import re,subprocess,json,argparse,hashlib,math
+import argparse
+import hashlib
+import json
+import math
+import re
+import shlex
+import subprocess
+import tempfile
 
-def end(text,start):
- a=text.index('{',start);level=0
- for i in range(a,len(text)):
-  if text[i]=='{':level+=1
-  elif text[i]=='}':
-   level-=1
-   if not level:return i+1
- raise ValueError('unbalanced method')
+
+def end(text, start):
+    opening = text.index("{", start)
+    level = 0
+    for index in range(opening, len(text)):
+        if text[index] == "{":
+            level += 1
+        elif text[index] == "}":
+            level -= 1
+            if level == 0:
+                return index + 1
+    raise ValueError("unterminated native function")
+
+
+def preprocess(path, compiler, gpu):
+    command = [compiler, "-E", "-P", "-x", "c++"]
+    if gpu:
+        command.append("-DSW4_USE_RAJA")
+    source = re.sub(r"^\s*#include[^\n]*", "", path.read_text(), flags=re.M)
+    return subprocess.check_output(command + ["-"], input=source, text=True)
+
+
 def selected(root,gpu,cxx="c++"):
- command=[cxx,'-E','-P','-x','c++']+(['-DSW4_USE_RAJA'] if gpu else [])+['-']
- src=(root/'src/TimeSeries.C').read_text();src=re.sub(r'^\s*#include[^\n]*','',src,flags=re.M)
- src=subprocess.check_output(command,input=src,text=True)
+ src=preprocess(root / "src/TimeSeries.C", cxx, gpu)
  names=['misfit','shiftfunc','compute_maxshift','misfit2','getwgh','getwgh5','set_window','window_weight']
  methods=[]
  for name in names:
   for m in re.finditer(r'(?:float_sw4|void) TimeSeries::'+name+r'\s*\([^;]*?\)\s*(?:const\s*)?\{',src):methods.append(src[m.start():end(src,m.start())])
  if sum('void TimeSeries::set_window' in m for m in methods)==1:
-  h=(root/'src/TimeSeries.h').read_text();h=re.sub(r'^\s*#include[^\n]*','',h,flags=re.M);h=subprocess.check_output(command,input=h,text=True)
+  h=preprocess(root / "src/TimeSeries.h", cxx, gpu)
   for m in re.finditer(r'void set_window\s*\([^;]*?\)\s*\{',h):methods.append(h[m.start():end(h,m.start())].replace('void set_window','void TimeSeries::set_window',1))
  for m in re.finditer(r'static float_sw4 receiver_window_weight\([^;]*?\)\s*\{',src):methods.insert(0,src[m.start():end(src,m.start())])
  return '\n'.join(methods)
@@ -139,7 +157,7 @@ int main(){cout<<setprecision(17);
 }
 '''
 
-def run(root, gpu, work, compiler, asan):
+def check_numerics(root, gpu, work, compiler, asan):
     work.mkdir(parents=True, exist_ok=False)
     methods=selected(root,gpu,compiler)
     unit=work/'objectives.cpp';unit.write_text(STUB+methods+MAIN)
@@ -162,32 +180,248 @@ def run(root, gpu, work, compiler, asan):
     print('PASS complete production objectives, derivatives and data adjoints:',root,'GPU path' if gpu else 'native path')
     return rows
 
-def main():
-    p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--source-root',type=Path,default=Path(__file__).resolve().parents[1])
-    p.add_argument('--work-dir',type=Path)
-    p.add_argument('--cpu-reference',type=Path)
-    p.add_argument('--cxx',default='c++')
-    p.add_argument('--raja',action='store_true',help='Select unified GPU implementation')
-    p.add_argument('--asan',action='store_true')
-    p.add_argument('--emit-native-main',type=Path,help='Generate a native test main for linking with this backend')
-    args=p.parse_args();root=args.source_root.resolve()
-    if args.emit_native_main:
-        source=(root/'src/main.C').read_text()
-        header=(Path(__file__).resolve().parent/'receiver_objective_native.h').resolve()
-        source=source.replace('using namespace std;','using namespace std;\n#include '+json.dumps(str(header)),1)
-        source,n=re.subn(r'simulation\.solve\s*\([^;]+;', 'receiver_objective_checks(simulation);',source,flags=re.S)
-        assert n in (1,2),n
-        args.emit_native_main.write_text(source)
-        return
-    assert args.work_dir,'--work-dir is required for numerical checks'
-    rows=run(root,args.raja,args.work_dir/'candidate',args.cxx,args.asan)
+
+def run_windows(args):
+    source = preprocess(args.source_root / "src/TimeSeries.C", args.cxx, args.raja)
+    setters = []
+    for match in re.finditer(r"void TimeSeries::set_window\s*\([^)]*\)\s*\{", source):
+        setters.append(source[match.start():end(source, match.start())])
+    if len(setters) == 1:
+        header = preprocess(args.source_root / "src/TimeSeries.h", args.cxx, args.raja)
+        for match in re.finditer(r"void set_window\s*\([^)]*\)\s*\{", header):
+            method = header[match.start():end(header, match.start())]
+            setters.append(method.replace("void set_window", "void TimeSeries::set_window", 1))
+    assert len(setters) == 2, "two- and four-value window setters are required"
+    defaults = []
+    for field in ("m_winL", "m_winR", "m_winL2", "m_winR2"):
+        match = re.search(r"\b" + field + r"\(([^)]+)\)", source)
+        assert match, "window state must be initialized: " + field
+        defaults.append(field + "=" + match.group(1))
+    start = source.index("TimeSeries::misfit(")
+    match = re.search(r"float_sw4\s+wghx\s*,\s*wghy\s*,\s*wghz\s*;", source[start:])
+    assert match
+    start += match.start()
+    match = re.search(r"if\s*\(\s*m_use_win\s*\)", source[start:])
+    assert match
+    start += match.start()
+    weight = source[start:end(source, start)]
+    helper = ""
+    if "window_weight(t)" in weight:
+        match = re.search(r"float_sw4 TimeSeries::window_weight\([^)]*\) const\s*\{", source)
+        assert match
+        helper = source[match.start():end(source, match.start())]
+    if "receiver_window_weight(" in weight:
+        match = re.search(r"static float_sw4 receiver_window_weight\([^)]*\)\s*\{", source)
+        assert match
+        helper = source[match.start():end(source, match.start())]
+    product = ""
+    match = re.search(r"^float_sw4 TimeSeries::product_wgh\(", source, re.M)
+    if match:
+        product = source[match.start():end(source, match.start())]
+    stub = r'''
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+#define float_sw4 double
+using namespace std;
+static double receiver_window_weight(double,double,double,double,double,double);
+class TimeSeries {
+ public:
+  bool m_use_win=false;
+  double m_dt=0.01, m_t0=3.9;
+  bool m_use_x=true, m_use_y=true, m_use_z=true;
+  int mLastTimeStep=5;
+  double data[3][6], *mRecordedSol[3];
+  TimeSeries() { for(int q=0;q<3;++q) { mRecordedSol[q]=data[q]; for(int i=0;i<6;++i) data[q][i]=1; } }
+  double product_wgh(TimeSeries&) const;
+  double DEFAULTS;
+  void set_window(double, double);
+  void set_window(double, double, double, double);
+  double window_weight(double) const;
+  double weight(double t) const {
+    double itau=1/(5*m_dt), wghv=0.42, wghx=wghv, wghy=wghv, wghz=wghv;
+    WEIGHT
+    return wghx;
+  }
+};
+'''.replace("DEFAULTS", ", ".join(defaults)).replace("WEIGHT", weight)
+    main = r'''
+static void close(double actual, double expected) {
+  if (std::abs(actual-expected)>1e-12)
+    throw std::runtime_error("window weight differs: actual="+std::to_string(actual)+
+                             " expected="+std::to_string(expected));
+}
+static double interval(double t, double left, double right) {
+  return 0.5*(std::tanh((t-left)/0.05)-std::tanh((t-right)/0.05));
+}
+int main() {
+  TimeSeries single;
+  close(single.weight(1.5),0.42);
+  single.set_window(1,2);
+  for(double t : {0.0,1.0,1.5,2.0,3.0,5.0}) close(single.weight(t),interval(t,1,2));
+  single.set_window(1,2,4,5);
+  for(double t : {0.0,1.0,1.5,2.0,3.0,4.0,4.5,5.0,6.0})
+    close(single.weight(t),std::fmax(interval(t,1,2),interval(t,4,5)));
+  single.set_window(1,3,2,4);
+  for(double t : {0.0,1.0,2.0,2.5,3.0,4.0,5.0})
+    close(single.weight(t),std::fmax(interval(t,1,3),interval(t,2,4)));
+  single.set_window(1,2);
+  close(single.weight(3.5),interval(3.5,1,2));
+#ifdef HAVE_PRODUCT
+  single.set_window(1,2,4,5);
+  double expected=0;
+  for(int i=0;i<=single.mLastTimeStep;++i) {
+    double t=single.m_t0+i*single.m_dt;
+    expected+=std::fmax(interval(t,1,2),interval(t,4,5));
+  }
+  close(single.product_wgh(single),3*expected);
+  single.m_use_x=false;
+  close(single.product_wgh(single),2*expected);
+#endif
+  std::cout<<"PASS: native single/two-window weights, overlap, and mode reset\n";
+}
+'''
+    with tempfile.TemporaryDirectory(prefix="sw4-window-unit-") as name:
+        root = Path(name)
+        unit = root / "windows.cpp"
+        unit.write_text(("#define HAVE_PRODUCT\n" if product else "") + stub + "\n".join(setters) + helper + product + main)
+        subprocess.run([args.cxx, "-std=c++11", str(unit), "-o", str(root/"windows")], check=True)
+        subprocess.run([str(root/"windows")], check=True)
+
+
+
+def emit_native_main(root, destination):
+    source = (root / "src/main.C").read_text()
+    header = Path(__file__).resolve().with_name("receiver_objective_native.h")
+    source = source.replace("using namespace std;",
+                            "using namespace std;\n#include " + json.dumps(str(header)), 1)
+    source, count = re.subn(r"simulation\.solve\s*\([^;]+;", "receiver_objective_checks(simulation);",
+                            source, flags=re.S)
+    assert count in (1, 2), count
+    destination.write_text(source)
+
+
+def execute(command, cwd):
+    print(shlex.join(command), flush=True)
+    subprocess.run(command, cwd=cwd, check=True)
+
+
+def remap(tokens, mapping):
+    return [mapping.get(token, token) for token in tokens]
+
+
+def build_native(source, dest, build_dir=None, make_optdir=None, revision=None):
+    source = source.resolve()
+    dest = dest.resolve()
+    dest.mkdir(parents=True, exist_ok=False)
+    cuda = bool(make_optdir) or "CUDA_DEFINES" in (build_dir / "CMakeFiles/sw4.dir/flags.make").read_text()
+    main = dest / ("native_main.cu" if cuda else "native_main.C")
+    obj = dest / "native_main.o"
+    link_obj = dest / "native_link.o"
+    binary = dest / "objectives-native"
+    emit_native_main(source, main)
+
+    if make_optdir:
+        # Standalone RAJA records its compile and link commands in the Make dry run.
+        result = subprocess.run(
+            ["make", "-n", "-W", "src/main.C", "sw4", "optdir=" + make_optdir,
+             "GIT_VERSION=" + revision], cwd=source, text=True, capture_output=True, check=True)
+        (dest / "make-commands.txt").write_text(result.stdout)
+        (dest / "make-query-stderr.log").write_text(result.stderr)
+        lines = result.stdout.splitlines()
+        compile_line = next(line for line in lines if " -c ../src/main.C" in line)
+        device_line = next(line for line in lines if " -dlink " in line)
+        link_line = next(line for line in lines if " -o sw4 main.o file_link.o " in line)
+        cwd = source / make_optdir
+        command = shlex.split(compile_line.split(";", 1)[1])
+        execute(remap(command, {"../src/main.C": str(main)}) + ["-o", str(obj)], cwd)
+        mapping = {"main.o": str(obj), "file_link.o": str(link_obj), "sw4": str(binary)}
+        execute(remap(shlex.split(device_line.split(";", 1)[1]), mapping), cwd)
+        execute(remap(shlex.split(link_line.split(";", 1)[1]), mapping), cwd)
+        return binary
+
+    cwd = build_dir.resolve()
+    target = cwd / "CMakeFiles/sw4.dir"
+    flags = {}
+    for line in (target / "flags.make").read_text().splitlines():
+        if " = " in line and not line.startswith("#"):
+            key, value = line.split(" = ", 1)
+            flags[key] = value
+    original_obj = "CMakeFiles/sw4.dir/" + ("gpu_sources/main.cu.o" if cuda else "src/main.C.o")
+    rules = (target / "build.make").read_text().splitlines()
+    compile_line = next(line.strip() for line in rules
+                        if line.startswith("\t") and " -c " in line and " -o " + original_obj in line)
+    for key, value in flags.items():
+        compile_line = compile_line.replace("$(" + key + ")", value)
+    assert "$(" not in compile_line, compile_line
+    command = shlex.split(compile_line)
+    command[command.index("-c") + 1] = str(main)
+    execute(remap(command, {original_obj: str(obj), original_obj + ".d": str(dest / "native_main.d")}), cwd)
+
+    mapping = {original_obj: str(obj), "CMakeFiles/sw4.dir/cmake_device_link.o": str(link_obj),
+               "bin/sw4": str(binary)}
+    if cuda:
+        response = dest / "deviceObjects.rsp"
+        response.write_text((target / "deviceObjects1.rsp").read_text().replace(original_obj, str(obj)))
+        mapping["CMakeFiles/sw4.dir/deviceObjects1.rsp"] = str(response)
+        execute(remap(shlex.split((target / "dlink.txt").read_text()), mapping), cwd)
+    execute(remap(shlex.split((target / "link.txt").read_text()), mapping), cwd)
+    return binary
+
+
+def run_numerics(args):
+    rows=check_numerics(args.source_root.resolve(),args.raja,args.work_dir/'candidate',args.cxx,args.asan)
     if args.cpu_reference:
-        reference=run(args.cpu_reference.resolve(),False,args.work_dir/'cpu-reference',args.cxx,args.asan)
+        reference=check_numerics(args.cpu_reference.resolve(),False,args.work_dir/'cpu-reference',args.cxx,args.asan)
         for a,b in zip(rows,reference):
             assert a[:4]==b[:4]
             for i in [4,5,7,9,11,12,14,16,17]:
                 assert abs(a[i]-b[i])<=2e-5*max(.001,abs(a[i]),abs(b[i])),('CPU parity',a[:4],i,a[i],b[i])
         print('PASS CPU reference parity')
 
-if __name__=='__main__':main()
+
+def run_native_build(args):
+    revision = args.revision
+    if args.make_optdir and not revision:
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                           cwd=args.source_root, text=True).strip()
+    print(build_native(args.source_root, args.work_dir, args.build_dir,
+                       args.make_optdir, revision))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    modes = parser.add_subparsers(dest="mode", required=True)
+    source = argparse.ArgumentParser(add_help=False)
+    source.add_argument("--source-root", type=Path, default=Path(__file__).resolve().parents[1])
+    extraction = argparse.ArgumentParser(add_help=False, parents=[source])
+    extraction.add_argument("--cxx", default="c++")
+    extraction.add_argument("--raja", action="store_true", help="Select unified GPU implementation")
+
+    windows = modes.add_parser("windows", parents=[extraction],
+                               help="Check single and two-window weights and mode reset")
+    windows.set_defaults(check=run_windows)
+
+    numerics = modes.add_parser("numerics", parents=[extraction],
+                                help="Check objectives, derivatives, and receiver data adjoints")
+    numerics.add_argument("--work-dir", type=Path, required=True)
+    numerics.add_argument("--cpu-reference", type=Path)
+    numerics.add_argument("--asan", action="store_true",
+                          help="Enable address and float-to-int overflow sanitizers")
+    numerics.set_defaults(check=run_numerics)
+
+    native = modes.add_parser("native-build", parents=[source],
+                              help="Link a driver against existing SW4 objects")
+    native.add_argument("--work-dir", type=Path, required=True)
+    build = native.add_mutually_exclusive_group(required=True)
+    build.add_argument("--build-dir", type=Path, help="Existing CMake Makefiles build directory")
+    build.add_argument("--make-optdir", help="Existing standalone RAJA Make output directory")
+    native.add_argument("--revision", help="Version for an archived RAJA source tree")
+    native.set_defaults(check=run_native_build)
+
+    args = parser.parse_args()
+    args.check(args)
+
+
+if __name__ == "__main__":
+    main()

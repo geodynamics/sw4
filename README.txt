@@ -23,7 +23,3 @@ tools        Matlab/Octave scripts for post processing and analysis of results
 
 
 For more info, contact: Computational Infrastructure for Geodynamics (CIG) {\tt geodynamics.org}.
-
-Receiver HDF5 templates use a single-reader metadata broadcast. See
-doc/receiver-template-input.md
-for the input contract and regression commands.
