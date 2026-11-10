@@ -179,7 +179,7 @@ m_global_event = a_ew->local_to_global_event(m_event);
 
 #endif // SW4 backend
 #if defined(SW4_USE_RAJA) // SW4 backend
-if (m_zRelativeToTopography && a_ew->topographyExists()) {
+if (a_ew->topographyExists()) {
 
 #else // SW4 backend
 if (a_ew->topographyExists() )
@@ -208,7 +208,7 @@ a_ew->m_1d_communicator );
 
 #endif // SW4 backend
 #if defined(SW4_USE_RAJA) // SW4 backend
-mZ += m_zTopo;
+if (m_zRelativeToTopography) mZ += m_zTopo;
 
 #else // SW4 backend
 #endif // SW4 backend

@@ -154,11 +154,23 @@ static htri_t station_dataset_exists(hid_t group, const char *group_name,
 
 static herr_t read_station_dataset(hid_t group, const char *group_name,
                                    const char *dataset_name, hid_t memory_type,
-                                   void *data) {
+                                   void *data, hssize_t expected_elements) {
   hid_t dataset = H5Dopen(group, dataset_name, H5P_DEFAULT);
   if (dataset < 0) {
     fprintf(stderr, "Error opening rechdf5 station %s dataset %s\n",
             group_name, dataset_name);
+    return -1;
+  }
+
+  // H5S_ALL transfers every element: check the caller's buffer contract first.
+  hid_t space = H5Dget_space(dataset);
+  hssize_t elements = space < 0 ? -1 : H5Sget_simple_extent_npoints(space);
+  herr_t space_status = space < 0 ? -1 : H5Sclose(space);
+  if (elements != expected_elements || space_status < 0) {
+    fprintf(stderr, "Invalid rechdf5 station %s dataset %s: expected %lld "
+                    "elements, found %lld\n", group_name, dataset_name,
+            (long long)expected_elements, (long long)elements);
+    H5Dclose(dataset);
     return -1;
   }
 
@@ -439,7 +451,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     }
     if (exists > 0) {
       if (read_station_dataset(grp, grp_name, "ISNSEW", H5T_NATIVE_INT,
-                               &isnsew) < 0) {
+                               &isnsew, 1) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -454,7 +466,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     if (exists > 0) {
       op_data->winlset = true;
       if (read_station_dataset(grp, grp_name, "WindowL", H5T_NATIVE_DOUBLE,
-                               &op_data->winl) < 0) {
+                               &op_data->winl, 1) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -468,7 +480,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     if (exists > 0) {
       op_data->winrset = true;
       if (read_station_dataset(grp, grp_name, "WindowR", H5T_NATIVE_DOUBLE,
-                               &op_data->winr) < 0) {
+                               &op_data->winr, 1) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -477,7 +489,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     exists = station_dataset_exists(grp, grp_name, "USEZVALUE");
     if (exists < 0 ||
         (exists > 0 && read_station_dataset(grp, grp_name, "USEZVALUE",
-                                            H5T_NATIVE_INT, &usezvalue) < 0)) {
+                                            H5T_NATIVE_INT, &usezvalue, 1) < 0)) {
       H5Gclose(grp);
       return -1;
     }
@@ -486,7 +498,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     exists = station_dataset_exists(grp, grp_name, "WINDOWS");
     if (exists < 0 ||
         (exists > 0 && read_station_dataset(grp, grp_name, "WINDOWS",
-                                            H5T_NATIVE_DOUBLE, data) < 0)) {
+                                            H5T_NATIVE_DOUBLE, data, 4) < 0)) {
       H5Gclose(grp);
       return -1;
     }
@@ -518,7 +530,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     if (has_xyz > 0) {
       // X, Y, Z
       if (read_station_dataset(grp, grp_name, "STX,STY,STZ",
-                               H5T_NATIVE_DOUBLE, data) < 0) {
+                               H5T_NATIVE_DOUBLE, data, 3) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -529,7 +541,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     } else if (has_geographic > 0) {
       // STLA,STLO,STDP
       if (read_station_dataset(grp, grp_name, "STLA,STLO,STDP",
-                               H5T_NATIVE_DOUBLE, data) < 0) {
+                               H5T_NATIVE_DOUBLE, data, 3) < 0) {
         H5Gclose(grp);
         return -1;
       }
