@@ -82,3 +82,7 @@ CMake defaults to standalone native OpenMP. Select `SW4_BACKEND=CUDA` or
 `SW4_BACKEND=HIP` explicitly to build the retained RAJA GPU implementation.
 RAJA/Umpire and GPU toolchains are unnecessary for the default CPU build.
 See [build options and backend tests](doc/unified-backends.md).
+
+Receiver HDF5 templates use a single-reader metadata broadcast. See
+[receiver-template input](doc/receiver-template-input.md)
+for the input contract and regression commands.

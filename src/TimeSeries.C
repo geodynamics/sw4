@@ -146,14 +146,10 @@ mX(x),
   //  m_utc_offset_computed(false),
   m_use_win(false),
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
-m_winL(-1e38),
+  m_winL(-1e38),
   m_winR(1e38),
   m_winL2(-1e38),
-  m_winR2(1e38),
-
-#endif // SW4 backend
+  m_winR2(-1e38),
 m_use_x(true),
   m_use_y(true),
   m_use_z(true),
@@ -1769,6 +1765,23 @@ void TimeSeries::interpolate( TimeSeries& intpfrom )
 }
 
 //-----------------------------------------------------------------------
+#if defined(SW4_USE_RAJA)
+// Use the native CPU observation taper on the GPU paths as well.
+static float_sw4 receiver_window_weight(float_sw4 t, float_sw4 dt,
+                                        float_sw4 left, float_sw4 right,
+                                        float_sw4 left2, float_sw4 right2) {
+  float_sw4 inverse_width = 1 / (5 * dt);
+  float_sw4 weight = 0.5 * (tanh((t - left) * inverse_width) -
+                            tanh((t - right) * inverse_width));
+  if (left2 > 0 || right2 > 0) {
+    float_sw4 second = 0.5 * (tanh((t - left2) * inverse_width) -
+                              tanh((t - right2) * inverse_width));
+    weight = weight >= second ? weight : second;
+  }
+  return weight;
+}
+#endif
+
 float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
                               float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift )
 {
@@ -1809,7 +1822,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       float_sw4** misfitsource;
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-float_sw4 aw, bw;
+
 
 #else // SW4 backend
 float**     misfitsource_float;
@@ -1830,8 +1843,7 @@ if( m_use_win )
          //	bw = -aw*0.5*(m_winR+m_winL);
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-aw = M_PI / (m_winR - m_winL);
-      bw = -aw * 0.5 * (m_winR + m_winL);
+
 
 #else // SW4 backend
 itau =1/(5*m_dt);
@@ -1920,10 +1932,8 @@ cout <<"WARNING: Mismatch between observation start time and simulation start ti
          {
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-if (t < m_winL || t > m_winR)
-          wghx = wghy = wghz = 0;
-        else
-          wghx = wghy = wghz = pow(cos(aw * t + bw), 10.0) * wghv;
+wghx = wghy = wghz = receiver_window_weight(t, m_dt, m_winL, m_winR,
+                                                   m_winL2, m_winR2);
 
 #else // SW4 backend
 wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
@@ -2349,7 +2359,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-float_sw4 aw, bw;
+
 
 #else // SW4 backend
 float_sw4 itaufr, itau;//aw, bw,
@@ -2363,8 +2373,7 @@ if( m_use_win )
       //      itaufr = 1/(2*dtfr);
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-aw = M_PI / (m_winR - m_winL);
-    bw = -aw * 0.5 * (m_winR + m_winL);
+
 
 #else // SW4 backend
 itau   = 1/(5*m_dt);
@@ -2477,10 +2486,8 @@ for( int i= 0 ; i <= mLastTimeStep ; i++ )
          // Window data in this object w(t_n)
 
 #if defined(SW4_USE_RAJA) // SW4 backend
-if (t - tshift < m_winL || t - tshift > m_winR)
-        wghx = wghy = wghz = 0;
-      else
-        wghx = wghy = wghz = pow(cos(aw * (t - tshift) + bw), 5.0) * wghv;
+wghx = wghy = wghz = receiver_window_weight(t - tshift, m_dt,
+                                                 m_winL, m_winR, m_winL2, m_winR2);
 
 #else // SW4 backend
 wghx = 0.5*tanh((t-tshift-m_winL)*itau) - 0.5*tanh((t-tshift-m_winR)*itau);
@@ -2576,10 +2583,8 @@ dmf[0]  += dwgh[m-mmin]*obs_windowed[0][m]*idtfr;
 
 #endif // SW4 backend
 #if defined(SW4_USE_RAJA) // SW4 backend
-if (tobs < m_winL || tobs > m_winR)
-            wghxobs = wghyobs = wghzobs = 0;
-          else
-            wghxobs = wghyobs = wghzobs = pow(cos(aw * (tobs) + bw), 5.0);
+wghxobs = wghyobs = wghzobs = receiver_window_weight(tobs, m_dt,
+                                                        m_winL, m_winR, m_winL2, m_winR2);
         }
 
         if (observed.m_usgsFormat) {
@@ -2817,12 +2822,8 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    retval->m_winL = m_winL;
    retval->m_winR = m_winR;
 
-#if defined(SW4_USE_RAJA) // SW4 backend
-#else // SW4 backend
-retval->m_winL2 = m_winL2;
+   retval->m_winL2 = m_winL2;
    retval->m_winR2 = m_winR2;
-
-#endif // SW4 backend
 retval->m_use_x = m_use_x;
    retval->m_use_y = m_use_y;
    retval->m_use_z = m_use_z;
@@ -3096,7 +3097,8 @@ float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
 float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
       float_sw4 t = m_t0 + i * m_dt;
-      if (m_use_win && (t < m_winL || t > m_winR)) wghx = wghy = wghz = 0;
+      if (m_use_win) wghx = wghy = wghz = receiver_window_weight(t, m_dt,
+                                                               m_winL, m_winR, m_winL2, m_winR2);
       if (!m_use_x) wghx = 0;
       if (!m_use_y) wghy = 0;
       if (!m_use_z) wghz = 0;
@@ -3457,6 +3459,7 @@ void TimeSeries::set_window( float_sw4 winl, float_sw4 winr )
    m_use_win = true;
    m_winL = winl;
    m_winR = winr;
+   m_winL2 = m_winR2 = -1e38;
 }
 
 //-----------------------------------------------------------------------
