@@ -44,7 +44,7 @@
 \renewcommand{\div}{{\rm div}}
 \renewcommand{\arraystretch}{1.3}
 
-\markboth{}{N. A. PETERSSON AND B. SJOGREEN; USER'S GUIDE TO SW4, v-2.0}
+\markboth{}{SW4 USER'S GUIDE: UNIFIED BACKENDS}
 
 \begin{document}
 
@@ -102,7 +102,7 @@ COMPUTATIONAL INFRASTRUCTURE FOR GEODYNAMICS (CIG)
 \hfill{\Huge \fontfamily{\sfdefault}\selectfont User's Guide \\
 % FILL: manual version
 % e.g. 1.0
-\raggedleft \huge \fontfamily{\sfdefault}\selectfont Version 3.0\\}
+\raggedleft \huge \fontfamily{\sfdefault}\selectfont Version 3.0\\{\Large Unified backends, November 2026}\\}
 
 %AUTHOR(S) & WEBSITE%
 \null
@@ -306,86 +306,72 @@ the Office of Science at the U.S.~Department of Energy.
 \index{srun}\index{parallel execution}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Running \emph{SW4}}
-This section assumes that \emph{SW4} has already been installed on your computer system. We refer to
-the report by Petersson and Sjogreen~\cite{SW4-install} for instructions on how to install
-\emph{SW4}.
+\section{Build and executable selection}
+The \texttt{unified-backends} branch selects one backend at build time:
+\texttt{OPENMP} (native CPU), \texttt{CUDA}, or \texttt{HIP}.
+Use the executable built for the available node type. A run cannot switch
+backends or mix CPU and GPU solver ranks. The installation guide,
+\texttt{SW4-Installation.pdf}, gives the CMake options and dependencies.
 
-\emph{SW4} can be executed from the command line or from a script. The simulation is specified by
-the input file, and the name of the input file is given on the command line. The input file is an
-ASCII text file that contains a number of commands specifying the properties of the simulation, such
-as the dimensions of the computational domain, grid spacing, the duration of the simulation, the
-material properties, the source model, as well as the desired output. To improve readability of this
-document we have used the continuation character ``$\backslash$" to extend long commands to the
-subsequent line. There is however no support for continuation characters in \emph{SW4}, so each
-command must be given on one (sometimes long) line in the input file.
-
-Since \emph{SW4} is a parallel code, it is required to be run under a parallel execution environment
-such as mpiexec, mpirun, openmpirun, or srun. The \verb+srun+ command is currently always used on
-the parallel machines at Livermore Computing. It is important to start \emph{SW4} with the correct
-parallel execution tool. For example, if you build \emph{SW4} with the \verb+openmpi+ compilers, you
-should use the \verb+openmpirun+ environment. Also note that some systems require you to start an
-\verb+mpd+ daemon before running any parallel programs. Chances are high that somebody else has
-already figured out how to run parallel programs on your system. If you have problems running
-\emph{SW4}, ask your local system administrator, or somebody else who has experience running MPI
-programs on your system.
-
-Throughout this document we use the convention that input files have the file suffix {\tt
-  .in}. However, \emph{SW4} will attempt to read any input file, regardless of its extension.
-
-If your system is setup for using \verb+mpiexec+, the command
+The Perlmutter installation has separate CPU and CUDA executables:
 \begin{verbatim}
-	shell> mpiexec -np 2 sw4 test.in
+/global/cfs/cdirs/m3354/perl/sw4.unifybackend/install/cpu/bin/sw4
+/global/cfs/cdirs/m3354/perl/sw4.unifybackend/install/cuda/bin/sw4
 \end{verbatim}
-runs \emph{SW4} on 2 processes, and tells it to read the input from a file named {\tt test.in}.  If you
-are using \verb+mpirun+, you would instead use the command
+The CPU prefix also contains \texttt{sw4mopt} for native material inversion.
+Building \texttt{sw4mopt} in a CUDA or HIP build tree still selects the native
+CPU inversion implementation. GPU model-level adjoints are not validated.
+
+\section{Running SW4}
+An input deck specifies the domain, material, source, duration, and output.
+Each SW4 command must occupy one line. The continuation character
+``$\backslash$'' used to wrap long examples in this guide is not supported
+in input files. The \texttt{.in} filename suffix is a convention.
+
+Use the MPI launcher that matches the build's MPI library. For example,
+inside a suitable CPU allocation, with the installed executable on \texttt{PATH}:
 \begin{verbatim}
-	shell> mpirun -np 2 sw4 test.in
+export OMP_NUM_THREADS=1
+mpiexec -n 2 sw4 test.in
 \end{verbatim}
-{\bf Remark: } If \emph{SW4} produces strange looking outputs, for example where the same text is
-repeated several times (e.g. once per processor), you are probably running \emph{SW4} under the
-wrong parallel execution environment. Make sure you are running \emph{SW4} under an environment that
-is compatible with the compiler that was used to build \emph{SW4}.
-%
-
-\subsection{Version information (-v)}
-\index{command line options!-v version info}
-
-Version information for the \emph{SW4} executable can be obtained through the {\tt -v} flag:
+Set \texttt{OMP\_NUM\_THREADS} to the CPU threads assigned to each rank.
+On Slurm, launch steps within an allocation. These examples use two ranks
+and one CPU core per rank; the GPU example also requires two allocated GPUs:
 \begin{verbatim}
-shell> mpirun optimize/sw4 -v
-----------------------------------------------------------------
-            sw4 version 2.0
-
- This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
- This is free software, and you are welcome to redistribute     
- it under certain conditions, see LICENSE.txt for more details  
-----------------------------------------------------------------
-  Compiled on: Mon Nov  6 09:11:04 PST 2017
-  By user:     petersson1
-  Machine:     fourier.llnl.gov
-  Compiler:    /opt/local/bin/mpicxx
-  3rd party include dir: /opt/local/lib/proj47/include, and library dir: /opt/local/lib/proj47/lib
-----------------------------------------------------------------
+srun -n 2 -c 1 --cpu-bind=cores /path/to/cpu/bin/sw4 test.in
+srun -n 2 -c 1 --gpus-per-task=1 --gpu-bind=closest \
+  /path/to/cuda/bin/sw4 test.in
 \end{verbatim}
-Note that the same information is by default printed to standard out (your screen, or log file when
-running in batch mode) at the beginning of every run.
+The shell continuation in the second launch command is valid shell syntax.
+Use one visible GPU per rank. CUDA host OpenMP is off by default, and staged
+MPI buffers are the default. Retain the runtime libraries used to link the
+executable. On Perlmutter, select the matching CPU/GPU node type and account;
+follow current site policy for allocations and queue limits.
 
-\subsection{Running on the parallel machines at Livermore Computing}
-%
-The srun command is currently used to run parallel jobs on LC machines. For example, the command
-\begin{verbatim}
-	shell> srun -ppdebug -n 32 sw4 xxx.in
-\end{verbatim}
-runs \emph{SW4} on 32 processors on the debug partion using xxx.in as the input file. Note that the
-pdebug partition is intended for shorter jobs. It is subject to both a CPU time limit and a limit on
-the number of processors per job. Jobs requiring more computer resources must be submitted through
-the batch system, currently using the \verb+msub+ command. Refer to the Livermore Computing web pages for
-detailed information (https://computing.llnl.gov).
+To inspect the executable's build information, use the same launcher with
+\texttt{sw4 -v}. Build information is also printed at startup.
 
-%\section{Warning and error messages}
+\section{Receiver input and inversion limits}
+HDF5 input/output requires a build with \texttt{USE\_HDF5=ON}; geographic
+projections require \texttt{USE\_PROJ=ON}. These CMake options are off by
+default. Receiver metadata is read by rank zero of each simulation
+MPI group and broadcast in ordered batches. This path is automatic for
+\texttt{rechdf5}; there is no input switch to enable it.
+Waveform reads remain on the owning ranks.
 
-%Warning and error messages are stored in separate log files...
+For travel-time inversion, an unresolved correlation peak contributes zero
+misfit and zero adjoint forcing. Native CPU inversion fixes the accepted
+window set at the first evaluation of each stage and rejects trial models
+that lose an accepted window. Review the logged exclusions and restart with
+reviewed windows if no trial is admissible. Receiver windows affect inversion
+weights; they do not taper the saved forward waveforms.
+
+The receiver checks cover metadata, Gaussian/flat source and receiver depth,
+and depth-gradient material planes. A model-level Taylor check covers one
+Vp direction in a small uniform CPU model. GPU model-level adjoints,
+representative-recording peak selection, HIP, and production-scale startup
+speedup remain unverified. Test commands and scope are in
+\texttt{doc/receiver-template-input.md} in the source repository.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Governing equations, coordinate system, and units}
@@ -3939,8 +3925,8 @@ The geographic coordinate option {\tt nsew=1} is only effective when {\tt variab
 \index{command!sachdf5}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Similar to the \verb+rec+ command, the \verb+rechdf5+ command is used to save the time history of the solution at a fixed location in
-space in the HDF5 format, see \S~\ref{sec:rec} for examples. The major difference is that all station's data is stored in a single
-file instead of multiple ones in either SAC or USGS format.
+space in HDF5 format, see \S~\ref{sec:rec} for examples. All stations for a command share one output file. Separate commands can
+write separate files, including files with repeated station names.
 \begin{flushleft}
 \bf
 Syntax:\\
@@ -3959,7 +3945,7 @@ The HDF5 file format is described in Section~\ref{sec:sachdf5-format}.
 \multicolumn{5}{|c|}{\bf sachdf5 command parameters}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
 infile & input file name  & string & none & station.h5 \\ \hline
-outfile & input file name  & string & none & station\_out.h5 \\ \hline
+outfile & output file name  & string & none & station\_out.h5 \\ \hline
 writeEvery & cycle interval to write the file to disk & int & none & 1000 \\ \hline
 %
 \hline
@@ -3969,6 +3955,16 @@ downsample & outputs all components with the given downsample rate, resulting in
 \end{center}
 
 \index{rechdf5 parameters!writeEvery, infile, outfile, downsample, variables}
+
+Station metadata may include \texttt{USEZVALUE}: a nonzero scalar treats
+the third station coordinate as absolute z instead of depth below the local
+surface. Scalar \texttt{WindowL} and \texttt{WindowR} override the command's
+window bounds for that station. A four-value \texttt{WINDOWS} dataset takes
+precedence and specifies $[L_1,R_1,L_2,R_2]$ in seconds. The second interval is active when
+at least one of its bounds is positive. Overlapping intervals use the maximum
+of their two smooth, five-sample tanh tapers. These weights apply to inversion;
+saved forward waveforms retain their original samples.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % images
@@ -5296,150 +5292,56 @@ directory. Note that only a subset of the header information is parsed by this r
 \section{sachdf5}\label{sec:sachdf5-format}
 \index{fileformats!sachdf5}
 
-The HDF5 format holds the time history of all components of the solution at a fixed point in space.
-There are 4 global attributes in the root group of the file, including {\tt DATETIME}, a time string
-(in UTC) recording the start of the simulation; {\tt UNIT}, the unit for the data (``m'', ``m/s'', etc.);
-{\tt DELTA}, the sample interval; and {\tt ORIGINTIME}, the origin time in seconds, relative to the start time 
-of SW4 calculation and seismogram of the earliest source.
+Receiver HDF5 files contain one group per station. The root attributes
+\texttt{DATETIME} and \texttt{UNIT} give the simulation's UTC start time and
+the motion unit. Root datasets \texttt{DELTA}, \texttt{DOWNSAMPLE}, and
+\texttt{STARTTIME} give the saved sample interval in seconds, downsampling
+factor, and trace start offset. \texttt{ORIGINTIME} is the earliest source's
+origin time in seconds relative to the simulation start.
 
-Then the time-series data of each station in separate groups, using the station name as the group name.
-Inside each group, there is the number of valid points stored in the data array, the station location
-in both xyz coordiate in SW4 domain (m) and latitude, longitude, depth. In the case when the surface grids are too sparse, we also store the actual location and the distance between the actual and user-specified location in {\tt ACTUALSTLA,STLO,STDP}, {\tt ACTUALSTX,STY,STZ}, and  {\tt DISTFROMACTUAL}.  The data array may be named with 
-{\tt X, Y, Z, or EW, NS, UP} depending on the {\tt isnsew=} option specified in the rec/sac command. For each of 
-these component, there are also {\tt *CMPAZ and} {\tt *CMINC} (e.g. {\tt XCMPAZ, XCMPINC}) recording its azimuth and inclination.
+Each station group stores its requested coordinates, sampled grid position,
+and component arrays. \texttt{ISNSEW} selects Cartesian \texttt{X,Y,Z} or
+geographic \texttt{EW,NS,UP} components; each component also has azimuth and
+inclination metadata. Native CPU output includes a four-value
+\texttt{WINDOWS} dataset. GPU output does not currently write this dataset;
+both backends accept it in receiver templates.
 
-Note that the dataspace of the data array is pre-allocated to hold the entire timeseries data of the simulation,
-when the SW4 is terminate early (i.e. in case of checkpoint/restart), only a portion of the data in the array
-is valid, with the size recorded in the {\tt NPTS} field. When reading the data, it is recommended to read the 
-{\tt NPTS} value first and only use the first {\tt NPTS} values from the data array.
-
-The HDF5 file stores data in an self-describing way, with the following fields:
+Arrays are allocated for the full simulation. Read \texttt{NPTS} first and
+use only that many samples, including step zero; the unused tail is not valid
+history. \texttt{DELTA} already includes the downsampling factor.
+The fields for vector receiver output are:
 
 \begin{center}
 \begin{tabular}{lll}\hline
 Name & Type & Size \\ \hline
   DATETIME & H5T\_STRING & string\_len \\ \hline
   UNIT & H5T\_STRING & string\_len \\ \hline
-  DELTA & H5T\_STD\_F32LE & 1 \\ \hline
-  ORIGINTIME & H5T\_STD\_F32LE & 1 \\ \hline
+  DELTA & H5T\_IEEE\_F32LE & 1 \\ \hline
+  ORIGINTIME & H5T\_IEEE\_F32LE & 1 \\ \hline
+  DOWNSAMPLE & H5T\_STD\_I32LE & 1 \\ \hline
+  STARTTIME & H5T\_IEEE\_F32LE & 1 \\ \hline
 Group /BK.BDM (station name) \\ \hline
-  ISNSEW & H5T\_IEEE\_I32LE & 1  \\ \hline
-  LOC & H5T\_IEEE\_I32LE & 1  \\ \hline
-  NPTS & H5T\_IEEE\_I32LE & 1  \\ \hline
-  STLA,STLO,STDP & H5T\_STD\_F32LE & 3 \\ \hline
-  ACTUALSTLA,STLO,STDP & H5T\_STD\_F32LE & 3 \\ \hline
-  STX,STY,STZ & H5T\_STD\_F32LE & 3 \\ \hline
-  ACTUALSTX,STY,STZ & H5T\_STD\_F32LE & 3 \\ \hline
-  DISTFROMACTUAL & H5T\_STD\_F32LE & 1\\ \hline
-  X or EW & H5T\_STD\_F32LE & NPTS \\ \hline
-  XCMPAZ or EWCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
-  XCMPINC or EWCMPINC & H5T\_STD\_F32LE & 1\\ \hline
-  Y or NS & H5T\_STD\_F32LE & NPTS \\ \hline
-  YCMPAZ or NSCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
-  YCMPINC or NSCMPINC & H5T\_STD\_F32LE & 1\\ \hline
-  Z or UP & H5T\_STD\_F32LE & NPTS \\ \hline
-  ZCMPAZ or UPCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
-  ZCMPINC or UPCMPINC & H5T\_STD\_F32LE & 1\\ \hline
+  ISNSEW & H5T\_STD\_I32LE & 1  \\ \hline
+  LOC & H5T\_STD\_I32LE & 1  \\ \hline
+  NPTS & H5T\_STD\_I32LE & 1  \\ \hline
+  STLA,STLO,STDP & H5T\_IEEE\_F64LE & 3 \\ \hline
+  ACTUALSTLA,STLO,STDP & H5T\_IEEE\_F64LE & 3 \\ \hline
+  STX,STY,STZ & H5T\_IEEE\_F64LE & 3 \\ \hline
+  ACTUALSTX,STY,STZ & H5T\_IEEE\_F64LE & 3 \\ \hline
+  DISTFROMACTUAL & H5T\_IEEE\_F64LE & 1\\ \hline
+  X or EW & H5T\_IEEE\_F32LE & NPTS \\ \hline
+  XCMPAZ or EWCMPAZ & H5T\_IEEE\_F32LE & 1\\ \hline
+  XCMPINC or EWCMPINC & H5T\_IEEE\_F32LE & 1\\ \hline
+  Y or NS & H5T\_IEEE\_F32LE & NPTS \\ \hline
+  YCMPAZ or NSCMPAZ & H5T\_IEEE\_F32LE & 1\\ \hline
+  YCMPINC or NSCMPINC & H5T\_IEEE\_F32LE & 1\\ \hline
+  Z or UP & H5T\_IEEE\_F32LE & NPTS \\ \hline
+  ZCMPAZ or UPCMPAZ & H5T\_IEEE\_F32LE & 1\\ \hline
+  ZCMPINC or UPCMPINC & H5T\_IEEE\_F32LE & 1\\ \hline
 \end{tabular}
 \end{center}
 
-The output of {\tt h5dump -A} header and metadata is below (lightly edited):
-
-\begin{verbatim}
-HDF5 "sta.hdf5" {
-GROUP "/" {
-   ATTRIBUTE "DATETIME" {
-      DATATYPE  H5T_STRING {
-         STRSIZE 27;
-         STRPAD H5T_STR_NULLTERM;
-         CSET H5T_CSET_ASCII;
-         CTYPE H5T_C_S1;
-      }
-      DATASPACE  SCALAR
-      DATA {
-      (0): "2019-10-02T02:18:58.000000"
-      }
-   }
-   ATTRIBUTE "UNIT" {
-      DATATYPE  H5T_STRING {
-         STRSIZE 2;
-         STRPAD H5T_STR_NULLTERM;
-         CSET H5T_CSET_ASCII;
-         CTYPE H5T_C_S1;
-      }
-      DATASPACE  SCALAR
-      DATA {
-      (0): "m"
-      }
-   }
-   DATASET "DELTA" {
-      DATATYPE  H5T_IEEE_F32LE
-      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-   }
-   DATASET "ORIGINTIME" {
-      DATATYPE  H5T_IEEE_F32LE
-      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-   }
-   GROUP "BK.BDM" {
-      DATASET "LOC" {
-         DATATYPE  H5T_STD_I32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "NPTS" {
-         DATATYPE  H5T_STD_I32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "STLA,STLO,STDP" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
-      }
-      DATASET "STX,STY,STZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
-      }
-      DATASET "X" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
-      }
-      DATASET "XCMPAZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "XCMPINC" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "Y" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
-      }
-      DATASET "YCMPAZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "YCMPINC" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "Z" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
-      }
-      DATASET "ZCMPAZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "ZCMPINC" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-   }
-   GROUP "BK.BKS" {
-   ...
-   }
-}
-
-\end{verbatim}
+Use \texttt{h5dump -H receiver.h5} to inspect the stored fields and their dimensions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{image}\label{sec:image-format}
