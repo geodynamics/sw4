@@ -2311,7 +2311,11 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
       float_sw4 other_lag, other_score;
       if (refine(i, other_lag, other_score))
       {
-         if (std::abs(other_lag - lag) > lag_tol && other_score >= score - score_tol)
+         // Correlation sums accumulate roundoff across the trace, and a
+         // refined peak can be much higher than every coarse sample.
+         const float_sw4 peak_tol = roundoff * (float_sw4(mLastTimeStep) + 1) *
+             std::max(scale, std::max(std::abs(score), std::abs(other_score)));
+         if (std::abs(other_lag - lag) > lag_tol && other_score >= score - peak_tol)
             return unresolved("competing correlation peaks", sampled);
       }
       else if (scores[i] >= score - score_tol)
