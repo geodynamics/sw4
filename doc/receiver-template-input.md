@@ -27,7 +27,7 @@ lists its inputs in `--help`.
 | Test entry point | Modes |
 | --- | --- |
 | `pytest/receiver_template_metadata.py` | `replay` checks station records and malformed inputs locally. `groups` checks two independent MPI groups. |
-| `pytest/receiver_template_startup.py` | `startup` compares matched HDF5-enabled builds. `depth` checks template and inline receivers over topography. |
+| `pytest/receiver_template_startup.py` | `startup` compares matched HDF5-enabled builds. `depth` checks receiver placement; `geometry` checks source z and depth-gradient materials on flat/Gaussian grids. |
 | `pytest/receiver_objective_numerics.py` | `windows` and `numerics` check receiver methods locally. `native-build` links a driver against an existing SW4 build. |
 
 Use a native CPU baseline for metadata parity. Run `groups`, `startup`,
@@ -35,3 +35,10 @@ Use a native CPU baseline for metadata parity. Run `groups`, `startup`,
 For native objectives, use a flat uniform-material deck with (1800, 1800, 0)
 inside the grid. The Taylor mode checks the material gradient with the
 native CPU sw4 and sw4mopt executables in an allocation.
+
+Geometry checks compare native rho/Vp/Vs planes with analytic depth gradients,
+match relative and absolute source positions, and verify above-surface source
+exclusion on one Gaussian hill and vertical material plane. The Taylor check
+covers one Vp direction in a small uniform model.
+GPU model-level adjoints, representative-recording peak selection, HIP and
+representative-scale startup performance remain unverified.
