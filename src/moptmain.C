@@ -18,6 +18,7 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 #ifndef SQR
 #define SQR(x) ((x)*(x))
@@ -226,12 +227,78 @@ void set_timewindows_from_eikonal_time(vector<vector<TimeSeries*> >& GlobalTimeS
 }
 
 //-----------------------------------------------------------------------
+
+// Select receiver windows once for this inversion. Both objective entry points
+// use the same local ownership and fixed set for all subsequent models.
+struct TravelTimeEvaluation
+{
+   explicit TravelTimeEvaluation(Mopt& mopt) : options(mopt) {}
+
+   double event(int e, vector<TimeSeries*>& synthetics,
+                vector<TimeSeries*>& observations,
+                const vector<TimeSeries*>* diffs = nullptr,
+                vector<TimeSeries*>* forcing = nullptr)
+   {
+      auto& mask = options.m_crosscorr_windows;
+      if (!options.m_crosscorr_frozen && mask.size() <= static_cast<size_t>(e))
+         mask.resize(e + 1);
+      auto& selected = mask[e];
+      if (!options.m_crosscorr_frozen)
+         selected.resize(synthetics.size());
+
+      double score = 0;
+      for (size_t m = 0; m < synthetics.size(); ++m)
+      {
+         if (!synthetics[m]->myPoint() || (options.m_crosscorr_frozen && !selected[m]))
+            continue;
+         bool resolved;
+         const double contribution = synthetics[m]->misfit2(
+             *observations[m], diffs ? (*diffs)[m] : nullptr, &resolved);
+         if (!options.m_crosscorr_frozen)
+            selected[m] = resolved;
+         if (resolved)
+         {
+            score += contribution;
+            ++accepted;
+            if (forcing)
+               forcing->push_back((*diffs)[m]);
+         }
+         else if (options.m_crosscorr_frozen)
+            ++lost;
+         else
+            ++excluded;
+      }
+      return score;
+   }
+
+   bool finish(EW& simulation)
+   {
+      int counts[3] = {accepted, excluded, lost}, group[3], total[3];
+      MPI_Allreduce(counts, group, 3, MPI_INT, MPI_SUM, simulation.m_1d_communicator);
+      MPI_Allreduce(group, total, 3, MPI_INT, MPI_SUM, simulation.m_cross_communicator);
+      if (!options.m_crosscorr_frozen)
+      {
+         CHECK_INPUT(total[0] > 0, "No resolved travel-time windows for inversion");
+         options.m_crosscorr_frozen = true;
+         if (simulation.proc_zero())
+            cout << "Travel-time window selection: " << total[0] << " accepted, "
+                 << total[1] << " excluded" << endl;
+      }
+      if (total[2] > 0 && simulation.proc_zero())
+         cout << "Model lost " << total[2] << " selected travel-time windows" << endl;
+      return total[2] == 0;
+   }
+
+   Mopt& options;
+   int accepted = 0, excluded = 0, lost = 0;
+};
+
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		int nmpard, double* xm,
 		vector<vector<Source*> >& GlobalSources,
 		vector<vector<TimeSeries*> >& GlobalTimeSeries,
 		vector<vector<TimeSeries*> >& GlobalObservations,
-		double& mf, Mopt *mopt )
+		double& mf, Mopt *mopt, bool forward_only )
 //-----------------------------------------------------------------------
 // Compute misfit.
 //
@@ -318,6 +385,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
    vector<Sarray> U(ng), Um(ng), ph(ng);
    mf = 0;
+   TravelTimeEvaluation traveltime(*mopt);
    //DBG
    //   float_sw4** mfmat = new float_sw4*[simulation.getNumberOfLocalEvents()];
    //   for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
@@ -336,6 +404,9 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph );
       sw4_profile->time_stamp("done forward solve" );
 //      cout.precision(16);  
+      if (forward_only)
+         continue;
+
 //  Compute misfit
       if( mopt->m_misfit == Mopt::L2 )
       {
@@ -348,18 +419,8 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 	    mf += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], NULL, dshift, ddshift, dd1shift );
          }
       }
-      else if( mopt->m_misfit == Mopt::CROSSCORR )
-      {
-	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	 {
-            // DBG
-            //            mfmat[e][m]=GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], NULL );
-            //            mf += mfmat[e][m];
-	    mf += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], NULL );
-	    //	    if( e==0 && m== 0 )
-	    //	       exit(0);
-	 }
-      }
+      else if (mopt->m_misfit == Mopt::CROSSCORR)
+         mf += traveltime.event(e, GlobalTimeSeries[e], GlobalObservations[e]);
 
       // Give back memory
       //   for( unsigned int g=0 ; g < ng ; g++ )
@@ -394,6 +455,19 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    //      delete[] mfmat[e];
    //   delete mfmat;
    // end DBG
+   }
+   if (forward_only)
+   {
+      sw4_profile->time_stamp("Exit compute_f");
+      return;
+   }
+   if (!mopt->m_test_regularizer && mopt->m_misfit == Mopt::CROSSCORR &&
+       !traveltime.finish(simulation))
+   {
+      // Trial models cannot improve the objective by dropping a selected window.
+      mf = std::numeric_limits<double>::infinity();
+      sw4_profile->time_stamp("Exit compute_f");
+      return;
    }
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
@@ -546,6 +620,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
    vector<Sarray> pseudo_hessian(ng);
    f = 0;
+   TravelTimeEvaluation traveltime(*mopt);
    
    float_sw4 *dfsevent, *dfmevent;
    if( nmpars > 0 )
@@ -606,17 +681,16 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                //               GlobalTimeSeries[e][m]->writeFileUSGS("syn6");
             }
          }
-         else if( mopt->m_misfit == Mopt::CROSSCORR )
-         {
-            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
-               f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
-            }
-         }
-         
+         vector<TimeSeries*> resolved_forcing;
+         if (mopt->m_misfit == Mopt::CROSSCORR)
+            f += traveltime.event(e, GlobalTimeSeries[e], GlobalObservations[e],
+                                 &diffs, &resolved_forcing);
+         auto& forcing = mopt->m_misfit == Mopt::CROSSCORR ? resolved_forcing : diffs;
+
          double dfsrc[11];
          get_source_pars( nspar, dfsrc, dfs );   
          sw4_profile->time_stamp("backward+adjoint solve" );
-         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
+         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda, forcing, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
          sw4_profile->time_stamp("done backward+adjoint solve" );
          // DEBUG
          //         int ip=39, jp=37, kp=3, gr=2;
@@ -641,6 +715,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          }
 
       }  // loop over events
+
+      if (mopt->m_misfit == Mopt::CROSSCORR)
+         CHECK_INPUT(traveltime.finish(simulation),
+                     "Gradient model lost a selected travel-time window");
 
       mopt->m_mp->limit_df( nmpard, dfm, nmpars, &dfs[nspar]);
 
@@ -1652,7 +1730,8 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 		  if( mopt->m_misfit == Mopt::L2 )
 		     mf = GlobalTimeSeries[e][s]->misfit( *GlobalObservations[e][s], NULL, dshift, ddshift, dd1shift );
 		  else if(  mopt->m_misfit == Mopt::CROSSCORR )
-		     mf = GlobalTimeSeries[e][s]->misfit2( *GlobalObservations[e][s], NULL );
+		     mf = mopt->m_crosscorr_windows[e][s] ?
+                    GlobalTimeSeries[e][s]->misfit2(*GlobalObservations[e][s], nullptr) : 0;
 		  double mftmp = mf;
 		  MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
 		  if( myRank == 0 )
@@ -2083,7 +2162,7 @@ int main(int argc, char **argv)
 // Solve forward problem to generate synthetic data
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-			 GlobalObservations, f, mopt );
+			 GlobalObservations, f, mopt, true );
 	      for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ ) 
               {
 #ifdef USE_HDF5
@@ -2223,7 +2302,7 @@ int main(int argc, char **argv)
            // 1. Solve for initial seismogram. 
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
-                         GlobalTimeSeries0, GlobalObservations, f, mopt );
+                         GlobalTimeSeries0, GlobalObservations, f, mopt, true );
 
            // 2. Continuation loop
               int ncsteps=mopt->m_ncontsteps;
@@ -2239,6 +2318,10 @@ int main(int argc, char **argv)
                     for( int m=0 ; m < GlobalObservations[e].size(); m++ )
                        GlobalObservationsCont[e][m]->add( *GlobalTimeSeries0[e][m],
                                                           *GlobalObservations[e][m], 1-par, par );
+
+                 // A continuation stage defines new observations.
+                 mopt->m_crosscorr_frozen = false;
+                 mopt->m_crosscorr_windows.clear();
 
                  if( mopt->m_optmethod == 1 )
                     lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 

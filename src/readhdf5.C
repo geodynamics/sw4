@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <string.h>
 #include <errno.h>
@@ -51,8 +52,21 @@
 #ifdef USE_HDF5
 #include "hdf5.h"
 
+// Keep the distribution bounded even for templates with millions of stations.
+static const size_t station_batch_size = 1024;
+
+struct station_metadata_t {
+  string name;
+  double x, y, z;
+  double winl, winr;
+  double win1, win2, win3, win4;
+  bool topodepth, foundwins;
+  bool geographic, nsew, winlset, winrset;
+};
+
 struct traverse_data_t {
   int myRank;
+  MPI_Comm communicator;
   EW* ew;
   /* bool cartCoordSet; */
   string inFileName;
@@ -67,18 +81,19 @@ struct traverse_data_t {
   bool is_obs;
   bool winlset;
   bool winrset;
-  float_sw4 winl;
-  float_sw4 winr;
-  float_sw4 win1;
-  float_sw4 win2;
-  float_sw4 win3;
-  float_sw4 win4;
+  // Command defaults. Each station starts with its own copy.
+  double winl;
+  double winr;
   bool usex;
   bool usey;
   bool usez;
   float_sw4 t0;
   bool scalefactor_set; 
   float_sw4 scalefactor;
+  vector<station_metadata_t> stations;
+  double distribution_time;
+  double construction_time;
+  size_t station_count;
 } traverse_data_t;
 
 struct traverse_data2_t {
@@ -135,11 +150,23 @@ static htri_t station_dataset_exists(hid_t group, const char *group_name,
 
 static herr_t read_station_dataset(hid_t group, const char *group_name,
                                    const char *dataset_name, hid_t memory_type,
-                                   void *data) {
+                                   void *data, hssize_t expected_elements) {
   hid_t dataset = H5Dopen(group, dataset_name, H5P_DEFAULT);
   if (dataset < 0) {
     fprintf(stderr, "Error opening rechdf5 station %s dataset %s\n",
             group_name, dataset_name);
+    return -1;
+  }
+
+  // H5S_ALL transfers every element: check the caller's buffer contract first.
+  hid_t space = H5Dget_space(dataset);
+  hssize_t elements = space < 0 ? -1 : H5Sget_simple_extent_npoints(space);
+  herr_t space_status = space < 0 ? -1 : H5Sclose(space);
+  if (elements != expected_elements || space_status < 0) {
+    fprintf(stderr, "Invalid rechdf5 station %s dataset %s: expected %lld "
+                    "elements, found %lld\n", group_name, dataset_name,
+            (long long)expected_elements, (long long)elements);
+    H5Dclose(dataset);
     return -1;
   }
 
@@ -155,6 +182,222 @@ static herr_t read_station_dataset(hid_t group, const char *group_name,
   return read_status < 0 || close_status < 0 ? -1 : 0;
 }
 
+static void construct_station(const station_metadata_t &station,
+                              struct traverse_data_t *op_data) {
+  EW *a_ew = op_data->ew;
+  double x = station.x, y = station.y, z = station.z, depth;
+  double lon = station.x, lat = station.y;
+  float_sw4 winl = station.winl, winr = station.winr;
+  bool geoCoordSet = station.geographic, nsew = station.nsew;
+  bool topodepth = station.topodepth;
+  depth = z;
+  if (geoCoordSet) a_ew->computeCartesianCoord(x, y, lon, lat);
+
+  bool inCurvilinear = false;
+  // we are in or above the curvilinear grid
+  if (a_ew->topographyExists() &&
+      z < a_ew->m_zmin[a_ew->mNumberOfCartesianGrids - 1])
+    inCurvilinear = true;
+
+  // check if (x,y,z) is not in the global bounding box
+  if (!((inCurvilinear || z >= 0) && x >= 0 && x <= op_data->m_global_xmax &&
+        y >= 0 && y <= op_data->m_global_ymax)) {
+    // The location of this station was outside the domain, so don't include it
+    // in the global list
+    if (op_data->myRank == 0 && a_ew->getVerbosity() > 0) {
+      stringstream receivererr;
+
+      receivererr << endl
+                  << "***************************************************"
+                  << endl
+                  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+      receivererr << " No RECEIVER file will be generated for file = "
+                  << op_data->outFileName << endl;
+      if (geoCoordSet) {
+        receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth
+                    << endl
+                    << endl;
+      } else {
+        receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+      }
+
+      receivererr << "***************************************************"
+                  << endl;
+      cerr << receivererr.str();
+      cerr.flush();
+    }
+  } else {
+    /* if (op_data->myRank == 0) */
+    /*   cout << "x=" << x << ", y=" << y << ", z=" << z << ", writeEvery=" <<
+     * op_data->writeEvery << endl; */
+
+    TimeSeries *ts_ptr = new TimeSeries(
+        a_ew, station.name, station.name, op_data->mode, false, false, true,
+        op_data->outFileName, x, y, z, topodepth, op_data->writeEvery,
+        op_data->downSample, !nsew, op_data->event);
+
+    // Share an HDF5 handle only with receivers writing to the same file.
+    // A single shared handle for all rechdf5 output files causes every rank
+    // to close and reopen files when switching receiver sets.
+    TimeSeries *file_ts0 = NULL;
+    for (int ts = (int)(*op_data->GlobalTimeSeries)[op_data->event].size() - 1;
+         ts >= 0; ts--) {
+      TimeSeries *candidate = (*op_data->GlobalTimeSeries)[op_data->event][ts];
+      if (candidate->getUseHDF5() &&
+          candidate->getPath() == ts_ptr->getPath() &&
+          candidate->gethdf5FileName() == ts_ptr->gethdf5FileName()) {
+        file_ts0 = candidate->getTS0Ptr();
+        break;
+      }
+    }
+
+    if (file_ts0 == NULL) {
+      ts_ptr->allocFid();
+      ts_ptr->setTS0Ptr(ts_ptr);
+    } else {
+      ts_ptr->setFidPtr(file_ts0->getFidPtr());
+      ts_ptr->setTS0Ptr(file_ts0);
+    }
+
+    if (ts_ptr->myPoint()) {
+      /* cout << "Rank " << op_data->myRank << "has this point x=" << x << " y="
+       * << y << " z=" << z << endl; */
+
+      // Only for observation data
+      if (op_data->is_obs) {
+        // Read data
+        bool ignore_utc = false;
+        if (!ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName,
+                                 ignore_utc)) {
+          delete ts_ptr;
+          MPI_Abort(MPI_COMM_WORLD, -1);
+          return;
+        }
+
+        // Set reference UTC to simulation UTC, for easier plotting.
+        ts_ptr->set_utc_to_simulation_utc();
+
+        // Set window, in simulation time
+        if (station.winlset || station.winrset) {
+          if (station.winlset && !station.winrset) winr = 1e38;
+          if (!station.winlset && station.winrset) winl = -1;
+          ts_ptr->set_window(winl, winr);
+        }
+
+        if (station.foundwins)
+          ts_ptr->set_window(station.win1, station.win2, station.win3,
+                             station.win4);
+
+        // Exclude some components
+        if (!op_data->usex || !op_data->usey || !op_data->usez)
+          ts_ptr->exclude_component(op_data->usex, op_data->usey,
+                                    op_data->usez);
+
+        // Add extra shift from command line, use with care.
+        if (op_data->t0 != 0) ts_ptr->add_shift(op_data->t0);
+        // DBG
+        //          ts_ptr->set_shift(0.0);
+
+        // Set scale factor if given
+        if (op_data->scalefactor_set)
+          ts_ptr->set_scalefactor(op_data->scalefactor);
+      }
+    }
+
+    // include the receiver in the global list
+    (*op_data->GlobalTimeSeries)[op_data->event].push_back(ts_ptr);
+  }
+}
+
+// Broadcast typed fields and names, not C++ object layouts or HDF5 file images.
+// A negative count reports a root read failure; zero marks the end of the
+// stream.
+static int distribute_station_batch(struct traverse_data_t *op_data,
+                                    bool failed = false) {
+  double start = MPI_Wtime();
+  int header[2] = {0, 0};
+  vector<double> values;
+  vector<int> flags;
+  vector<char> names;
+  if (op_data->myRank == 0) {
+    header[0] = failed ? -1 : (int)op_data->stations.size();
+    if (!failed) {
+      values.resize(9 * header[0]);
+      flags.resize(7 * header[0]);
+      for (int k = 0; k < header[0]; ++k) {
+        const station_metadata_t &station = op_data->stations[k];
+        CHECK_INPUT(station.name.size() <=
+                        (size_t)std::numeric_limits<int>::max() - names.size(),
+                    "Receiver station names exceed MPI message capacity");
+        values[9 * k] = station.x;
+        values[9 * k + 1] = station.y;
+        values[9 * k + 2] = station.z;
+        values[9 * k + 3] = station.winl;
+        values[9 * k + 4] = station.winr;
+        values[9 * k + 5] = station.win1;
+        values[9 * k + 6] = station.win2;
+        values[9 * k + 7] = station.win3;
+        values[9 * k + 8] = station.win4;
+        flags[7 * k + 5] = station.topodepth;
+        flags[7 * k + 6] = station.foundwins;
+        flags[7 * k] = station.geographic;
+        flags[7 * k + 1] = station.nsew;
+        flags[7 * k + 2] = station.winlset;
+        flags[7 * k + 3] = station.winrset;
+        flags[7 * k + 4] = (int)station.name.size();
+        names.insert(names.end(), station.name.begin(), station.name.end());
+      }
+      header[1] = (int)names.size();
+    }
+  }
+  MPI_Bcast(header, 2, MPI_INT, 0, op_data->communicator);
+  if (header[0] < 0) {
+    MPI_Abort(MPI_COMM_WORLD, -1);
+    return -1;
+  }
+  if (header[0] == 0) {
+    op_data->distribution_time += MPI_Wtime() - start;
+    return 0;
+  }
+  if (op_data->myRank != 0) {
+    values.resize(9 * header[0]);
+    flags.resize(7 * header[0]);
+    names.resize(header[1]);
+  }
+  MPI_Bcast(values.data(), (int)values.size(), MPI_DOUBLE, 0, op_data->communicator);
+  MPI_Bcast(flags.data(), (int)flags.size(), MPI_INT, 0, op_data->communicator);
+  MPI_Bcast(names.data(), header[1], MPI_CHAR, 0, op_data->communicator);
+  op_data->distribution_time += MPI_Wtime() - start;
+
+  start = MPI_Wtime();
+  size_t offset = 0;
+  for (int k = 0; k < header[0]; ++k) {
+    station_metadata_t station;
+    station.name.assign(names.data() + offset, flags[7 * k + 4]);
+    offset += flags[7 * k + 4];
+    station.x = values[9 * k];
+    station.y = values[9 * k + 1];
+    station.z = values[9 * k + 2];
+    station.winl = values[9 * k + 3];
+    station.winr = values[9 * k + 4];
+    station.win1 = values[9 * k + 5];
+    station.win2 = values[9 * k + 6];
+    station.win3 = values[9 * k + 7];
+    station.win4 = values[9 * k + 8];
+    station.topodepth = flags[7 * k + 5] != 0;
+    station.foundwins = flags[7 * k + 6] != 0;
+    station.geographic = flags[7 * k] != 0;
+    station.nsew = flags[7 * k + 1] != 0;
+    station.winlset = flags[7 * k + 2] != 0;
+    station.winrset = flags[7 * k + 3] != 0;
+    construct_station(station, op_data);
+  }
+  op_data->construction_time += MPI_Wtime() - start;
+  op_data->station_count += header[0];
+  op_data->stations.clear();
+  return header[0];
+}
+
 static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
 {
   hid_t grp;
@@ -166,10 +409,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 #endif
   EW *a_ew;
   double data[4];
-  double lon, lat, depth, x, y, z;
+  double lon, lat, x, y, z;
   bool geoCoordSet = true, topodepth = true, nsew = true;
   int isnsew = 1, usezvalue;
-  bool foundwins=false;
 
   ASSERT(operator_data != NULL);
 
@@ -197,72 +439,6 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       return -1;
     }
 
-    htri_t exists = station_dataset_exists(grp, grp_name, "ISNSEW");
-    if (exists < 0) {
-      H5Gclose(grp);
-      return -1;
-    }
-    if (exists > 0) {
-      if (read_station_dataset(grp, grp_name, "ISNSEW", H5T_NATIVE_INT,
-                               &isnsew) < 0) {
-        H5Gclose(grp);
-        return -1;
-      }
-      nsew = isnsew != 0;
-    }
-
-    exists = station_dataset_exists(grp, grp_name, "WindowL");
-    if (exists < 0) {
-      H5Gclose(grp);
-      return -1;
-    }
-    if (exists > 0) {
-      op_data->winlset = true;
-      if (read_station_dataset(grp, grp_name, "WindowL", H5T_NATIVE_DOUBLE,
-                               &op_data->winl) < 0) {
-        H5Gclose(grp);
-        return -1;
-      }
-    }
-
-    exists = station_dataset_exists(grp, grp_name, "WindowR");
-    if (exists < 0) {
-      H5Gclose(grp);
-      return -1;
-    }
-    if (exists > 0) {
-      op_data->winrset = true;
-      if (read_station_dataset(grp, grp_name, "WindowR", H5T_NATIVE_DOUBLE,
-                               &op_data->winr) < 0) {
-        H5Gclose(grp);
-        return -1;
-      }
-    }
-
-    exists = station_dataset_exists(grp, grp_name, "USEZVALUE");
-    if (exists < 0 ||
-        (exists > 0 && read_station_dataset(grp, grp_name, "USEZVALUE",
-                                            H5T_NATIVE_INT, &usezvalue) < 0)) {
-      H5Gclose(grp);
-      return -1;
-    }
-    if (exists > 0 && usezvalue != 0) topodepth = false;
-
-    exists = station_dataset_exists(grp, grp_name, "WINDOWS");
-    if (exists < 0 ||
-        (exists > 0 && read_station_dataset(grp, grp_name, "WINDOWS",
-                                            H5T_NATIVE_DOUBLE, data) < 0)) {
-      H5Gclose(grp);
-      return -1;
-    }
-    if (exists > 0) {
-      op_data->win1 = data[0];
-      op_data->win2 = data[1];
-      op_data->win3 = data[2];
-      op_data->win4 = data[3];
-      foundwins = true;
-    }
-
     // ISNSEW describes component orientation, not coordinate representation.
     // Prefer Cartesian coordinates when both supported representations exist.
     htri_t has_xyz =
@@ -280,10 +456,85 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
         return -1;
       }
     }
+    if (has_xyz == 0 && has_geographic == 0)
+      return H5Gclose(grp);  // This group is not a station.
+
+    station_metadata_t station{};
+    station.winlset = op_data->winlset;
+    station.winrset = op_data->winrset;
+    station.winl = op_data->winl;
+    station.winr = op_data->winr;
+
+    htri_t exists = station_dataset_exists(grp, grp_name, "ISNSEW");
+    if (exists < 0) {
+      H5Gclose(grp);
+      return -1;
+    }
+    if (exists > 0) {
+      if (read_station_dataset(grp, grp_name, "ISNSEW", H5T_NATIVE_INT,
+                               &isnsew, 1) < 0) {
+        H5Gclose(grp);
+        return -1;
+      }
+      nsew = isnsew != 0;
+    }
+
+    exists = station_dataset_exists(grp, grp_name, "WindowL");
+    if (exists < 0) {
+      H5Gclose(grp);
+      return -1;
+    }
+    if (exists > 0) {
+      station.winlset = true;
+      if (read_station_dataset(grp, grp_name, "WindowL", H5T_NATIVE_DOUBLE,
+                               &station.winl, 1) < 0) {
+        H5Gclose(grp);
+        return -1;
+      }
+    }
+
+    exists = station_dataset_exists(grp, grp_name, "WindowR");
+    if (exists < 0) {
+      H5Gclose(grp);
+      return -1;
+    }
+    if (exists > 0) {
+      station.winrset = true;
+      if (read_station_dataset(grp, grp_name, "WindowR", H5T_NATIVE_DOUBLE,
+                               &station.winr, 1) < 0) {
+        H5Gclose(grp);
+        return -1;
+      }
+    }
+
+    exists = station_dataset_exists(grp, grp_name, "USEZVALUE");
+    if (exists < 0 ||
+        (exists > 0 && read_station_dataset(grp, grp_name, "USEZVALUE",
+                                            H5T_NATIVE_INT, &usezvalue, 1) < 0)) {
+      H5Gclose(grp);
+      return -1;
+    }
+    if (exists > 0 && usezvalue != 0) topodepth = false;
+
+    exists = station_dataset_exists(grp, grp_name, "WINDOWS");
+    if (exists < 0 ||
+        (exists > 0 && read_station_dataset(grp, grp_name, "WINDOWS",
+                                            H5T_NATIVE_DOUBLE, data, 4) < 0)) {
+      H5Gclose(grp);
+      return -1;
+    }
+    if (exists > 0) {
+      station.win1 = data[0];
+      station.win2 = data[1];
+      station.win3 = data[2];
+      station.win4 = data[3];
+      station.foundwins = true;
+    }
+
     if (has_xyz > 0) {
       // X, Y, Z
       if (read_station_dataset(grp, grp_name, "STX,STY,STZ",
-                               H5T_NATIVE_DOUBLE, data) < 0) {
+                               H5T_NATIVE_DOUBLE, data, 3) < 0) {
         H5Gclose(grp);
         return -1;
       }
@@ -291,137 +542,33 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       y = data[1];
       z = data[2];
       geoCoordSet = false;
-    } else if (has_geographic > 0) {
+    } else {
       // STLA,STLO,STDP
       if (read_station_dataset(grp, grp_name, "STLA,STLO,STDP",
-                               H5T_NATIVE_DOUBLE, data) < 0) {
+                               H5T_NATIVE_DOUBLE, data, 3) < 0) {
         H5Gclose(grp);
         return -1;
       }
       lat = data[0];
       lon = data[1];
       z = data[2];
-    } else {
-      // Not a station group, ignore
-      H5Gclose(grp);
-      return 0;
     }
 
-    depth = z;
-    if (geoCoordSet)
-      a_ew->computeCartesianCoord(x, y, lon, lat);
+    station.name = grp_name;
+    // For geographic records x/y carry longitude/latitude until construction.
+    station.x = geoCoordSet ? lon : x;
+    station.y = geoCoordSet ? lat : y;
+    station.z = z;
+    station.geographic = geoCoordSet;
+    station.nsew = nsew;
+    station.topodepth = topodepth;
+    op_data->stations.push_back(station);
 
-    bool inCurvilinear=false;
-    // we are in or above the curvilinear grid 
-    if ( a_ew->topographyExists() && z < a_ew->m_zmin[a_ew->mNumberOfCartesianGrids-1])
-      inCurvilinear = true;
 
-    // check if (x,y,z) is not in the global bounding box
-    if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=op_data->m_global_xmax && y>=0 && y<=op_data->m_global_ymax)) {
-      // The location of this station was outside the domain, so don't include it in the global list
-      if (op_data->myRank == 0 && a_ew->getVerbosity() > 0) {
-        stringstream receivererr;
-    
-        receivererr << endl 
-  		  << "***************************************************" << endl
-  		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
-        receivererr << " No RECEIVER file will be generated for file = " << op_data->outFileName<< endl;
-        if (geoCoordSet) {
-  	  receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
-        }
-        else {
-    	  receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
-        }
-        
-        receivererr << "***************************************************" << endl;
-        cerr << receivererr.str();
-        cerr.flush();
-      }
-    }
-    else
-    {
-      /* if (op_data->myRank == 0) */
-      /*   cout << "x=" << x << ", y=" << y << ", z=" << z << ", writeEvery=" << op_data->writeEvery << endl; */
-
-      TimeSeries *ts_ptr = new TimeSeries(a_ew, grp_name, grp_name, op_data->mode, false, false, true, op_data->outFileName, x, y, z, topodepth, op_data->writeEvery,
-          op_data->downSample, !nsew, op_data->event);
-
-      // Share an HDF5 handle only with receivers writing to the same file.
-      // A single shared handle for all rechdf5 output files causes every rank
-      // to close and reopen files when switching receiver sets.
-      TimeSeries *file_ts0 = NULL;
-      for (int ts =
-               (int)(*op_data->GlobalTimeSeries)[op_data->event].size() - 1;
-           ts >= 0; ts--) {
-        TimeSeries *candidate =
-            (*op_data->GlobalTimeSeries)[op_data->event][ts];
-        if (candidate->getUseHDF5() &&
-            candidate->getPath() == ts_ptr->getPath() &&
-            candidate->gethdf5FileName() ==
-                ts_ptr->gethdf5FileName()) {
-          file_ts0 = candidate->getTS0Ptr();
-          break;
-        }
-      }
-
-      if (file_ts0 == NULL) {
-        ts_ptr->allocFid();
-        ts_ptr->setTS0Ptr(ts_ptr);
-      } else {
-        ts_ptr->setFidPtr(file_ts0->getFidPtr());
-        ts_ptr->setTS0Ptr(file_ts0);
-      }
-
-      if (ts_ptr->myPoint()) {
-        /* cout << "Rank " << op_data->myRank << "has this point x=" << x << " y=" << y << " z=" << z << endl; */
-
-        // Only for observation data
-        if (op_data->is_obs) {
-          // Read data
-          bool ignore_utc = false;
-          if (!ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName, ignore_utc)) {
-            delete ts_ptr;
-            H5Gclose(grp);
-            return -1;
-          }
-
-          // Set reference UTC to simulation UTC, for easier plotting.
-          ts_ptr->set_utc_to_simulation_utc();
-      
-          // Set window, in simulation time
-          if( op_data->winlset || op_data->winrset )
-          {
-             if( op_data->winlset && !op_data->winrset )
-                op_data->winr = 1e38;
-             if( !op_data->winlset && op_data->winrset )
-                op_data->winl = -1;
-             ts_ptr->set_window( op_data->winl, op_data->winr );
-          }
-
-          if( foundwins )
-             ts_ptr->set_window( op_data->win1, op_data->win2, op_data->win3, op_data->win4 );
-
-          // Exclude some components
-          if( !op_data->usex || !op_data->usey || !op_data->usez )
-             ts_ptr->exclude_component( op_data->usex, op_data->usey, op_data->usez );
-      
-          // Add extra shift from command line, use with care.
-          if( op_data->t0 != 0 )
-             ts_ptr->add_shift( op_data->t0 );
-          //DBG
-          //          ts_ptr->set_shift(0.0);
-      
-          // Set scale factor if given
-          if( op_data->scalefactor_set )
-             ts_ptr->set_scalefactor( op_data->scalefactor );
-          }
-      }
-  
-      // include the receiver in the global list
-      (*op_data->GlobalTimeSeries)[op_data->event].push_back(ts_ptr);
-    }
-
-    H5Gclose(grp);
+    herr_t close_status = H5Gclose(grp);
+    if (close_status < 0) return -1;
+    if (op_data->stations.size() == station_batch_size)
+      distribute_station_batch(op_data);
   }
 
   return 0;
@@ -429,10 +576,11 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 
 void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor)
 {
-  hid_t fid, fapl;
+  hid_t fid;
 
   struct traverse_data_t tData;
   tData.myRank = ew->getRank();
+  tData.communicator = ew->m_1d_communicator;
   tData.ew = ew;
   tData.inFileName  = inFileName;
   tData.outFileName = outFileName;
@@ -455,28 +603,45 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
   tData.scalefactor_set = scalefactor_set;
   tData.scalefactor = scalefactor;
 
-  fapl = H5Pcreate(H5P_FILE_ACCESS);
-  /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
+  tData.distribution_time = 0;
+  tData.construction_time = 0;
+  tData.station_count = 0;
+  double start = MPI_Wtime();
 
-  fid = H5Fopen(inFileName.c_str(),  H5F_ACC_RDONLY, fapl);
-  if (fid < 0) {
-    printf("%s Error opening file [%s]\n", __func__, inFileName.c_str());
-    return;
-  }
-
-  if (inFileName == outFileName) {
-    if (tData.myRank == 0) {
-      printf("Warning: Same station input file and output file name [%s]\n", inFileName.c_str());
+  if (tData.myRank == 0) {
+    // Only root accesses the template. Receiver construction remains collective.
+    fid = H5Fopen(inFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (fid < 0) {
+      fprintf(stderr, "%s Error opening file [%s]\n", __func__,
+              inFileName.c_str());
+      distribute_station_batch(&tData, true);
+      return;
     }
+    if (inFileName == outFileName)
+      printf("Warning: Same station input file and output file name [%s]\n",
+             inFileName.c_str());
+
+    herr_t iterate_status =
+        H5Literate(fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, traverse_func,
+                   &tData);
+    herr_t file_status = H5Fclose(fid);
+    if (iterate_status < 0 || file_status < 0) {
+      fprintf(stderr, "Failed reading station metadata from [%s]\n",
+              inFileName.c_str());
+      distribute_station_batch(&tData, true);
+      return;
+    }
+    if (!tData.stations.empty()) distribute_station_batch(&tData);
+    distribute_station_batch(&tData);  // End of metadata stream.
+    double read_time = MPI_Wtime() - start - tData.distribution_time -
+                       tData.construction_time;
+    printf("Receiver HDF5 setup: %zu station records from [%s], read %.6f s, "
+           "distribution %.6f s, construction %.6f s\n",
+           tData.station_count, inFileName.c_str(), read_time, tData.distribution_time,
+           tData.construction_time);
+  } else {
+    while (distribute_station_batch(&tData) > 0) {}
   }
-
-  herr_t status = H5Literate (fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, traverse_func, &tData);
-
-  H5Pclose(fapl);
-  CHECK_INPUT(status >= 0, "Failed reading station metadata from " << inFileName);
-  H5Fclose(fid);
-
-  return;
 }
 
 static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)

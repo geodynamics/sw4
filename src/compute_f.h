@@ -2,7 +2,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, d
 		vector<vector<Source*> >& GlobalSources,
 		vector<vector<TimeSeries*> >& GlobalTimeSeries,
 		vector<vector<TimeSeries*> >& GlobalObservations,
-		double& mf, Mopt *mopt );
+		double& mf, Mopt *mopt, bool forward_only = false );
 
 void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs, int nmpard, double* xm,
 		       vector<vector<Source*> >& GlobalSources,
