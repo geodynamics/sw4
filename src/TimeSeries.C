@@ -2224,8 +2224,9 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
    if (!m_myPoint)
       return 0;
 
-   // Keep the reference lag range and coarse samples. Refine only inside
-   // a bracket with a rising left side and a falling right side.
+   // Keep the reference lag range and coarse samples. A coarse neighbor
+   // can lie beyond a sidelobe trough, so validate the stationary maximum
+   // after bounded refinement rather than requiring neighbor slope signs.
    constexpr int n = 40;
    const float_sw4 limit = 2, spacing = 2 * limit / (n - 1);
    float_sw4 lags[n], scores[n], slopes[n], scale = 0;
@@ -2263,8 +2264,6 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
 
    auto refine = [&](int i, float_sw4& lag, float_sw4& score) {
       const int left = std::max(0, i - 1), right = std::min(n - 1, i + 1);
-      if (!(slopes[left] > 0 && slopes[right] < 0))
-         return false;
       float_sw4 lo = lags[left], hi = lags[right];
       lag = lags[i];
       for (int it = 0; it < 64; ++it)
