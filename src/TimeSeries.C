@@ -31,6 +31,7 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include <limits>
 #include <mpi.h>
 #include <unistd.h>
 
@@ -111,6 +112,10 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       mBinaryMode(true),
       //  m_utc_set(false),
       //  m_utc_offset_computed(false),
+      m_winL(-1e38),
+      m_winR(1e38),
+      m_winL2(-1e38),
+      m_winR2(-1e38),
       m_use_win(false),
       m_use_x(true),
       m_use_y(true),
@@ -132,7 +137,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       m_event(event) {
 
   // 1. Adjust z if depth below topography is given
-  if (m_zRelativeToTopography && a_ew->topographyExists()) {
+  if (a_ew->topographyExists()) {
     float_sw4 zTopoLocal;
     if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, zTopoLocal,
                                                       a_ew->mTopoGridExt) < 0)
@@ -140,9 +145,9 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
     MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
                   MPI_COMM_WORLD);
 
-    mZ += m_zTopo;
   } else
     m_zTopo = 0;
+  if (m_zRelativeToTopography) mZ += m_zTopo;
   m_zRelativeToTopography = false;
   // 2. Find nearest grid point and its grid.
   m_myPoint =
@@ -1635,6 +1640,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
     // Interpolate data to this object
     //      int order = 4;
     float_sw4 scale_factor = 0;
+      float_sw4 dscale_factor = 0, ddscale_factor = 0;
 
     float_sw4 mf[3], dmf[3], ddmf[3];
     float_sw4 dtfr = observed.m_dt;
@@ -1643,11 +1649,6 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
     bool compute_difference = (diff != NULL);
     float_sw4** misfitsource;
-    float_sw4 aw, bw;
-    if (m_use_win) {
-      aw = M_PI / (m_winR - m_winL);
-      bw = -aw * 0.5 * (m_winR + m_winL);
-    }
     if (compute_difference) {
       if (diff->mLastTimeStep < mLastTimeStep)
         diff->allocateRecordingArrays(mLastTimeStep, m_t0 + m_shift, m_dt);
@@ -1712,10 +1713,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
       float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
       if (m_use_win) {
-        if (t < m_winL || t > m_winR)
-          wghx = wghy = wghz = 0;
-        else
-          wghx = wghy = wghz = pow(cos(aw * t + bw), 10.0) * wghv;
+        wghx = wghy = wghz = window_weight(t);
       }
       if (!m_use_x) wghx = 0;
       if (!m_use_y) wghy = 0;
@@ -1723,7 +1721,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
       // If too far past the end of observed, set to zero.
       //	 if( ie > nfrsteps + order/2 )
-      if (ie > nfrsteps + 1) {
+      if (ie > nfrsteps - 1) {
         mf[0] = mf[1] = mf[2] = 0;
         dmf[0] = dmf[1] = dmf[2] = 0;
         ddmf[0] = ddmf[1] = ddmf[2] = 0;
@@ -1752,14 +1750,14 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 
         float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
         if (ie < 3) {
-          mmin = 1;
-          mmax = 5;
+          mmin = 0;
+          mmax = 4;
           ai = ir - (mmin + 2);
           getwgh5(ai, wgh, dwgh, ddwgh);
 
-        } else if (ie > nfrsteps - 3) {
-          mmin = nfrsteps - 4;
-          mmax = nfrsteps;
+        } else if (ie > nfrsteps - 4) {
+          mmin = nfrsteps - 5;
+          mmax = nfrsteps - 1;
           ai = ir - (mmin + 2);
           getwgh5(ai, wgh, dwgh, ddwgh);
         } else {
@@ -1851,14 +1849,29 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
       }
       scale_factor +=
           wghx * mf[0] * mf[0] + wghy * mf[1] * mf[1] + wghz * mf[2] * mf[2];
+      // The observation energy changes when its time shift changes.
+      dscale_factor -= 2 * (wghx * mf[0] * dmf[0] +
+                            wghy * mf[1] * dmf[1] + wghz * mf[2] * dmf[2]);
+      ddscale_factor += 2 * (wghx * (dmf[0] * dmf[0] + mf[0] * ddmf[0]) +
+                             wghy * (dmf[1] * dmf[1] + mf[1] * ddmf[1]) +
+                             wghz * (dmf[2] * dmf[2] + mf[2] * ddmf[2]));
     }
     //  scale misfit and diff-source
     if (m_misfit_scaling == 1) {
       if (scale_factor == 0) {
         cout << "WARNING: Observation contains zero data" << endl;
         scale_factor = 1;
+         dscale_factor = ddscale_factor = 0;
       }
       float_sw4 iscale = 1 / scale_factor;
+      // Apply the quotient rule to the same normalized objective we return.
+      float_sw4 normalized_misfit = 0.5 * misfit * iscale;
+      float_sw4 normalized_dshift =
+          (dshift - normalized_misfit * dscale_factor) * iscale;
+      ddshift = (ddshift - normalized_misfit * ddscale_factor -
+                 2 * normalized_dshift * dscale_factor) * iscale;
+      dshift = normalized_dshift;
+      dd1shift *= iscale;
       misfit *= iscale;
       if (compute_difference)
         for (int i = 0; i <= mLastTimeStep; i++) {
@@ -1873,58 +1886,111 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
-  bool dbg = false;
-  if (m_myPoint) {
-    //       dbg = m_staName == "FAKE.51";
-    // 1. Evaluate correlation at some time shifts around zero
-    int noptpt = 40;
-    float_sw4 tlim = 2, fmax = -1e38, tmax = 0;
-    float_sw4 f, df, ddf;
-    if (dbg)
-      cout << m_event << "Compute maxshift \n 1. scan through time points "
-           << endl;
-    for (int n = 0; n < noptpt; n++) {
-      float_sw4 tshift = -tlim + n * 2 * tlim / (noptpt - 1);
-      shiftfunc(observed, tshift, f, df, ddf);
-      if (f > fmax) {
-        fmax = f;
-        tmax = tshift;
+float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
+{
+   resolved = false;
+   if (!m_myPoint)
+      return 0;
+
+   // Keep the reference lag range and coarse samples. A coarse neighbor
+   // can lie beyond a sidelobe trough, so validate the stationary maximum
+   // after bounded refinement rather than requiring neighbor slope signs.
+   constexpr int n = 40;
+   const float_sw4 limit = 2, spacing = 2 * limit / (n - 1);
+   float_sw4 lags[n], scores[n], slopes[n], scale = 0;
+   int best = 0;
+   auto unresolved = [&](const char* reason, float_sw4 lag) {
+      cout << "Unresolved travel-time window " << m_staName << ": " << reason
+           << ", sampled shift " << lag << endl;
+      return lag;
+   };
+   if (observed.mLastTimeStep < 5 || mLastTimeStep < 0 ||
+       !(observed.m_dt > 0) || !std::isfinite(observed.m_dt))
+      return unresolved("insufficient observation samples", 0);
+
+   for (int i = 0; i < n; ++i)
+   {
+      lags[i] = -limit + i * 2 * limit / (n - 1);
+      float_sw4 curvature;
+      shiftfunc(observed, lags[i], scores[i], slopes[i], curvature);
+      if (!std::isfinite(scores[i]) || !std::isfinite(slopes[i]))
+         return unresolved("nonfinite correlation", i == 0 ? 0 : lags[best]);
+      scale = std::max(scale, std::abs(scores[i]));
+      if (scores[i] > scores[best])
+         best = i;
+   }
+   const float_sw4 sampled = lags[best];
+   if (!(scores[best] > 0))
+      return unresolved("no positive correlation peak", sampled);
+
+   const float_sw4 roundoff = 32 * std::numeric_limits<float_sw4>::epsilon();
+   const float_sw4 score_tol = roundoff * scale;
+   const float_sw4 lag_tol = std::max(float_sw4(1e-12), roundoff * limit);
+   // Scaling both traces changes C and C'' together. Test relative resolution
+   // so a small but identifiable peak retains the same lag.
+   const float_sw4 curvature_tol = (score_tol / spacing) / spacing;
+
+   auto refine = [&](int i, float_sw4& lag, float_sw4& score) {
+      const int left = std::max(0, i - 1), right = std::min(n - 1, i + 1);
+      float_sw4 lo = lags[left], hi = lags[right];
+      lag = lags[i];
+      for (int it = 0; it < 64; ++it)
+      {
+         float_sw4 slope, curvature;
+         shiftfunc(observed, lag, score, slope, curvature);
+         if (!std::isfinite(score) || !std::isfinite(slope) || !std::isfinite(curvature))
+            return false;
+         const bool maximum = curvature < -curvature_tol &&
+                              std::isfinite(float_sw4(1) / curvature);
+         if (maximum && std::abs(slope) <= lag_tol * -curvature &&
+             lag > -limit && lag < limit && score + score_tol >= scores[i])
+            return true;
+         if (slope > 0)
+            lo = lag;
+         else if (slope < 0)
+            hi = lag;
+         else
+            return false;
+         const float_sw4 trial = maximum ? lag - slope / curvature : lo;
+         const float_sw4 next = trial > lo && trial < hi ? trial : lo + (hi - lo) / 2;
+         if (next == lag || next == lo || next == hi)
+            return false;
+         lag = next;
       }
-      if (dbg) cout << m_event << "ts= " << tshift << " f= " << f << endl;
-    }
-    // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) =
-    // 0
-    int maxit = 10, it = 0;
-    float_sw4 tol = 1e-12;
-    float_sw4 err = tol + 1;
-    float_sw4 t1 = tmax;
-    if (dbg) cout << m_event << " 2. Newton iteration" << endl;
-    while (it < maxit && err > tol) {
-      shiftfunc(observed, t1, f, df, ddf);
-      float_sw4 tnew = t1 - df / ddf;
-      err = abs(tnew - t1);
-      t1 = tnew;
-      it++;
-      if (dbg) cout << m_event << " it " << it << " err " << err << endl;
-    }
-    if (f > fmax) {
-      tmax = t1;
-      if (err > tol) {
-        cout << "ERROR: No convergence in compute_maxshift, err= " << err
-             << endl;
+      return false;
+   };
+
+   float_sw4 lag, score;
+   if (!refine(best, lag, score))
+      return unresolved("no resolved interior maximum", sampled);
+
+   // Distinct local maxima can tie even when their sampled heights differ.
+   // Check the refined heights before interpreting one lag as the arrival.
+   for (int i = 0; i < n; ++i)
+   {
+      if (i == best)
+         continue;
+      // Adjacent seeds can converge to different close peaks even when
+      // roundoff makes one sampled height slightly lower than its neighbor.
+      if (std::abs(i - best) > 1 &&
+          (!(scores[i] > 0) || (i > 0 && scores[i] < scores[i - 1]) ||
+           (i + 1 < n && scores[i] < scores[i + 1])))
+         continue;
+      float_sw4 other_lag, other_score;
+      if (refine(i, other_lag, other_score))
+      {
+         // Correlation sums accumulate roundoff across the trace, and a
+         // refined peak can be much higher than every coarse sample.
+         const float_sw4 peak_tol = roundoff * (float_sw4(mLastTimeStep) + 1) *
+             std::max(scale, std::max(std::abs(score), std::abs(other_score)));
+         if (std::abs(other_lag - lag) > lag_tol && other_score >= score - peak_tol)
+            return unresolved("competing correlation peaks", sampled);
       }
-      if (ddf >= 0) {
-        cout << "ERROR: compute_maxshift found a minimum,  f'' = " << ddf
-             << endl;
-      }
-    }
-    if (dbg)
-      cout << m_event << " Found optimal time shift = " << tmax << " df= " << df
-           << " f= " << f << " fmax= " << fmax << endl;
-    return tmax;
-  } else
-    return 0;
+      else if (scores[i] >= score - score_tol)
+         return unresolved("competing unresolved peak", sampled);
+   }
+   resolved = true;
+   return lag;
 }
 
 //-----------------------------------------------------------------------
@@ -1949,11 +2015,6 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
   bool compute_adjsrc = adjsrc != NULL;
   //   float_sw4 scale_factor=0;
 
-  float_sw4 aw, bw;
-  if (m_use_win) {
-    aw = M_PI / (m_winR - m_winL);
-    bw = -aw * 0.5 * (m_winR + m_winL);
-  }
 
   // Weight to ramp down the end of misfit.
   float_sw4 wghv;
@@ -1972,7 +2033,10 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     // Here t is t_n+tshift, t_n is time in this object.
     //   ir is grid point index in observed object that correspond to t_n+tshift
     //  need to evaluate the observed data at this grid point.
-    int ie = static_cast<int>(ir);
+    // Test observation support before converting a Newton trial to an index.
+    int ie = 0;
+    if (ir >= 1 && ir < static_cast<double>(nfrsteps) + 1)
+       ie = static_cast<int>(ir);
     int mmin = ie - 2;
     int mmax = ie + 3;
     if (mmax - mmin + 1 > nfrsteps) {
@@ -1986,13 +2050,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     // Windowing and component selection
     float_sw4 wghx, wghy, wghz;
     wghx = wghy = wghz = wghv;
-    if (m_use_win) {
-      // Window data in this object w(t_n)
-      if (t - tshift < m_winL || t - tshift > m_winR)
-        wghx = wghy = wghz = 0;
-      else
-        wghx = wghy = wghz = pow(cos(aw * (t - tshift) + bw), 5.0) * wghv;
-    }
+    if (m_use_win) wghx = wghy = wghz = window_weight(t - tshift);
     if (!m_use_x) wghx = 0;
     if (!m_use_y) wghy = 0;
     if (!m_use_z) wghz = 0;
@@ -2005,13 +2063,13 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     if (1 <= ie && ie <= nfrsteps) {
       float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
       if (ie < 3) {
-        mmin = 1;
-        mmax = 5;
+        mmin = 0;
+        mmax = 4;
         ai = ir - (mmin + 2);
         getwgh5(ai, wgh, dwgh, ddwgh);
-      } else if (ie > nfrsteps - 3) {
-        mmin = nfrsteps - 4;
-        mmax = nfrsteps;
+      } else if (ie > nfrsteps - 4) {
+        mmin = nfrsteps - 5;
+        mmax = nfrsteps - 1;
         ai = ir - (mmin + 2);
         getwgh5(ai, wgh, dwgh, ddwgh);
       } else {
@@ -2023,12 +2081,8 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
         float_sw4 wghxobs, wghyobs, wghzobs;
         wghxobs = wghyobs = wghzobs = 1;
         if (m_use_win) {
-          double tobs = m * dtfr + t0fr;  // t_n+tshift in Observation time
-          // Window data in this object w(t_n+tshift)
-          if (tobs < m_winL || tobs > m_winR)
-            wghxobs = wghyobs = wghzobs = 0;
-          else
-            wghxobs = wghyobs = wghzobs = pow(cos(aw * (tobs) + bw), 5.0);
+          double tobs = m * dtfr + t0fr;
+          wghxobs = wghyobs = wghzobs = window_weight(tobs);
         }
 
         if (observed.m_usgsFormat) {
@@ -2101,7 +2155,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     }
   }
   if (compute_adjsrc) {
-    float_sw4 iddf = 1 / ddfunc;
+    const float_sw4 iddf = 1 / ddfunc;
     for (int i = 0; i <= mLastTimeStep; i++) {
       adjsrc[0][i] *= iddf;
       adjsrc[1][i] *= iddf;
@@ -2111,34 +2165,39 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::misfit2(TimeSeries& observed, TimeSeries* diff) {
-  // Computes  travel time (correlation) misfit.
-  //  if diff !=NULL, also computes diff := this - observed
-  //       where 'diff' has the same grid points as 'this'. 'observed' is
-  //       interpolated to this grid, and is set to zero outside its interval
-  //       of definition.
-  float_sw4 misfit = 0;
-  if (m_myPoint) {
-    if (abs(m_t0 + m_shift - (observed.m_t0 + observed.m_shift)) > 100)
+float_sw4 TimeSeries::misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved)
+{
+   if (resolved)
+      *resolved = false;
+   if (!m_myPoint)
+      return 0;
+
+      if (abs(m_t0 + m_shift - (observed.m_t0 + observed.m_shift)) > 100)
       cout << "WARNING: Mismatch between observation start time and simulation "
               "start time is large. "
            << "Station Tstart = " << m_t0 + m_shift
            << " Observation Tstart = " << observed.m_t0 + observed.m_shift
            << endl;
 
-    float_sw4 ms = compute_maxshift(observed);
-    misfit = 0.5 * ms * ms;
-
-    if (diff != NULL) {
-      float_sw4 f, df, ddf;
-      float_sw4** misfitsource;
+   bool valid;
+   const float_sw4 lag = compute_maxshift(observed, valid);
+   if (resolved)
+      *resolved = valid;
+   if (diff)
+   {
       if (diff->mLastTimeStep < mLastTimeStep)
-        diff->allocateRecordingArrays(mLastTimeStep, m_t0 + m_shift, m_dt);
-      misfitsource = diff->getRecordingArray();
-      shiftfunc(observed, ms, f, df, ddf, misfitsource);
-    }
-  }
-  return misfit;
+         diff->allocateRecordingArrays(mLastTimeStep, m_t0 + m_shift, m_dt);
+      float_sw4** source = diff->getRecordingArray();
+      if (valid)
+      {
+         float_sw4 score, slope, curvature;
+         shiftfunc(observed, lag, score, slope, curvature, source);
+      }
+      else
+         for (int q = 0; q < 3; ++q)
+            std::fill_n(source[q], mLastTimeStep + 1, 0);
+   }
+   return valid ? 0.5 * lag * lag : 0;
 }
 
 //-----------------------------------------------------------------------
@@ -2183,6 +2242,8 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
   retval->m_use_win = m_use_win;
   retval->m_winL = m_winL;
   retval->m_winR = m_winR;
+  retval->m_winL2 = m_winL2;
+  retval->m_winR2 = m_winR2;
   retval->m_use_x = m_use_x;
   retval->m_use_y = m_use_y;
   retval->m_use_z = m_use_z;
@@ -2324,7 +2385,7 @@ float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
       float_sw4 wghx, wghy, wghz;
       wghx = wghy = wghz = wghv;
       float_sw4 t = m_t0 + i * m_dt;
-      if (m_use_win && (t < m_winL || t > m_winR)) wghx = wghy = wghz = 0;
+      if (m_use_win) wghx = wghy = wghz = window_weight(t);
       if (!m_use_x) wghx = 0;
       if (!m_use_y) wghy = 0;
       if (!m_use_z) wghz = 0;
@@ -2598,6 +2659,30 @@ void TimeSeries::set_window(float_sw4 winl, float_sw4 winr) {
   m_use_win = true;
   m_winL = winl;
   m_winR = winr;
+  m_winL2 = m_winR2 = -1e38;
+}
+
+void TimeSeries::set_window(float_sw4 winl, float_sw4 winr,
+                            float_sw4 winl2, float_sw4 winr2) {
+  m_use_win = true;
+  m_winL = winl;
+  m_winR = winr;
+  m_winL2 = winl2;
+  m_winR2 = winr2;
+}
+
+float_sw4 TimeSeries::window_weight(float_sw4 t) const {
+  // Match the native CPU observation windows: a five-sample tanh taper,
+  // with the maximum weight when P- and S-wave intervals overlap.
+  float_sw4 inverse_width = 1 / (5 * m_dt);
+  float_sw4 weight = 0.5 * (tanh((t - m_winL) * inverse_width) -
+                            tanh((t - m_winR) * inverse_width));
+  if (m_winL2 > 0 || m_winR2 > 0) {
+    float_sw4 second = 0.5 * (tanh((t - m_winL2) * inverse_width) -
+                              tanh((t - m_winR2) * inverse_width));
+    weight = weight >= second ? weight : second;
+  }
+  return weight;
 }
 
 //-----------------------------------------------------------------------

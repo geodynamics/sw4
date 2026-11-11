@@ -112,7 +112,7 @@ class TimeSeries {
 
   float_sw4 misfit(TimeSeries& observed, TimeSeries* diff, float_sw4& dshift,
                    float_sw4& ddshift, float_sw4& dd1shift);
-  float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff);
+  float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved = nullptr);
 
   void interpolate(TimeSeries& intpfrom);
 
@@ -127,6 +127,8 @@ class TimeSeries {
   void filter_data(Filter* filter_ptr);
   void print_timeinfo() const;
   void set_window(float_sw4 winl, float_sw4 winr);
+  void set_window(float_sw4 winl, float_sw4 winr, float_sw4 winl2,
+                  float_sw4 winr2);
   void exclude_component(bool usex, bool usey, bool usez);
   void readSACfiles(EW* ew, const char* sac1, const char* sac2,
                     const char* sac3, bool ignore_utc);
@@ -195,7 +197,7 @@ class TimeSeries {
   void getwgh5(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6],
                float_sw4 ddwgh[6]);
 
-  float_sw4 compute_maxshift(TimeSeries& observed);
+  float_sw4 compute_maxshift(TimeSeries& observed, bool& resolved);
   void shiftfunc(TimeSeries& observed, float_sw4 tshift, float_sw4& func,
                  float_sw4& dfunc, float_sw4& ddfunc,
                  float_sw4** adjsrc = NULL);
@@ -267,7 +269,8 @@ class TimeSeries {
 
   // Window for optimization, m_winL, m_winR given relative simulation time
   // zero.
-  float_sw4 m_winL, m_winR;
+  float_sw4 m_winL, m_winR, m_winL2, m_winR2;
+  float_sw4 window_weight(float_sw4 t) const;
   bool m_use_win, m_use_x, m_use_y, m_use_z;
 
   // quiet mode?
