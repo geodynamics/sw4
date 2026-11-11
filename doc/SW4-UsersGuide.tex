@@ -5292,150 +5292,56 @@ directory. Note that only a subset of the header information is parsed by this r
 \section{sachdf5}\label{sec:sachdf5-format}
 \index{fileformats!sachdf5}
 
-The HDF5 format holds the time history of all components of the solution at a fixed point in space.
-There are 4 global attributes in the root group of the file, including {\tt DATETIME}, a time string
-(in UTC) recording the start of the simulation; {\tt UNIT}, the unit for the data (``m'', ``m/s'', etc.);
-{\tt DELTA}, the sample interval; and {\tt ORIGINTIME}, the origin time in seconds, relative to the start time 
-of SW4 calculation and seismogram of the earliest source.
+Receiver HDF5 files contain one group per station. The root attributes
+\texttt{DATETIME} and \texttt{UNIT} give the simulation's UTC start time and
+the motion unit. Root datasets \texttt{DELTA}, \texttt{DOWNSAMPLE}, and
+\texttt{STARTTIME} give the saved sample interval in seconds, downsampling
+factor, and trace start offset. \texttt{ORIGINTIME} is the earliest source's
+origin time in seconds relative to the simulation start.
 
-Then the time-series data of each station in separate groups, using the station name as the group name.
-Inside each group, there is the number of valid points stored in the data array, the station location
-in both xyz coordiate in SW4 domain (m) and latitude, longitude, depth. In the case when the surface grids are too sparse, we also store the actual location and the distance between the actual and user-specified location in {\tt ACTUALSTLA,STLO,STDP}, {\tt ACTUALSTX,STY,STZ}, and  {\tt DISTFROMACTUAL}.  The data array may be named with 
-{\tt X, Y, Z, or EW, NS, UP} depending on the {\tt isnsew=} option specified in the rec/sac command. For each of 
-these component, there are also {\tt *CMPAZ and} {\tt *CMINC} (e.g. {\tt XCMPAZ, XCMPINC}) recording its azimuth and inclination.
+Each station group stores its requested coordinates, sampled grid position,
+and component arrays. \texttt{ISNSEW} selects Cartesian \texttt{X,Y,Z} or
+geographic \texttt{EW,NS,UP} components; each component also has azimuth and
+inclination metadata. Native CPU output includes a four-value
+\texttt{WINDOWS} dataset. GPU output does not currently write this dataset;
+both backends accept it in receiver templates.
 
-Note that the dataspace of the data array is pre-allocated to hold the entire timeseries data of the simulation,
-when the SW4 is terminate early (i.e. in case of checkpoint/restart), only a portion of the data in the array
-is valid, with the size recorded in the {\tt NPTS} field. When reading the data, it is recommended to read the 
-{\tt NPTS} value first and only use the first {\tt NPTS} values from the data array.
-
-The HDF5 file stores data in an self-describing way, with the following fields:
+Arrays are allocated for the full simulation. Read \texttt{NPTS} first and
+use only that many samples, including step zero; the unused tail is not valid
+history. \texttt{DELTA} already includes the downsampling factor.
+The fields for vector receiver output are:
 
 \begin{center}
 \begin{tabular}{lll}\hline
 Name & Type & Size \\ \hline
   DATETIME & H5T\_STRING & string\_len \\ \hline
   UNIT & H5T\_STRING & string\_len \\ \hline
-  DELTA & H5T\_STD\_F32LE & 1 \\ \hline
-  ORIGINTIME & H5T\_STD\_F32LE & 1 \\ \hline
+  DELTA & H5T\_IEEE\_F32LE & 1 \\ \hline
+  ORIGINTIME & H5T\_IEEE\_F32LE & 1 \\ \hline
+  DOWNSAMPLE & H5T\_STD\_I32LE & 1 \\ \hline
+  STARTTIME & H5T\_IEEE\_F32LE & 1 \\ \hline
 Group /BK.BDM (station name) \\ \hline
-  ISNSEW & H5T\_IEEE\_I32LE & 1  \\ \hline
-  LOC & H5T\_IEEE\_I32LE & 1  \\ \hline
-  NPTS & H5T\_IEEE\_I32LE & 1  \\ \hline
-  STLA,STLO,STDP & H5T\_STD\_F32LE & 3 \\ \hline
-  ACTUALSTLA,STLO,STDP & H5T\_STD\_F32LE & 3 \\ \hline
-  STX,STY,STZ & H5T\_STD\_F32LE & 3 \\ \hline
-  ACTUALSTX,STY,STZ & H5T\_STD\_F32LE & 3 \\ \hline
-  DISTFROMACTUAL & H5T\_STD\_F32LE & 1\\ \hline
-  X or EW & H5T\_STD\_F32LE & NPTS \\ \hline
-  XCMPAZ or EWCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
-  XCMPINC or EWCMPINC & H5T\_STD\_F32LE & 1\\ \hline
-  Y or NS & H5T\_STD\_F32LE & NPTS \\ \hline
-  YCMPAZ or NSCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
-  YCMPINC or NSCMPINC & H5T\_STD\_F32LE & 1\\ \hline
-  Z or UP & H5T\_STD\_F32LE & NPTS \\ \hline
-  ZCMPAZ or UPCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
-  ZCMPINC or UPCMPINC & H5T\_STD\_F32LE & 1\\ \hline
+  ISNSEW & H5T\_STD\_I32LE & 1  \\ \hline
+  LOC & H5T\_STD\_I32LE & 1  \\ \hline
+  NPTS & H5T\_STD\_I32LE & 1  \\ \hline
+  STLA,STLO,STDP & H5T\_IEEE\_F64LE & 3 \\ \hline
+  ACTUALSTLA,STLO,STDP & H5T\_IEEE\_F64LE & 3 \\ \hline
+  STX,STY,STZ & H5T\_IEEE\_F64LE & 3 \\ \hline
+  ACTUALSTX,STY,STZ & H5T\_IEEE\_F64LE & 3 \\ \hline
+  DISTFROMACTUAL & H5T\_IEEE\_F64LE & 1\\ \hline
+  X or EW & H5T\_IEEE\_F32LE & NPTS \\ \hline
+  XCMPAZ or EWCMPAZ & H5T\_IEEE\_F32LE & 1\\ \hline
+  XCMPINC or EWCMPINC & H5T\_IEEE\_F32LE & 1\\ \hline
+  Y or NS & H5T\_IEEE\_F32LE & NPTS \\ \hline
+  YCMPAZ or NSCMPAZ & H5T\_IEEE\_F32LE & 1\\ \hline
+  YCMPINC or NSCMPINC & H5T\_IEEE\_F32LE & 1\\ \hline
+  Z or UP & H5T\_IEEE\_F32LE & NPTS \\ \hline
+  ZCMPAZ or UPCMPAZ & H5T\_IEEE\_F32LE & 1\\ \hline
+  ZCMPINC or UPCMPINC & H5T\_IEEE\_F32LE & 1\\ \hline
 \end{tabular}
 \end{center}
 
-The output of {\tt h5dump -A} header and metadata is below (lightly edited):
-
-\begin{verbatim}
-HDF5 "sta.hdf5" {
-GROUP "/" {
-   ATTRIBUTE "DATETIME" {
-      DATATYPE  H5T_STRING {
-         STRSIZE 27;
-         STRPAD H5T_STR_NULLTERM;
-         CSET H5T_CSET_ASCII;
-         CTYPE H5T_C_S1;
-      }
-      DATASPACE  SCALAR
-      DATA {
-      (0): "2019-10-02T02:18:58.000000"
-      }
-   }
-   ATTRIBUTE "UNIT" {
-      DATATYPE  H5T_STRING {
-         STRSIZE 2;
-         STRPAD H5T_STR_NULLTERM;
-         CSET H5T_CSET_ASCII;
-         CTYPE H5T_C_S1;
-      }
-      DATASPACE  SCALAR
-      DATA {
-      (0): "m"
-      }
-   }
-   DATASET "DELTA" {
-      DATATYPE  H5T_IEEE_F32LE
-      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-   }
-   DATASET "ORIGINTIME" {
-      DATATYPE  H5T_IEEE_F32LE
-      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-   }
-   GROUP "BK.BDM" {
-      DATASET "LOC" {
-         DATATYPE  H5T_STD_I32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "NPTS" {
-         DATATYPE  H5T_STD_I32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "STLA,STLO,STDP" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
-      }
-      DATASET "STX,STY,STZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 3 ) / ( 3 ) }
-      }
-      DATASET "X" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
-      }
-      DATASET "XCMPAZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "XCMPINC" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "Y" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
-      }
-      DATASET "YCMPAZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "YCMPINC" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "Z" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 2209 ) / ( 2209 ) }
-      }
-      DATASET "ZCMPAZ" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-      DATASET "ZCMPINC" {
-         DATATYPE  H5T_IEEE_F32LE
-         DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-      }
-   }
-   GROUP "BK.BKS" {
-   ...
-   }
-}
-
-\end{verbatim}
+Use \texttt{h5dump -H receiver.h5} to inspect the stored fields and their dimensions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{image}\label{sec:image-format}
