@@ -65,6 +65,9 @@ class Mopt
 
    enum Misfittype {L2,CROSSCORR};
    Misfittype m_misfit;
+   // Receiver-owner selection shared by score and gradient evaluations.
+   bool m_crosscorr_frozen = false;
+   std::vector<std::vector<unsigned char>> m_crosscorr_windows;
 
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
