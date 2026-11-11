@@ -50,6 +50,25 @@ Directories
 - optimize/    - Directory for object files and the optimized SW4 executable
 - debug/       - Directory for object files and a SW4 executable with debug symbols
 
+
+CPU HDF5 output
+---------------
+
+An event can write separate receiver HDF5 files with repeated station names.
+Receiver datasets include step zero when downsampled; restarts overwrite samples
+after the checkpoint and stop if the saved history cannot be restored.
+
+SSI files expose the solver `timestep`, effective `outputtimestep`, and durable
+`lastsw4timestep` / `lastoutputindex` progress markers. Checkpoints flush partial
+SSI buffers and receiver output before saving the restart state.
+
+CPU allocation regressions are provided in
+`pytest/receiver_hdf5_metadata.py`, `pytest/restart_hdf5_output_offsets.py`,
+`pytest/receiver_hdf5_restart_failure.py`, and
+`pytest/ssi_zfp_dataset_lifetime.py`. Run them with an HDF5-enabled CPU executable;
+compressed cases require ZFP. Set `TMPDIR` to shared storage for their `srun` steps.
+
+
 License
 -------
 

@@ -212,12 +212,20 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 
 
     filespace = H5Dget_space(dset);
-    H5Sget_simple_extent_dims(filespace, dims, NULL);
-    if (dims[0] < start[0] + count[0])
-        count[0] = dims[0] - start[0];
-    H5Sselect_hyperslab (filespace, H5S_SELECT_SET, start, NULL, count, NULL);
+  H5Sget_simple_extent_dims(filespace, dims, NULL);
+  if (start[0] > dims[0] || count[0] > dims[0] - start[0]) {
+    printf("%s: receiver dataset [%s] has %llu slots, write needs [%llu, %llu)\n",
+           __func__, name, (unsigned long long)dims[0],
+           (unsigned long long)start[0],
+           (unsigned long long)(start[0] + count[0]));
+    H5Pclose(dxpl);
+    H5Sclose(filespace);
+    H5Dclose(dset);
+    return -1;
+  }
+  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
 
-    ret  = H5Dwrite(dset, type_id, H5S_ALL, filespace, dxpl, data);
+  ret = H5Dwrite(dset, type_id, H5S_ALL, filespace, dxpl, data);
     if (ret < 0) {
         printf("%s: Error with H5Dwrite [%s]\n", __func__, name);
         return -1;
@@ -353,9 +361,11 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_alignment(fapl, 32767, alignment);
+  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
   fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
   if (fid < 0) {
     printf("Error: H5Fcreate failed\n");
+    H5Pclose(fapl);
     return -1;
   }
   H5Pclose(fapl);
@@ -453,8 +463,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     createAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, attr_space4);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
-    if( !xyzcomponent )
-      isnsew = 1;
+    isnsew = xyzcomponent ? 0 : 1;
 
     createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
 
@@ -536,15 +545,18 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     	dset_names[8] = "DUZDZ";
     }
 
-
+    int station_downsample = TimeSeries[ts]->getDownSample();
+    if (totalSteps < 1 || station_downsample < 1) {
+      printf("%s: invalid receiver steps=%d or downSample=%d\n", __func__,
+             totalSteps, station_downsample);
+      return -1;
+    }
+    // Include the sample at step zero and every eligible sample thereafter.
+    total_dims = 1 + ((hsize_t)totalSteps - 1) / station_downsample;
     for (int i = 0; i < ndset; i++) {
-      total_dims = (hsize_t)(totalSteps/TimeSeries[ts]->getDownSample());
-      if (total_dims == 0) {
-        printf("%s: Error with dataset length 0\n", __func__);
-        return -1;
-      }
       dset_space = H5Screate_simple(1, &total_dims, NULL);
-      dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+      dset = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space,
+                       H5P_DEFAULT, dcpl, H5P_DEFAULT);
       H5Sclose(dset_space);
       ASSERT(dset >= 0);
 #ifdef USE_DSET_ATTR
@@ -571,6 +583,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   H5Sclose(attr_space1);
   H5Sclose(attr_space3);
   H5Sclose(attr_space4);
+  H5Fflush(fid, H5F_SCOPE_GLOBAL);
   H5Fclose(fid);
 
   elapsed_time = MPI_Wtime() - start_time;

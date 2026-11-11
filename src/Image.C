@@ -1043,7 +1043,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
    double stime, etime;
    stime = MPI_Wtime();
 #ifdef USE_HDF5
-   hid_t h5_fid, grd, dset, attr, dtype, attr_space1, dset_space, fapl;
+   hid_t h5_fid, grd, dset, attr, dtype, attr_space1, dset_space, fapl, dcpl;
 #endif
 // plane_in_proc returns true for z=const lpanes, because all processors have a part in these planes
    bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
@@ -1341,7 +1341,11 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       dims = total_elem;
       dset_space = H5Screate_simple(1, &dims, NULL);
       /* cout << "Rank " << mEW->getRank() << " creating patches array with length " << dims << endl; */
-      dset = H5Dcreate(h5_fid, "patches", dtype, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      dcpl = H5Pcreate(H5P_DATASET_CREATE);
+      H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
+      H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
+      dset = H5Dcreate(h5_fid, "patches", dtype, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+      H5Pclose(dcpl);
       if( dset < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not create HDF5 patches dataset" << endl;
       H5Sclose(dset_space);
@@ -1363,7 +1367,11 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
            dset_space = H5Screate_simple(1, &dims, NULL);
            /* cout << "Rank " << mEW->getRank() << " creating grid array with length " << dims << endl; */
            sprintf(grid_name, "grid%d", g);
-           dset = H5Dcreate(h5_fid, grid_name, dtype, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+           dcpl = H5Pcreate(H5P_DATASET_CREATE);
+           H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
+           H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
+           dset = H5Dcreate(h5_fid, grid_name, dtype, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+           H5Pclose(dcpl);
            if( dset < 0 )
               cout << "ERROR: Image::writeImagePlane_2 could not create HDF5 grid dataset" << endl;
            H5Sclose(dset_space);
@@ -1376,7 +1384,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       delete [] ni;
       delete [] nj;
 
-      /* H5Fflush(h5_fid, H5F_SCOPE_LOCAL); */
+      H5Fflush(h5_fid, H5F_SCOPE_GLOBAL);
       H5Fclose(h5_fid);
 #else
      cout << "ERROR: cannot write image in HDF5 format without sw4 compiled with HDF5 library!" << endl;

@@ -42,6 +42,15 @@
 #include "Require.h"
 #include "mpi.h"
 
+namespace {
+// The final solver step is written even if it is not on a dump boundary.
+// Reserve a distinct SSI slot for that partial final interval.
+int ssi_output_cycle(int sw4_cycle, int dump_interval) {
+  if (dump_interval <= 0) return sw4_cycle;
+  return sw4_cycle / dump_interval + (sw4_cycle % dump_interval != 0);
+}
+}  // namespace
+
 int ESSI3D::mPreceedZeros = 0;
 int ESSI3D::mNumberOfTimeSteps = -1;
 
@@ -225,10 +234,10 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 
   if (m_dumpInterval != -1) {
     if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) return;
-    a_cycle /= m_dumpInterval;
+    a_cycle = ssi_output_cycle(a_cycle, m_dumpInterval);
   }
 
-  write_image_hdf5(a_cycle, a_path, a_time, a_U);
+  write_image_hdf5(a_cycle, o_cycle, a_path, a_time, a_U);
 
   if (o_cycle == mNumberOfTimeSteps)  // last time step
     close_vel_file();
@@ -249,7 +258,7 @@ void ESSI3D::force_write_image(float_sw4 a_time, int a_cycle,
 #ifdef USE_HDF5
   double hdf5_time = MPI_Wtime();
   open_vel_file(a_cycle, a_path, a_time, a_Z);
-  write_image_hdf5(a_cycle, a_path, a_time, a_U);
+  write_image_hdf5(a_cycle, a_cycle, a_path, a_time, a_U);
   close_vel_file();
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 #else
@@ -258,6 +267,25 @@ void ESSI3D::force_write_image(float_sw4 a_time, int a_cycle,
               << std::endl;
 #endif
   return;
+}
+
+//-----------------------------------------------------------------------
+void ESSI3D::flush_pending(int sw4_timestep) {
+#ifdef USE_HDF5
+  if (!m_fileOpen || m_nbufstep == 0) return;
+
+  int cycle = m_dumpInterval > 0 ? sw4_timestep / m_dumpInterval
+                                 : sw4_timestep;
+  int last_output_step = m_dumpInterval > 0 ? cycle * m_dumpInterval
+                                             : sw4_timestep;
+  for (int i = 0; i < 3; i++) {
+    void* field = m_precision == 4 ? (void*)m_floatField[i]
+                                   : (void*)m_doubleField[i];
+    m_hdf5helper->write_vel(field, i, cycle, m_nbufstep);
+  }
+  m_hdf5helper->write_progress(last_output_step, cycle - 1);
+  m_nbufstep = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -349,10 +377,14 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
       origin[d] = (mGlobalDims[2 * d] - 1) * h;  // low end of each index range
     double az = mEW->getGridAzimuth();
     double dt = mEW->getTimeStep();
+    double output_timestep = m_dumpInterval > 0 ? dt * m_dumpInterval : dt;
 
     if (!m_isRestart) {
       m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
-                                 dt);
+                                 dt, output_timestep);
+    } else {
+      // Older ssioutput files do not have the progress datasets.
+      m_hdf5helper->ensure_progress_datasets();
     }
     if (debug)
       cout << "Creating hdf5 velocity fields..." << endl;
@@ -361,7 +393,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   MPI_Barrier(comm);
 
   if (m_dumpInterval > 0) {
-    int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
+    int nstep = ssi_output_cycle(m_ntimestep, m_dumpInterval);
     if (m_compressionMode > 0)
       m_hdf5helper->init_write_vel(m_isRestart, nstep, m_compressionMode,
                                    m_compressionPar, m_bufferInterval);
@@ -395,6 +427,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
         m_hdf5helper->write_topo(m_doubleField[0]);
     }
   }
+  m_hdf5helper->open_output_datasets();
 
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 
@@ -414,8 +447,8 @@ void ESSI3D::close_vel_file() {
   return;
 }
 
-void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
-                              vector<Sarray>& a_U) {
+void ESSI3D::write_image_hdf5(int cycle, int sw4_timestep, std::string& path,
+                              float_sw4 t, vector<Sarray>& a_U) {
   // Top grid only
   int g = mEW->mNumberOfGrids - 1;
   int doWrite = 0;
@@ -423,7 +456,7 @@ void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
   /* debug = true; */
 
   for (int i = 0; i < 3; i++) {
-    int nstep = (int)floor(m_ntimestep / m_dumpInterval);
+    int nstep = ssi_output_cycle(m_ntimestep, m_dumpInterval);
     compute_image(a_U[g], i, cycle);
     if (cycle > 0 &&
         (m_nbufstep == m_bufferInterval - 1 || cycle == nstep)) {
@@ -447,9 +480,13 @@ void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
             "written correctly!\n");
 
   if (doWrite == 3) {
+    m_hdf5helper->write_progress(sw4_timestep, cycle - 1);
     if (debug)
-      fprintf(stderr, "Rank %d: write_image_hdf5 cycle=%d/%d, m_nbufstep=%d\n",
-              m_rank, cycle, m_ntimestep, m_nbufstep);
+      fprintf(stderr,
+              "Rank %d: write_image_hdf5 cycle=%d/%d, sw4_timestep=%d, "
+              "output_index=%d, m_nbufstep=%d\n",
+              m_rank, cycle, m_ntimestep, sw4_timestep, cycle - 1,
+              m_nbufstep);
     m_nbufstep = 0;
   }
   return;

@@ -79,10 +79,10 @@ def read_sw4img(fname):
     # Grid size info
     h = np.zeros(npatch, dtype=np.float64)
     zmin = np.zeros(npatch, dtype=np.float64)
-    i = np.zeros(npatch, dtype=np.int)
-    ni = np.zeros(npatch, dtype=np.int)
-    j = np.zeros(npatch, dtype=np.int)
-    nj = np.zeros(npatch, dtype=np.int)
+    i = np.zeros(npatch, dtype=int)
+    ni = np.zeros(npatch, dtype=int)
+    j = np.zeros(npatch, dtype=int)
+    nj = np.zeros(npatch, dtype=int)
     nelem = 0
     for u in range (0, npatch):
         h[u] = struct.unpack('d', img.read(8))[0]
@@ -199,6 +199,14 @@ def verify(pytest_dir, tolerance):
 
     essi_fname = hdf5_dir + 'essioutput.ssi'
     ref_essi_fname = ref_dir + 'essioutput.cycle=000.essi'
+    with h5py.File(essi_fname, 'r') as essi_file:
+        last_sw4_timestep = essi_file['lastsw4timestep'][0]
+        last_output_index = essi_file['lastoutputindex'][0]
+    if last_sw4_timestep != 268 or last_output_index != 267:
+        print("ESSI progress metadata does not match!",
+              last_sw4_timestep, last_output_index)
+        return False
+
     data0, data1, data2 = read_essi(essi_fname)
     ref_data0, ref_data1, ref_data2 = read_essi(ref_essi_fname)
     sum0 = np.sum(data0)

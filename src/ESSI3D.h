@@ -79,6 +79,8 @@ class ESSI3D {
                          std::vector<Sarray>& a_U, std::string& a_path,
                          Sarray& a_Z);
 
+  void flush_pending(int sw4_timestep);
+
   void finalize_hdf5();
 
  protected:
@@ -92,8 +94,8 @@ class ESSI3D {
   void open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                      Sarray& a_Z);
   void close_vel_file();
-  void write_image_hdf5(int cycle, std::string& path, float_sw4 t,
-                        std::vector<Sarray>& a_U);
+  void write_image_hdf5(int cycle, int sw4_timestep, std::string& path,
+                        float_sw4 t, std::vector<Sarray>& a_U);
 #endif
 
   void compute_file_suffix(int cycle, std::stringstream& fileSuffix);

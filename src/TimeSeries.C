@@ -30,6 +30,7 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+#include <limits>
 #include <mpi.h>
 
 #include <iostream>
@@ -115,7 +116,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_winL(-1e38),
   m_winR(1e38),
   m_winL2(-1e38),
-  m_winR2(1e38),
+  m_winR2(-1e38),
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
@@ -1309,7 +1310,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   write_npts = npts;
   write_data = y;
   if (mDownSample > 1) {
-    write_npts = (int) npts / mDownSample;
+    write_npts = npts > 0 ? 1 + (npts - 1) / mDownSample : 0;
     write_data = new float[write_npts];
     for (int i = 0; i < write_npts; i++) 
       write_data[i] = y[i*mDownSample];
@@ -1327,9 +1328,12 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   if (count > 0) 
     ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
 
+  CHECK_INPUT(ret == 1, "Could not write receiver HDF5 component " << var
+                        << " for station " << m_staName);
+
   if (isLast && ret == 1) {
     m_nptsWritten += count;
-    H5Gflush(grp);
+    // H5Gflush(grp);
   }
 
   if (mDownSample > 1) 
@@ -1803,6 +1807,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 // Interpolate data to this object
 //      int order = 4;
       float_sw4 scale_factor=0;
+      float_sw4 dscale_factor = 0, ddscale_factor = 0;
 
       float_sw4 mf[3], dmf[3], ddmf[3];
       float_sw4 dtfr  = observed.m_dt;
@@ -1964,7 +1969,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       getwgh5( ai, wgh, dwgh, ddwgh );
             
 	    }
-	    else if( ie > nfrsteps-3 )
+	    else if( ie > nfrsteps - 4 )
 	    {
 	       mmin = nfrsteps-5;
 	       mmax = nfrsteps-1;
@@ -2069,6 +2074,12 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    }
 	 }
 	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
+      // The observation energy changes when its time shift changes.
+      dscale_factor -= 2 * (wghx * mf[0] * dmf[0] +
+                            wghy * mf[1] * dmf[1] + wghz * mf[2] * dmf[2]);
+      ddscale_factor += 2 * (wghx * (dmf[0] * dmf[0] + mf[0] * ddmf[0]) +
+                             wghy * (dmf[1] * dmf[1] + mf[1] * ddmf[1]) +
+                             wghz * (dmf[2] * dmf[2] + mf[2] * ddmf[2]));
       }
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
@@ -2081,8 +2092,17 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
                " t0 = " << m_t0 << " shift= " << m_shift << endl;
 
 	    scale_factor=1;
+         dscale_factor = ddscale_factor = 0;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
+      // Apply the quotient rule to the same normalized objective we return.
+      float_sw4 normalized_misfit = 0.5 * misfit * iscale;
+      float_sw4 normalized_dshift =
+          (dshift - normalized_misfit * dscale_factor) * iscale;
+      ddshift = (ddshift - normalized_misfit * ddscale_factor -
+                 2 * normalized_dshift * dscale_factor) * iscale;
+      dshift = normalized_dshift;
+      dd1shift *= iscale;
 	 misfit *= iscale;
 	 if( compute_difference )
 	    for( int i=0 ; i <= mLastTimeStep ; i++ )
@@ -2108,71 +2128,111 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
+float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
 {
-   bool dbg =false;
-   if( m_myPoint )
-   {
-      //      dbg = m_staName == "FAKE.1";
-      // 1. Evaluate correlation at some time shifts around zero
-      int noptpt = 40;
-      float_sw4 tlim = 2, fmax = -1e38, tmax=0;
-      float_sw4 f, df, ddf;
-      if( dbg )
-      {
-         cout << m_staName << " : " << m_global_event << "Compute maxshift \n 1. scan through time points " << endl;
-      }
-      for( int n=0 ; n < noptpt ; n++ )
-      {
-	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
-	 shiftfunc( observed, tshift, f, df, ddf );
-	 if( f > fmax )
-	 {
-	    fmax = f;
-	    tmax = tshift;
-	 }
-	 if( dbg )
-            cout << m_staName<< " : " << m_global_event << "ts= " << tshift << " f= " << f << endl;
-      }
-      // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
-      int maxit=15, it=0;
-      float_sw4 tol=1e-12;
-      float_sw4 err=tol+1;
-      float_sw4 t1 = tmax;
-      //      t1 = 0;
-      if( dbg )
-	cout << m_global_event << " 2. Newton iteration" << endl;
-      while( it < maxit && err > tol )
-      {
-	 shiftfunc( observed, t1, f, df, ddf );
-	 float_sw4 tnew = t1 - df/ddf;
-	 err = abs(tnew-t1);
-	 t1=tnew;
-	 it++;
-	 if( dbg )
-            cout << m_staName << " : " << m_global_event << " it " << it << " err " << err << endl;
-      }
-      //      if( err < tol )
-      if( f > fmax ) // && ( -tlim <= t1 && t1 <= tlim ) )
-      {
-	 tmax = t1;
-	 if( err > tol )
-	 {
-	    cout << m_staName << " ERROR: No convergence in compute_maxshift, err= " << err << endl;
-	 }
-	 if( ddf >= 0 )
-	 {
-	    cout << m_staName << " ERROR: compute_maxshift found a minimum,  f'' = " << ddf << endl;
-	 }
-      }
-      else
-         cout << m_staName << " WARNING: compute_maxshift:  max shift not determined by f'=0" << endl;
-      if( dbg )
-         cout << m_staName << " : " << m_global_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
-      return tmax;
-   }
-   else
+   resolved = false;
+   if (!m_myPoint)
       return 0;
+
+   // Keep the reference lag range and coarse samples. A coarse neighbor
+   // can lie beyond a sidelobe trough, so validate the stationary maximum
+   // after bounded refinement rather than requiring neighbor slope signs.
+   constexpr int n = 40;
+   const float_sw4 limit = 2, spacing = 2 * limit / (n - 1);
+   float_sw4 lags[n], scores[n], slopes[n], scale = 0;
+   int best = 0;
+   auto unresolved = [&](const char* reason, float_sw4 lag) {
+      cout << "Unresolved travel-time window " << m_staName << ": " << reason
+           << ", sampled shift " << lag << endl;
+      return lag;
+   };
+   if (observed.mLastTimeStep < 5 || mLastTimeStep < 0 ||
+       !(observed.m_dt > 0) || !std::isfinite(observed.m_dt))
+      return unresolved("insufficient observation samples", 0);
+
+   for (int i = 0; i < n; ++i)
+   {
+      lags[i] = -limit + i * 2 * limit / (n - 1);
+      float_sw4 curvature;
+      shiftfunc(observed, lags[i], scores[i], slopes[i], curvature);
+      if (!std::isfinite(scores[i]) || !std::isfinite(slopes[i]))
+         return unresolved("nonfinite correlation", i == 0 ? 0 : lags[best]);
+      scale = std::max(scale, std::abs(scores[i]));
+      if (scores[i] > scores[best])
+         best = i;
+   }
+   const float_sw4 sampled = lags[best];
+   if (!(scores[best] > 0))
+      return unresolved("no positive correlation peak", sampled);
+
+   const float_sw4 roundoff = 32 * std::numeric_limits<float_sw4>::epsilon();
+   const float_sw4 score_tol = roundoff * scale;
+   const float_sw4 lag_tol = std::max(float_sw4(1e-12), roundoff * limit);
+   // Scaling both traces changes C and C'' together. Test relative resolution
+   // so a small but identifiable peak retains the same lag.
+   const float_sw4 curvature_tol = (score_tol / spacing) / spacing;
+
+   auto refine = [&](int i, float_sw4& lag, float_sw4& score) {
+      const int left = std::max(0, i - 1), right = std::min(n - 1, i + 1);
+      float_sw4 lo = lags[left], hi = lags[right];
+      lag = lags[i];
+      for (int it = 0; it < 64; ++it)
+      {
+         float_sw4 slope, curvature;
+         shiftfunc(observed, lag, score, slope, curvature);
+         if (!std::isfinite(score) || !std::isfinite(slope) || !std::isfinite(curvature))
+            return false;
+         const bool maximum = curvature < -curvature_tol &&
+                              std::isfinite(float_sw4(1) / curvature);
+         if (maximum && std::abs(slope) <= lag_tol * -curvature &&
+             lag > -limit && lag < limit && score + score_tol >= scores[i])
+            return true;
+         if (slope > 0)
+            lo = lag;
+         else if (slope < 0)
+            hi = lag;
+         else
+            return false;
+         const float_sw4 trial = maximum ? lag - slope / curvature : lo;
+         const float_sw4 next = trial > lo && trial < hi ? trial : lo + (hi - lo) / 2;
+         if (next == lag || next == lo || next == hi)
+            return false;
+         lag = next;
+      }
+      return false;
+   };
+
+   float_sw4 lag, score;
+   if (!refine(best, lag, score))
+      return unresolved("no resolved interior maximum", sampled);
+
+   // Distinct local maxima can tie even when their sampled heights differ.
+   // Check the refined heights before interpreting one lag as the arrival.
+   for (int i = 0; i < n; ++i)
+   {
+      if (i == best)
+         continue;
+      // Adjacent seeds can converge to different close peaks even when
+      // roundoff makes one sampled height slightly lower than its neighbor.
+      if (std::abs(i - best) > 1 &&
+          (!(scores[i] > 0) || (i > 0 && scores[i] < scores[i - 1]) ||
+           (i + 1 < n && scores[i] < scores[i + 1])))
+         continue;
+      float_sw4 other_lag, other_score;
+      if (refine(i, other_lag, other_score))
+      {
+         // Correlation sums accumulate roundoff across the trace, and a
+         // refined peak can be much higher than every coarse sample.
+         const float_sw4 peak_tol = roundoff * (float_sw4(mLastTimeStep) + 1) *
+             std::max(scale, std::max(std::abs(score), std::abs(other_score)));
+         if (std::abs(other_lag - lag) > lag_tol && other_score >= score - peak_tol)
+            return unresolved("competing correlation peaks", sampled);
+      }
+      else if (scores[i] >= score - score_tol)
+         return unresolved("competing unresolved peak", sampled);
+   }
+   resolved = true;
+   return lag;
 }
 
 //-----------------------------------------------------------------------
@@ -2269,8 +2329,8 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       //      if( !compute_adjsrc ) 
       {
          obs_windowed[0][i] *= wghxobs;
-         obs_windowed[1][i] *= wghxobs;
-         obs_windowed[2][i] *= wghxobs;     
+         obs_windowed[1][i] *= wghyobs;
+         obs_windowed[2][i] *= wghzobs;
       }
    }
    for( int i= 0 ; i <= mLastTimeStep ; i++ )
@@ -2286,7 +2346,10 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       // Here t is t_n+tshift, t_n is time in this object.
       //   ir is grid point index in observed object that correspond to t_n+tshift
       //  need to evaluate the observed data at this grid point.
-      int ie   = static_cast<int>(ir);
+      // Test observation support before converting a Newton trial to an index.
+      int ie = 0;
+      if (ir >= 1 && ir < static_cast<double>(nfrsteps) + 1)
+         ie = static_cast<int>(ir);
       int mmin = ie-2;
       int mmax = ie+3;
       if( mmax-mmin+1 > nfrsteps )
@@ -2341,7 +2404,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }
-	 else if( ie > nfrsteps-3 )
+	 else if( ie > nfrsteps - 4 )
 	 {
 	    mmin = nfrsteps-5;
 	    mmax = nfrsteps-1;
@@ -2404,14 +2467,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
    }
    if( compute_adjsrc )
    {
-      float_sw4 iddf;
-      if( ddfunc == 0 )
-      {
-         std::cout <<"TimeSeries::shiftfunc: WARNING ddf = 0 " << std::endl;
-         iddf = 1;
-      }
-      else
-         iddf=1/ddfunc;
+      const float_sw4 iddf = 1 / ddfunc;
 
       for( int i= 0 ; i <= mLastTimeStep ; i++ )      
       {
@@ -2432,16 +2488,13 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
+float_sw4 TimeSeries::misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved)
 {
-   // Computes  travel time (correlation) misfit.
-   //  if diff !=NULL, also computes diff := this - observed
-   //       where 'diff' has the same grid points as 'this'. 'observed' is
-   //       interpolated to this grid, and is set to zero outside its interval
-   //       of definition.
-   float_sw4 misfit = 0;
-   if( m_myPoint )
-   {
+   if (resolved)
+      *resolved = false;
+   if (!m_myPoint)
+      return 0;
+
       if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
       {
 	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. " << 
@@ -2456,34 +2509,26 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
          cout << "Observation t0 = " <<observed.m_t0 << " shift= " << observed.m_shift << endl;
          cout << " station  t0 = " << m_t0 << " shift= " << m_shift << endl;
       }
-      // DEBUG
-      //      if( m_myPoint && m_staName=="GS.CN181" )
-      //      {
-      //         cout << "station GS.CN181, window lims "  
-      //              << m_winL << " " << m_winR  << " " 
-      //              << m_winL2 << " " << m_winR2 << endl;
-      //      }
-      float_sw4 ms=compute_maxshift( observed );
-      misfit = 0.5*ms*ms;
 
-      if( diff != NULL )
+   bool valid;
+   const float_sw4 lag = compute_maxshift(observed, valid);
+   if (resolved)
+      *resolved = valid;
+   if (diff)
+   {
+      if (diff->mLastTimeStep < mLastTimeStep)
+         diff->allocateRecordingArrays(mLastTimeStep, m_t0 + m_shift, m_dt);
+      float_sw4** source = diff->getRecordingArray();
+      if (valid)
       {
-	 float_sw4 f, df, ddf;
-	 float_sw4** misfitsource;
-	 if( diff->mLastTimeStep < mLastTimeStep )
-	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
-	 misfitsource = diff->getRecordingArray();
-	 shiftfunc( observed, ms, f, df, ddf, misfitsource );
-         // DBG
-         //         cout << m_staName << " shift = " << ms << " f= " << f << " df= " << df << " ddf= " << ddf <<endl;
-         //         float_sw4 h=1e-6, fp, dfp, ddfp, fm, dfm, ddfm;
-         //	 shiftfunc( observed, ms+h, fp, dfp, ddfp );
-         //	 shiftfunc( observed, ms-h, fm, dfm, ddfm );
-         //         cout << m_staName << " num df= " << (fp-fm)/(2*h) << " num ddf= " << (dfp-dfm)/(2*h) << endl;
-         // end DBG
+         float_sw4 score, slope, curvature;
+         shiftfunc(observed, lag, score, slope, curvature, source);
       }
+      else
+         for (int q = 0; q < 3; ++q)
+            std::fill_n(source[q], mLastTimeStep + 1, 0);
    }
-   return misfit;
+   return valid ? 0.5 * lag * lag : 0;
 }
 
 //-----------------------------------------------------------------------
@@ -3071,6 +3116,7 @@ void TimeSeries::set_window( float_sw4 winl, float_sw4 winr )
    m_use_win = true;
    m_winL = winl;
    m_winR = winr;
+   m_winL2 = m_winR2 = -1e38;
 }
 
 //-----------------------------------------------------------------------
@@ -3552,199 +3598,211 @@ static int cubic_interp(float *xi, float *yi, int nin, float *xo, float *yo, int
     return 0;
 }
 
-void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
-{
-  bool debug = false;
-  hid_t fid, grp;
-  char data[128];
-  hsize_t ndim, dims[4];
+bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
+  /* bool debug = false; */
+  hid_t fid, grp = -1;
+  /* char data[128]; */
+  /* hsize_t ndim, dims[4]; */
   int ret;
 
-  if (!m_myPoint) 
-      return;
+  if (!m_myPoint) return true;
 
   /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
-  fid = H5Fopen(FileName.c_str(),  H5F_ACC_RDONLY, H5P_DEFAULT);
+  fid = H5Fopen(FileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
-    return;
+    return false;
   }
-  
+
+  auto fail = [&]() {
+    if (grp >= 0) H5Gclose(grp);
+    H5Fclose(fid);
+    return false;
+  };
+
   char datetime[128];
-  readAttrStr(fid, "DATETIME", datetime);
+  if (readAttrStr(fid, "DATETIME", datetime) < 0) return fail();
 
-  if (sscanf(datetime, "%4d-%2d-%2dT%2d:%2d:%2d.%d",  &m_utc[0],  &m_utc[1], &m_utc[2], &m_utc[3], &m_utc[4], &m_utc[5], &m_utc[6]) == EOF) {
-    cout << "ERROR reading observation " << m_fileName << " , UTC parse [" << datetime << "] failed!" << endl;
+  if (sscanf(datetime, "%4d-%2d-%2dT%2d:%2d:%2d.%d", &m_utc[0], &m_utc[1],
+             &m_utc[2], &m_utc[3], &m_utc[4], &m_utc[5], &m_utc[6]) != 7) {
+    cout << "ERROR reading observation " << m_fileName << " , UTC parse ["
+         << datetime << "] failed!" << endl;
+    return fail();
   }
-  else {
-    int utcrefsim[7];
-    m_ew->get_utc(utcrefsim, m_event );
-    m_t0 = utc_distance( utcrefsim, m_utc );
-  }
+  int utcrefsim[7];
+  m_ew->get_utc(utcrefsim, m_event);
+  m_t0 = utc_distance(utcrefsim, m_utc);
 
-  // dt may be downsampled 
+  // dt may be downsampled
   int downsample;
-  readAttrInt(fid, "DOWNSAMPLE", &downsample);
+  if (readAttrInt(fid, "DOWNSAMPLE", &downsample) < 0) return fail();
   if (downsample < 1) {
-     cout << "ERROR: downsample="<< downsample << " is invalid! Setting to 1" << endl;
-     downsample = 1;
+    cout << "ERROR: downsample=" << downsample << " is invalid!" << endl;
+    return fail();
+  }
+  if (downsample != mDownSample) {
+    cout << "ERROR: receiver downsample mismatch for station " << m_staName
+         << ": file=" << downsample << ", input=" << mDownSample << endl;
+    return fail();
   }
 
   std::string dset_names[3];
   char unit[128];
-  readAttrStr(fid, "UNIT", unit);
+  if (readAttrStr(fid, "UNIT", unit) < 0) return fail();
   bool foundd = (strstr(unit, "m") != NULL);
   bool foundv = (strstr(unit, "m/s") != NULL);
 
-  if( foundd || foundv ) {
-    // The file contains velocities or displacements. 
+  if (foundd || foundv) {
+    // The file contains velocities or displacements.
     bool cartesian = false;
 
     grp = H5Gopen(fid, m_staName.c_str(), H5P_DEFAULT);
-    if (grp < 0) 
+    if (grp < 0) {
       cout << "ERROR opening group [" << m_staName << "] !" << endl;
+      return fail();
+    }
 
     int is_nsew, npts, sw4npts;
-    readAttrInt(grp, "ISNSEW", &is_nsew);
+    if (readAttrInt(grp, "ISNSEW", &is_nsew) < 0) return fail();
 
-    if (is_nsew == 1) {
+    htri_t nsew_status = H5Lexists(grp, "EW", H5P_DEFAULT);
+    htri_t xyz_status = H5Lexists(grp, "X", H5P_DEFAULT);
+    if (nsew_status < 0 || xyz_status < 0) return fail();
+    bool has_nsew = nsew_status > 0;
+    bool has_xyz = xyz_status > 0;
+
+    if (has_nsew && (is_nsew == 1 || !has_xyz)) {
       dset_names[0] = "EW";
       dset_names[1] = "NS";
       dset_names[2] = "UP";
-    }
-    else {
+    } else if (has_xyz) {
       cartesian = true;
       dset_names[0] = "X";
       dset_names[1] = "Y";
       dset_names[2] = "Z";
+    } else {
+      cout << "ERROR: no complete displacement component set in group ["
+           << m_staName << "]" << endl;
+      return fail();
     }
     m_xyzcomponent = cartesian;
 
-    readAttrInt(grp, "NPTS", &npts);
-    if( npts <= 1 ) {
-       cout << "ERROR: observed data is too short" << endl;
-       cout << "    File " << FileName << " not read." << endl;
-       return;
+    if (readAttrInt(grp, "NPTS", &npts) < 0) return fail();
+    if (npts <= 1) {
+      cout << "ERROR: observed data is too short" << endl;
+      cout << "    File " << FileName << " not read." << endl;
+      return fail();
     }
-    
-    float dt, tstart;
-    readAttrFloat(fid, "DELTA", &dt);
 
-    sw4npts =  (npts-1) * downsample + 1;
+    float dt, tstart;
+    if (readAttrFloat(fid, "DELTA", &dt) < 0) return fail();
+
+    sw4npts = (npts - 1) * downsample + 1;
 
     // Only allocate arrays if we aren't doing a restart
-    if(!mIsRestart) {
+    if (!mIsRestart) {
       // Assumes starting from time 0 and timestep 0
       tstart = 0;
-      allocateRecordingArrays( sw4npts, m_t0+tstart, (float_sw4)(dt/downsample));
-      m_nsteps = sw4npts;
-    }
-    else {
-      m_nptsWritten = npts;
+      allocateRecordingArrays(sw4npts, m_t0 + tstart, tstart);
     }
 
-    if (mAllocatedSize <= 0) {
-       cout << "ERROR: recording arrays not allocated!" << endl;
-       return;
+    if (mAllocatedSize <= 0 || sw4npts > mAllocatedSize) {
+      cout << "ERROR: receiver history exceeds recording array for station "
+           << m_staName << endl;
+      return fail();
     }
 
-    mLastTimeStep = sw4npts - 1;
+    std::vector<float> buf_0(npts), buf_1(npts), buf_2(npts);
+    if (readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0.data()) < 0 ||
+        readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1.data()) < 0 ||
+        readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2.data()) < 0)
+      return fail();
 
-    float *buf_0 = new float[npts];
-    float *buf_1 = new float[npts];
-    float *buf_2 = new float[npts];
-
-    readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0);
-    readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1);
-    readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2);
-
-    // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
-    float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
-    float_sw4 a11 = m_calpha*deti;
-    float_sw4 a12 = m_thxnrm*deti;
-    float_sw4 a21 =-m_salpha*deti;
-    float_sw4 a22 = m_thynrm*deti;
+    // Mapping to invert (e,n) to (x,y) components, Only needed in the
+    // non-cartesian case.
+    float_sw4 deti = 1.0 / (m_thynrm * m_calpha + m_thxnrm * m_salpha);
+    float_sw4 a11 = m_calpha * deti;
+    float_sw4 a12 = m_thxnrm * deti;
+    float_sw4 a21 = -m_salpha * deti;
+    float_sw4 a22 = m_thynrm * deti;
 
     if (downsample > 1) {
-      float *buf_0up = new float[sw4npts];
-      float *buf_1up = new float[sw4npts];
-      float *buf_2up = new float[sw4npts];
-      float *x  = new float[npts];
-      float *nx = new float[sw4npts];
-      for (int i = 0; i < npts; i++) 
-          x[i] = i * downsample;
+      std::vector<float> buf_0up(sw4npts), buf_1up(sw4npts),
+          buf_2up(sw4npts), x(npts), nx(sw4npts);
+      for (int i = 0; i < npts; i++) x[i] = i * downsample;
 
-      for (int i = 0; i < sw4npts; i++) 
-          nx[i] = i;
+      for (int i = 0; i < sw4npts; i++) nx[i] = i;
 
       // Cubic interpolation
-      ret = cubic_interp(x, buf_0, npts, nx, buf_0up, sw4npts);
+      ret = cubic_interp(x.data(), buf_0.data(), npts, nx.data(),
+                         buf_0up.data(), sw4npts);
       if (ret < 0) {
         cout << "ERROR: cubic_interp failed!" << endl;
-        return;
+        return fail();
       }
-      ret = cubic_interp(x, buf_1, npts, nx, buf_1up, sw4npts);
+      ret = cubic_interp(x.data(), buf_1.data(), npts, nx.data(),
+                         buf_1up.data(), sw4npts);
       if (ret < 0) {
         cout << "ERROR: cubic_interp failed!" << endl;
-        return;
+        return fail();
       }
-      ret = cubic_interp(x, buf_2, npts, nx, buf_2up, sw4npts);
+      ret = cubic_interp(x.data(), buf_2.data(), npts, nx.data(),
+                         buf_2up.data(), sw4npts);
       if (ret < 0) {
         cout << "ERROR: cubic_interp failed!" << endl;
-        return;
+        return fail();
       }
 
       for (int i = 0; i < sw4npts; i++) {
-        if( cartesian ) {
+        if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
           mRecordedSol[2][i] = (float_sw4)buf_2up[i];
-        }
-        else {
-          mRecordedSol[0][i] = a11*(float_sw4)buf_1up[i] + a12*(float_sw4)buf_0up[i];
-          mRecordedSol[1][i] = a21*(float_sw4)buf_1up[i] + a22*(float_sw4)buf_0up[i];
+        } else {
+          mRecordedSol[0][i] =
+              a11 * (float_sw4)buf_1up[i] + a12 * (float_sw4)buf_0up[i];
+          mRecordedSol[1][i] =
+              a21 * (float_sw4)buf_1up[i] + a22 * (float_sw4)buf_0up[i];
           mRecordedSol[2][i] = -(float_sw4)buf_2up[i];
         }
-
       }
 
-      delete[] buf_0up;
-      delete[] buf_1up;
-      delete[] buf_2up;
-      delete[] x;
-      delete[] nx;
-    }
-    else {
+    } else {
       for (int i = 0; i < sw4npts; i++) {
-        if( cartesian ) {
+        if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
           mRecordedSol[2][i] = (float_sw4)buf_2[i];
-        }
-        else {
-          mRecordedSol[0][i] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
-          mRecordedSol[1][i] = a21*(float_sw4)buf_1[i] + a22*(float_sw4)buf_0[i];
+        } else {
+          mRecordedSol[0][i] =
+              a11 * (float_sw4)buf_1[i] + a12 * (float_sw4)buf_0[i];
+          mRecordedSol[1][i] =
+              a21 * (float_sw4)buf_1[i] + a22 * (float_sw4)buf_0[i];
           mRecordedSol[2][i] = -(float_sw4)buf_2[i];
         }
       }
     }
 
     for (int i = 0; i < sw4npts; i++) {
-      mRecordedFloats[0][i] = (float) mRecordedSol[0][i];
-      mRecordedFloats[1][i] = (float) mRecordedSol[1][i];
-      mRecordedFloats[2][i] = (float) mRecordedSol[2][i];
+      mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
+      mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
+      mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
     }
 
-    delete[] buf_0;
-    delete[] buf_1;
-    delete[] buf_2;
-    H5Gclose(grp);
-  }
-  else {
-    cout << "ERROR: unit [" << unit << "] is unrecognized! Currently supports m or m/s" << endl;
+    m_dt = dt / downsample;
+    mLastTimeStep = sw4npts - 1;
+    if (H5Gclose(grp) < 0) {
+      grp = -1;
+      return fail();
+    }
+    grp = -1;
+  } else {
+    cout << "ERROR: unit [" << unit
+         << "] is unrecognized! Currently supports m or m/s" << endl;
+    return fail();
   }
 
-  H5Fclose(fid);
+  return H5Fclose(fid) >= 0;
 }
 #endif
 
@@ -3800,8 +3858,18 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
     std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_hdf5Name;
 #ifdef USE_HDF5
-    if( m_myPoint )
-      readSACHDF5(ew, fullFilePath, ignore_utc);
+    CHECK_INPUT(readSACHDF5(ew, fullFilePath, ignore_utc),
+                "Could not restore receiver history for station "
+                    << m_staName << " from " << fullFilePath << ". ");
+    int last_required_sample =
+        ((beginCycle - 1) / mDownSample) * mDownSample;
+    CHECK_INPUT(!m_myPoint || mLastTimeStep >= last_required_sample,
+                "Receiver history for station " << m_staName << " in "
+                    << fullFilePath << " ends before checkpoint cycle "
+                    << beginCycle << ". ");
+    // Receiver output can extend beyond the latest usable checkpoint.
+    // Resume writing at the checkpoint, replacing that uncheckpointed tail.
+    if (m_myPoint) m_nptsWritten = beginCycle / mDownSample;
 #else
     cout << "readSACHDF5: read from HDF5 file but sw4 is not compiled with HDF5!" << endl;
 #endif
@@ -4031,14 +4099,15 @@ int TimeSeries::closeHDF5File()
 //-----------------------------------------------------------------------
 void TimeSeries::resetHDF5file()
 {
-  m_nptsWritten = 0;
+  // Preserve the receiver offset restored from the checkpoint.
+  if (!mIsRestart) m_nptsWritten = 0;
   m_isMetaWritten = m_isIncAzWritten = false;
   closeHDF5File();
   return;
 }
 
 //-----------------------------------------------------------------------
-hid_t TimeSeries::openHDF5File(std::string suffix)
+hid_t TimeSeries::openHDF5File(std::string suffix, bool quiet)
 {
   hid_t fapl;
   bool is_debug = false;
@@ -4061,7 +4130,8 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   if (m_hdf5Name.find(".hdf5") == string::npos && m_hdf5Name.find(".h5") == string::npos) 
     filename.append(".hdf5");
 
-  if (*m_fid_ptr >=0 && this->m_ts0Ptr && filename.compare(this->m_ts0Ptr->m_fidName) == 0) {
+  if (*m_fid_ptr > 0 && this->m_ts0Ptr &&
+      filename.compare(this->m_ts0Ptr->m_fidName) == 0) {
     // If file is alread open, no need to open it again
     return *m_fid_ptr;
   }
@@ -4082,7 +4152,8 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
 
   *m_fid_ptr = H5Fopen(filename.c_str(),  H5F_ACC_RDWR, fapl);
   if (*m_fid_ptr <= 0) {
-    printf("%s Error opening file [%s]\n", __func__, filename.c_str());
+    if (!quiet)
+      printf("%s Error opening file [%s]\n", __func__, filename.c_str());
     H5Pclose(fapl);
     return 0;
   }

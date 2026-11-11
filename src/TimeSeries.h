@@ -106,7 +106,7 @@ float_sw4 arrival_time( float_sw4 lod );
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
 float_sw4 misfit( TimeSeries& observed, TimeSeries* diff, float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift );
-float_sw4 misfit2( TimeSeries& observed, TimeSeries* diff );
+float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff, bool* resolved = nullptr);
 
 void interpolate( TimeSeries& intpfrom );
 
@@ -158,10 +158,11 @@ int   allocFid();
 void  setFidPtr(hid_t *fid) {m_fid_ptr = fid;};
 void  setTS0Ptr(TimeSeries *ptr) {m_ts0Ptr = ptr;};
 hid_t *getFidPtr() {return m_fid_ptr;};
+TimeSeries *getTS0Ptr() {return m_ts0Ptr;};
 int   closeHDF5File();
 void  resetHDF5file();
-void  readSACHDF5( EW *ew, string FileName, bool ignore_utc );
-hid_t openHDF5File(std::string suffix);
+bool  readSACHDF5( EW *ew, string FileName, bool ignore_utc );
+hid_t openHDF5File(std::string suffix, bool quiet=false);
 void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
 double getWriteTime() {return m_writeTime;};
@@ -198,7 +199,7 @@ void getwgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[
 void getwgh5( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 
 
-float_sw4 compute_maxshift( TimeSeries& observed );
+float_sw4 compute_maxshift(TimeSeries& observed, bool& resolved);
 void shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
 		float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc=NULL );
 
