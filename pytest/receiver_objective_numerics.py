@@ -159,6 +159,25 @@ int main(){cout<<setprecision(17);
       if(d.data[q][i]!=0) throw runtime_error("unresolved window left adjoint forcing");
  }
  cout<<"PASS exclusion of zero and near-zero curvature windows\n";
+
+ // A coarse neighbor can lie beyond a Ricker sidelobe trough even though
+ // Newton refinement from the best sample resolves the translated peak.
+ for(double width : {.05,.1,.2}) for(double delay : {.03,.137,.73,1.3}) {
+  if(width==.05 && delay==.73) continue; // Not a valid prior CPU peak.
+  TimeSeries u(801,0,.01),o(801,0,.01),d(801,0,.01);
+  u.m_use_y=u.m_use_z=false;
+  for(int i=0;i<=u.mLastTimeStep;++i) {
+   double a=(i*.01-4-delay)/width,b=(i*.01-4)/width;
+   u.put(0,i,(1-2*a*a)*exp(-a*a));
+   o.put(0,i,(1-2*b*b)*exp(-b*b));
+  }
+  bool valid=false;
+  double score=u.misfit2(o,&d,&valid);
+  if(!valid || abs(sqrt(2*score)-delay)>2e-5)
+   throw runtime_error("resolved Ricker peak differs from CPU translation control");
+ }
+ cout<<"PASS resolved Ricker peaks across frequency and coarse-lag phase\n";
+
  // Analytic weak peak: its curvature scales with amplitude, its lag does not.
  for(int exponent : {-10,-50}) {
   TimeSeries u(41,4,.125),o(97,0,.125),d(41,4,.125);
