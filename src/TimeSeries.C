@@ -1968,10 +1968,13 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed, bool& resolved)
    // Check the refined heights before interpreting one lag as the arrival.
    for (int i = 0; i < n; ++i)
    {
-      if (std::abs(i - best) <= 1 || !(scores[i] > 0))
+      if (i == best)
          continue;
-      if ((i > 0 && scores[i] < scores[i - 1]) ||
-          (i + 1 < n && scores[i] < scores[i + 1]))
+      // Adjacent seeds can converge to different close peaks even when
+      // roundoff makes one sampled height slightly lower than its neighbor.
+      if (std::abs(i - best) > 1 &&
+          (!(scores[i] > 0) || (i > 0 && scores[i] < scores[i - 1]) ||
+           (i + 1 < n && scores[i] < scores[i + 1])))
          continue;
       float_sw4 other_lag, other_score;
       if (refine(i, other_lag, other_score))
