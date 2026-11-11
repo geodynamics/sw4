@@ -3,7 +3,8 @@
 
 Run in an authorized allocation. The startup mode compares matched baseline
 and candidate builds. The depth mode compares template and inline receivers
-over Gaussian topography. Startup timings are smoke-test measurements.
+over Gaussian topography. Geometry checks validate source z and material
+depth gradients. Startup timings are smoke-test measurements.
 """
 import argparse
 import json
@@ -302,6 +303,107 @@ def run_depth(args):
     elevated_absolute(args, args.sw4.resolve(strict=True))
 
 
+
+GEOMETRY_INPUT = """grid h=200 x=4000 y=4000 z=3000 extrapolate=1
+time steps=6
+fileio path=. verbose=1
+supergrid gp=4
+{topography}
+block vp=6000 vs=3464 rho=2700 vpgrad=0.5 vsgrad=0.25 rhograd=0.1 absdepth={absolute_material}
+source x=2000 y=2000 {source_depth} mzz=1e18 t0=0.01 freq=16.6667 type=Gaussian
+{extra_source}
+rec x=2200 y=2000 z=300 file=motion usgsformat=0 sacformat=0 hdf5format=1 hdf5file=motion.h5 nsew=0
+"""
+
+
+def check_geometry_material(root, gaussian, absolute):
+    """Check actual native material planes against the analytic Gaussian depth."""
+    planes = {}
+    for mode in ('rho', 'p', 's', 'gridz'):
+        files = list(root.glob(f'material*.{mode}.sw4img.h5'))
+        assert len(files) == 1, (mode, files)
+        with h5py.File(files[0], 'r') as stream:
+            planes[mode] = {name: stream[name][...] for name in ('patches', 'ni', 'nj', 'grid_size')}
+    reference = planes['gridz']
+    assert len(reference['ni']) == (2 if gaussian else 1)
+    position = 0
+    errors = dict(rho=0., p=0., s=0.)
+    for ni, nj, spacing in zip(reference['ni'], reference['nj'], reference['grid_size']):
+        count = int(ni * nj)
+        z = reference['patches'][position:position+count].reshape(int(nj), int(ni))
+        y = np.arange(int(ni)) * spacing
+        surface = -100 * np.exp(-((y-2000)/1500)**2) if gaussian else np.zeros_like(y)
+        depth = z if absolute else z-surface[None, :]
+        assert np.all(np.isfinite(depth))
+        for mode, base, gradient in [('rho', 2700., .1), ('p', 6000., .5), ('s', 3464., .25)]:
+            plane = planes[mode]
+            for name in ('ni', 'nj', 'grid_size'):
+                np.testing.assert_array_equal(plane[name], reference[name])
+            actual = plane['patches'][position:position+count].reshape(z.shape)
+            expected = base + gradient*depth
+            np.testing.assert_allclose(actual, expected, rtol=2e-12, atol=2e-8)
+            errors[mode] = max(errors[mode], float(np.max(np.abs(actual-expected))))
+        position += count
+    assert position == len(reference['patches']) and position > 0
+    return errors
+
+
+def check_geometry_sources(root, expected_z, ignored):
+    text = (root/'sw4.log').read_text()
+    levels = re.findall(r'Min source z-level:\s*(\S+), max source z-level:\s*(\S+)', text)
+    assert len(levels) == 1, text[-8000:]
+    np.testing.assert_allclose([float(value) for value in levels[0]], expected_z, rtol=0, atol=1e-8)
+    assert ('Ignoring Source' in text) == ignored, text[-8000:]
+    if ignored:
+        assert 'because it is above the topography' in text
+    with h5py.File(root/'motion.h5', 'r') as stream:
+        result = {component: stream['motion'][component][...] for component in 'XYZ'}
+    assert all(np.all(np.isfinite(value)) for value in result.values())
+    assert any(np.max(np.abs(value)) > 0 for value in result.values())
+    return result
+
+
+def run_geometry(args):
+    """Validate native source correction and depth-dependent materials together."""
+    args.work_dir = args.work_dir.resolve()
+    args.work_dir.mkdir(parents=True, exist_ok=False)
+    binary = args.sw4.resolve(strict=True)
+    topography = ('topography input=gaussian zmax=2000 order=4 gaussianAmp=100 '
+                  'gaussianXc=2000 gaussianYc=2000 gaussianLx=1500 gaussianLy=1500')
+    cases = [
+        ('flat', False, False, 'depth=200', False, 200.),
+        ('gaussian-absolute-source', True, False, 'z=100', False, 100.),
+        ('gaussian-relative-source', True, False, 'depth=200', False, 100.),
+        ('gaussian-ignored-source', True, False, 'depth=200', True, 100.),
+        ('gaussian-absolute-material', True, True, 'z=100', False, 100.),
+    ]
+    results = {}
+    try:
+        for name, gaussian, absolute, source, ignored, expected_z in cases:
+            deck = GEOMETRY_INPUT.format(topography=topography if gaussian else '',
+                absolute_material=int(absolute), source_depth=source,
+                extra_source=('source x=2000 y=2000 z=-150 mzz=1e18 t0=0.01 '
+                              'freq=16.6667 type=Gaussian') if ignored else '')
+            deck += ''.join(f'imagehdf5 x=2000 mode={mode} file=material cycle=0 precision=double\n'
+                            for mode in ('rho', 'p', 's', 'gridz'))
+            result, output = run_solver(args, binary, args.work_dir/name, deck,
+                                        layout=('--ntasks-per-node=2',))
+            results[name] = result
+            assert result['exit_code'] == 0 and 'HDF5-DIAG' not in output, output[-8000:]
+        traces = {}
+        for name, gaussian, absolute, source, ignored, expected_z in cases:
+            root = args.work_dir/name
+            results[name]['material_max_abs_error'] = check_geometry_material(root, gaussian, absolute)
+            traces[name] = check_geometry_sources(root, expected_z, ignored)
+        for name in ('gaussian-relative-source', 'gaussian-ignored-source'):
+            for component in 'XYZ':
+                np.testing.assert_allclose(traces[name][component],
+                    traces['gaussian-absolute-source'][component], rtol=2e-12, atol=1e-15)
+        print('PASS: analytic source z, above-surface exclusion, and depth-gradient rho/Vp/Vs on flat and Gaussian grids')
+    finally:
+        (args.work_dir/'geometry-results.json').write_text(json.dumps(results, indent=2)+'\n')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_subparsers(dest="mode", required=True)
@@ -326,6 +428,12 @@ def main():
     depth.add_argument("--unsupported-baseline", type=Path,
                        help="Optional older build expected to lack depth support")
     depth.set_defaults(check=run_depth, tasks=2, cpus_per_task=4)
+
+    geometry = modes.add_parser("geometry", parents=[launcher],
+                                help="Check Gaussian source depths and native material gradients")
+    geometry.add_argument("--sw4", type=Path, required=True)
+    geometry.add_argument("--cpus-per-task", type=int, default=1)
+    geometry.set_defaults(check=run_geometry, tasks=2)
 
     args = parser.parse_args()
     args.check(args)
