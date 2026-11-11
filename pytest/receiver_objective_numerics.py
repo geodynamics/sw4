@@ -203,6 +203,29 @@ int main(){cout<<setprecision(17);
   double score=u.misfit2(o,&d,&valid);
   if(valid || score!=0) throw runtime_error("ambiguous periodic peaks were accepted");
  }
+
+ // Two equal close arrivals can occupy adjacent coarse seeds. Test their
+ // rejection beside a single-arrival control at the same sampling rates.
+ for(double width : {.02,.025,.035}) for(bool tied : {false,true}) {
+  TimeSeries u(1601,0,.005),o(1601,0,.005),d(1601,0,.005);
+  u.m_use_y=u.m_use_z=false;
+  const double arrival=.046875;
+  for(int i=0;i<=u.mLastTimeStep;++i) {
+   double t=i*.005-4;
+   u.put(0,i,exp(-t*t/(width*width)));
+   o.put(0,i,exp(-pow((t-arrival)/width,2))+
+               (tied ? exp(-pow((t+arrival)/width,2)) : 0));
+   for(int q=0;q<3;++q) d.put(q,i,1);
+  }
+  bool valid=false;
+  double score=u.misfit2(o,&d,&valid);
+  if(valid==tied || (tied ? score!=0 : abs(sqrt(2*score)-arrival)>2e-5))
+   throw runtime_error("close-arrival ambiguity policy differs from analytic control");
+  if(tied) for(int q=0;q<3;++q) for(int i=0;i<=u.mLastTimeStep;++i)
+   if(d.data[q][i]!=0) throw runtime_error("ambiguous arrivals left adjoint forcing");
+ }
+ cout<<"PASS close-arrival exclusion and single-arrival controls\n";
+
  cout<<"PASS weak isolated peak and competing peak controls\n";
 
 }
