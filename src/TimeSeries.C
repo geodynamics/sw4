@@ -3805,6 +3805,8 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
          m_t0=utc_distance(reference,m_utc);
       }
       allocateRecordingArrays(count,m_t0+start,dt/downsample);
+      // Include the time-zero sample when sizing inversion output.
+      m_nsteps=count;
       m_xyzcomponent=cartesian;
    }
    for(int i=0;i<count;++i) {
