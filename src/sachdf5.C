@@ -477,6 +477,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
         dset_names[0] = "EW";
         dset_names[1] = "NS";
         dset_names[2] = "UP";
+        cmpazs[0] = 90.;
+        cmpazs[1] = 0.;
         cmpincs[2] = 0.;
       }
     } else if (mode == TimeSeries::Velocity) {
@@ -489,6 +491,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
         dset_names[0] = "Vew";
         dset_names[1] = "Vns";
         dset_names[2] = "Vup";
+        cmpazs[0] = 90.;
+        cmpazs[1] = 0.;
         cmpincs[2] = 0.;
       }
     } else if (mode == TimeSeries::Div) {
@@ -540,9 +544,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
       /* createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
       /* createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
       createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1,
-                      &cmpazs[i]);
-      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1,
                       &cmpincs[i]);
+      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1,
+                      &cmpazs[i]);
 #else
       /* createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1); */
       /* createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1); */
