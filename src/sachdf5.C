@@ -459,13 +459,16 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
 
     createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
 
-    cmpazs[0] = TimeSeries[ts]->getXaz();
-    cmpazs[1] = TimeSeries[ts]->getXaz() + 90.;
+    mode = TimeSeries[ts]->getMode();
+    const bool geographic = !xyzcomponent &&
+        (mode == TimeSeries::Displacement || mode == TimeSeries::Velocity ||
+         mode == TimeSeries::Curl);
+    cmpazs[0] = geographic ? 90. : TimeSeries[ts]->getXaz();
+    cmpazs[1] = geographic ? 0. : TimeSeries[ts]->getXaz() + 90.;
     cmpazs[2] = 0.;
     cmpincs[0] = 90.;
     cmpincs[1] = 90.;
-    cmpincs[2] = 180.;
-    mode = TimeSeries[ts]->getMode();
+    cmpincs[2] = geographic ? 0. : 180.;
     // Datasets
     if (mode == TimeSeries::Displacement) {
       ndset = 3;
@@ -477,9 +480,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
         dset_names[0] = "EW";
         dset_names[1] = "NS";
         dset_names[2] = "UP";
-        cmpazs[0] = 90.;
-        cmpazs[1] = 0.;
-        cmpincs[2] = 0.;
       }
     } else if (mode == TimeSeries::Velocity) {
       ndset = 3;
@@ -491,9 +491,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
         dset_names[0] = "Vew";
         dset_names[1] = "Vns";
         dset_names[2] = "Vup";
-        cmpazs[0] = 90.;
-        cmpazs[1] = 0.;
-        cmpincs[2] = 0.;
       }
     } else if (mode == TimeSeries::Div) {
       ndset = 1;

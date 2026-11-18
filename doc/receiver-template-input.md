@@ -7,9 +7,10 @@ follow the existing paths. Missing or invalid station metadata stops setup
 before time stepping. The setup log separates read, distribution and receiver
 construction times.
 
-Cartesian receiver HDF5 component azimuths follow the simulation grid on
-every rank. Geographic east and north components use 90 and 0 degrees,
-respectively, as in SAC output.
+New Cartesian displacement, velocity and curl receiver HDF5 files use the
+simulation grid azimuth on every rank. Their geographic east and north
+components use 90 and 0 degrees, respectively. Geographic curl uses an
+upward vertical component with the existing Curlx, Curly and Curlz names.
 
 `USEZVALUE` selects an absolute z coordinate. SW4 checks the receiver against
 the local terrain without adding the surface z to the supplied coordinate.

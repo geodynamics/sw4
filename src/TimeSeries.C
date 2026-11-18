@@ -620,9 +620,9 @@ void TimeSeries::writeFile(string suffix) {
       ux << filePrefix.str() << "curlx";
       uy << filePrefix.str() << "curly";
       uz << filePrefix.str() << "curlz";
-      azimx = m_x_azimuth;
-      azimy = m_x_azimuth + 90.;
-      updownang = 180;
+      azimx = m_xyzcomponent ? m_x_azimuth : 90.;
+      azimy = m_xyzcomponent ? m_x_azimuth + 90. : 0.;
+      updownang = m_xyzcomponent ? 180. : 0.;
       msg << "[curlx|curly|curlz]" << endl;
     } else if (m_mode == Strains) {
       xfield = "Uxx";

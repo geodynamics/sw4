@@ -295,19 +295,24 @@ def run_orientation(args):
             station["ISNSEW"] = [orientation]
 
     deck = STARTUP_INPUT.replace("z=3000 ", "z=3000 az=140 ", 1)
+    deck += ("rechdf5 infile={template} outfile=curl.h5 "
+             "variables=curl writeEvery=2 downSample=2\n")
     run = root / "rotated-grid"
     result, output = run_solver(args, args.sw4.resolve(strict=True), run,
                                 deck.format(template=path))
     assert result["exit_code"] == 0 and "program sw4 finished!" in output, output[-8000:]
-    with h5py.File(run / "receiver.h5", "r") as stream:
-        for name, (orientation, components, azimuths, inclinations) in expected.items():
-            station = stream[name]
-            assert int(station["ISNSEW"][0]) == orientation, name
-            for component, azimuth, inclination in zip(components, azimuths, inclinations):
-                actual = (float(station[component + "CMPAZ"][0]),
-                          float(station[component + "CMPINC"][0]))
-                assert actual == (azimuth, inclination), (name, component, actual)
-    print("PASS: Cartesian and geographic HDF5 azimuths on a rotated grid")
+    for filename in ("receiver.h5", "curl.h5"):
+        with h5py.File(run / filename, "r") as stream:
+            for name, (orientation, components, azimuths, inclinations) in expected.items():
+                station = stream[name]
+                assert int(station["ISNSEW"][0]) == orientation, (filename, name)
+                if filename == "curl.h5":
+                    components = ("Curlx", "Curly", "Curlz")
+                for component, azimuth, inclination in zip(components, azimuths, inclinations):
+                    actual = (float(station[component + "CMPAZ"][0]),
+                              float(station[component + "CMPINC"][0]))
+                    assert actual == (azimuth, inclination), (filename, name, component, actual)
+    print("PASS: Cartesian and geographic HDF5 orientation for displacement and curl")
 
 
 def run_depth(args):
