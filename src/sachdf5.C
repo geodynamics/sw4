@@ -795,9 +795,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 {
   bool is_debug = false;
 
-  hid_t fid, grp, attr, attr_space1, attr_space3, attr_space4, dset_space, dset, dcpl, fapl;
+  hid_t fid, grp, attr, attr_space1, attr_space3, dset_space, dset, dcpl, fapl;
   herr_t ret;
-  hsize_t dims1 = 1, dims3 = 3, dims4 = 4, total_dims;
+  hsize_t dims1 = 1, dims3 = 3, total_dims;
   double start_time, elapsed_time;
   float stxyz[3], stlonlatdep[3], o, dt;
   std::string dset_names[10];
@@ -925,7 +925,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
   attr_space1 = H5Screate_simple(1, &dims1, NULL);
   attr_space3 = H5Screate_simple(1, &dims3, NULL);
-  attr_space4 = H5Screate_simple(1, &dims4, NULL);
 
   dcpl = H5Pcreate(H5P_DATASET_CREATE);
   H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
@@ -985,8 +984,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
 
-    createAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, attr_space4);
-
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
     isnsew = xyzcomponent ? 0 : 1;
 
@@ -1042,7 +1039,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   H5Pclose(dcpl);
   H5Sclose(attr_space1);
   H5Sclose(attr_space3);
-  H5Sclose(attr_space4);
   H5Fflush(fid, H5F_SCOPE_GLOBAL);
   H5Fclose(fid);
 
