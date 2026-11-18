@@ -140,7 +140,8 @@ mX(x),
   m_epi_lon(-122.5),
   m_epi_depth(0.0),
   m_epi_time_offset(0.0),
-  m_x_azimuth(0.0),
+  // Rank zero creates the HDF5 headers for stations on every rank.
+  m_x_azimuth(a_ew->getGridAzimuth()),
   mBinaryMode(true),
   //  m_utc_set(false),
   //  m_utc_offset_computed(false),
@@ -477,9 +478,6 @@ float_sw4 xG, yG, zG;
    }
    else
       mRecordedFloats = static_cast<float**>(0);
-
-// do some misc pre computations
-   m_x_azimuth = a_ew->getGridAzimuth(); // degrees
 
    double xd, yd, lond, latd;
    xd=mX;
@@ -3807,6 +3805,8 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc)
          m_t0=utc_distance(reference,m_utc);
       }
       allocateRecordingArrays(count,m_t0+start,dt/downsample);
+      // Include the time-zero sample when sizing inversion output.
+      m_nsteps=count;
       m_xyzcomponent=cartesian;
    }
    for(int i=0;i<count;++i) {

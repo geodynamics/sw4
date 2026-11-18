@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify CPU receiver metadata and separate HDF5 output files.
+"""Verify receiver metadata and separate HDF5 output files.
 
 Run in an allocation with an HDF5-enabled CPU SW4 executable. The case includes
 an ASCII receiver before two rechdf5 commands, repeated station names across
@@ -16,7 +16,7 @@ import h5py
 import numpy as np
 
 
-INPUT = """grid h=200 x=4000 y=4000 z=3000 extrapolate=1
+INPUT = """grid h=200 x=4000 y=4000 z=3000 az=140 extrapolate=1
 time steps=4
 fileio path=.
 supergrid gp=4
@@ -41,7 +41,8 @@ def main():
         with h5py.File(root / "stations.h5", "w") as stream:
             for station, coords, orientation in (
                 ("sta01", (1800, 1800, 0), None),
-                ("sta02", (2000, 1800, 0), 0),
+                # Put the Cartesian receiver beyond either two-rank split.
+                ("sta02", (2400, 2400, 0), 0),
             ):
                 group = stream.create_group(station)
                 group["STX,STY,STZ"] = np.asarray(coords, dtype=np.float64)
@@ -66,14 +67,17 @@ def main():
             raise AssertionError("SW4 failed:\n" + result.stdout)
         for filename in ("first.h5", "second.h5"):
             with h5py.File(root / filename, "r") as stream:
-                for station, orientation, components in (
-                    ("sta01", 1, ("EW", "NS", "UP")),
-                    ("sta02", 0, ("X", "Y", "Z")),
+                for station, orientation, components, azimuths, inclinations in (
+                    ("sta01", 1, ("EW", "NS", "UP"), (90, 0, 0), (90, 90, 0)),
+                    ("sta02", 0, ("X", "Y", "Z"), (140, 230, 0), (90, 90, 180)),
                 ):
                     group = stream[station]
                     assert int(group["ISNSEW"][0]) == orientation
                     assert int(group["NPTS"][0]) == 5
-                    for component in components:
+                    assert "WINDOWS" not in group
+                    for component, azimuth, inclination in zip(components, azimuths, inclinations):
+                        assert float(group[component + "CMPAZ"][0]) == azimuth
+                        assert float(group[component + "CMPINC"][0]) == inclination
                         values = group[component][:]
                         assert values.shape == (5,)
                         assert np.all(np.isfinite(values))

@@ -30,6 +30,25 @@
 
 #define STRINGSIZE 128
 
+static void write_receiver_windows(EW& simulation,
+                                   const vector<vector<TimeSeries*>>& events)
+{
+#ifdef USE_HDF5
+   // Release waveform handles on all ranks before any owner creates WINDOWS.
+   // Serializing writes alone leaves stale HDF5 allocation metadata cached.
+   for (const auto& receivers : events)
+      for (auto* receiver : receivers)
+         if (receiver->getUseHDF5())
+            receiver->closeHDF5File();
+#endif
+   for (const auto& receivers : events)
+      for (auto* receiver : receivers)
+      {
+         MPI_Barrier(simulation.m_1d_communicator);
+         receiver->writeWindows();
+      }
+}
+
 void usage(string thereason)
 {
   cout << endl
@@ -2271,12 +2290,7 @@ int main(int argc, char **argv)
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
 
-              for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
-                for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
-                  // This barrier is needed as each process needs to open and write to the HDF5 file independently, and one at a time
-                  MPI_Barrier(simulation.m_1d_communicator);
-                  GlobalTimeSeries[e][m]->writeWindows();  
-                }
+              write_receiver_windows(simulation, GlobalTimeSeries);
 
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
@@ -2403,13 +2417,8 @@ int main(int argc, char **argv)
                         std::cout << "ERROR, no source given for event " << e << std::endl;
                      simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, mopt->m_mp, 
                                     mopt->get_wave_mode(), e, simulation.getRank());
-               
-                     for( int s=0 ; s < GlobalObservations[e].size() ; s++) {
-                        // This barrier is needed as each process needs to open and write to the HDF5 file independently, and one at a time
-                        MPI_Barrier(simulation.m_1d_communicator);
-                        GlobalObservations[e][s]->writeWindows();
-                     }
                  }
+                 write_receiver_windows(simulation, GlobalObservations);
               }
            }
            else

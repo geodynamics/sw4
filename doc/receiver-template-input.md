@@ -14,6 +14,10 @@ Four-value `WINDOWS` takes precedence and uses the maximum of the two
 five-sample tanh tapers where they overlap. The second interval is active
 when at least one of its bounds is positive.
 
+Forward receiver HDF5 files omit the optional `WINDOWS` dataset. Inversion
+writes it when saving time windows. Cartesian component azimuths use the
+simulation grid azimuth on every rank.
+
 The normalized L2 time-shift derivatives include the shift dependence of the
 observation energy. A travel-time measurement requires a resolved interior
 correlation peak. Unresolved windows contribute zero score and zero adjoint
