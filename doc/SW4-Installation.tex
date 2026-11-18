@@ -46,7 +46,7 @@
 
 \begin{document}
 
-\title{Installing SW4 version 3.0}
+\title{Installing SW4: unified backends}
 
 \author{ N. Anders Petersson$^*$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This work
@@ -55,7 +55,7 @@
     LLNL-SM-741310.} 
 \and Houjun Tang\thanks{ Lawrence Berkeley National Laboratory}
     }
-\date{September 21, 2022}
+\date{November 2026}
 \maketitle
 
 %\thispagestyle{plain}
@@ -66,649 +66,149 @@
 %\pagebreak
 \tableofcontents
 
-\section{Introduction}
-The sole purpose of this document is to describe the installation process of the seismic wave
-propagation code \emph{SW4}. A comprehensive user's guide is provided in the report by
-Petersson, Sjogreen, and Tang~\cite{SW4-v3}.
+\sloppy
+\section{Build requirements}
+The \texttt{unified-backends} branch builds one execution backend per executable:
+\texttt{OPENMP} for native CPU execution, \texttt{CUDA} for NVIDIA GPUs, or
+\texttt{HIP} for AMD GPUs. Use separate build and installation directories for
+each backend. There is no runtime backend switch or support for mixing CPU
+and GPU solver ranks in one run.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Installing \emph{SW4} with spack}\label{cha:installing-sw4-spack}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\emph{SW4} can be installed with Spack (\url{https://spack.io}), which is a package manager for supercomputers, Linux, and macOS. It can automatically install \emph{SW4} together with all its dependent libraries, such as MPI, Proj, OpenMP, blas, lapack, HDF5, FFTW, and ZFP. 
-\begin{verbatim}
-  > git clone -c feature.manyFiles=true https://github.com/spack/spack.git
-  > . spack/share/spack/setup-env.sh
-  > spack install sw4
-\end{verbatim}
+All builds need C, C++, and Fortran compilers, compatible MPI libraries,
+BLAS, and LAPACK. CPU execution also needs OpenMP. CMake 3.18 or newer is
+required; the supplied presets and HIP backend require 3.21 or newer.
+Use dependencies built with compatible compilers and the same MPI implementation.
 
-Run the following command to add the installed \emph{SW4} executable to your system PATH:
-\begin{verbatim}
-  > . spack/share/spack/setup-env.sh
-  > spack load sw4
-\end{verbatim}
-
-\section{Compilers and third party libraries}
-
-Before you can build \emph{SW4} on your system, you must have
-\begin{enumerate}
-\item the \verb+lapack+ and \verb+blas+ libraries. These libraries provide basic linear algebra functionality and are pre-installed on many machines;
-\item an MPI library. This library provides support for message passing on parallel
-  machines. Examples of open source implementations include Mpich and OpenMPI. Note that the MPI library must be installed even if you are only building \emph{SW4} for a single core system.
-\end{enumerate}
-
-To avoid incompatibility issues and linking problems, we recommend using the same compiler for the libraries as for \emph{SW4}.
-
-In order to use geographic projection and material models stored in the \emph{rfile} format, you need to install the PROJ before building \emph{SW4}:
-\begin{itemize}
-\item PROJ (version 6+), \url{https://proj.org/download.html}
-\end{itemize}  
-If you also wish to use material models using the \emph{sfile} or \emph{GMG} format, you also need to download and install the HDF5 library:
-\begin{itemize}
-\item HDF5 (version 1.12+), \url{https://www.hdfgroup.org/downloads/hdf5/source-code}
-\end{itemize}
-To simplify the build process, all libraries should be installed under the same directory, such that the library files (.so, .a, etc.) are in the lib sub-directory and the include files (.h) end up in the include sub-directory. See Section~\ref{sec:proj} for details.
-
-\paragraph{MacOS}
-
-We recommend using the MacPorts package manager for installing the required compilers and libraries. Simply go to www.macports.org, and install macports on your system. With that in place, you can use the \verb+port+ command as follows
-\begin{verbatim}
-sudo port install gcc11
-sudo port install mpich-gcc11
-sudo port install hdf5
-\end{verbatim}
-Here, \verb+gcc11+ refers to version 11 of the GNU compiler suite. Compiler versions are bound to change in the future, so the above commands will need to be modified accordingly. Before starting, make sure you install a version of gcc that is compatible with the MPI library package. The above example installs the \verb+mpich+ package using the gcc11 compilers, which includes a compatible Fortran compiler. Alternatively, you can use the \verb+openmpi+ package. Note that the \verb+port select+ commands are used to create shortcuts to the compilers and MPI environment. By using the above setup, the GNU compilers can be accessed with \verb+gcc+ and \verb+gfortran+ commands, and the MPI compilers and execution environment are called \verb+mpicxx+, \verb+mpif90+, and \verb+mpirun+, respectively.
-
-The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed using the \verb+-framework Accelerate+ link option. If that is not available or does not work on your machine, you can download \verb+lapack+ and \verb+blas+ from \url{www.netlib.org.}
-
-\paragraph{Linux}
-We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core 18 Linux. Other Linux variants use similar commands for installing software packages, but note that the package manager \verb+yum+ is specific to Fedora Core. For Ubuntu systems, one can simply change \verb+yum+ to \verb+apt-get+
-
-You need to have root privileges to install precompiled packages. Start by opening an xterm and set your user identity to root by the command
-\begin{verbatim}
-su -
-\end{verbatim}
-Install the compilers by issuing the commands
-\begin{verbatim}
-yum install gcc
-yum install gcc-c++
-yum install gcc-gfortran
-\end{verbatim}
-You install the \verb+mpich+ and \verb+hdf5+ library and include files with the command
-\begin{verbatim}
-yum install mpich-devel
-yum install hdf5
-\end{verbatim}
-
-The executables and libraries are installed in \verb+/usr/lib64/mpich/bin+ and  \verb+/usr/lib64/mpich/lib+ respectively. We suggest that you add \verb+/usr/lib64/mpich/bin+ to your path. This is done with the command:
-\begin{verbatim}
-export PATH=${PATH}:/usr/lib64/mpich/bin
-\end{verbatim}
-if your shell is \verb+bash+. For \verb+tcsh+ users, the command is
-\begin{verbatim}
-setenv PATH ${PATH}:/usr/lib64/mpich/bin
-\end{verbatim}
-It is convenient to put the path setting command in your startup file, \verb+.bashrc+ or \verb+.cshrc+., for bash or csh/tcsh respectively.
-The \verb+blas+ and \verb+lapack+ libraries are installed with
-\begin{verbatim}
-yum install blas
-yum install lapack
-\end{verbatim}
-On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and \verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore add the links explicitly. If the libraries were installed elsewhere on your system, but you don't know where, you can find them with the following command:
-\begin{verbatim}
-find / -name "*blas*" -print
-\end{verbatim}
-After locating the directory where the libraries reside (in this case \verb+/usr/lib64+), we add
-links to the libraries with the commands:
-\begin{verbatim}
-cd /usr/lib64
-ln -s libblas.so.3 libblas.so
-ln -s liblapack.so.3 liblapack.so
-\end{verbatim}
-Note that you need to have \verb+root+ privileges for this to work.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Unpacking the source code tar ball}
-\index{installation!directories}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-To unpack the \emph{SW4} source code, you place the file \verb+sw4-v3.0.tar.gz+ in the
-desired directory and issue the following command:
-\begin{verbatim}
-tar xzf sw4-v3.0.tar.gz
-\end{verbatim}
-As a result a new sub-directory named \verb+sw4-v3.0+ is created. It contains several files
-and sub-directories:
-%
-\begin{itemize}
-\item \verb+LICENSE.txt+ License information.
-\item \verb+INSTALL.txt+ A link to this document.
-\item \verb+README.txt+ General information about \emph{SW4}.
-\item \verb+configs+ Directory containing \verb+make+ configuration files.
-\item \verb+src+ C++ and Fortran source code of \emph{SW4}.
-\item \verb+tools+ Matlab/Octave scripts for post processing and analysis.
-\item \verb+pytest+ Python script and input files for testing the \emph{SW4} installation.
-\item \verb+examples+ Sample input files.
-\item \verb+Makefile+ Main makefile (don't change this file!).
-\item \verb+CMakeLists.txt+ CMake configuration file (don't change this file either!).
-\item \verb+wave.txt+ Text for printing the "SW4 Lives" banner at the end of a successful build.
-\end{itemize}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Installing \emph{SW4} with make}\label{cha:installing-sw4}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%The \emph{SW4} source code is released under the GNU general public license and can be downloaded
-%from:
-%\begin{verbatim}
-%https://computation.llnl.gov/casc/serpentine/software.html
-%\end{verbatim}
-
-The classical way of building \emph{SW4} uses \verb+make+. We recommend using GNU make, sometimes called \verb+gmake+. You can check the version of make on you system with the command
-\begin{verbatim}
-    > make -v
-\end{verbatim}
-If you don't have GNU make installed on your system, you can obtain it from www.gnu.org.
-
-We have built \emph{SW4} and its supporting libraries on Intel based laptops and desktops running
-LINUX and OSX. It has also been built on several supercomputers such as the Intel machines {\tt 
-quartz} (at LLNL), {\tt Cori} (at LBNL), and {\tt Summit} (at ORNL). We have
-successfully used the following versions of Gnu, Intel, and IBM compilers:
-\begin{verbatim}
-GNU:   g++/gcc/gfortran      versions 4.5+
-Intel: icpc/icc/ifort        versions 16.0+
-IBM:   xlcxx/xlc/xlf         versions 12.1+
-\end{verbatim}
-
-\emph{SW4} uses the message passing interface (MPI) standard for communication on parallel distributed memory machines. Note that the MPI library often includes wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich} package build wrappers for the underlying C++ and Fortran compilers called {\tt mpicxx} and {\tt mpif90}, as well as the {\tt mpirun} script. We highly recommend using these programs for compiling, linking, and running \emph{SW4}.
-
-
-\subsection{Basic compilation and linking of \emph{SW4}}\label{sec:basic-install}
-\index{installation!basic} 
-
-The basic build process is controlled by the environmental variables \verb+FC+, \verb+CXX+, \verb+EXTRA_FORT_FLAGS+, \verb+EXTRA_CXX_FLAGS+, and \verb+EXTRA_LINK_FLAGS+. These variables should hold the names of the Fortran and C++ compilers, and any extra options that should be passed to the compilers and linker. The easiest way of assigning these variables is by creating a file in the \verb+configs+ directory called \verb+make.inc+. The \verb+Makefile+ will look for this file and read it if it is available. There are several examples in the \verb+configs+ directory, e.g. \verb+make.osx+ for Macs and \verb+make.linux+ for Linux machines. You should copy one of these files to your own \verb+make.inc+ and edit it as needed. 
-
-\subsubsection{Mac machines}
-If you are on a Mac, you could copy the setup from \verb+make.osx+,
-\begin{verbatim}
-cd configs
-cp make.osx make.inc
-cat make.inc
-proj = no
-hdf5 = no
-FC = mpif90
-CXX = mpicxx
-EXTRA_FORT_FLAGS = 
-EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc11 -lgfortran
-\end{verbatim}
-In this case, the \verb+blas+ and \verb+lapack+ libraries are assumed to be provided by the \verb+-framework Accelerate+ option. The \verb+libgfortran+ library is located in the directory \verb+/opt/local/lib/gcc11+, which is where \verb+macports+ currently installs it.
-
-\subsubsection{Linux machines}
-If you are on a Linux machine, we suggest you copy the configuration options from \verb+make.linux+,
-\begin{verbatim}
-cd configs
-cp make.linux make.inc
-cat make.inc
-proj = no
-FC = gfortran
-CXX = mpicxx
-EXTRA_LINK_FLAGS = -L/usr/lib64 -llapack -lblas -lgfortran
-\end{verbatim}
-This setup assumes that the \verb+blas+ and \verb+lapack+ libraries are located in the
-\verb+/usr/lib64+ directory. 
-In the case of Fedora Core 18, we needed to set the link flag variable to
-\begin{verbatim}
-EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib64/mpich/lib  -llapack -lblas -lgfortran
-\end{verbatim}
-
-\subsubsection{Using make}
-You build \emph{SW4} with the "make" command from the main directory.
-\begin{verbatim}
-cd /enter/your/path/sw4-v3.0
-make
-\end{verbatim}
-If all goes well, you will see the SW4 Lives banner on your screen after the compilation and linking
-has completed,
-{\samepage
-\begin{verbatim}
-    
-``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='````'-.,_,.-'``'-.,_,.='``
-  _________    ____      __      ____    _    __
- /   ____  \   \   \    /  \    /   /   / |  |  |  
- |  |    \./    \   \  /    \  /   /   /  |  |  |
- |  |______      \   \/      \/   /   /   '--'  |
- \______   \      \              /    |______   |
-        |  |       \     /\     /            |  |      
- /`\____|  |        \   /  \   /             |  |      
- \_________/         \_/    \_/              |__|      
-                                       
-   __       __  ____    ____  _______    ______    __  
-  |  |     |  | \   \  /   / |   ____|  /    __|  |  | 
-  |  |     |  |  \   \/   /  |  |__     |   (__   |  | 
-  |  |     |  |   \      /   |   __|    \__    |  |  | 
-  |  `----.|  |    \    /    |  |____    __)   |  |__| 
-  |_______||__|     \__/     |_______|  (_____/   (__)
-``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='````'-.,_,.-'``'-.,_,.='``
-
-\end{verbatim}
-}
-By default, \verb+make+ builds an optimized \verb+sw4+ executable. It is located in 
-\begin{verbatim}
-/enter/your/path/sw4-v3.0/optimize/sw4
-\end{verbatim}
-You can also build an executable with debugging symbols by adding the \verb+debug=yes+ option to \verb+make+,
-\begin{verbatim}
-  > cd /enter/your/path/sw4-v3.0
-  > make debug=yes
-\end{verbatim}
-In this case, the executable will be located in
-\begin{verbatim}
-/enter/your/path/sw4-v3.0/debug/sw4
-\end{verbatim}
-It can be convenient to add the corresponding directory to your \verb+PATH+ environment
-variable. This can be accomplished by modifying your shell configuration file, e.g. \verb+~/.cshrc+
-if you are using C-shell.
-
-\subsubsection{How do I setup the {\tt make.inc} file?}
-
-The input file for \verb+make+ is
-\begin{verbatim}
-sw4-v3.0/Makefile
-\end{verbatim}
-Do {\em not} change this \verb+Makefile+. It should only be necessary to edit your configuration
-file, that is,
-\begin{verbatim}
-/my/path/sw4-v3.0/configs/make.inc
-\end{verbatim}
-Note that you must create this file, for example by copying one of the \verb+make.xyz+ files in the
-same directory. The \verb+make.inc+ file holds all information that is particular for your system,
-such as the name of the compilers, the location of the third party libraries, and any extra
-arguments that should be passed to the compiler or linker. 
-
-The following \verb+make.inc+ file includes all configurable options:
-\begin{verbatim}
-proj = no
-hdf5 = no
-SW4ROOT = /my/path/to/installed/library
-CXX = mpicxx
-FC  = mpif77
-EXTRA_CXX_FLAGS = -DUSING_MPI
-EXTRA_FORT_FLAGS = -fno-underscoring
-EXTRA_LINK_FLAGS = -framework vecLib
-\end{verbatim}
-The \verb+CXX+ and \verb+FC+ variables should be set to the names of the C++ and
-Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
-\verb+EXTRA_LINK_FLAGS+ variables should contain any additional arguments that need to be passed to
-the C++ compiler, Fortran compiler, or linker, on your system.
-
-\subsection{Building \emph{SW4} with PROJ, HDF5, and ZFP support}
-The PROJ library enables the more advanced geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile, sfile} and {\tt gmg} commands. To enable the {\tt sfile}, {\tt ssioutput}, and {\tt gmg} commands, you have to also install the {\tt HDF5} library. To use ZFP compression for the {\tt ssioutput} command, {\tt ZFP} and {\tt H5Z-ZFP} are required. See Section \ref{sec:proj} for installing these libraries.
-
-Once you have successfully installed the PROJ, and optionally the HDF5 and ZFP libraries, it should be easy to re-configure \emph{SW4} to use them. Simply edit your configuration file (\verb+make.inc+) by adding the following lines to the top of the file, setting the {\tt proj}, {\tt hdf5}, and {\tt zfp} keywords to
-{\tt yes} or {\tt no}, as appropriate.
-\begin{verbatim}
-proj = yes 
-hdf5 = yes
-zfp = yes
-SW4ROOT = /thid/party/basedir
-HDF5ROOT = /thid/party/basedir
-ZFPROOT = /thid/party/basedir
-H5ZROOT = /thid/party/basedir
-\end{verbatim}
-
-You then need to re-compile \emph{SW4}. Go to the \emph{SW4} main directory, clean out the previous
-object files and executable, and re-run make:
-\begin{verbatim}
-  > make clean
-  > make
-\end{verbatim}
-If all goes well, the ``SW4 lives'' banner is shown after the make command is
-completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
-\verb+debug+ directories.
-
-\subsection{Testing the \emph{SW4} installation}
-The \emph{SW4} source code distribution includes a Python (3) script for running several tests and
-checking the solutions against previously verified results. Note that the same set of tests can be
-performed when \emph{SW4} is built with CMake, see Section~\ref{cha:ctest-sw4}.
-
-After \emph{SW4} has been built with \verb+make+, go to the \verb+pytest+ directory and run
-\verb+test_sw4.py+. If the \verb+sw4+ executable resides in the \verb+optimize+ directory, you can
-run the basic tests by doing:
-\begin{verbatim}
-  > cd pytest
-  > ./test_sw4.py ("./test_sw4.py -u 0" if HDF5 is not installed)
-\end{verbatim}
-If all goes well, you should see the following output:
-\begin{verbatim}
-Running all tests for level 0 ...
-Test # 1 Input file: energy-nomr-2nd-1.in PASSED
-Test # 2 Input file: energy-mr-4th-1.in PASSED
-...
-Test # 25 Input file: loh1-h100-mr-restart-hdf5-1.in PASSED
-Out of 25 tests, 0 failed, 23 passed, and 2 skipped
-\end{verbatim}
-Some aspects of the testing can be modified by providing command line arguments to
-\verb+test_sw4.py+. For a complete list of options do \verb+test_sw4.py --help+, which currently
-give the output:
-\begin{verbatim}
-    > ./test_sw4.py --help
-usage: test_sw4.py [-h] [-v] [-l {0,1,2}] [-m MPITASKS] [-d SW4_EXE_DIR]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -v, --verbose         increase output verbosity
-  -l {0,1,2}, --level {0,1,2}
-                        testing level
-  -m MPITASKS, --mpitasks MPITASKS
-                        number of mpi tasks
-  -t OMPTHREADS, --ompthreads OMPTHREADS
-                        number of omp threads per task
-  -d SW4_EXE_DIR, --sw4_exe_dir SW4_EXE_DIR
-                        name of directory for sw4 executable
-  -p PYTEST_DIR, --pytest_dir PYTEST_DIR
-                        full path to the directory of pytest
-                        (/path/sw4/pytest)
-  -u {0,1,2,3,4}, --usehdf5 {0,1,2,3,4}
-                        run HDF5 tests with, 0 no HDF5, 1 first HDF5 case, 2
-                        second case,..., 4 all cases
-  -g {0,1}, --geodynbc {0,1}
-                        run Geodynbc tests with, 0 skip, 1 both cases
-  -A CPU_ALLOCATION, --cpu_allocation CPU_ALLOCATION
-                        name of cpu bank/allocation
-\end{verbatim}
-Note  that the directory name for the \verb+sw4+ executable should be given relative to the main
-\verb+sw4+ directory.
-
-\section{Installing \emph{SW4} with CMake}\label{cha:installing-cmake-sw4}
-\emph{SW4} can also be built with CMake. Compared to using regular {\tt make}, this build process is
-easier to use because it is fully automated. However, it gives the user less control of which
-compilers, linker, and libraries to use. Similar to using regular {\tt make}, the \emph{SW4} CMake
-configuration allows automated correctness testing of the installation. The test runs the same set
-of cases as the \verb+test_sw4.py+ script in the \verb+pytest+ directory, see
-Section~\ref{cha:ctest-sw4} for details.
-
-To use CMake, navigate to the top {\tt sw4} directory and run the following commands:
-\begin{verbatim}
-  > mkdir build
-  > cd build
-  > cmake [options] ..
-  > make
-  > make install
-\end{verbatim}
-
-The two dots after {\tt cmake [options]} are essential and instructs it to look in the parent
-directory for the {\tt CMakeLists.txt} file.
- 
-The \verb+cmake+ command searches for the necessary libraries and other dependencies then creates
-makefiles that are appropriate for your system. You then run \verb+make+ to compiles and link
-\emph{SW4} using these makefiles. For details about the exact commands being used in compilation,
-run \texttt{make VERBOSE=1}.  Once SW4 has been successfully built, you will see the
-``SW4 Lives!'' banner on the screen.
-
-NOTE: If you want to rebuild \verb+sw4+ with a new set of options, you can force \verb+cmake+ to start
-from scratch by removing the file \verb+CMakeCache.txt+ in the \verb+build+ directory. Another way
-is to remove all files in the \verb+build+ directory.
-
-\subsection{CMake Options}
-CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option,
-add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the options in the
-\texttt{cmake} command.  For example, when building SW4 with the PROJ library:
-%
-\begin{verbatim}
-  > export 
-  > cmake -DUSE_PROJ=ON -DPROJ_DIR=${SW4ROOT}/install/lib64/cmake/proj ..
-\end{verbatim}
-%
-A list of options is shown in the table below.
-%
 \begin{center}
-\begin{tabular}{|l|c|p{0.55\textwidth}|}
-\hline
-Option & Default & Details \\
-\hline
-%
-USE\_PROJ & OFF & Enable PROJ library. \\ \hline
-PROJ\_DIR & (none) & The path to the PROJ installation. \\ \hline
-%
-USE\_HDF5 & OFF & Enable HDF5 library. \\ \hline
-HDF5\_DIR & (none) & The path to the HDF5 installation. \\ \hline
-%
-USE\_ZFP & OFF & Enable ZFP compression. \\ \hline
-ZFP\_DIR & (none) & The path to the ZFP installation. \\ \hline
-H5Z\_ZFP\_DIR & (none) & The path to the H5Z-ZFP installation. \\ \hline
-CMAKE\_BUILD\_TYPE & Release & The type of build to setup. Can be either \texttt{Debug},
-\texttt{Release}, or \texttt{RelWithDebInfo}.  This affects the type of optimization and debug flags
-used in compiling \emph{SW4}. \\ \hline
-%
-TESTING\_LEVEL & 0 & Specifies the testing level for automated tests.  Level 0 corresponds to tests
-that run in roughly a minute or less (7 total), level 1 to tests that run in roughly 10 minutes or
-less (13 total) and level 2 to tests that may require up to an hour or more (17 total). \\ \hline
-%
-MPI\_NUM\_TEST\_PROCS & 4 & Number of MPI processes to use in tests. Generally using more processes
-will result in the tests finishing faster, but there is no point exceeding the number of available
-cores on your system.  We strongly recommend at least 8 processes if TESTING\_LEVEL is 1 or
-higher.\\ \hline
-%
-% -DMPIEXEC=/usr/bin/srun
-%
-MPIEXEC & mpirun & UNIX command for running an MPI application.\\ \hline
-% -DMPIEXEC_NUMPROC_FLAG=-n
-MPIEXEC\_NUMPROC\_FLAG & -np & MPI command option for specifying the number of processes.\\ \hline 
-% -DMPIEXEC_PREFLAGS=-ppdebug
-MPIEXEC\_PREFLAGS & (none) & Extra MPI command option.\\ \hline 
+\begin{tabular}{|l|p{10cm}|}\hline
+Feature & Additional requirements \\ \hline
+Geographic projections & PROJ 6 or newer; configure with \texttt{USE\_PROJ=ON}. \\ \hline
+HDF5 input/output & Parallel HDF5 C and high-level libraries;
+\texttt{USE\_HDF5=ON}. Required for receiver HDF5, Sfile/GMG materials,
+and HDF5 outputs. Serial HDF5 is rejected. \\ \hline
+ZFP-compressed SSI & ZFP and H5Z-ZFP 1.1.0 or newer, plus HDF5;
+\texttt{USE\_ZFP=ON}. Build ZFP with eight-bit bitstream words. \\ \hline
+Random materials & Precision-matched MPI FFTW libraries;
+\texttt{USE\_FFTW3=ON}. \\ \hline
+CUDA or HIP solver & Matching GPU compiler and RAJA; Umpire is required with the default
+\path{SW4_USE_UMPIRE=ON}.
+Use the C++ standard required by those libraries
+(\path{SW4_GPU_CXX_STANDARD=20} by default). \\ \hline
 \end{tabular}
 \end{center}
 
-\paragraph{Modifying the MPI execution commands.}
-By default, \verb+mpirun+ is used to start parallel runs when you do \verb+make test+.  However, on
-Livermore computing (LC) machines the command for running MPI programs is \verb+srun+, not
-\verb+mpirun+. Also, the flag for specifying the number of processors is different, and you must
-give an additional flag for running interactive jobs on the debug partition. For example, you would
-say
+The optional I/O libraries and FFTW are disabled by default. Enable the
+features required by the input deck. GPU builds use double precision;
+\texttt{SW4\_PRECISION=single} is supported only for the native CPU solver.
+
+\section{Build and install}
+Run these commands from the repository root. Replace dependency paths and
+compiler choices with those for your site. Set \texttt{CMAKE\_PREFIX\_PATH}
+to the required dependency installation prefixes, separated by semicolons;
+\texttt{HDF5\_ROOT} and \texttt{FFTW\_ROOT} can select those libraries explicitly.
+Use an appropriate build concurrency for the host or allocation.
+
+\subsection{Native CPU}
+\begin{samepage}
 \begin{verbatim}
-srun -ppdebug -n 128 sw4 inputfile.in
+cmake -S . -B build/cpu -DCMAKE_BUILD_TYPE=Release \
+  -DSW4_BACKEND=OPENMP -DSW4_BUILD_MOPT=ON \
+  -DUSE_PROJ=ON -DUSE_HDF5=ON -DUSE_ZFP=ON -DUSE_FFTW3=ON \
+  -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON \
+  -DCMAKE_INSTALL_PREFIX="$PWD/install/cpu"
+cmake --build build/cpu --parallel 4
+cmake --install build/cpu
 \end{verbatim}
-to run on the debug partition using 128 cores. To modify the default MPI execution program and
-other runtime parameters, the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and
-MPIEXEC\_PREFLAGS can be set as in the following example:
+\end{samepage}
+The installed executables are \texttt{install/cpu/bin/sw4} and
+\path{install/cpu/bin/sw4mopt}. Omit \texttt{SW4\_BUILD\_MOPT=ON} if
+material inversion is not needed. This option is off by default.
+The CPU backend does not require CUDA, HIP, RAJA, or Umpire.
+
+\subsection{CUDA}
+Configure after loading the CUDA compiler and MPI environment. RAJA and
+Umpire must have CUDA enabled and support the target GPU architecture.
+The architecture value below is for NVIDIA A100 GPUs:
+\begin{samepage}
 \begin{verbatim}
-cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=srun \
-      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
+cmake -S . -B build/cuda -DCMAKE_BUILD_TYPE=Release \
+  -DSW4_BACKEND=CUDA -DCMAKE_CUDA_ARCHITECTURES=80 \
+  -DSW4_GPU_HOST_OPENMP=OFF -DSW4_BUILD_MOPT=OFF \
+  -DUSE_PROJ=ON -DUSE_HDF5=ON -DUSE_ZFP=ON -DUSE_FFTW3=ON \
+  -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON \
+  -DCMAKE_INSTALL_PREFIX="$PWD/install/cuda"
+cmake --build build/cuda --parallel 4
+cmake --install build/cuda
 \end{verbatim}
+\end{samepage}
+The installed forward solver is \texttt{install/cuda/bin/sw4}.
+CUDA host OpenMP is off by default. MPI uses staged host buffers by default
+(\path{SW4_GPU_MPI_BUFFERS=STAGED}); experimental prefetch options are off.
+A \texttt{sw4mopt} built with \texttt{SW4\_BUILD\_MOPT=ON}, including in a GPU
+build tree, uses the native CPU inversion implementation.
 
-After the PROJ and HDF5 libraries have been installed (see next section), you need to tell
-\verb+cmake+ where to find them. On the LC-machines, all three libraries are currently installed under
-\verb+/usr/apps/wpp+, and you can use the following command options to configure \verb+sw4+:
+For HIP, use a fresh directory, \texttt{SW4\_BACKEND=HIP}, a supported ROCm
+compiler (set \texttt{CMAKE\_HIP\_COMPILER} to \texttt{amdclang++}, not \texttt{hipcc}),
+matching RAJA/Umpire libraries, and the appropriate
+\path{CMAKE_HIP_ARCHITECTURES}. The receiver and geometry checks reported
+here have not validated HIP.
+
+\subsection{Perlmutter environment}
+The CPU and CUDA builds use separate prefixes under
+\path{/global/cfs/cdirs/m3354/perl/sw4.unifybackend/install}:
+\texttt{cpu/bin} and \texttt{cuda/bin}. Select the executable explicitly.
+The build environment uses GNU 13.2, Cray MPICH, parallel HDF5 1.14.3.9,
+and Cray FFTW; CUDA builds also load CUDA 13.2. The CUDA dependency stack
+uses RAJA 2026.07.0 and Umpire 2026.07.1.
+
+Retain the matching runtime libraries when moving or launching an executable.
+Use the site's module environment and inspect \texttt{ldd} for missing
+libraries. CPU builds must also be checked on CPU nodes; a build on a GPU
+node alone does not establish CPU-node compatibility. Run simulations inside
+an allocation, with the CPU or GPU account and node type appropriate to the
+selected executable. Resource requests and queue limits follow current site
+policy.
+
+\section{Run and validate}
+Use the MPI launcher for the MPI library used at build time. For example,
+inside a suitable allocation:
+\begin{samepage}
 \begin{verbatim}
-cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=36 -DMPIEXEC=srun \
-      -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug \
-      -DUSE_HDF5=ON -DPROJ_DIR=/usr/apps/wpp \
-      -DUSE_PROJ=ON -DHDF5_DIR=/usr/apps/wpp ..
+export OMP_NUM_THREADS=1
+mpiexec -n 2 install/cpu/bin/sw4 test.in
 \end{verbatim}
-To verify that \verb+cmake+ actually found the libraries, pay attention to the
-following lines of the output from the \verb+cmake+ command:
+\end{samepage}
+Replace the example input path with an existing deck and run from a directory
+where its inputs and output paths resolve correctly. On Slurm systems use
+\texttt{srun} with the allocation's process, thread, and GPU bindings.
+Start GPU runs with one visible GPU per MPI rank. See
+\texttt{SW4-UsersGuide.pdf} for input syntax and receiver metadata.
+
+CTest is optional. Configure with \texttt{BUILD\_TESTING=ON}, select
+\texttt{TESTING\_LEVEL} and \texttt{MPI\_NUM\_TEST\_PROCS}, then run
+\begin{samepage}
 \begin{verbatim}
-...
--- Found PROJ: /usr/apps/wpp/lib/libproj.so  
-...
+ctest --test-dir build/cpu --output-on-failure -j1
 \end{verbatim}
+\end{samepage}
+in an allocation
+that supports the configured MPI launcher. The presets disable CTest by default.
+The receiver regression entry points and their required executables are listed
+in \path{receiver-template-input.md}; they are separate from CTest.
 
-Sometimes CMake doesn't pick up the correct compiler. Say, for example that the C++ compiler on your
-system is called {\tt mpicxx} and the Fortran compiler is {\tt mpiifort}. You can tell {\tt cmake}
-to use those compilers by setting the following environment variables {\em before} running cmake
-(assuming a {\tt csh} shell),
-\begin{verbatim}
-  > setenv CXX mpicxx
-  > setenv FC mpiifort
-\end{verbatim}
+Receiver validation covers bounded metadata batches, malformed input,
+flat/Gaussian receiver and source placement, and depth-gradient material
+planes. The material-gradient Taylor check uses native CPU \texttt{sw4} and
+\texttt{sw4mopt}, one Vp direction, and a small uniform model. These checks
+do not establish GPU model-level adjoints, peak selection for representative
+recordings, HIP correctness, or startup speedup at production scale.
 
-\subsection{CTest}\label{cha:ctest-sw4}
-The \emph{SW4} CMake configuration includes several test cases used to verify the correctness
-of the \emph{SW4} installation.  Each test consists of two parts. First it runs a case using an input
-file in the \verb+pytest+ directory. Secondly, it checks that the results are within
-a reasonable error tolerance from previously recorded results.
-
-To run the tests, use either the command \texttt{make test} or \texttt{ctest} as follows:
-%
-\begin{verbatim}
-build > ctest
-Test project /Users/petersson1/src/sw4-cig/build
-      Start  1: Run_twilight/flat-twi-1
- 1/24 Test  #1: Run_twilight/flat-twi-1 .....................   Passed    0.49 sec
-      Start  2: Check_Result_twilight/flat-twi-1
- 2/24 Test  #2: Check_Result_twilight/flat-twi-1 ............   Passed    0.03 sec
-      Start  3: Run_twilight/flat-twi-2
-...
-      Start 23: Run_pointsource/pointsource-sg-1
-23/24 Test #23: Run_pointsource/pointsource-sg-1 ............   Passed   89.56 sec
-      Start 24: Check_Result_pointsource/pointsource-sg-1
-24/24 Test #24: Check_Result_pointsource/pointsource-sg-1 ...   Passed    0.03 sec
-
-100% tests passed, 0 tests failed out of 24
-
-Total Test time (real) = 230.91 sec
-\end{verbatim}
-
-You can run tests selectively using \texttt{ctest -R \textless regex\textgreater}, for example:
-%
-\begin{verbatim}
-build > ctest -R meshrefine
-Test project /Users/petersson1/src/sw4-cig/build
-    Start 15: Run_meshrefine/refine-el-1
-1/6 Test #15: Run_meshrefine/refine-el-1 .................   Passed   25.61 sec
-    Start 16: Check_Result_meshrefine/refine-el-1
-2/6 Test #16: Check_Result_meshrefine/refine-el-1 ........   Passed    0.03 sec
-    Start 17: Run_meshrefine/refine-att-1
-3/6 Test #17: Run_meshrefine/refine-att-1 ................   Passed   22.00 sec
-    Start 18: Check_Result_meshrefine/refine-att-1
-4/6 Test #18: Check_Result_meshrefine/refine-att-1 .......   Passed    0.03 sec
-    Start 19: Run_meshrefine/refine-att-2nd-1
-5/6 Test #19: Run_meshrefine/refine-att-2nd-1 ............   Passed   17.63 sec
-    Start 20: Check_Result_meshrefine/refine-att-2nd-1
-6/6 Test #20: Check_Result_meshrefine/refine-att-2nd-1 ...   Passed    0.03 sec
-
-100% tests passed, 0 tests failed out of 6
-
-Total Test time (real) =  65.35 sec
-\end{verbatim}
-
-If a test fails you can check the details in the output log at
-\texttt{Testing/Temporary/LastTest.log}.
-
-\section{Installing the PROJ, HDF5, and ZFP}\label{sec:proj}
-\index{installation!proj} \index{installation!hdf5}
-
-If you are interested in using the advanced geographical mapping options of the {\tt grid} command, the {\tt sfile}, or the {\tt gmg} command, you need to install the PROJ package. For {\tt sfile}, {\tt ssioutput},  and {\tt gmg}, the HDF5 library is also required. To use the {\tt ssioutput} command with ZFP compression, both ZFP library and the ZFP HDF5 filter library (H5Z-ZFP) are required.  
-
-The following instructions describe how to install the two packages. For simplicity all packages
-are installed under the same top directory. If you are using {\tt cmake}, you may optionally put the
-PROJ and HDF5 packages in a separate directory. In the following we shall assume that all packages are
-installed under the same top directory, and that you assign the name of that directory to the
-environment variable \verb+SW4ROOT+. When you are finished installing the packages, the
-corresponding include and library files should be in the sub-directories \verb+${SW4ROOT}/include+
-and \verb+${SW4ROOT}/lib+, respectively.
-
-\subsection{PROJ}
-The PROJ library requires SQLite, if your system does not have it installed already, it can be compiled with the following steps:
-\begin{verbatim}
-  # Download sqlite from https://www.sqlite.org/download.html (sqlite-autoconf-x)
-  > tar xf sqlite-autoconf-x.tar.gz
-  > cd sqlite-autoconf-x/
-  > ./configure --prefix=${SW4ROOT}
-  > make
-  > make install
-\end{verbatim}
-
-The PROJ library (version 9 and later is recommended) can be installed by the following steps:
-
-\begin{verbatim}
-  # Download PROJ from https://proj.org/download.html
-  > tar xf proj-x.x.x.tar.gz
-  > cd proj-x.x.x
-  > mkdir build
-  > cd build
-  > cmake -DBUILD_APPS=OFF -DCMAKE_INSTALL_PREFIX=${SW4ROOT} \
-          -DSQLITE3_INCLUDE_DIR=${SW4ROOT}/include           \
-          -DSQLITE3_LIBRARY=${SW4ROOT}/lib/libsqlite3.so  ..
-
-  # Note that the two -DSQLITE3 flags are needed if you compiled SQLite yourself.
-  > make
-  > make install
-\end{verbatim}
-
-\subsection{HDF5}
-Installing HDF5 (version 1.12 and later is recommended) can be done with the following steps:
-\begin{verbatim}
-  # Download HDF5 from https://www.hdfgroup.org/downloads/hdf5/source-code
-  > tar xf hdf5-1.xx.x.tar.gz
-  > cd hdf5-1.xx.x
-  > mkdir build
-  > cd build
-  > cmake -DHDF5_ENABLE_PARALLEL=ON -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
-  > make
-  > make install
-\end{verbatim}
-
-\subsection{ZFP and H5Z-ZFP}
-We recommend using ZFP and H5Z-ZFP's latest stable release version. 
-
-Installing ZFP can be done with the following steps:
-\begin{verbatim}
-  # Download ZFP from https://github.com/LLNL/zfp/releases
-  > tar xf zfp-x.x.x.tar.gz
-  > cd zfp-x.x.x
-  > mkdir build
-  > cd build
-  > cmake -DZFP_BIT_STREAM_WORD_SIZE=8 -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
-  > make
-  > make install
-\end{verbatim}
-
-Installing H5Z-ZFP can be done with the following steps:
-\begin{verbatim}
-  # Download H5Z-ZFP from https://github.com/LLNL/H5Z-ZFP/releases
-  > tar xf vx.x.x.tar.gz
-  > cd H5Z-ZFP-x.x.x
-  > mkdir build
-  > cd build
-  > export HDF_DIR=/path/to/hdf5/install
-  > export ZFP_DIR=/path/to/zfp/install
-  > cmake -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
-  > make
-  > make install
-\end{verbatim}
-
-To verify that the libraries have been installed properly, you should go to the \verb+SW4ROOT+
-directory and list the {\tt lib} sub-directory (\verb+cd ${SW4ROOT}; ls lib lib64+). You should see the
-following files (on Mac OSX machines, the .so extension is replaced by .dylib ):
-\begin{verbatim}
-  > cd ${SW4ROOT}
-  > ls lib lib64
-  > lib
-  > libhdf5.so ...
-  > lib64
-  > libproj.so ...
-\end{verbatim}
-
-Furthermore, if you list the include sub-directory, you should see include files such as 
-\begin{verbatim}
-  > cd ${SW4ROOT}
-  > ls include
-  > proj.h hdf5.h ...
-\end{verbatim}
-
-\subsection{SW4 with PROJ, HDF5, and ZFP}
-To build SW4 with all the libraries can be done using CMake with the following commands:
-
-\begin{verbatim}
-  > export PROJ_ROOT=/path/to/proj/install
-  > export HDF5_ROOT=/path/to/hdf5/install
-  > export ZFP_ROOT=/path/to/zfp/install
-  > export H5Z_ZFP_ROOT=/path/to/h5z_zfp/install
-  > cmake -DUSE_HDF5=ON -DUSE_PROJ=ON -DUSE_ZFP=ON ..
-  > make
-\end{verbatim}
-
-
+\section{Legacy Make builds}
+The Make workflow remains available with a site-specific
+\texttt{configs/make.inc}. Its executables and object directories differ
+from CMake's \texttt{build/<backend>/bin} layout. Keep Make and CMake outputs
+separate and use the configuration matching the selected backend and libraries.
+Do not reuse object files from another compiler or dependency stack.
 
 \section{Disclaimer} 
 This document was prepared as an account of work sponsored by an agency of the United States
@@ -723,8 +223,8 @@ LLC. The views and opinions of authors expressed herein do not necessarily state
 the United States government or Lawrence Livermore National Security, LLC, and shall not be used for
 advertising or product endorsement purposes. 
 
-\bibliographystyle{plain}
 
-\bibliography{sw4-refs} 
+
+
 
 \end{document}

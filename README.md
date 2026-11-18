@@ -2,11 +2,11 @@ SW4 - Seismic Waves, 4th order accuracy
 ===========================================================
 [![License GPL2+:](https://img.shields.io/badge/License-GPL%202%2B-red)](https://github.com/geodynamics/sw4/blob/master/LICENSE.txt)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8322590.svg)](https://doi.org/10.5281/zenodo.8322590)
-[![pdf manual](https://img.shields.io/badge/get-PDF-green.svg)](https://github.com/geodynamics/sw4/blob/master/doc/SW4_UsersGuide.pdf)
+[![pdf manual](https://img.shields.io/badge/get-PDF-green.svg)](doc/SW4-UsersGuide.pdf)
 
 More information
 ----------------
-Please see the [Users Guide](https://github.com/geodynamics/sw4/blob/master/doc/SW4_UsersGuide.pdf) for more information regarding the use of SW4.
+Please see the [Users Guide](doc/SW4-UsersGuide.pdf) for more information regarding the use of SW4.
 
 Additional resources:
 - [SW4](https://geodynamics.org/resources/sw4/about)
