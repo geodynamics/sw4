@@ -108,7 +108,8 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       m_epi_lon(-122.5),
       m_epi_depth(0.0),
       m_epi_time_offset(0.0),
-      m_x_azimuth(0.0),
+      // Rank zero creates the HDF5 headers for stations on every rank.
+      m_x_azimuth(a_ew->getGridAzimuth()),
       mBinaryMode(true),
       //  m_utc_set(false),
       //  m_utc_offset_computed(false),
@@ -320,9 +321,6 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       mRecordedFloats[q] = static_cast<float*>(0);
   } else
     mRecordedFloats = static_cast<float**>(0);
-
-  // do some misc pre computations
-  m_x_azimuth = a_ew->getGridAzimuth();  // degrees
 
   double xd, yd, lond, latd;
   xd = mX;
@@ -622,9 +620,9 @@ void TimeSeries::writeFile(string suffix) {
       ux << filePrefix.str() << "curlx";
       uy << filePrefix.str() << "curly";
       uz << filePrefix.str() << "curlz";
-      azimx = m_x_azimuth;
-      azimy = m_x_azimuth + 90.;
-      updownang = 180;
+      azimx = m_xyzcomponent ? m_x_azimuth : 90.;
+      azimy = m_xyzcomponent ? m_x_azimuth + 90. : 0.;
+      updownang = m_xyzcomponent ? 180. : 0.;
       msg << "[curlx|curly|curlz]" << endl;
     } else if (m_mode == Strains) {
       xfield = "Uxx";

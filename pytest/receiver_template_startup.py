@@ -277,6 +277,44 @@ def run_startup(args):
         (args.work_dir / "results.json").write_text(json.dumps(results, indent=2) + "\n")
 
 
+
+def run_orientation(args):
+    """Verify that rank zero writes the right axes for nonlocal receivers."""
+    root = args.work_dir.resolve()
+    root.mkdir(parents=True)
+    path = root / "stations.h5"
+    expected = {
+        "cartesian": (0, ("X", "Y", "Z"), (140, 230, 0), (90, 90, 180)),
+        "geographic": (1, ("EW", "NS", "UP"), (90, 0, 0), (90, 90, 0)),
+    }
+    with h5py.File(path, "w") as stream:
+        for name, (orientation, _, _, _) in expected.items():
+            station = stream.create_group(name)
+            # Both coordinates lie beyond the midpoint for either two-rank split.
+            station["STX,STY,STZ"] = [2400., 2400., 0.]
+            station["ISNSEW"] = [orientation]
+
+    deck = STARTUP_INPUT.replace("z=3000 ", "z=3000 az=140 ", 1)
+    deck += ("rechdf5 infile={template} outfile=curl.h5 "
+             "variables=curl writeEvery=2 downSample=2\n")
+    run = root / "rotated-grid"
+    result, output = run_solver(args, args.sw4.resolve(strict=True), run,
+                                deck.format(template=path))
+    assert result["exit_code"] == 0 and "program sw4 finished!" in output, output[-8000:]
+    for filename in ("receiver.h5", "curl.h5"):
+        with h5py.File(run / filename, "r") as stream:
+            for name, (orientation, components, azimuths, inclinations) in expected.items():
+                station = stream[name]
+                assert int(station["ISNSEW"][0]) == orientation, (filename, name)
+                if filename == "curl.h5":
+                    components = ("Curlx", "Curly", "Curlz")
+                for component, azimuth, inclination in zip(components, azimuths, inclinations):
+                    actual = (float(station[component + "CMPAZ"][0]),
+                              float(station[component + "CMPINC"][0]))
+                    assert actual == (azimuth, inclination), (filename, name, component, actual)
+    print("PASS: Cartesian and geographic HDF5 orientation for displacement and curl")
+
+
 def run_depth(args):
     args.work_dir=args.work_dir.resolve()
     args.work_dir.mkdir(parents=True,exist_ok=False)
@@ -434,6 +472,11 @@ def main():
     geometry.add_argument("--sw4", type=Path, required=True)
     geometry.add_argument("--cpus-per-task", type=int, default=1)
     geometry.set_defaults(check=run_geometry, tasks=2)
+
+    orientation = modes.add_parser("orientation", parents=[launcher],
+                                   help="Check nonlocal receiver azimuths on a rotated grid")
+    orientation.add_argument("--sw4", type=Path, required=True)
+    orientation.set_defaults(check=run_orientation, tasks=2, cpus_per_task=2)
 
     args = parser.parse_args()
     args.check(args)
