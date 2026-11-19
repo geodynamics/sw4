@@ -50,17 +50,24 @@ def run(sw4, input_file, run_dir, tasks):
             input_file.name, result.returncode, result.stdout[-8000:]))
 
 
-def capture(run_dir, steps, dump_interval, read_ssi_data=True):
+def capture(run_dir, steps, downsample, dump_interval, read_ssi_data=True):
     receiver = {}
+    extent = steps // downsample + 1
     for filename, stations in RECEIVER_COMPONENTS.items():
+        # The centered velocity derivative is only saved during time stepping.
+        samples = steps if filename == "velocity.h5" else steps + 1
+        expected_npts = (samples - 1) // downsample + 1
         with h5py.File(run_dir / filename, "r") as stream:
             for station, components in stations.items():
                 group = stream[station]
                 npts = int(group["NPTS"][0])
+                if npts != expected_npts:
+                    raise AssertionError("{} NPTS {} != {}".format(
+                        station, npts, expected_npts))
                 for component in components:
-                    if group[component].shape != (npts,):
-                        raise AssertionError("{} {} has shape {}, NPTS {}".format(
-                            station, component, group[component].shape, npts))
+                    if group[component].shape != (extent,):
+                        raise AssertionError("{} {} shape {} != {}".format(
+                            station, component, group[component].shape, (extent,)))
                 receiver[station] = {
                     "NPTS": npts,
                     "components": {
@@ -95,8 +102,9 @@ def capture(run_dir, steps, dump_interval, read_ssi_data=True):
 
 def damage_uncheckpointed_tail(run_dir, checkpoint, downsample,
                                dump_interval, poison_ssi=True):
-    first = checkpoint // downsample + 1
     for filename, stations in RECEIVER_COMPONENTS.items():
+        samples = checkpoint if filename == "velocity.h5" else checkpoint + 1
+        first = (samples - 1) // downsample + 1
         with h5py.File(run_dir / filename, "r+") as stream:
             for station, components in stations.items():
                 group = stream[station]
@@ -153,7 +161,7 @@ def check_case(sw4, tasks, steps, downsample, dump_interval,
                                  restartfile=""))
     run(sw4, base, run_dir, tasks)
     read_ssi_data = not ssi_options
-    expected = capture(run_dir, steps, dump_interval, read_ssi_data)
+    expected = capture(run_dir, steps, downsample, dump_interval, read_ssi_data)
     for name, station in expected[0].items():
         traces = np.stack(list(station["components"].values()))
         if not (np.isfinite(traces).all() and np.any(traces)):
@@ -179,7 +187,7 @@ def check_case(sw4, tasks, steps, downsample, dump_interval,
         damage_uncheckpointed_tail(run_dir, checkpoint, downsample,
                                    dump_interval, read_ssi_data)
         run(sw4, restart, run_dir, tasks)
-        compare(capture(run_dir, steps, dump_interval, read_ssi_data), expected,
+        compare(capture(run_dir, steps, downsample, dump_interval, read_ssi_data), expected,
                 "steps {} downsample {} restart {}".format(
                     steps, downsample, checkpoint),
                 0.02 if ssi_options else 1e-8)
