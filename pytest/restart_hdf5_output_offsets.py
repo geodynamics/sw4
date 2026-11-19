@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compare receiver and SSI output after two restarts with an uninterrupted run.
 
-Run inside a one-node GPU allocation with a HIP/HDF5-enabled SW4 executable.
+Run inside a one-node GPU allocation with a GPU/HDF5-enabled SW4 executable.
 """
 
 import argparse
@@ -23,9 +23,19 @@ block vp=4000 vs=2000 rho=2600 z2=1000
 source x=11000 y=11000 z=200 mxy=1e18 t0=0.01 freq=16.6667 type=Gaussian
 rec x=11000 y=11000 z=0 file=sta01 usgsformat=0 sacformat=0 hdf5format=1 hdf5file=receiver.h5 writeEvery=2 downSample={downsample}
 rec x=11200 y=11000 z=0 file=sta02 usgsformat=0 sacformat=0 hdf5format=1 hdf5file=receiver.h5 writeEvery=2 downSample={downsample}
+rec x=11000 y=11000 z=0 file=vel_xyz usgsformat=0 sacformat=0 hdf5format=1 hdf5file=velocity.h5 writeEvery=2 downSample={downsample} variables=velocity nsew=0
+rec x=11200 y=11000 z=0 file=vel_enu usgsformat=0 sacformat=0 hdf5format=1 hdf5file=velocity.h5 writeEvery=2 downSample={downsample} variables=velocity nsew=1
 ssioutput file=ssi-restart xmin=10000 xmax=12000 ymin=10000 ymax=12000 depth=0 precision=4 bufferInterval={buffer_interval} dumpInterval={dump_interval}{ssi_options}
 checkpoint cycleInterval={checkpoint_interval} restartpath=. file=restart hdf5=yes{restartfile}
 """
+
+RECEIVER_COMPONENTS = {
+    "receiver.h5": {"sta01": ("X", "Y", "Z"), "sta02": ("X", "Y", "Z")},
+    "velocity.h5": {
+        "vel_xyz": ("Vx", "Vy", "Vz"),
+        "vel_enu": ("Vew", "Vns", "Vup"),
+    },
+}
 
 
 def run(sw4, input_file, run_dir, tasks):
@@ -42,21 +52,22 @@ def run(sw4, input_file, run_dir, tasks):
 
 def capture(run_dir, steps, dump_interval, read_ssi_data=True):
     receiver = {}
-    with h5py.File(run_dir / "receiver.h5", "r") as stream:
-        for station in ("sta01", "sta02"):
-            group = stream[station]
-            npts = int(group["NPTS"][0])
-            for component in "XYZ":
-                if group[component].shape != (npts,):
-                    raise AssertionError("{} {} has shape {}, NPTS {}".format(
-                        station, component, group[component].shape, npts))
-            receiver[station] = {
-                "NPTS": npts,
-                "components": {
-                    component: group[component][:npts].copy()
-                    for component in "XYZ"
-                },
-            }
+    for filename, stations in RECEIVER_COMPONENTS.items():
+        with h5py.File(run_dir / filename, "r") as stream:
+            for station, components in stations.items():
+                group = stream[station]
+                npts = int(group["NPTS"][0])
+                for component in components:
+                    if group[component].shape != (npts,):
+                        raise AssertionError("{} {} has shape {}, NPTS {}".format(
+                            station, component, group[component].shape, npts))
+                receiver[station] = {
+                    "NPTS": npts,
+                    "components": {
+                        component: group[component][:npts].copy()
+                        for component in components
+                    },
+                }
 
     expected_cycles = list(range(dump_interval, steps + 1, dump_interval))
     if expected_cycles[-1] != steps:
@@ -84,16 +95,17 @@ def capture(run_dir, steps, dump_interval, read_ssi_data=True):
 
 def damage_uncheckpointed_tail(run_dir, checkpoint, downsample,
                                dump_interval, poison_ssi=True):
-    with h5py.File(run_dir / "receiver.h5", "r+") as stream:
-        for station in ("sta01", "sta02"):
-            group = stream[station]
-            npts = int(group["NPTS"][0])
-            first = checkpoint // downsample + 1
-            if first >= npts:
-                raise AssertionError("No receiver tail after checkpoint")
-            for component in "XYZ":
-                group[component][first:npts] = 1234567.0
-            group["NPTS"][...] = first
+    first = checkpoint // downsample + 1
+    for filename, stations in RECEIVER_COMPONENTS.items():
+        with h5py.File(run_dir / filename, "r+") as stream:
+            for station, components in stations.items():
+                group = stream[station]
+                npts = int(group["NPTS"][0])
+                if first >= npts:
+                    raise AssertionError("No receiver tail after checkpoint")
+                for component in components:
+                    group[component][first:npts] = 1234567.0
+                group["NPTS"][...] = first
 
     with h5py.File(run_dir / "ssi-restart.ssi", "r+") as stream:
         first = checkpoint // dump_interval
@@ -116,7 +128,7 @@ def compare(actual, expected, label, ssi_atol):
         if got["NPTS"] != want["NPTS"]:
             raise AssertionError("{} {} NPTS {} != {}".format(
                 label, station, got["NPTS"], want["NPTS"]))
-        for component in "XYZ":
+        for component in want["components"]:
             np.testing.assert_allclose(
                 got["components"][component], want["components"][component],
                 rtol=2e-5, atol=1e-8,
@@ -142,17 +154,14 @@ def check_case(sw4, tasks, steps, downsample, dump_interval,
     run(sw4, base, run_dir, tasks)
     read_ssi_data = not ssi_options
     expected = capture(run_dir, steps, dump_interval, read_ssi_data)
-    receiver_peak = max(np.max(np.abs(values))
-                        for station in expected[0].values()
-                        for values in station["components"].values())
+    for name, station in expected[0].items():
+        traces = np.stack(list(station["components"].values()))
+        if not (np.isfinite(traces).all() and np.any(traces)):
+            raise AssertionError("Receiver {} has no finite nonzero motion".format(name))
     ssi_peak = (max(np.max(np.abs(values)) for values in expected[1].values())
                 if read_ssi_data else None)
-    if not (np.isfinite(receiver_peak) and receiver_peak > 0 and
-            (not read_ssi_data or
-             (np.isfinite(ssi_peak) and ssi_peak > 0))):
-        raise AssertionError("Fixture has no finite nonzero motion: "
-                             "receiver {}, SSI {}".format(
-                                 receiver_peak, ssi_peak))
+    if read_ssi_data and not (np.isfinite(ssi_peak) and ssi_peak > 0):
+        raise AssertionError("SSI fixture has no finite nonzero motion")
 
     for checkpoint in checkpoints:
         restart = run_dir / "restart-{}.in".format(checkpoint)

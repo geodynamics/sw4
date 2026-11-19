@@ -3157,7 +3157,6 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     return fail();
   }
 
-  std::string dset_names[3];
   char unit[128];
   if (readAttrStr(fid, "UNIT", unit) < 0) return fail();
   bool foundd = (strstr(unit, "m") != NULL);
@@ -3176,26 +3175,29 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     int is_nsew, npts, sw4npts;
     if (readAttrInt(grp, "ISNSEW", &is_nsew) < 0) return fail();
 
-    htri_t nsew_status = H5Lexists(grp, "EW", H5P_DEFAULT);
-    htri_t xyz_status = H5Lexists(grp, "X", H5P_DEFAULT);
-    if (nsew_status < 0 || xyz_status < 0) return fail();
-    bool has_nsew = nsew_status > 0;
-    bool has_xyz = xyz_status > 0;
-
-    if (has_nsew && (is_nsew == 1 || !has_xyz)) {
-      dset_names[0] = "EW";
-      dset_names[1] = "NS";
-      dset_names[2] = "UP";
-    } else if (has_xyz) {
-      cartesian = true;
-      dset_names[0] = "X";
-      dset_names[1] = "Y";
-      dset_names[2] = "Z";
-    } else {
-      cout << "ERROR: no complete displacement component set in group ["
+    const bool velocity = m_mode == Velocity;
+    const char* const nsew_names[] = {velocity ? "Vew" : "EW",
+                                      velocity ? "Vns" : "NS",
+                                      velocity ? "Vup" : "UP"};
+    const char* const xyz_names[] = {velocity ? "Vx" : "X",
+                                     velocity ? "Vy" : "Y",
+                                     velocity ? "Vz" : "Z"};
+    auto has_components = [grp](const char* const (&names)[3]) {
+      for (const char* name : names)
+        if (H5Lexists(grp, name, H5P_DEFAULT) <= 0) return false;
+      return true;
+    };
+    const bool has_nsew = has_components(nsew_names);
+    const bool has_xyz = has_components(xyz_names);
+    if (!has_nsew && !has_xyz) {
+      cout << "ERROR: no complete "
+           << (velocity ? "velocity" : "displacement")
+           << " component set in group ["
            << m_staName << "]" << endl;
       return fail();
     }
+    cartesian = has_xyz && (is_nsew != 1 || !has_nsew);
+    const char* const* dset_names = cartesian ? xyz_names : nsew_names;
     m_xyzcomponent = cartesian;
 
     if (readAttrInt(grp, "NPTS", &npts) < 0) return fail();
@@ -3224,9 +3226,9 @@ bool TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     }
 
     std::vector<float> buf_0(npts), buf_1(npts), buf_2(npts);
-    if (readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0.data()) < 0 ||
-        readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1.data()) < 0 ||
-        readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2.data()) < 0)
+    if (readHDF5Data(grp, dset_names[0], npts, buf_0.data()) < 0 ||
+        readHDF5Data(grp, dset_names[1], npts, buf_1.data()) < 0 ||
+        readHDF5Data(grp, dset_names[2], npts, buf_2.data()) < 0)
       return fail();
 
     // Mapping to invert (e,n) to (x,y) components, Only needed in the
