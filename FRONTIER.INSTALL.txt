@@ -39,3 +39,8 @@
 6. run python test script in pytest/
 7. see performance/large/run.frontier.cmd for sample batch script
 
+Set SW4_TRACE_MPI_FINALIZE=1 in the launch environment to log when each rank
+enters and returns from MPI_Finalize. These diagnostics go to stderr. Rank 0
+prints "program sw4 finished!" after its MPI_Finalize call succeeds. Use the
+launcher exit status to confirm that the MPI step has exited.
+

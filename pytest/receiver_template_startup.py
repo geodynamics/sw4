@@ -301,6 +301,8 @@ def run_orientation(args):
     result, output = run_solver(args, args.sw4.resolve(strict=True), run,
                                 deck.format(template=path))
     assert result["exit_code"] == 0 and "program sw4 finished!" in output, output[-8000:]
+    finalize = output.find("Pre MPI_Finalize")
+    assert 0 <= finalize < output.index("program sw4 finished!"), output[-8000:]
     for filename in ("receiver.h5", "curl.h5"):
         with h5py.File(run / filename, "r") as stream:
             for name, (orientation, components, azimuths, inclinations) in expected.items():
