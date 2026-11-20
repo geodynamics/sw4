@@ -770,12 +770,13 @@ EW::~EW() {
   ::operator delete[](m_sbop, Space::Managed);
 #endif
   ::operator delete[](viewArrayActual, Space::Managed);
-  for (int m = 0; m < mNumberOfGrids; m += 4) {
-  //std::cout<<"MPI BUFFER TYPE IS "<<as_int(mpi_buffer_space)<<" "<<std::get<0>(bufs_type1[4 * m])<<" \n";
-    ::operator delete[](std::get<0>(bufs_type1[4 * m]), mpi_buffer_space);
-    ::operator delete[](std::get<0>(bufs_type3[4 * m]), mpi_buffer_space);
-    ::operator delete[](std::get<0>(bufs_type4[4 * m]), mpi_buffer_space);
-    ::operator delete[](std::get<0>(bufs_type21[4 * m]), mpi_buffer_space);
+  // Each grid owns one allocation per buffer family. The other three entries
+  // for that grid point into the same allocation.
+  for (const auto* buffers : {&bufs_type1, &bufs_type3, &bufs_type4, &bufs_type21}) {
+    for (size_t entry = 0; entry < buffers->size(); entry += 4) {
+      if (auto* base = std::get<0>((*buffers)[entry]))
+        ::operator delete[](base, mpi_buffer_space);
+    }
   }
 
   for (int m = 0; m < mNumberOfCartesianGrids; m++) {
