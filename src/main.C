@@ -35,6 +35,8 @@
 #include <mpi.h>
 #include <omp.h>
 
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -405,14 +407,6 @@ int main(int argc, char **argv) {
             GlobalTimeSeries[0][ts]->closeHDF5File();
 #endif
 
-        if (myRank == 0) {
-          cout << "============================================================"
-               << endl
-               << " program sw4 finished! " << endl
-               << "============================================================"
-               << endl;
-        }
-
         status = 0;
       }
     }
@@ -454,13 +448,32 @@ int main(int argc, char **argv) {
   SCR_Finalize();
 #endif
 
-  if (!myRank){
-  time_t now;
-  time(&now);
-  printf("Pre MPI_Finalize %s \n",ctime(&now));
-}
-  // Stop MPI
-  MPI_Finalize();
-  // std::cout<<"MPI_Finalize done\n"<<std::flush;
+  const char* trace_setting = std::getenv("SW4_TRACE_MPI_FINALIZE");
+  const bool trace_finalize =
+      trace_setting && std::strcmp(trace_setting, "1") == 0;
+  if (myRank == 0) {
+    time_t now;
+    time(&now);
+    printf("Pre MPI_Finalize %s \n", ctime(&now));
+    std::fflush(stdout);
+  }
+  if (trace_finalize) {
+    std::fprintf(stderr, "SW4 rank %d entering MPI_Finalize\n", myRank);
+    std::fflush(stderr);
+  }
+  const int finalize_status = MPI_Finalize();
+  if (trace_finalize || finalize_status != MPI_SUCCESS) {
+    std::fprintf(stderr, "SW4 rank %d returned from MPI_Finalize with status %d\n",
+                 myRank, finalize_status);
+    std::fflush(stderr);
+  }
+  if (finalize_status != MPI_SUCCESS)
+    return EXIT_FAILURE;
+
+  if (myRank == 0) {
+    cout << "============================================================" << endl
+         << " program sw4 finished! " << endl
+         << "============================================================" << endl;
+  }
   return status;
 }  // end of main
